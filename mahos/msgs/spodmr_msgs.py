@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
+import msgpack
 
+from .fit_msgs import PeakType
 from ..util.comp import dict_isclose
 from .common_msgs import Request, BinaryState, Status
 from .common_meas_msgs import BasicMeasData
@@ -127,6 +129,32 @@ class SPODMRData(BasicMeasData, ComplexDataMixin):
 
         if self.params.get("invert_sweep", False):
             self.xdata = self.xdata[::-1]
+
+    # h5
+
+    def _h5_write_fit_params(self, val):
+        d = val.copy()
+        if "peak_type" in d:
+            d["peak_type"] = d["peak_type"].value
+        return np.void(msgpack.dumps(d))
+
+    def _h5_read_fit_params(self, val):
+        d = msgpack.loads(val.tobytes())
+        if "peak_type" in d:
+            d["peak_type"] = PeakType(d["peak_type"])
+        return d
+
+    def _h5_attr_writers(self) -> dict:
+        return {
+            "fit_params": self._h5_write_fit_params,
+            "fit_result": self._h5_write_fit_result,
+        }
+
+    def _h5_readers(self) -> dict:
+        return {
+            "fit_params": self._h5_read_fit_params,
+            "fit_result": self._h5_read_fit_result,
+        }
 
     # getters
 
