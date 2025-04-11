@@ -298,7 +298,7 @@ class Confocal(Node):
         else:
             self.switch = DummyWorker()
         if "pg" in self.conf["target"]["servers"]:
-            self.pg = PulseGen_CW(self.cli, self.logger)
+            self.pg = PulseGen_CW(self.cli, self.logger, channels=("laser", "mw"))
         else:
             self.pg = DummyWorker()
 
