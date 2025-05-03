@@ -235,6 +235,9 @@ class Confocal(Node):
 
         :param piezo.interval_sec: (default: 0.5) Interval to poll piezo pos.
         :type piezo.interval_sec: float
+        :param pg_channels: (default: ["laser"], only target.servers.pg is given)
+            List of PG channels to set high continuously on INTERACT or SCAN states.
+        :type pg_channels: list[str]
 
         :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
         :type tracer.pd_names: list[str]
@@ -298,7 +301,8 @@ class Confocal(Node):
         else:
             self.switch = DummyWorker()
         if "pg" in self.conf["target"]["servers"]:
-            self.pg = PulseGen_CW(self.cli, self.logger, channels=("laser", "mw"))
+            chs = self.conf.get("pg_channels", ["laser"])
+            self.pg = PulseGen_CW(self.cli, self.logger, channels=tuple(chs))
         else:
             self.pg = DummyWorker()
 
