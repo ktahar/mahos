@@ -11,13 +11,13 @@ Logic and instrument control part of confocal microscope.
 from __future__ import annotations
 import typing as T
 
-from ..msgs.common_msgs import Reply, StateReq, ShutdownReq
+from ..msgs.common_msgs import Reply, StateReq, ShutdownReq, BinaryState
 from ..msgs import confocal_msgs
 from ..msgs.confocal_msgs import Axis, ConfocalState, MoveReq
 from ..msgs.confocal_msgs import SaveImageReq, ExportImageReq, ExportViewReq, LoadImageReq
 from ..msgs.confocal_msgs import SaveTraceReq, ExportTraceReq, LoadTraceReq
 from ..msgs.confocal_msgs import TraceCommand, CommandTraceReq, BufferCommand, CommandBufferReq
-from ..msgs.confocal_msgs import ConfocalStatus, Image, Trace, ScanDirection
+from ..msgs.confocal_msgs import ConfocalStatus, TraceStatus, Image, Trace, ScanDirection
 from ..msgs.param_msgs import GetParamDictReq
 from ..node.node import Node
 from ..node.client import NodeClient
@@ -632,3 +632,234 @@ class Confocal(Node):
         self._work()
         time_to_pub = self.pub_timer.check()
         self._publish(time_to_pub)
+
+
+class TraceNodeClient(NodeClient, BaseMeasClientMixin):
+    """Simple TraceNode Client.
+
+    Simple client API for measurement services provided by Trace.
+    Only latest subscribed messages are hold.
+    If you need message-driven things, use QTraceNodeClient instead.
+
+    """
+
+    M = confocal_msgs
+
+    def __init__(
+        self,
+        gconf: dict,
+        name,
+        context=None,
+        prefix=None,
+        status_handler=None,
+        trace_handler=None,
+    ):
+        NodeClient.__init__(self, gconf, name, context=context, prefix=prefix)
+
+        getters = self.add_sub([(b"status", status_handler), (b"trace", trace_handler)])
+
+        self.get_status: T.Callable[[], ConfocalStatus] = getters[0]
+        self.get_trace: T.Callable[[], Trace] = getters[2]
+
+        self.req = self.add_req(gconf)
+
+    def save_trace(self, file_name) -> bool:
+        rep = self.req.request(SaveTraceReq(file_name))
+        return rep.success
+
+    def export_trace(self, file_name, params=None) -> bool:
+        rep = self.req.request(ExportTraceReq(file_name, params=params))
+        return rep.success
+
+    def load_trace(self, file_name) -> Trace | None:
+        rep = self.req.request(LoadTraceReq(file_name))
+        if rep.success:
+            return rep.ret
+        else:
+            return None
+
+    def _command_trace(self, command: TraceCommand):
+        rep = self.req.request(CommandTraceReq(command))
+        return rep.success
+
+    def pause_trace(self):
+        return self._command_trace(TraceCommand.PAUSE)
+
+    def resume_trace(self):
+        return self._command_trace(TraceCommand.RESUME)
+
+    def clear_trace(self):
+        return self._command_trace(TraceCommand.CLEAR)
+
+
+class TraceNode(Node):
+    CLIENT = TraceNodeClient
+
+    def __init__(self, gconf: dict, name, context=None):
+        """Node for only Trace function from Confocal.
+
+        Collect time trace of PD, no piezo scan or positioning.
+
+        :param pg_channels: (default: ["laser"], only target.servers.pg is given)
+            List of PG channels to set high continuously when ACTIVE.
+        :type pg_channels: list[str]
+
+        :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
+        :type tracer.pd_names: list[str]
+        :param tracer.interval_sec: (default: 0.5) Interval to poll trace data.
+        :type tracer.interval_sec: float
+        :param tracer.size: (default: 500) Size of trace data.
+        :type tracer.size: int
+        :param tracer.samples: (default: 5) Number of samples per chunk.
+        :type tracer.samples: int
+        :param tracer.oversample: (default: 1) Oversample factor.
+        :type tracer.oversample: int
+        :param tracer.time_window_sec: (default: 0.01) Time window for single data point.
+        :type tracer.time_window_sec: float
+        :param tracer.pd_bounds: (default: (-10.0, 10.0)) PD's voltage bounds.
+        :type tracer.pd_bounds: tuple[float, float]
+
+        """
+
+        Node.__init__(self, gconf, name, context=context)
+
+        self.state = BinaryState.IDLE
+
+        self.cli = MultiInstrumentClient(
+            gconf,
+            self.conf["target"]["servers"],
+            inst_remap=self.conf.get("inst_remap"),
+            context=self.ctx,
+            prefix=self.joined_name(),
+        )
+        self.add_clients(self.cli)
+        self.add_rep()
+        self.status_pub = self.add_pub(b"status")
+        self.trace_pub = self.add_pub(b"trace")
+
+        _default_sw_names = ["switch"] if "switch" in self.conf["target"]["servers"] else []
+        sw_names = self.conf.get("switch_names", _default_sw_names)
+        if sw_names:
+            self.switch = Switch(
+                self.cli, self.logger, sw_names, self.conf.get("switch_command", "confocal")
+            )
+        else:
+            self.switch = DummyWorker()
+        if "pg" in self.conf["target"]["servers"]:
+            chs = self.conf.get("pg_channels", ["laser"])
+            self.pg = PulseGen_CW(self.cli, self.logger, channels=tuple(chs))
+        else:
+            self.pg = DummyWorker()
+
+        self.tweaker_clis: dict[str, TweakSaver] = {}
+        for tweaker in self.conf["target"].get("tweakers", []):
+            cli = TweakSaver(gconf, tweaker, context=self.ctx, prefix=self.joined_name())
+            self.tweaker_clis[tweaker] = cli
+            self.add_clients(cli)
+
+        self.tracer = Tracer(self.cli, self.logger, self.conf.get("tracer", {}))
+
+        self.io = ConfocalIO(self.logger)
+
+    def close_resources(self):
+        if self.state == BinaryState.ACTIVE:
+            if hasattr(self, "switch"):
+                self.switch.stop()
+            if hasattr(self, "pg"):
+                self.pg.stop()
+            if hasattr(self, "tracer"):
+                self.tracer.stop()
+
+    def change_state(self, msg: StateReq) -> Reply:
+        if self.state == msg.state:
+            return Reply(True, "Already in that state")
+
+        self.logger.info(f"Changing state from {self.state} to {msg.state}")
+        # stop unnecessary modules
+        success = True
+        if msg.state == BinaryState.IDLE:
+            success = self.switch.stop() and self.pg.stop() and self.tracer.stop()
+            if not success:
+                return Reply(False, "Failed to stop internal worker.", ret=self.state)
+        elif msg.state == BinaryState.ACTIVE:
+            if not self.switch.start():
+                return Reply(False, "Failed to start switch.", ret=self.state)
+            if not self.pg.start():
+                self.switch.stop()
+                return Reply(False, "Failed to start pg.", ret=self.state)
+            if not self.tracer.start():
+                self.pg.stop()
+                self.switch.stop()
+                return Reply(False, "Failed to start worker.", ret=self.state)
+
+        self.state = msg.state
+        # publish changed state immediately to prevent StateManager from missing the change
+        status = TraceStatus(state=self.state, tracer_paused=self.tracer.is_paused())
+        self.status_pub.publish(status)
+        return Reply(True)
+
+    def save_trace(self, msg: SaveTraceReq) -> Reply:
+        success = self.io.save_trace(msg.file_name, self.tracer.trace_msg(), msg.note)
+        if success:
+            for tweaker_name, cli in self.tweaker_clis.items():
+                success &= cli.save(msg.file_name, "__" + tweaker_name + "__")
+        return Reply(success)
+
+    def export_trace(self, msg: ExportTraceReq) -> Reply:
+        success = self.io.export_trace(msg.file_name, self.tracer.trace_msg(), params=msg.params)
+        return Reply(success)
+
+    def load_trace(self, msg: LoadTraceReq) -> Reply:
+        trace = self.io.load_trace(msg.file_name)
+        if trace is None:
+            return Reply(False)
+        else:
+            return Reply(True, ret=trace)
+
+    def command_trace(self, msg: CommandTraceReq) -> Reply:
+        if msg.command == TraceCommand.CLEAR:
+            self.tracer.clear_buf()
+            return Reply(True)
+        elif msg.command == TraceCommand.PAUSE:
+            self.tracer.pause_msg()
+            return Reply(True)
+        elif msg.command == TraceCommand.RESUME:
+            self.tracer.resume_msg()
+            return Reply(True)
+        else:
+            return Reply(False, "Unknown trace command: " + str(msg.command))
+
+    def handle_req(self, msg):
+        if isinstance(msg, StateReq):
+            return self.change_state(msg)
+        elif isinstance(msg, SaveTraceReq):
+            return self.save_trace(msg)
+        elif isinstance(msg, ExportTraceReq):
+            return self.export_trace(msg)
+        elif isinstance(msg, LoadTraceReq):
+            return self.load_trace(msg)
+        elif isinstance(msg, CommandTraceReq):
+            return self.command_trace(msg)
+        else:
+            return Reply(False, "Invalid message type")
+
+    def _work(self):
+        if self.state == BinaryState.ACTIVE:
+            self.tracer.work()
+
+    def _publish(self):
+        status = TraceStatus(state=self.state, tracer_paused=self.tracer.is_paused())
+        self.status_pub.publish(status)
+        if self.state == BinaryState.ACTIVE:
+            self.trace_pub.publish(self.tracer.trace_msg())
+
+    def wait(self):
+        self.logger.info("Waiting for instrument server...")
+        for pd in self.tracer.pd_names:
+            self.cli.wait(pd)
+        self.logger.info("Server is up!")
+
+    def main(self):
+        self.poll()
+        self._work()
+        self._publish()

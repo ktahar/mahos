@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import msgpack
 
-from .common_msgs import Message, Request, State, Status
+from .common_msgs import Message, Request, State, Status, BinaryState
 from .data_msgs import Data, ComplexDataMixin, FormatTimeMixin
 
 from .common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
@@ -363,6 +363,18 @@ class ConfocalStatus(Status):
 
     def __str__(self):
         return f"Confocal({self.state.name}, {self.pos}, {self.tracer_paused})"
+
+
+class TraceStatus(Status):
+    def __init__(self, state: BinaryState, tracer_paused: bool):
+        self.state = state
+        self.tracer_paused = tracer_paused
+
+    def __repr__(self):
+        return f"TraceStatus({self.state}, {self.tracer_paused})"
+
+    def __str__(self):
+        return f"Trace({self.state.name}, {self.tracer_paused})"
 
 
 class MoveReq(Request):

@@ -14,17 +14,21 @@ from .Qt import QtCore
 
 from ..msgs.common_msgs import ShutdownReq, BinaryState, BinaryStatus
 from ..msgs.param_msgs import GetParamDictReq
-from ..msgs.confocal_msgs import Axis, ConfocalStatus, ConfocalState, ScanDirection, Trace
 from ..msgs.confocal_msgs import (
+    Axis,
+    ConfocalStatus,
+    ConfocalState,
+    TraceStatus,
+    ScanDirection,
+    Trace,
     MoveReq,
     SaveImageReq,
     ExportImageReq,
     ExportViewReq,
     LoadImageReq,
     Image,
-)
-from ..msgs.confocal_msgs import BufferCommand, CommandBufferReq
-from ..msgs.confocal_msgs import (
+    BufferCommand,
+    CommandBufferReq,
     SaveTraceReq,
     ExportTraceReq,
     LoadTraceReq,
@@ -217,25 +221,8 @@ class QTracerSubWorker(QStatusSubWorker):
         self.traceUpdated.emit(msg)
 
 
-class QTracerClient(QReqClient):
-    """Qt-based client for Tracer part of Confocal."""
-
-    paused = QtCore.pyqtSignal(bool)
-    traceUpdated = QtCore.pyqtSignal(Trace)
-
-    def __init__(self, gconf: dict, name, context=None, parent=None):
-        QReqClient.__init__(self, gconf, name, context=context, parent=parent)
-
-        self._trace = None
-
-        self.sub = QTracerSubWorker(self.conf, self.ctx)
-        # do signal connections here
-        self.sub.traceUpdated.connect(self.traceUpdated)
-        self.sub.statusUpdated.connect(self.update_paused)
-
-        self.add_sub(self.sub)
-
-    def update_paused(self, status: ConfocalStatus):
+class _TracingMixin(object):
+    def update_paused(self, status: ConfocalStatus | TraceStatus):
         self.paused.emit(status.tracer_paused)
 
     def save_trace(self, file_name, note: str = "") -> bool:
@@ -265,6 +252,75 @@ class QTracerClient(QReqClient):
 
     def clear(self):
         return self._command(TraceCommand.CLEAR)
+
+
+class QTracerClient(QReqClient, _TracingMixin):
+    """Qt-based client for Tracer part of Confocal."""
+
+    paused = QtCore.pyqtSignal(bool)
+    traceUpdated = QtCore.pyqtSignal(Trace)
+
+    def __init__(self, gconf: dict, name, context=None, parent=None):
+        QReqClient.__init__(self, gconf, name, context=context, parent=parent)
+
+        self._trace = None
+
+        self.sub = QTracerSubWorker(self.conf, self.ctx)
+        # do signal connections here
+        self.sub.traceUpdated.connect(self.traceUpdated)
+        self.sub.statusUpdated.connect(self.update_paused)
+
+        self.add_sub(self.sub)
+
+
+class QTraceNodeSubWorker(QStatusSubWorker):
+    """Worker object for Subscriber part of QTraceClient."""
+
+    statusUpdated = QtCore.pyqtSignal(TraceStatus)
+    traceUpdated = QtCore.pyqtSignal(Trace)
+
+    def __init__(self, lconf: dict, context, parent=None):
+        QStatusSubWorker.__init__(self, lconf, context, parent=parent)
+        self.add_handler(lconf, b"trace", self.handle_trace)
+
+    def handle_trace(self, msg):
+        self.traceUpdated.emit(msg)
+
+
+class QTraceNodeClient(QStateReqClient, _TracingMixin):
+    """Qt-based client for TraceNode (Node with Tracer only)."""
+
+    statusUpdated = QtCore.pyqtSignal(TraceStatus)
+    stateUpdated = QtCore.pyqtSignal(BinaryState, BinaryState)
+    traceUpdated = QtCore.pyqtSignal(Trace)
+    paused = QtCore.pyqtSignal(bool)
+
+    def __init__(self, gconf: dict, name, context=None, parent=None):
+        QStateReqClient.__init__(self, gconf, name, context=context, parent=parent)
+
+        self._state = None
+        self._trace = None
+
+        self.sub = QTraceNodeSubWorker(self.conf, self.ctx)
+        # do signal connections here
+        self.sub.traceUpdated.connect(self.traceUpdated)
+        self.sub.statusUpdated.connect(self.update_paused)
+        self.sub.statusUpdated.connect(self.check_state)
+
+        self.add_sub(self.sub)
+
+    def start(self, params=None, label: str = "") -> bool:
+        return self.change_state(BinaryState.ACTIVE, params=params, label=label)
+
+    def stop(self, params=None, label: str = "") -> bool:
+        return self.change_state(BinaryState.IDLE, params=params, label=label)
+
+    def check_state(self, status: TraceStatus):
+        # if self._state is None or self._state != status.state:
+        # if self._state is not None and self._state != status.state:
+        if self._state is not None:
+            self.stateUpdated.emit(status.state, self._state)
+        self._state = status.state
 
 
 class QConfocalTrackerClient(QStateClient):

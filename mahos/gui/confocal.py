@@ -43,7 +43,12 @@ from ..msgs.confocal_msgs import direction_to_str, str_to_direction, mode_to_str
 from ..msgs.confocal_msgs import line_mode_to_str, str_to_line_mode
 from ..msgs.confocal_tracker_msgs import OptMode
 from ..meas.confocal_worker import DEFAULT_TRACER_SIZE
-from .confocal_client import QConfocalClient, QConfocalTrackerClient, QTracerClient
+from .confocal_client import (
+    QConfocalClient,
+    QConfocalTrackerClient,
+    QTracerClient,
+    QTraceNodeClient,
+)
 from ..node.global_params import GlobalParamsClient
 from ..node.node import local_conf, join_name
 from ..util import conv
@@ -54,6 +59,8 @@ from .gui_node import GUINode
 from .dialog import save_dialog, load_dialog, export_dialog
 from .param import apply_widgets
 from .common_widget import ClientWidget
+
+Policy = QtWidgets.QSizePolicy.Policy
 
 
 class imageDialog(QtWidgets.QDialog, Ui_imageDialog):
@@ -2135,7 +2142,7 @@ class ConfocalWidget(ClientWidget, Ui_Confocal):
 class traceView(ClientWidget, Ui_traceView):
     """Widget for Confocal trace view."""
 
-    def __init__(self, gconf: dict, name, gparams_name, context, parent=None):
+    def __init__(self, gconf: dict, name, gparams_name, context, cli=None, parent=None):
         ClientWidget.__init__(self, parent)
         self.setupUi(self)
 
@@ -2146,7 +2153,10 @@ class traceView(ClientWidget, Ui_traceView):
         self.pi = pg.PlotItem()
         self.graphicsView.setCentralItem(self.pi)
 
-        self.cli = QTracerClient(gconf, name, context=context, parent=self)
+        if cli is None:
+            self.cli = QTracerClient(gconf, name, context=context, parent=self)
+        else:
+            self.cli = cli
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
         self.add_clients(self.cli, self.gparams_cli)
 
@@ -2447,8 +2457,64 @@ class ConfocalMainWindow(QtWidgets.QMainWindow):
         QtWidgets.QMainWindow.closeEvent(self, event)
 
 
+class TraceWidget(QtWidgets.QWidget):
+    """QWidget with traceView and a few buttons."""
+
+    def __init__(self, gconf: dict, name, context, parent=None):
+        QtWidgets.QWidget.__init__(self, parent)
+
+        lconf = local_conf(gconf, name)
+        target = lconf["target"]
+        self.cli = QTraceNodeClient(gconf, target["trace"], context=context, parent=self)
+
+        self.traceView = traceView(
+            gconf, target["trace"], target["gparams"], context, cli=self.cli, parent=self
+        )
+
+        self.setWindowTitle(f"MAHOS.TraceGUI ({join_name(target['trace'])})")
+
+        self.init_ui()
+        self.init_connection()
+
+    def init_ui(self):
+        hl = QtWidgets.QHBoxLayout()
+        self.startButton = QtWidgets.QPushButton("Start", parent=self)
+        self.stopButton = QtWidgets.QPushButton("Stop", parent=self)
+        spacer = QtWidgets.QSpacerItem(40, 20, Policy.Expanding, Policy.Minimum)
+        for w in (self.startButton, self.stopButton):
+            hl.addWidget(w)
+        hl.addItem(spacer)
+
+        vl = QtWidgets.QVBoxLayout()
+        vl.addLayout(hl)
+        vl.addWidget(self.traceView)
+        self.setLayout(vl)
+
+    def init_connection(self):
+        self.cli.stateUpdated.connect(self.update_state)
+        self.startButton.clicked.connect(self.cli.start)
+        self.stopButton.clicked.connect(self.cli.stop)
+
+    def update_state(self, state: BinaryState, last_state: BinaryState):
+        self.startButton.setEnabled(state == BinaryState.IDLE)
+        self.stopButton.setEnabled(state != BinaryState.IDLE)
+
+    def closeEvent(self, event):
+        """Close the clients on closeEvent."""
+
+        self.traceView.close_clients()
+        QtWidgets.QWidget.closeEvent(self, event)
+
+
 class ConfocalGUI(GUINode):
     """GUINode for Confocal using ConfocalMainWindow."""
 
     def init_widget(self, gconf: dict, name, context):
         return ConfocalMainWindow(gconf, name, context)
+
+
+class TraceGUI(GUINode):
+    """GUINode for Confocal using ConfocalMainWindow."""
+
+    def init_widget(self, gconf: dict, name, context):
+        return TraceWidget(gconf, name, context)
