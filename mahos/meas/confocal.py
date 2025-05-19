@@ -659,9 +659,19 @@ class TraceNodeClient(NodeClient, BaseMeasClientMixin):
         getters = self.add_sub([(b"status", status_handler), (b"trace", trace_handler)])
 
         self.get_status: T.Callable[[], ConfocalStatus] = getters[0]
-        self.get_trace: T.Callable[[], Trace] = getters[2]
+        self.get_trace: T.Callable[[], Trace] = getters[1]
 
         self.req = self.add_req(gconf)
+
+    def start(self, params=None, label: str = "") -> bool:
+        """Start the measurement, i.e., change state to ACTIVE."""
+
+        return self.change_state(BinaryState.ACTIVE, params=params, label=label)
+
+    def stop(self, params=None, label: str = "") -> bool:
+        """Stop the measurement, i.e., change state to IDLE."""
+
+        return self.change_state(BinaryState.IDLE, params=params, label=label)
 
     def save_trace(self, file_name) -> bool:
         rep = self.req.request(SaveTraceReq(file_name))
