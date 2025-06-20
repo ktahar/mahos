@@ -195,7 +195,7 @@ class SPODMRData(BasicMeasData, ComplexDataMixin):
                     return (i0 - i1) / (i0 + i1) * 2
             elif plotmode == "normalize1":
                 if flip:
-                    return (i1 - i0) / i1
+                    return (i1 - i0) / i0
                 else:
                     return (i0 - i1) / i1
             else:  # "diff". fall back "data01" to "diff" too.
