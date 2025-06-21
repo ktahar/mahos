@@ -155,6 +155,9 @@ class SG_mock(Instrument):
         # self.logger.info(f"Mock set freq CW: {f:.2f} MHz.")
         return True
 
+    def query_opc(self):
+        return True
+
     # Standard API
 
     def set(self, key: str, value=None, label: str = "") -> bool:
@@ -176,7 +179,7 @@ class SG_mock(Instrument):
 
     def get(self, key: str, args=None, label: str = ""):
         if key == "opc":
-            return True
+            return self.query_opc()
         elif key == "bounds":
             return self.get_bounds()
         else:
@@ -432,11 +435,20 @@ class Counter_mock(Instrument):
         else:
             return np.random.normal(size=self.samples, loc=100.0)
 
+    def pop_block(self):
+        time.sleep(self.period)
+        if self.stamp:
+            return np.random.normal(size=self.samples, loc=100.0), time.time_ns()
+        else:
+            return np.random.normal(size=self.samples, loc=100.0)
+
     # Standard API
 
     def configure(self, params: dict, label: str = "") -> bool:
         self.samples = params["cb_samples"]
         self.stamp = params.get("stamp", False)
+        self.period = self.samples * params.get("oversample", 1) / params.get("rate", 1.0)
+        self.logger.info(f"Period: {self.period*1e3:.1f} ms")
         return True
 
     def start(self, label: str = "") -> bool:
@@ -1101,6 +1113,10 @@ class PulseStreamer_mock(Instrument):
         trigger = self._extract_trigger_blocks(blocks)
         if trigger is None:
             return False
+        if trigger:
+            self._trigger_type = trigger_type
+        else:
+            self._trigger_type = TriggerType.IMMEDIATE
 
         self.offsets = self._adjust_blocks(blocks)
         if self.offsets is None:
@@ -1141,6 +1157,10 @@ class PulseStreamer_mock(Instrument):
             self.logger.error(msg)
             return False
 
+    def clear(self) -> bool:
+        # For API compatibility
+        return True
+
     # Standard API
 
     def reset(self, label: str = "") -> bool:
@@ -1177,7 +1197,7 @@ class PulseStreamer_mock(Instrument):
         if key == "trigger":
             return self.trigger()
         elif key == "clear":  # for API compatibility
-            return True
+            return self.clear()
         else:
             return self.fail_with(f"unknown set() key: {key}")
 

@@ -82,8 +82,11 @@ class ODMR(BasicMeasNode):
             self.pg = DummyWorker()
         else:
             self.worker = SweeperOverlay(self.cli, self.logger, self.conf.get("sweeper", {}))
-            # As pg is not currently used in SweeperOverlay, existence of pg implies PulseGen_CW.
-            if "pg" in self.conf["target"]["servers"]:
+            if (
+                "pg" in self.conf["target"]["servers"]
+                and self.worker._class_name != "ODMRSweeperPG"
+            ):
+                # PG is not used in worker, so use PulseGen_CW.
                 self.pg = PulseGen_CW(self.cli, self.logger, channels=("laser", "mw"))
             else:
                 self.pg = DummyWorker()

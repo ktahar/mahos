@@ -63,10 +63,28 @@ class ODMRData(BasicMeasData, ComplexDataMixin):
         return self.has_data() and np.issubdtype(self.data.dtype, np.complexfloating)
 
     def get_xdata(self):
-        return np.linspace(self.params["start"], self.params["stop"], self.params["num"])
+        xs = np.linspace(self.params["start"], self.params["stop"], self.params["num"])
+        if self.sweeps() == 1 and np.isnan(self.data).any():
+            # first sweep has not been completed. reduce length
+            idx = np.where(np.isnan(self.data[:, 0]))[0][0]
+            xs = xs[:idx]
+
+        return xs
+
+    def _rm_nan(self, data):
+        if not np.isnan(data).any():
+            return data
+        if data.shape[1] == 1:
+            # first sweep has not been completed. reduce length
+            idx = np.where(np.isnan(data[:, 0]))[0][0]
+            return data[:idx, :]
+        else:
+            # nan should appear only at the latest sweep line,
+            # remove that line.
+            return data[:, :-1]
 
     def _get_ydata_nobg(self, last_n, normalize_n, complex_conv):
-        ydata = self.conv_complex(self.data, complex_conv)[:, -last_n:]
+        ydata = self.conv_complex(self._rm_nan(self.data), complex_conv)[:, -last_n:]
         if not normalize_n:
             return ydata, None
 
@@ -79,8 +97,8 @@ class ODMRData(BasicMeasData, ComplexDataMixin):
         return ydata / coeff, None
 
     def _get_ydata_bg(self, last_n, normalize_n, complex_conv):
-        ydata = self.conv_complex(self.data, complex_conv)[:, -last_n:]
-        bg_ydata = self.conv_complex(self.bg_data, complex_conv)[:, -last_n:]
+        ydata = self.conv_complex(self._rm_nan(self.data), complex_conv)[:, -last_n:]
+        bg_ydata = self.conv_complex(self._rm_nan(self.bg_data), complex_conv)[:, -last_n:]
         if normalize_n:
             return ydata / bg_ydata, None
         return ydata, bg_ydata
@@ -133,7 +151,7 @@ class ODMRData(BasicMeasData, ComplexDataMixin):
             return conv(ydata0), conv(ydata1)
 
     def get_image(self, last_n: int = 0, complex_conv: str = "real") -> NDArray:
-        return self.conv_complex(self.data, complex_conv)[:, -last_n:]
+        return self.conv_complex(self._rm_nan(self.data), complex_conv)[:, -last_n:]
 
     def get_fit_xdata(self):
         return self.fit_xdata
@@ -157,7 +175,9 @@ class ODMRData(BasicMeasData, ComplexDataMixin):
             return self.fit_data
 
         ## normalize by measured ydata.
-        ydata = np.mean(self.conv_complex(self.data, self.fit_complex_conv)[:, -last_n:], axis=1)
+        ydata = np.mean(
+            self.conv_complex(self._rm_nan(self.data), self.fit_complex_conv)[:, -last_n:], axis=1
+        )
         if normalize_n > 0:
             coeff = np.mean(np.sort(ydata)[-normalize_n:])
         else:
@@ -192,6 +212,8 @@ class ODMRData(BasicMeasData, ComplexDataMixin):
         if self.label != label:
             return False
         if not self.has_params() or params is None:
+            return False
+        if np.isnan(self.data).any():
             return False
         p = params
         return (

@@ -307,6 +307,10 @@ class PulseStreamer(Instrument):
             self.logger.error(msg)
             return False
 
+    def clear(self) -> bool:
+        # For API compatibility
+        return True
+
     # Standard API
 
     def reset(self, label: str = "") -> bool:
@@ -347,7 +351,7 @@ class PulseStreamer(Instrument):
         if key == "trigger":
             return self.trigger()
         elif key == "clear":  # for API compatibility
-            return True
+            return self.clear()
         else:
             return self.fail_with(f"unknown set() key: {key}")
 

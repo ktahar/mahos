@@ -21,6 +21,11 @@ class ODMRSweeperInterface(InstrumentInterface):
 
         return self.get("line")
 
+    def get_point(self) -> np.ndarray | None:
+        """Get single point in sweep line."""
+
+        return self.get("point")
+
     def get_unit(self) -> str:
         """Get unit."""
 
