@@ -1292,6 +1292,299 @@ class MG3710E(VisaInstrument):
         return success
 
 
+class SRS_SG390(VisaInstrument):
+    """SRS SG390 Series Vector Signal Generator.
+
+    Currently supports only RF (N-type) output connector.
+
+    :param power_bounds: Power bounds in dBm (min, max).
+    :type power_bounds: tuple[float, float]
+    :param freq_bounds: Frequency bounds in Hz (min, max).
+    :type freq_bounds: tuple[float, float]
+
+    """
+
+    AMOD_FUNC = {
+        "EXT": 5,
+        "EXTERNAL": 5,
+        "SIN": 0,
+        "SINE": 0,
+    }
+
+    DMOD_FUNC = {
+        "EXT": 5,
+        "EXTERNAL": 5,
+        "SIN": 0,
+        "SINE": 0,
+    }
+
+    def __init__(self, name, conf, prefix=None):
+        conf["write_termination"] = "\n"
+        conf["read_termination"] = "\n"
+        if "timeout" not in conf:
+            conf["timeout"] = 2000.0
+
+        VisaInstrument.__init__(self, name, conf, prefix=prefix)
+
+        self.power_min, self.power_max = self.conf.get("power_bounds", (-144.0, 0.0))
+        self.freq_min, self.freq_max = self.conf.get("freq_bounds", (9e3, 6e9))
+        # CW only (no triggered point sweep)
+        self._mode = Mode.CW
+
+        c = self.conf.get("fm_ext", {})
+        self.fm_ext_conf = {
+            "DC_coupling": c.get("DC_coupling", True),
+        }
+        self.logger.debug(f"fm_ext conf: {self.fm_ext_conf}")
+
+        c = self.conf.get("am_ext", {})
+        self.am_ext_conf = {
+            "DC_coupling": c.get("DC_coupling", True),
+        }
+        self.logger.debug(f"am_ext conf: {self.am_ext_conf}")
+
+    def query_error(self):
+        # TODO: check the returned format: number only or message?
+        #       if number only, we may append message here
+        return self.inst.query("LERR?")
+
+    def get_power_bounds(self):
+        return self.power_min, self.power_max
+
+    def get_freq_bounds(self):
+        return self.freq_min, self.freq_max
+
+    def get_bounds(self):
+        return {
+            "power": self.get_power_bounds(),
+            "freq": self.get_freq_bounds(),
+        }
+
+    def set_output(self, on: bool, silent: bool = False) -> bool:
+        if on:
+            self.inst.write("ENBR 1")
+            if not silent:
+                self.logger.info("RF Output ON")
+        else:
+            self.inst.write("ENBR 0")
+            if not silent:
+                self.logger.info("RF Output OFF")
+        return True
+
+    def _fmt_freq(self, freq) -> str | None:
+        """Format frequency as string.
+
+        Frequency may be passed as string (e.g. '100 MHz') or number (1.0E8).
+        The value is checked only if a number is passed.
+
+        """
+
+        if isinstance(freq, str):
+            return freq
+        elif isinstance(freq, float) or isinstance(freq, int):
+            if freq < self.freq_min or freq > self.freq_max:
+                raise ValueError("Invalid frequency.")
+            return f"{freq:.12E}"
+        else:
+            self.logger.error("Invalid type {} of frequency {}".format(type(freq), freq))
+            return None
+
+    def set_freq_CW(self, freq) -> bool:
+        f = self._fmt_freq(freq)
+        if f is None:
+            return False
+
+        self.inst.write("FREQ " + f)
+        return True
+
+    def set_power(self, power_dBm: float) -> bool:
+        if power_dBm < self.power_min or power_dBm > self.power_max:
+            return self.fail_with("Invalid power.")
+
+        self.inst.write(f"AMPR {power_dBm:.3f} dBm")
+        return True
+
+    def set_qam(self) -> bool:
+        """Set modulation type to digital QAM (Quadrature Amplitude Modulation)."""
+
+        self.inst.write("TYPE 7")
+        self.logger.info("Digital modulation (QAM) ON.")
+        return True
+
+    def set_dm_func(self, func: str) -> bool:
+        """Set digital (IQ) moduration function."""
+
+        func = func.upper()
+        if func not in self.DMOD_FUNC:
+            return self.fail_with(f"Unknown mod func: {func}")
+        self.inst.write(f"QFNC {self.DMOD_FUNC[func]:d}")
+        return True
+
+    def set_analog_ext_coupling(self, DC_coupling: bool) -> bool:
+        cpl = "1" if DC_coupling else "0"
+        self.inst.write("COUP " + cpl)
+        return True
+
+    def set_analog_mod_func(self, func: str) -> bool:
+        func = func.upper()
+        if func not in self.AMOD_FUNC:
+            return self.fail_with(f"Unknown mod func: {func}")
+        self.inst.write(f"MFNC {self.AMOD_FUNC[func]:d}")
+        return True
+
+    def set_fm_deviation(self, deviation_Hz: float) -> bool:
+        """Set FM deviation in Hz."""
+
+        self.inst.write(f"FDEV {deviation_Hz:.8E}")
+        return True
+
+    def set_fm(self) -> bool:
+        """Set modulation type to analog FM (Frequency Modulation)."""
+
+        self.inst.write("TYPE 1")
+        self.inst.write("STYP 0")
+        self.logger.info("Frequency modulation ON.")
+        return True
+
+    def set_am_depth(self, depth: float) -> bool:
+        """Set AM depth."""
+
+        self.inst.write(f"ADEP {depth:.8f}")
+        return True
+
+    def set_am(self) -> bool:
+        """Set modulation type to analog AM (Amplitude Modulation)."""
+
+        self.inst.write("TYPE 0")
+        self.inst.write("STYP 0")
+        self.logger.info("Amplitude modulation ON.")
+        return True
+
+    def set_modulation(self, on: bool) -> bool:
+        """If on is True turn on modulation."""
+
+        if on:
+            self.inst.write("MODL 1")
+            self.logger.info("Modulation ON.")
+        else:
+            self.inst.write("MODL 0")
+            self.logger.info("Modulation OFF.")
+        return True
+
+    def configure_cw(self, freq, power, reset: bool = True) -> bool:
+        """Setup Continuous Wave output with fixed freq and power."""
+
+        success = (
+            (self.rst_cls() if reset else True)
+            and self.set_freq_CW(freq)
+            and self.set_power(power)
+            and self.check_error()
+        )
+        if success:
+            self.logger.info("Configured CW output.")
+        else:
+            self.logger.error("Failed to configure CW output.")
+        return success
+
+    def configure_iq_ext(self) -> bool:
+        """Setup external IQ modulation mode."""
+
+        success = (
+            self.set_modulation(True)
+            # Indicate IQ (digital) mod by setting QAM.
+            # With external IQ, the signal is not always QAM and we could also select ASK or PSK.
+            # Selecting QAM is recommended in manual page 74.
+            and self.set_qam()
+            and self.set_dm_func("EXT")
+            and self.check_error()
+        )
+        if success:
+            self.logger.info("Configured external IQ modulation.")
+        else:
+            self.logger.error("Failed to configure external IQ modulation.")
+        return success
+
+    def configure_fm_ext(self, deviation) -> bool:
+        """Setup external FM mode."""
+
+        success = (
+            self.set_modulation(True)
+            and self.set_fm()
+            and self.set_analog_mod_func("EXT")
+            and self.set_analog_ext_coupling(self.fm_ext_conf["DC_coupling"])
+            and self.set_fm_deviation(deviation)
+            and self.check_error()
+        )
+        if success:
+            self.logger.info("Configured external FM.")
+        else:
+            self.logger.error("Failed to configure external FM.")
+        return success
+
+    def configure_am_ext(self, depth) -> bool:
+        """Setup external AM mode."""
+
+        success = (
+            self.set_modulation(True)
+            and self.set_am()
+            and self.set_analog_mod_func("EXT")
+            and self.set_analog_ext_coupling(self.am_ext_conf["DC_coupling"])
+            and self.set_am_depth(depth)
+            and self.check_error()
+        )
+        if success:
+            self.logger.info("Configured for external AM.")
+        else:
+            self.logger.error("Failed to configure external AM.")
+        return success
+
+    # Standard API
+
+    def get(self, key: str, args=None, label: str = ""):
+        if key == "opc":
+            return self.query_opc(delay=args)
+        elif key == "bounds":
+            return self.get_bounds()
+        else:
+            self.logger.error(f"unknown get() key: {key}")
+            return None
+
+    def set(self, key: str, value=None, label: str = "") -> bool:
+        if key == "output":
+            return self.set_output(value)
+        elif key == "dm_source":
+            return self.set_dm_source(value)
+        elif key == "dm":
+            return self.set_dm(value)
+        elif key == "modulation":
+            return self.set_modulation(value)
+        else:
+            self.logger.error("Unknown set() key.")
+            return False
+
+    def configure(self, params: dict, label: str = "") -> bool:
+        label = label.lower()
+        if label == "iq_ext":
+            return self.configure_iq_ext()
+        elif label == "fm_ext":
+            if not self.check_required_params(params, "deviation"):
+                return False
+            return self.configure_fm_ext(params["deviation"])
+        elif label == "am_ext":
+            if not self.check_required_params(params, "depth"):
+                return False
+            return self.configure_am_ext(params["depth"])
+        elif label == "point_trig_freq_sweep":
+            return self.fail_with("Doesn't support point_trig_freq_sweep")
+        elif label == "cw":
+            if not self.check_required_params(params, ("freq", "power")):
+                return False
+            return self.configure_cw(params["freq"], params["power"], params.get("reset", True))
+        else:
+            self.logger.error(f"Unknown label {label}")
+            return False
+
+
 class DS_SG(VisaInstrument):
     """DS Instruments Signal Generator.
 
