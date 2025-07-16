@@ -40,15 +40,18 @@ class AxisWidgets(object):
         target_box: QtWidgets.QDoubleSpinBox,
         moving_label: QtWidgets.QLabel,
         homed_label: QtWidgets.QLabel,
+        decimals: float,
     ):
         self.pos_label = pos_label
         self.target_box = target_box
         self.moving_label = moving_label
         self.homed_label = homed_label
         self.is_homed = False
+        self.decimals = decimals
 
     def fmt_pos(self, target: float, pos: float):
-        return f"{pos:.3f} ({target:.3f})"
+        d = self.decimals
+        return f"{pos:.{d}f} ({target:.{d}f})"
 
     def fmt_moving(self, moving: bool):
         return "Moving" if moving else "Stopped"
@@ -66,11 +69,12 @@ class AxisWidgets(object):
 class PosTweakerWidget(ClientTopWidget):
     """Top widget for DigitalOutGUI"""
 
-    def __init__(self, gconf: dict, name, gparams_name, verbose, fontsize, context):
+    def __init__(self, gconf: dict, name, gparams_name, verbose, fontsize, decimals, context):
         ClientTopWidget.__init__(self)
         self.setWindowTitle(f"MAHOS.PosTweakerGUI ({join_name(name)})")
 
         self._fontsize = fontsize
+        self._decimals = decimals
         self._widgets = {}
         self._group_name = "__" + name + "__"
 
@@ -115,7 +119,7 @@ class PosTweakerWidget(ClientTopWidget):
             target_box.setMinimum(range_min)
             target_box.setMaximum(range_max)
             target_box.setValue(state["target"])
-            target_box.setDecimals(3)
+            target_box.setDecimals(self._decimals)
             target_box.lineEdit().returnPressed.connect(partial(self.request_set_target, ax))
             target_box.setSizePolicy(Policy.MinimumExpanding, Policy.Minimum)
             moving_label = QtWidgets.QLabel()
@@ -132,6 +136,7 @@ class PosTweakerWidget(ClientTopWidget):
                 target_box,
                 moving_label,
                 homed_label,
+                self._decimals,
             )
             self._widgets[ax].update(state)
 
@@ -220,6 +225,7 @@ class PosTweakerGUI(GUINode):
         target = lconf["target"]
         verbose = lconf.get("verbose", True)
         fontsize = lconf.get("fontsize", 26)
+        decimals = lconf.get("decimals", 3)
         return PosTweakerWidget(
-            gconf, target["pos_tweaker"], target["gparams"], verbose, fontsize, context
+            gconf, target["pos_tweaker"], target["gparams"], verbose, fontsize, decimals, context
         )
