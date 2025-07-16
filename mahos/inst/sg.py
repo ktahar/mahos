@@ -1318,16 +1318,69 @@ class SRS_SG390(VisaInstrument):
         "SINE": 0,
     }
 
+    ERROR_CODES = {
+        0: "No Error",
+        10: "Illegal Value",
+        11: "Illegal Mode",
+        12: "Not Allowed",
+        13: "Recall Failed",
+        14: "No Clock Option",
+        15: "No RF Doubler Option",
+        16: "No IQ Option",
+        17: "Failed Self Test",
+        30: "Lost Data",
+        32: "No Listener",
+        40: "Failed ROM Check",
+        42: "Failed EEPROM Check",
+        43: "Failed FPGA Check",
+        44: "Failed SRAM Check",
+        45: "Failed GPIB Check",
+        46: "Failed LF DDS Check",
+        47: "Failed RF DDS Check",
+        48: "Failed 20 MHz PLL",
+        49: "Failed 100 MHz PLL",
+        50: "Failed 19 MHz PLL",
+        51: "Failed 1 GHz PLL",
+        52: "Failed 4 GHz PLL",
+        53: "Failed DAC",
+        80: "Out of Memory",
+        81: "File Does Not Exist",
+        82: "File Not Open",
+        83: "File Not Writable",
+        84: "File Already Exists",
+        85: "File Corrupt",
+        86: "End of File",
+        87: "File Locked",
+        110: "Illegal Command",
+        111: "Undefined Command",
+        112: "Illegal Query",
+        113: "Illegal Set",
+        114: "Null Parameter",
+        115: "Extra Parameters",
+        116: "Missing Parameters",
+        117: "Parameter Overflow",
+        118: "Invalid Floating Point Number",
+        120: "Invalid Integer",
+        121: "Invalid Overflow",
+        122: "Invalid Hexadecimal",
+        126: "Syntax Error",
+        127: "Illegal Units",
+        128: "Missing Units",
+        170: "Communication Error",
+        171: "Over Run",
+        254: "Too Many Errors",
+    }
+
     def __init__(self, name, conf, prefix=None):
         conf["write_termination"] = "\n"
-        conf["read_termination"] = "\n"
+        conf["read_termination"] = "\r\n"
         if "timeout" not in conf:
             conf["timeout"] = 2000.0
 
         VisaInstrument.__init__(self, name, conf, prefix=prefix)
 
-        self.power_min, self.power_max = self.conf.get("power_bounds", (-144.0, 0.0))
-        self.freq_min, self.freq_max = self.conf.get("freq_bounds", (9e3, 6e9))
+        self.power_min, self.power_max = self.conf.get("power_bounds", (-110.0, 16.5))
+        self.freq_min, self.freq_max = self.conf.get("freq_bounds", (950e3, 6.075e9))
         # CW only (no triggered point sweep)
         self._mode = Mode.CW
 
@@ -1344,9 +1397,14 @@ class SRS_SG390(VisaInstrument):
         self.logger.debug(f"am_ext conf: {self.am_ext_conf}")
 
     def query_error(self):
-        # TODO: check the returned format: number only or message?
-        #       if number only, we may append message here
-        return self.inst.query("LERR?")
+        # Format to standard string repr which can be parsed in check_error()
+        try:
+            err = self.inst.query("LERR?")
+            msg = self.ERROR_CODES[int(err)]
+            return f'{err},"{msg}"'
+        except (ValueError, KeyError):
+            self.logger.error(f"LERR? > {err}")
+            return '999,"Result of LERR? is ill-formed"'
 
     def get_power_bounds(self):
         return self.power_min, self.power_max
@@ -1475,7 +1533,7 @@ class SRS_SG390(VisaInstrument):
         """Setup Continuous Wave output with fixed freq and power."""
 
         success = (
-            (self.rst_cls() if reset else True)
+            (self.reset() if reset else True)
             and self.set_freq_CW(freq)
             and self.set_power(power)
             and self.check_error()
@@ -1539,6 +1597,13 @@ class SRS_SG390(VisaInstrument):
         return success
 
     # Standard API
+
+    def reset(self, label: str = "") -> bool:
+        self.rst_cls()
+        # Reset state is RF on - Switch them off.
+        self.inst.write("ENBR 0")
+        self.inst.write("ENBL 0")
+        return True
 
     def get(self, key: str, args=None, label: str = ""):
         if key == "opc":
