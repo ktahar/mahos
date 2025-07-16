@@ -10,10 +10,9 @@ GUI frontend for PosTweaker.
 
 from __future__ import annotations
 from functools import partial
+import math
 
-from .Qt import QtWidgets, QtGui, question_yn
-
-# from .Qt import QtCore
+from .Qt import QtCore, QtWidgets, QtGui, question_yn
 
 from ..msgs.pos_tweaker_msgs import PosTweakerStatus
 from ..node.global_params import GlobalParamsClient
@@ -33,21 +32,34 @@ def set_fontsize(widget, fontsize: int):
     widget.setFont(font)
 
 
+class TargetBox(QtWidgets.QDoubleSpinBox):
+    stepped = QtCore.pyqtSignal()
+
+    def stepBy(self, steps: int):
+        QtWidgets.QDoubleSpinBox.stepBy(self, steps)
+        self.stepped.emit()
+
+
 class AxisWidgets(object):
     def __init__(
         self,
         pos_label: QtWidgets.QLabel,
-        target_box: QtWidgets.QDoubleSpinBox,
+        target_box: TargetBox,
+        step_box: QtWidgets.QDoubleSpinBox,
         moving_label: QtWidgets.QLabel,
         homed_label: QtWidgets.QLabel,
         decimals: float,
     ):
         self.pos_label = pos_label
         self.target_box = target_box
+        self.step_box = step_box
         self.moving_label = moving_label
         self.homed_label = homed_label
         self.is_homed = False
         self.decimals = decimals
+
+        self.step_box.editingFinished.connect(self.update_step)
+        self.update_step()
 
     def fmt_pos(self, target: float, pos: float):
         d = self.decimals
@@ -57,7 +69,10 @@ class AxisWidgets(object):
         return "Moving" if moving else "Stopped"
 
     def fmt_homed(self, homed: bool):
-        return "Homed" if homed else "NOT Homed"
+        return "Homed" if homed else '<span style="color:red">NOT Homed</span>'
+
+    def update_step(self):
+        self.target_box.setSingleStep(self.step_box.value())
 
     def update(self, state: dict[str, [float, bool]]):
         self.pos_label.setText(self.fmt_pos(state["target"], state["pos"]))
@@ -114,14 +129,32 @@ class PosTweakerWidget(ClientTopWidget):
         for i, (ax, state) in enumerate(status.axis_states.items()):
             label = QtWidgets.QLabel(ax)
             pos_label = QtWidgets.QLabel()
-            target_box = QtWidgets.QDoubleSpinBox()
+
+            dec = self._decimals
+            target_box = TargetBox()
             range_min, range_max = state["range"]
+            target_box.setDecimals(dec)
             target_box.setMinimum(range_min)
             target_box.setMaximum(range_max)
+            target_box.setToolTip(f"[{range_min:.{dec}f}, {range_max:.{dec}f}]")
             target_box.setValue(state["target"])
-            target_box.setDecimals(self._decimals)
             target_box.lineEdit().returnPressed.connect(partial(self.request_set_target, ax))
+            target_box.stepped.connect(partial(self.request_set_target, ax))
             target_box.setSizePolicy(Policy.MinimumExpanding, Policy.Minimum)
+
+            step_box = QtWidgets.QDoubleSpinBox()
+            step_box.setPrefix("step: ")
+            step_box.setDecimals(dec)
+            step_min = 10 ** (-dec)
+            step_box.setMinimum(step_min)
+            mx = max(abs(range_min), abs(range_max))
+            step_max = 10 ** (int(math.log10(mx)))
+            step_box.setMaximum(step_max)
+            step_box.setToolTip(f"[{step_min:.{dec}f}, {step_max:.{dec}f}]")
+            step_box.setValue(step_min)
+            step_box.setSingleStep(step_min)
+            step_box.setSizePolicy(Policy.MinimumExpanding, Policy.Minimum)
+
             moving_label = QtWidgets.QLabel()
             homed_label = QtWidgets.QLabel()
             set_target_button = QtWidgets.QPushButton("Set")
@@ -134,6 +167,7 @@ class PosTweakerWidget(ClientTopWidget):
             self._widgets[ax] = AxisWidgets(
                 pos_label,
                 target_box,
+                step_box,
                 moving_label,
                 homed_label,
                 self._decimals,
@@ -144,6 +178,7 @@ class PosTweakerWidget(ClientTopWidget):
                 label,
                 pos_label,
                 target_box,
+                step_box,
                 set_target_button,
                 stop_button,
                 moving_label,
@@ -155,10 +190,11 @@ class PosTweakerWidget(ClientTopWidget):
             self.gl.addWidget(pos_label, i, 1)
             self.gl.addWidget(target_box, i, 2)
             self.gl.addWidget(set_target_button, i, 3)
-            self.gl.addWidget(stop_button, i, 4)
-            self.gl.addWidget(moving_label, i, 5)
-            self.gl.addWidget(homed_label, i, 6)
-            self.gl.addWidget(home_button, i, 7)
+            self.gl.addWidget(step_box, i, 4)
+            self.gl.addWidget(stop_button, i, 5)
+            self.gl.addWidget(moving_label, i, 6)
+            self.gl.addWidget(homed_label, i, 7)
+            self.gl.addWidget(home_button, i, 8)
 
         self.cli.statusUpdated.connect(self.update)
         self.adjustSize()
