@@ -65,8 +65,8 @@ class = "PulseStreamer_mock"
 [localhost.server.instrument.pg.conf]
 resource = "dummy.ip.addr"
 [localhost.server.instrument.pg.conf.channels]
-mw1 = 9    # note that ch9 is out of range for 8ch-PG
-mw1_i = 8  # note that ch8 is out of range for 8ch-PG
+mw1 = 7    # note that ch9 is out of range for 8ch-PG
+mw1_i = 7  # note that ch8 is out of range for 8ch-PG
 mw1_q = 7
 laser = 6
 sync = 5
