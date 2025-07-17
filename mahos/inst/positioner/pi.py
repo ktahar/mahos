@@ -35,6 +35,7 @@ class PI_OneAxis_USB(Instrument):
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf, prefix=prefix)
 
+        self.check_required_conf(["dev", "range"])
         self.dev = GCSDevice(self.conf["dev"])
         devs = self.dev.EnumerateUSB(mask=self.conf.get("mask", self.conf["dev"]))
         if len(devs) != 1:
