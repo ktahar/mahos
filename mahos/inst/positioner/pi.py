@@ -10,7 +10,7 @@ PI part of Positioner module.
 
 from __future__ import annotations
 
-from pipython import GCSDevice
+from pipython import GCSDevice, GCSError
 
 from ..exceptions import InstError
 from ..instrument import Instrument
@@ -27,8 +27,7 @@ class PI_OneAxis_USB(Instrument):
     :param mask: (default: dev) Mask string to discriminate multiple devices.
         Blank will be fine if only one device is connected.
     :type mask: str
-    :param range: (default: limits defined for the device) travel range.
-        (lower, upper) bounds of the position.
+    :param range: travel range. (lower, upper) bounds of the position.
     :type range: tuple[float, float]
 
     """
@@ -55,17 +54,7 @@ class PI_OneAxis_USB(Instrument):
         self.ax = ids[0]
         self.logger.info(f"Axis ID is {self.ax}.")
 
-        self.limits = [self.dev.qNLM(self.ax), self.dev.qPLM(self.ax)]
-        self.logger.debug(f"limits: {self.limits[0]:.3f} {self.limits[1]:.3f}")
-        self.range = self.conf.get("range", self.limits)
-        if self.range[0] < self.limits[0]:
-            msg = f"Given range is out of limit: {self.range[0]} < {self.limits[0]}"
-            self.logger.error(msg)
-            raise ValueError(msg)
-        if self.range[1] > self.limits[1]:
-            msg = f"Given range is out of limit: {self.range[1]} > {self.limits[1]}"
-            self.logger.error(msg)
-            raise ValueError(msg)
+        self.range = self.conf["range"]
         self.logger.info(f"range: {self.range[0]:.3f} {self.range[1]:.3f}")
 
     def _stop(self) -> bool:
@@ -75,12 +64,15 @@ class PI_OneAxis_USB(Instrument):
     def move(self, pos: float) -> bool:
         if pos < self.range[0] or pos > self.range[1]:
             return self.fail_with(f"Target pos {pos:.3f} is out of range {self.range}.")
-        self.dev.MOV(self.ax, pos)
+        try:
+            self.dev.MOV(self.ax, pos)
+        except GCSError:
+            self.logger.exception("Error in MOV. Maybe out of limits?")
+            return False
         return True
 
     def get_moving(self) -> bool:
-        # Maybe we can use ONT as well?
-        return self.dev.IsMoving(self.ax)[self.ax]
+        return not self.dev.qONT(self.ax)[self.ax]
 
     def home(self) -> bool:
         # Assume the device is already homed.
@@ -97,10 +89,10 @@ class PI_OneAxis_USB(Instrument):
         }
 
     def get_pos(self) -> float:
-        self.dev.qPOS(self.ax)[self.ax]
+        return self.dev.qPOS(self.ax)[self.ax]
 
     def get_target(self) -> float:
-        self.dev.qMOV(self.ax)[self.ax]
+        return self.dev.qMOV(self.ax)[self.ax]
 
     def get_all(self) -> dict[str, [float, bool]]:
         """Get all important info about this device packed in a dict.
