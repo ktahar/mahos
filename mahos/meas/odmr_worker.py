@@ -61,7 +61,7 @@ class SweeperBase(Worker):
                     self.conf.get("time_window", 10e-3), 0.1e-3, 10.0, unit="s", SI_prefix=True
                 ),
                 gate_delay=P.FloatParam(
-                    self.conf.get("gate_delay", 0.0), 0.0, 3.0, unit="s", SI_prefix=True
+                    self.conf.get("gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
                 ),
             )
         elif label == "pulse":
@@ -115,7 +115,7 @@ class SweeperBase(Worker):
             delay=P.FloatParam(
                 0.0,
                 0.0,
-                3.0,
+                10.0,
                 unit="s",
                 SI_prefix=True,
                 doc="delay after PG trigger before the measurement",
@@ -123,7 +123,7 @@ class SweeperBase(Worker):
             background_delay=P.FloatParam(
                 0.0,
                 0.0,
-                3.0,
+                10.0,
                 unit="s",
                 SI_prefix=True,
                 doc="delay between normal and background (reference) measurements",

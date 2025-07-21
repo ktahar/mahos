@@ -18,7 +18,7 @@ class ODMRPGMixin(object):
 
     Required attributes:
     - conf
-        -pg_freq_cw
+        - pg_freq_cw
     - pg
     - _analog_pd
     - _block_base
