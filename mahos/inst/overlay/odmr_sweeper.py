@@ -261,6 +261,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
         self._minimum_block_length = self.conf["minimum_block_length"]
         self._block_base = self.conf["block_base"]
+        self._start_delay = self.conf.get("start_delay", 0.0)
         self._channel_remap = self.conf.get("channel_remap")
         self._continue_mw = False
 
@@ -368,10 +369,14 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             self.logger.warn("start() is called while running.")
             return True
 
-        if not self.sg.set_output(True):
-            return self.fail_with("Failed to start sg.")
         if not self.start_pd():
             return self.fail_with("Failed to start pd.")
+        if not self.sg.set_output(True):
+            return self.fail_with("Failed to start sg.")
+        if not self.pg.start():
+            return self.fail_with("Failed to start pg.")
+
+        time.sleep(self._start_delay)
 
         self._stop_ev = threading.Event()
         self._thread = threading.Thread(target=self.sweep_loop, args=(self._stop_ev,))
