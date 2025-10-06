@@ -76,7 +76,10 @@ class ODMR(BasicMeasNode):
         else:
             self.switch = DummyWorker()
 
-        self._direct = "sweeper" not in self.conf["target"]["servers"]
+        self._direct = not (
+            "sweeper" in self.conf["target"]["servers"]
+            or "sweeper_name" in self.conf.get("sweeper", {})
+        )
         if self._direct:
             self.worker = Sweeper(self.cli, self.logger, self.conf.get("sweeper", {}))
             self.pg = DummyWorker()
@@ -189,7 +192,7 @@ class ODMR(BasicMeasNode):
             for inst in ["sg", "pg"] + self.worker.pd_names:
                 self.cli.wait(inst)
         else:
-            self.cli.wait("sweeper")
+            self.cli.wait(self.worker.sweeper_name)
         self.logger.info("Server is up!")
 
     def main(self):

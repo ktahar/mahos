@@ -1579,8 +1579,11 @@ class SRS_SG390(VisaInstrument):
             self.logger.error("Failed to configure external FM.")
         return success
 
-    def configure_am_ext(self, depth) -> bool:
+    def configure_am_ext(self, depth, log: bool = False) -> bool:
         """Setup external AM mode."""
+
+        if log:
+            return self.fail_with("Does not support log scale AM depth.")
 
         success = (
             self.set_modulation(True)

@@ -50,7 +50,7 @@ class Param(object):
         self._doc = doc
 
         if not self.restore_default():
-            raise ValueError("Default value is invalid.")
+            raise ValueError(f"Default value {default} is invalid.")
 
     def __repr__(self):
         return "<{}: {}>".format(self.__class__.__name__, self.value())

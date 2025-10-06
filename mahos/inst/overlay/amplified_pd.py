@@ -12,7 +12,7 @@ import numpy as np
 
 from .overlay import InstrumentOverlay
 from ...msgs import param_msgs as P
-from ..lockin import LI5640
+from ..lockin import LI5640, SR860
 from ..pd import LUCI_OE200, AnalogPD, LockinAnalogPD
 
 
@@ -600,6 +600,166 @@ class OE200_LI5640_AI(InstrumentOverlay):
             return self.luci.configure(params, label)
         elif label == "li5640":
             success = self.li5640.configure(params, label)
+            #  configure() may change the gain.
+            self.update_gain()
+            return success
+        else:
+            #  update the gain with PD configuration so as to secure the correct gain
+            #  before subsequent (clock_mode) measurement.
+            self.update_gain()
+            return self.pd.configure(params, label)
+
+    def start(self, label: str = "") -> bool:
+        return self.pd.start()
+
+    def stop(self, label: str = "") -> bool:
+        return self.pd.stop()
+
+
+class OE200_SR860_AI(InstrumentOverlay):
+    """FEMTO Messtechnik OE-200 Variable Gain Photoreceiver and with SR860 Lockin & DAQ AnalogIn.
+
+    :param luci: a LUCI_OE200 instance
+    :type luci: LUCI_OE200
+    :param sr860: a SR860 instance
+    :type sr860: SR860
+    :param pd: a LockinAnalogPD instance. gain should be 1.
+    :type pd: LockinAnalogPD
+
+    """
+
+    def __init__(self, name, conf, prefix=None):
+        InstrumentOverlay.__init__(self, name, conf=conf, prefix=prefix)
+
+        self.luci: LUCI_OE200 = self.conf.get("luci")
+        self.sr860: SR860 = self.conf.get("sr860")
+        self.pd: LockinAnalogPD = self.conf.get("pd")
+        self.add_instruments(self.luci, self.sr860, self.pd)
+
+        self.init_lockin()
+        self.update_gain()
+
+    def init_lockin(self):
+        self.sr860.set_ch1_mode(False)
+        self.sr860.set_ch2_mode(False)
+        self.sr860.set_Xoffset_enable(False)
+        self.sr860.set_Yoffset_enable(False)
+        self.sr860.set_Xratio_enable(False)
+        self.sr860.set_Yratio_enable(False)
+
+        #  These settings must not be changed afterwards.
+        self.sr860.lock_params(
+            [
+                "ch1_mode",
+                "ch2_mode",
+                "Xoffset_enable",
+                "Yoffset_enable",
+                "Xratio_enable",
+                "Yratio_enable",
+            ]
+        )
+
+    def update_gain(self) -> tuple[float, float]:
+        #  It is not perfect to memoise the param values at sr860 setters
+        #  due to auto-setting or local operation.
+        #  Fetch the necessary parameters on our timing.
+
+        volt_sens = self.sr860.get_sensitivity_float()
+        Xexpand = self.sr860.get_Xexpand()
+        Yexpand = self.sr860.get_Yexpand()
+
+        v1_gain = Xexpand * 10.0 / volt_sens
+        v2_gain = Yexpand * 10.0 / volt_sens
+        self.gain = v1_gain * self.luci.gain, v2_gain * self.luci.gain
+        self.logger.info(f"Current total gain: {self.gain[0]:.2e}, {self.gain[1]:.2e} V/W")
+        return self.gain
+
+    # LockinAnalogPD wrappers / compatible interfaces
+
+    def _convert_data(
+        self, data: np.ndarray | np.cdouble | tuple[np.ndarray, float] | None
+    ) -> np.ndarray | np.cdouble | tuple[np.ndarray, float] | None:
+        if data is None:
+            return None
+
+        gain_r, gain_i = self.gain
+
+        if isinstance(data, np.cdouble):
+            # read-on-demand
+            return np.cdouble(data.real / gain_r + 1.0j * data.imag / gain_i)
+        elif isinstance(data, tuple):
+            #  stamped clock-mode
+            data[0].real /= gain_r
+            data[0].imag /= gain_i
+            return data
+        else:
+            # ndarray, buffered read
+            data.real /= gain_r
+            data.imag /= gain_i
+            return data
+
+    def _convert_all_data(
+        self, data: list[np.ndarray | tuple[np.ndarray, float]] | None
+    ) -> list[np.ndarray | tuple[np.ndarray, float]] | None:
+        if data is None:
+            return None
+        return [self._convert_data(d) for d in data]
+
+    # Methods used by confocal_scanner
+
+    def pop_block(
+        self,
+    ) -> np.ndarray | tuple[np.ndarray | float]:
+        return self._convert_data(self.pd.pop_block())
+
+    def get_max_rate(self) -> float | None:
+        return self.pd.get_max_rate()
+
+    # Standard API
+
+    def set(self, key: str, value=None, label: str = "") -> bool:
+        # no set() key for pd
+        key = key.lower()
+        if key in ("led", "gain", "coupling"):
+            return self.luci.set(key, value)
+        else:
+            success = self.sr860.set(key, value)
+            #  set() may change the gain.
+            self.update_gain()
+            return success
+
+    def get(self, key: str, args=None, label: str = ""):
+        if key == "data":
+            return self._convert_data(self.pd.get(key, args))
+        elif key == "all_data":
+            return self._convert_all_data(self.pd.get(key, args))
+        elif key == "unit":
+            return "W"
+        elif key == "gain":
+            return self.gain
+        elif key in ("devices", "id", "pin", "product"):
+            return self.luci.get(key, args)
+        else:
+            return self.sr860.get(key, args)
+
+    def get_param_dict_labels(self) -> list[str]:
+        return ["luci", "sr860"]
+
+    def get_param_dict(self, label: str = "") -> P.ParamDict[str, P.PDValue] | None:
+        """Get ParamDict for `label`."""
+
+        if label == "luci":
+            return self.luci.get_param_dict(label)
+        elif label == "sr860":
+            return self.sr860.get_param_dict(label)
+        else:
+            return self.pd.get_param_dict(label)
+
+    def configure(self, params: dict, label: str = "") -> bool:
+        if label == "luci":
+            return self.luci.configure(params, label)
+        elif label == "sr860":
+            success = self.sr860.configure(params, label)
             #  configure() may change the gain.
             self.update_gain()
             return success

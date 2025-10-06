@@ -571,6 +571,7 @@ class RIGOL_DG2000(VisaInstrument):
                 self._freq_bounds[ch][0],
                 self._freq_bounds[ch][1],
                 unit="Hz",
+                digit=8,
                 SI_prefix=True,
             ),
             ampl=P.FloatParam(
@@ -1381,6 +1382,7 @@ class SIGLENT_SDG2000X(VisaInstrument):
                 self._freq_bounds[0],
                 self._freq_bounds[1],
                 unit="Hz",
+                digit=8,
                 SI_prefix=True,
             ),
             ampl=P.FloatParam(

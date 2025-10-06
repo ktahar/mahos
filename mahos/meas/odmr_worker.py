@@ -175,10 +175,11 @@ class SweeperOverlay(SweeperBase):
 
     def __init__(self, cli, logger, conf: dict):
         Worker.__init__(self, cli, logger, conf)
-        self.sweeper = ODMRSweeperInterface(cli, "sweeper")
+        self.sweeper_name = conf.get("sweeper_name", "sweeper")
+        self.sweeper = ODMRSweeperInterface(cli, self.sweeper_name)
         self.add_instruments(self.sweeper)
 
-        self._class_name = cli.class_name("sweeper")
+        self._class_name = cli.class_name(self.sweeper_name)
         self.point = self.conf.get("point", False)
         self.data = ODMRData()
 

@@ -580,7 +580,6 @@ class LI5640(VisaInstrument):
             return self.fail_with(f"Unrecongizable expand factor: {fac}")
         i = {1: 0, 10: 1, 100: 2}[fac]
         self.inst.write(f"OEXP 1, {i}")
-        self._data1_expand = fac
         return True
 
     def get_data2_expand(self) -> int:
@@ -599,7 +598,6 @@ class LI5640(VisaInstrument):
             return self.fail_with(f"Unrecongizable expand factor: {fac}")
         i = {1: 0, 10: 1, 100: 2}[fac]
         self.inst.write(f"OEXP 2, {i}")
-        self._data2_expand = fac
         return True
 
     def get_ratio_enable(self) -> bool:
@@ -777,9 +775,7 @@ class LI5640(VisaInstrument):
             amplitude=P.FloatParam(
                 self.get_amplitude(), 0.0, 5.0, unit="V", doc="internal oscillator amplitude"
             ),
-            harmonics=P.IntParam(
-                self.get_harmonics(), 1, 19999, unit="deg", doc="harmonics degrees"
-            ),
+            harmonics=P.IntParam(self.get_harmonics(), 1, 19999, doc="harmonics degrees"),
             data1=P.EnumParam(self.Data1, self.get_data1(), doc="Data1 output type"),
             data2=P.EnumParam(self.Data2, self.get_data2(), doc="Data2 output type"),
             data_normalization=P.EnumParam(
@@ -815,6 +811,717 @@ class LI5640(VisaInstrument):
             ),
             ratio_k=P.FloatParam(self.get_ratio_k(), doc="k-factor in ratio output mode"),
             lamp=P.BoolParam(self.get_lamp(), doc="True to enable physical lamp"),
+        )
+        return d
+
+    def configure(self, params: dict, label: str = "") -> bool:
+        for key, val in P.unwrap(params).items():
+            if key in self.PARAM_NAMES:
+                getattr(self, "set_" + key)(val)
+            else:
+                return self.fail_with(f"Unknown param: {key}")
+        return True
+
+
+class SR860(VisaInstrument):
+    """SRS SR860 Lockin Amplifier."""
+
+    class RefSource(enum.Enum):
+        INT = 0
+        EXT = 1
+        DUAL = 2
+        CHOP = 3
+
+    class RefEdge(enum.Enum):
+        SIN = 0
+        TTL_POS = 1
+        TTL_NEG = 2
+
+    class InputRange(enum.Enum):
+        r1V = 0
+        r300mV = 1
+        r100mV = 2
+        r30mV = 3
+        r10mV = 4
+
+    class Sensitivity(enum.Enum):
+        s1V = 0
+        s500mV = 1
+        s200mV = 2
+        s100mV = 3
+        s50mV = 4
+        s20mV = 5
+        s10mV = 6
+        s5mV = 7
+        s2mV = 8
+        s1mV = 9
+        s500uV = 10
+        s200uV = 11
+        s100uV = 12
+        s50uV = 13
+        s20uV = 14
+        s10uV = 15
+        s5uV = 16
+        s2uV = 17
+        s1uV = 18
+        s500nV = 19
+        s200nV = 20
+        s100nV = 21
+        s50nV = 22
+        s20nV = 23
+        s10nV = 24
+        s5nV = 25
+        s2nV = 26
+        s1nV = 27
+
+    Sensitivity_to_Float = {
+        Sensitivity.s1nV: 1e-9,
+        Sensitivity.s2nV: 2e-9,
+        Sensitivity.s5nV: 5e-9,
+        Sensitivity.s10nV: 10e-9,
+        Sensitivity.s20nV: 20e-9,
+        Sensitivity.s50nV: 50e-9,
+        Sensitivity.s100nV: 100e-9,
+        Sensitivity.s200nV: 200e-9,
+        Sensitivity.s500nV: 500e-9,
+        Sensitivity.s1uV: 1e-6,
+        Sensitivity.s2uV: 2e-6,
+        Sensitivity.s5uV: 5e-6,
+        Sensitivity.s10uV: 10e-6,
+        Sensitivity.s20uV: 20e-6,
+        Sensitivity.s50uV: 50e-6,
+        Sensitivity.s100uV: 100e-6,
+        Sensitivity.s200uV: 200e-6,
+        Sensitivity.s500uV: 500e-6,
+        Sensitivity.s1mV: 1e-3,
+        Sensitivity.s2mV: 2e-3,
+        Sensitivity.s5mV: 5e-3,
+        Sensitivity.s10mV: 10e-3,
+        Sensitivity.s20mV: 20e-3,
+        Sensitivity.s50mV: 50e-3,
+        Sensitivity.s100mV: 100e-3,
+        Sensitivity.s200mV: 200e-3,
+        Sensitivity.s500mV: 500e-3,
+        Sensitivity.s1V: 1.0,
+    }
+
+    class TimeConstant(enum.Enum):
+        c1us = 0
+        c3us = 1
+        c10us = 2
+        c30us = 3
+        c100us = 4
+        c300us = 5
+        c1ms = 6
+        c3ms = 7
+        c10ms = 8
+        c30ms = 9
+        c100ms = 10
+        c300ms = 11
+        c1s = 12
+        c3s = 13
+        c10s = 14
+        c30s = 15
+        c100s = 16
+        c300s = 17
+        c1ks = 18
+        c3ks = 19
+        c10ks = 20
+        c30ks = 21
+
+    PARAM_NAMES = [
+        "phase_offset",
+        "freq",
+        "amplitude",
+        "harmonics",
+        "ref_source",
+        "ref_edge",
+        "ref_imp",
+        "input_mode",
+        "input_source",
+        "coupling",
+        "ground",
+        "input_range",
+        "current_gain",
+        "sensitivity",
+        "time_constant",
+        "sync_filter",
+        "adv_filter",
+        "slope",
+        "ch1_mode",
+        "ch2_mode",
+        "Xoffset_enable",
+        "Yoffset_enable",
+        "Roffset_enable",
+        "Xoffset",
+        "Yoffset",
+        "Roffset",
+        "Xexpand",
+        "Yexpand",
+        "Rexpand",
+        "Xratio_enable",
+        "Yratio_enable",
+        "Rratio_enable",
+    ]
+
+    def __init__(self, name, conf, prefix=None):
+        if "write_termination" not in conf:
+            conf["write_termination"] = "\n"
+        if "read_termination" not in conf:
+            conf["read_termination"] = "\n"
+        VisaInstrument.__init__(self, name, conf, prefix=prefix)
+
+        self._locks = {p: False for p in self.PARAM_NAMES}
+
+    def get_phase_offset(self) -> float:
+        """get current phase offset in degrees."""
+
+        return float(self.inst.query("PHAS?"))
+
+    def set_phase_offset(self, phase_deg: float) -> bool:
+        """set phase offset in degrees."""
+
+        while phase_deg > 180.0:
+            phase_deg -= 360.0
+        while phase_deg < -180.0:
+            phase_deg += 360.0
+
+        self.inst.write(f"PHAS {phase_deg:.4f}")
+        return True
+
+    def get_freq(self) -> float:
+        """get frequency of `internal oscillator`.
+
+        Note that this is not measured frequency of external reference.
+
+        """
+
+        return float(self.inst.query("FREQ?"))
+
+    def set_freq(self, freq: float) -> bool:
+        """set frequency of `internal oscillator`."""
+
+        self.inst.write(f"FREQ {freq:.6f}")
+        return True
+
+    def get_amplitude(self) -> float:
+        """get amplitude of internal oscillator."""
+
+        #  drop range info (after comma)
+        return float(self.inst.query("SLVL?").split(",")[0])
+
+    def set_amplitude(self, ampl: float) -> bool:
+        """set amplitude of internal oscillator."""
+
+        if not (0.0 <= ampl <= 2.0):
+            return self.fail_with(f"amplitude {ampl} is out of bounds")
+
+        self.inst.write(f"SLVL {ampl:.4e}")
+        return True
+
+    def get_harmonics(self) -> int:
+        """get current harmonics degree."""
+
+        return int(self.inst.query("HARM?"))
+
+    def set_harmonics(self, harmonics_deg: int) -> bool:
+        """set harmonics degree."""
+
+        if not (1 <= harmonics_deg <= 99):
+            return self.fail_with(f"harmonics out of range: {harmonics_deg}")
+
+        self.inst.write(f"HARM {harmonics_deg:d}")
+        return True
+
+    def get_ref_source(self) -> RefSource:
+        """get current reference source."""
+
+        return self.RefSource(int(self.inst.query("RSRC?")))
+
+    def set_ref_source(self, src: RefSource) -> bool:
+        """set reference source."""
+
+        self.inst.write(f"RSRC {src.value}")
+        return True
+
+    def get_ref_edge(self) -> RefEdge:
+        """get current reference source rdge."""
+
+        return self.RefEdge(int(self.inst.query("RTRG?")))
+
+    def set_ref_edge(self, edge: RefEdge) -> bool:
+        """set reference source edge."""
+
+        self.inst.write(f"RTRG {edge.value}")
+        return True
+
+    def get_ref_imp(self) -> bool:
+        """get current reference source input impedance (True: 50 Ohm, False: 1M Ohm)."""
+
+        return bool(self.inst.query("REFZ?"))
+
+    def set_ref_imp(self, imp_1M: bool) -> bool:
+        """set reference source imput impedance (True: 50 Ohm, False: 1M Ohm)."""
+
+        self.inst.write(f"REFZ {bool(imp_1M):d}")
+        return True
+
+    def get_input_mode(self) -> bool:
+        """get current signal input source (True: current, False: voltage)."""
+
+        return bool(self.inst.query("IVMD?"))
+
+    def set_input_mode(self, current: bool) -> bool:
+        """set signal input source (True: current, False: voltage)."""
+
+        self.inst.write(f"IVMD {bool(current):d}")
+        return True
+
+    def get_input_source(self) -> bool:
+        """get current signal input source (True: A-B, False: A)."""
+
+        return bool(self.inst.query("ISRC?"))
+
+    def set_input_source(self, diff_input: bool) -> bool:
+        """set signal input source (True: A-B, False: A)."""
+
+        self.inst.write(f"ISRC {bool(diff_input):d}")
+        return True
+
+    def get_coupling(self) -> bool:
+        """get input coupling (True: DC, False: AC)."""
+
+        return bool(int(self.inst.query("ICPL?")))
+
+    def set_coupling(self, DC_coupling: bool) -> bool:
+        """set input coupling (True: DC, False: AC)."""
+
+        self.inst.write(f"ICPL {bool(DC_coupling):d}")
+        return True
+
+    def get_ground(self) -> bool:
+        """get input ground (True: Grounded, False: Floating)."""
+
+        return bool(int(self.inst.query("IGND?")))
+
+    def set_ground(self, ground: bool) -> bool:
+        """set input ground (True: Grounded, False: Floating)."""
+
+        self.inst.write(f"IGND {bool(ground):d}")
+        return True
+
+    def get_input_range(self) -> InputRange:
+        """get input range."""
+
+        return self.InputRange(int(self.inst.query("IRNG?")))
+
+    def set_input_range(self, input_range: InputRange) -> bool:
+        """set input range."""
+
+        self.inst.write(f"IRNG {input_range.value}")
+        return True
+
+    def get_current_gain(self) -> bool:
+        """get current gain (True: 100 M Ohm, False: 1 M Ohm)."""
+
+        return bool(int(self.inst.query("ICUR?")))
+
+    def set_current_gain(self, gain_100M: bool) -> bool:
+        """set current gain (True: 100 M Ohm, False: 1 M Ohm)."""
+
+        self.inst.write(f"ICUR {bool(gain_100M):d}")
+        return True
+
+    def get_sensitivity(self) -> Sensitivity:
+        """get sensitivity."""
+
+        return self.Sensitivity(int(self.inst.query("SCAL?")))
+
+    def get_sensitivity_float(self) -> float:
+        return self.Sensitivity_to_Float[self.get_sensitivity()]
+
+    def set_sensitivity(self, sens: Sensitivity) -> bool:
+        """set sensitivity."""
+
+        self.inst.write(f"SCAL {sens.value}")
+        return True
+
+    def get_time_constant(self) -> TimeConstant:
+        """get time constant."""
+
+        return self.TimeConstant(int(self.inst.query("OFLT?")))
+
+    def set_time_constant(self, cons: TimeConstant) -> bool:
+        """set time constant."""
+
+        self.inst.write(f"OFLT {cons.value}")
+        return True
+
+    def get_sync_filter(self) -> bool:
+        """get sync filter. True if sync filter is enabled."""
+
+        return bool(int(self.inst.query("SYNC?")))
+
+    def set_sync_filter(self, enable: bool) -> bool:
+        """set sync filter."""
+
+        self.inst.write(f"SYNC {bool(enable):d}")
+        return True
+
+    def get_adv_filter(self) -> bool:
+        """get advanced filter. True if adv filter is enabled."""
+
+        return bool(int(self.inst.query("ADVFILT?")))
+
+    def set_adv_filter(self, enable: bool) -> bool:
+        """set adv filter."""
+
+        self.inst.write(f"ADVFILT {bool(enable):d}")
+        return True
+
+    def get_slope(self) -> int:
+        """get slope in dB/oct."""
+
+        i = int(self.inst.query("OFSL?"))
+        if i not in (0, 1, 2, 3):
+            self.logger.error(f"Unexpected response to OFSL?: {i}")
+            return 0
+        return {0: 6, 1: 12, 2: 18, 3: 24}[i]
+
+    def set_slope(self, slope_dB_oct: int) -> bool:
+        """set slope in dB/oct."""
+
+        if slope_dB_oct not in (6, 12, 18, 24):
+            return self.fail_with(f"Unrecongizable slope: {slope_dB_oct}")
+        i = {6: 0, 12: 1, 18: 2, 24: 3}[slope_dB_oct]
+        self.inst.write(f"OFSL {i}")
+        return True
+
+    def get_ch1_mode(self) -> bool:
+        """get ch1 output mode (True: R, False: X)."""
+
+        return bool(self.inst.query("COUT? 0"))
+
+    def set_ch1_mode(self, output_R: bool) -> bool:
+        """set ch1 output mode (True: R, False: X)."""
+
+        self.inst.write(f"COUT 0, {bool(output_R):d}")
+        return True
+
+    def get_ch2_mode(self) -> bool:
+        """get ch2 output mode (True: Theta, False: Y)."""
+
+        return bool(self.inst.query("COUT? 1"))
+
+    def set_ch2_mode(self, output_Theta: bool) -> bool:
+        """set ch2 output mode (True: Theta, False: Y)."""
+
+        self.inst.write(f"COUT 1, {bool(output_Theta):d}")
+        return True
+
+    def get_Xoffset_enable(self) -> bool:
+        """get if offset for X is enabled."""
+
+        return bool(int(self.inst.query("COFA? 0")))
+
+    def set_Xoffset_enable(self, enable: bool) -> bool:
+        """set if offset for X is enabled."""
+
+        self.inst.write(f"COFA 0, {bool(enable):d}")
+        return True
+
+    def get_Yoffset_enable(self) -> bool:
+        """get if offset for Y is enabled."""
+
+        return bool(int(self.inst.query("COFA? 1")))
+
+    def set_Yoffset_enable(self, enable: bool) -> bool:
+        """set if offset for Y is enabled."""
+
+        self.inst.write(f"COFA 1, {bool(enable):d}")
+        return True
+
+    def get_Roffset_enable(self) -> bool:
+        """get if offset for R is enabled."""
+
+        return bool(int(self.inst.query("COFA? 2")))
+
+    def set_Roffset_enable(self, enable: bool) -> bool:
+        """set if offset for R is enabled."""
+
+        self.inst.write(f"COFA 2, {bool(enable):d}")
+        return True
+
+    def get_Xoffset(self) -> float:
+        """get offset value for X in percent."""
+
+        return float(self.inst.query("COFP? 0"))
+
+    def set_Xoffset(self, offset_percent: bool) -> bool:
+        """set offset value for X."""
+
+        self.inst.write(f"COFP 0, {offset_percent:.2f}")
+        return True
+
+    def get_Yoffset(self) -> float:
+        """get offset value for Y in percent."""
+
+        return float(self.inst.query("COFP? 1"))
+
+    def set_Yoffset(self, offset_percent: bool) -> bool:
+        """set offset value for Y."""
+
+        self.inst.write(f"COFP 1, {offset_percent:.2f}")
+        return True
+
+    def get_Roffset(self) -> float:
+        """get offset value for R in percent."""
+
+        return float(self.inst.query("COFP? 2"))
+
+    def set_Roffset(self, offset_percent: bool) -> bool:
+        """set offset value for R."""
+
+        self.inst.write(f"COFP 2, {offset_percent:.2f}")
+        return True
+
+    def get_Xexpand(self) -> int:
+        """get output expand factor for X."""
+
+        i = int(self.inst.query("CEXP? 0"))
+        if i not in (0, 1, 2):
+            self.logger.error(f"Unexpected response to CEXP? 0: {i}")
+            return 0
+        return {0: 1, 1: 10, 2: 100}[i]
+
+    def set_Xexpand(self, fac: int) -> bool:
+        """set output expand factor for X."""
+
+        if fac not in (1, 10, 100):
+            return self.fail_with(f"Unrecongizable expand factor: {fac}")
+        i = {1: 0, 10: 1, 100: 2}[fac]
+        self.inst.write(f"CEXP 0, {i}")
+        return True
+
+    def get_Yexpand(self) -> int:
+        """get output expand factor for Y."""
+
+        i = int(self.inst.query("CEXP? 1"))
+        if i not in (0, 1, 2):
+            self.logger.error(f"Unexpected response to CEXP? 1: {i}")
+            return 0
+        return {0: 1, 1: 10, 2: 100}[i]
+
+    def set_Yexpand(self, fac: int) -> bool:
+        """set output expand factor for Y."""
+
+        if fac not in (1, 10, 100):
+            return self.fail_with(f"Unrecongizable expand factor: {fac}")
+        i = {1: 0, 10: 1, 100: 2}[fac]
+        self.inst.write(f"CEXP 1, {i}")
+        return True
+
+    def get_Rexpand(self) -> int:
+        """get output expand factor for R."""
+
+        i = int(self.inst.query("CEXP? 2"))
+        if i not in (0, 1, 2):
+            self.logger.error(f"Unexpected response to CEXP? 2: {i}")
+            return 0
+        return {0: 1, 1: 10, 2: 100}[i]
+
+    def set_Rexpand(self, fac: int) -> bool:
+        """set output expand factor for R."""
+
+        if fac not in (1, 10, 100):
+            return self.fail_with(f"Unrecongizable expand factor: {fac}")
+        i = {1: 0, 10: 1, 100: 2}[fac]
+        self.inst.write(f"CEXP 2, {i}")
+        return True
+
+    def get_Xratio_enable(self) -> bool:
+        """get if ratio mode for X is enabled."""
+
+        return bool(int(self.inst.query("CRAT? 0")))
+
+    def set_Xratio_enable(self, enable: bool) -> bool:
+        """set if ratio mode for X is enabled."""
+
+        self.inst.write(f"CRAT 0, {bool(enable):d}")
+        return True
+
+    def get_Yratio_enable(self) -> bool:
+        """get if ratio mode for Y is enabled."""
+
+        return bool(int(self.inst.query("CRAT? 1")))
+
+    def set_Yratio_enable(self, enable: bool) -> bool:
+        """set if ratio mode for Y is enabled."""
+
+        self.inst.write(f"CRAT 1, {bool(enable):d}")
+        return True
+
+    def get_Rratio_enable(self) -> bool:
+        """get if ratio mode for R is enabled."""
+
+        return bool(int(self.inst.query("CRAT? 2")))
+
+    def set_Rratio_enable(self, enable: bool) -> bool:
+        """set if ratio mode for R is enabled."""
+
+        self.inst.write(f"CRAT 2, {bool(enable):d}")
+        return True
+
+    # Auto settings
+
+    def set_auto_phase_offset(self) -> bool:
+        """set auto phase offset."""
+
+        self.inst.write("APHS")
+        return True
+
+    def set_auto_range(self) -> bool:
+        """execute auto range setting."""
+
+        self.inst.write("ARNG")
+        return True
+
+    def set_auto_scale(self) -> bool:
+        """execute auto scale setting."""
+
+        self.inst.write("ASCL")
+        return True
+
+    def _check_and_set(self, key: str, value) -> bool:
+        if key not in self.PARAM_NAMES:
+            return self.fail_with(f"Unknown parameter: {key}")
+        if not self._locks[key]:
+            return getattr(self, "set_" + key)(value)
+
+        # locked. check current value.
+        v = getattr(self, "get_" + key)()
+        if value != v:
+            return self.fail_with(f"{key} is locked as {v}. cannot set to {value}")
+        return True
+
+    def lock_params(self, param_names: str | list[str] | tuple[str]) -> bool:
+        if isinstance(param_names, str):
+            param_names = [param_names]
+        for n in param_names:
+            if n not in self._locks:
+                return self.fail_with(f"Unknown parameter: {n}")
+            self._locks[n] = True
+
+    def release_params(self, param_names: str | list[str] | tuple[str]) -> bool:
+        if isinstance(param_names, str):
+            param_names = [param_names]
+        for n in param_names:
+            if n not in self._locks:
+                return self.fail_with(f"Unknown parameter: {n}")
+            self._locks[n] = False
+
+    # Standard API
+
+    def get(self, key: str, args=None, label: str = ""):
+        if key == "opc":
+            return self.query_opc(delay=args)
+        else:
+            self.logger.error(f"unknown get() key: {key}")
+            return None
+
+    def set(self, key: str, value=None, label: str = "") -> bool:
+        if key == "auto_phase_offset":
+            return self.set_auto_phase_offset()
+        elif key == "auto_range":
+            return self.set_auto_range()
+        elif key == "auto_scale":
+            return self.set_auto_scale()
+        elif key == "lock":
+            return self.lock_params(value)
+        elif key == "release":
+            return self.release_params(value)
+        elif key in self.PARAM_NAMES:
+            return getattr(self, "set_" + key)(value)
+        else:
+            return self.fail_with("Unknown set() key.")
+
+    def get_param_dict_labels(self) -> list[str]:
+        return [""]
+
+    def get_param_dict(self, label: str = "") -> P.ParamDict[str, P.PDValue]:
+        d = P.ParamDict(
+            phase_offset=P.FloatParam(
+                self.get_phase_offset(), -180.0, 180.0, unit="deg", doc="phase offset in degrees"
+            ),
+            ref_source=P.EnumParam(self.RefSource, self.get_ref_source(), doc="ref source"),
+            ref_edge=P.EnumParam(self.RefEdge, self.get_ref_edge(), doc="ref source edge"),
+            ref_imp=P.BoolParam(self.get_ref_imp(), doc="ref input impedance (True:50, False:1M)"),
+            input_mode=P.BoolParam(
+                self.get_input_mode(), doc="signal input mode (True: current, False: voltage)"
+            ),
+            input_source=P.BoolParam(
+                self.get_input_source(), doc="signal input source (True: A-B, False: A)"
+            ),
+            coupling=P.BoolParam(
+                self.get_coupling(), doc="signal input coupling (True: DC, False: AC)"
+            ),
+            ground=P.BoolParam(
+                self.get_ground(), doc="signal input grounding (True: ground, False: float)"
+            ),
+            input_range=P.EnumParam(self.InputRange, self.get_input_range(), doc="input range"),
+            current_gain=P.BoolParam(
+                self.get_current_gain(), doc="current gain (True: 100 M, False: 1 M)"
+            ),
+            sensitivity=P.EnumParam(self.Sensitivity, self.get_sensitivity(), doc="sensitivity"),
+            time_constant=P.EnumParam(
+                self.TimeConstant, self.get_time_constant(), doc="time constant"
+            ),
+            sync_filter=P.BoolParam(self.get_sync_filter(), doc="True to enable sync filter"),
+            adv_filter=P.BoolParam(self.get_adv_filter(), doc="True to enable advanced filter"),
+            slope=P.IntChoiceParam(self.get_slope(), (6, 12, 18, 24), doc="Slope in dB/oct"),
+            freq=P.FloatParam(
+                self.get_freq(),
+                1e-3,
+                500e3,
+                unit="Hz",
+                SI_prefix=True,
+                doc="internal oscillator frequency",
+            ),
+            amplitude=P.FloatParam(
+                self.get_amplitude(),
+                0.0,
+                2.0,
+                unit="V",
+                SI_prefix=True,
+                doc="internal oscillator amplitude",
+            ),
+            harmonics=P.IntParam(self.get_harmonics(), 1, 99, doc="harmonics degrees"),
+            ch1_mode=P.BoolParam(self.get_ch1_mode(), doc="CH1 output (True: R, False: X)"),
+            ch2_mode=P.BoolParam(self.get_ch2_mode(), doc="CH2 output (True: Theta, False: Y)"),
+            Xoffset_enable=P.BoolParam(
+                self.get_Xoffset_enable(), doc="True to enable offset for X"
+            ),
+            Yoffset_enable=P.BoolParam(
+                self.get_Yoffset_enable(), doc="True to enable offset for Y"
+            ),
+            Roffset_enable=P.BoolParam(
+                self.get_Roffset_enable(), doc="True to enable offset for R"
+            ),
+            Xoffset=P.FloatParam(self.get_Xoffset(), doc="offset value for X"),
+            Yoffset=P.FloatParam(self.get_Yoffset(), doc="offset value for Y"),
+            Roffset=P.FloatParam(self.get_Roffset(), doc="offset value for R"),
+            Xexpand=P.IntChoiceParam(self.get_Xexpand(), (1, 10, 100), doc="Expand factor for X"),
+            Yexpand=P.IntChoiceParam(self.get_Yexpand(), (1, 10, 100), doc="Expand factor for Y"),
+            Rexpand=P.IntChoiceParam(self.get_Rexpand(), (1, 10, 100), doc="Expand factor for R"),
+            Xratio_enable=P.BoolParam(
+                self.get_Xratio_enable(), doc="True to enable ratio output mode for X"
+            ),
+            Yratio_enable=P.BoolParam(
+                self.get_Yratio_enable(), doc="True to enable ratio output mode for Y"
+            ),
+            Rratio_enable=P.BoolParam(
+                self.get_Rratio_enable(), doc="True to enable ratio output mode for R"
+            ),
         )
         return d
 
