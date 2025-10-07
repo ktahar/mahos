@@ -158,14 +158,14 @@ class LockinAnalogPDMM(InstrumentOverlay):
 
 class _LI5640Mixin(object):
     def init_lockin(self):
-        self.li5640.set_data1(LI5640.Data1.X)
-        self.li5640.set_data2(LI5640.Data2.Y)
-        self.li5640.set_Xoffset_enable(False)
-        self.li5640.set_Yoffset_enable(False)
-        self.li5640.set_data_normalization(LI5640.DataNormalization.OFF)
+        self.lockin.set_data1(LI5640.Data1.X)
+        self.lockin.set_data2(LI5640.Data2.Y)
+        self.lockin.set_Xoffset_enable(False)
+        self.lockin.set_Yoffset_enable(False)
+        self.lockin.set_data_normalization(LI5640.DataNormalization.OFF)
 
         #  These settings must not be changed afterwards.
-        self.li5640.lock_params(
+        self.lockin.lock_params(
             ["data1", "data2", "Xoffset_enable", "Yoffset_enable", "data_normalization"]
         )
 
@@ -174,9 +174,9 @@ class _LI5640Mixin(object):
         #  due to auto-setting or local operation.
         #  Fetch the necessary parameters on our timing.
 
-        volt_sens = self.li5640.get_volt_sensitivity_float()
-        data1_expand = self.li5640.get_data1_expand()
-        data2_expand = self.li5640.get_data2_expand()
+        volt_sens = self.lockin.get_volt_sensitivity_float()
+        data1_expand = self.lockin.get_data1_expand()
+        data2_expand = self.lockin.get_data2_expand()
 
         v1_gain = data1_expand * 10.0 / volt_sens
         v2_gain = data2_expand * 10.0 / volt_sens
@@ -190,8 +190,8 @@ class _LI5640Mixin(object):
 class LockinAnalogPD_LI5640(InstrumentOverlay, _LI5640Mixin):
     """Generic (fixed gain) Photoreceiver and with LI5640 Lockin & DAQ AnalogIn.
 
-    :param li5640: a LI5640 instance
-    :type li5640: LI5640
+    :param lockin: a LI5640 instance
+    :type lockin: LI5640
     :param pd: a LockinAnalogPD instance.
     :type pd: LockinAnalogPD
 
@@ -200,9 +200,9 @@ class LockinAnalogPD_LI5640(InstrumentOverlay, _LI5640Mixin):
     def __init__(self, name, conf, prefix=None):
         InstrumentOverlay.__init__(self, name, conf=conf, prefix=prefix)
 
-        self.li5640: LI5640 = self.conf.get("li5640")
+        self.lockin: LI5640 = self.conf.get("lockin")
         self.pd: LockinAnalogPD = self.conf.get("pd")
-        self.add_instruments(self.li5640, self.pd)
+        self.add_instruments(self.lockin, self.pd)
 
         self.init_lockin()
         self.update_gain()
@@ -253,7 +253,7 @@ class LockinAnalogPD_LI5640(InstrumentOverlay, _LI5640Mixin):
     def set(self, key: str, value=None, label: str = "") -> bool:
         # no set() key for pd
 
-        success = self.li5640.set(key, value)
+        success = self.lockin.set(key, value)
         #  set() may change the gain.
         self.update_gain()
         return success
@@ -274,20 +274,20 @@ class LockinAnalogPD_LI5640(InstrumentOverlay, _LI5640Mixin):
         elif key == "gain":
             return self.total_gain
         else:
-            return self.li5640.get(key, args)
+            return self.lockin.get(key, args)
 
     def get_param_dict_labels(self) -> list[str]:
-        return ["li5640"]
+        return ["lockin"]
 
     def get_param_dict(self, label: str = "") -> P.ParamDict[str, P.PDValue] | None:
-        if label == "li5640":
-            return self.li5640.get_param_dict(label)
+        if label == "lockin":
+            return self.lockin.get_param_dict(label)
         else:
             return self.pd.get_param_dict(label)
 
     def configure(self, params: dict, label: str = "") -> bool:
-        if label == "li5640":
-            success = self.li5640.configure(params, label)
+        if label == "lockin":
+            success = self.lockin.configure(params, label)
             #  configure() may change the gain.
             self.update_gain()
             return success
@@ -301,8 +301,8 @@ class LockinAnalogPD_LI5640(InstrumentOverlay, _LI5640Mixin):
 class LockinAnalogPDMM_LI5640(InstrumentOverlay, _LI5640Mixin):
     """Generic (fixed gain) Photoreceiver and with LI5640 Lockin & DMM.
 
-    :param li5640: a LI5640 instance
-    :type li5640: LI5640
+    :param lockin: a LI5640 instance
+    :type lockin: LI5640
     :param pd: a LockinAnalogPDMM instance.
     :type pd: LockinAnalogPDMM
 
@@ -311,9 +311,9 @@ class LockinAnalogPDMM_LI5640(InstrumentOverlay, _LI5640Mixin):
     def __init__(self, name, conf, prefix=None):
         InstrumentOverlay.__init__(self, name, conf=conf, prefix=prefix)
 
-        self.li5640: LI5640 = self.conf.get("li5640")
+        self.lockin: LI5640 = self.conf.get("lockin")
         self.pd: LockinAnalogPDMM = self.conf.get("pd")
-        self.add_instruments(self.li5640, self.pd)
+        self.add_instruments(self.lockin, self.pd)
 
         self.init_lockin()
         self.update_gain()
@@ -330,7 +330,7 @@ class LockinAnalogPDMM_LI5640(InstrumentOverlay, _LI5640Mixin):
     def set(self, key: str, value=None, label: str = "") -> bool:
         # no set() key for pd
 
-        success = self.li5640.set(key, value)
+        success = self.lockin.set(key, value)
         #  set() may change the gain.
         self.update_gain()
         return success
@@ -349,20 +349,20 @@ class LockinAnalogPDMM_LI5640(InstrumentOverlay, _LI5640Mixin):
         elif key == "gain":
             return self.total_gain
         else:
-            return self.li5640.get(key, args)
+            return self.lockin.get(key, args)
 
     def get_param_dict_labels(self) -> list[str]:
-        return ["li5640"] + self.pd.get_param_dict_labels()
+        return ["lockin"] + self.pd.get_param_dict_labels()
 
     def get_param_dict(self, label: str = "") -> P.ParamDict[str, P.PDValue] | None:
-        if label == "li5640":
-            return self.li5640.get_param_dict(label)
+        if label == "lockin":
+            return self.lockin.get_param_dict(label)
         else:
             return self.pd.get_param_dict(label)
 
     def configure(self, params: dict, label: str = "") -> bool:
-        if label == "li5640":
-            success = self.li5640.configure(params, label)
+        if label == "lockin":
+            success = self.lockin.configure(params, label)
             #  configure() may change the gain.
             self.update_gain()
             return success
@@ -469,8 +469,8 @@ class OE200_LI5640_AI(InstrumentOverlay):
 
     :param luci: a LUCI_OE200 instance
     :type luci: LUCI_OE200
-    :param li5640: a LI5640 instance
-    :type li5640: LI5640
+    :param lockin: a LI5640 instance
+    :type lockin: LI5640
     :param pd: a LockinAnalogPD instance. gain should be 1.
     :type pd: LockinAnalogPD
 
@@ -480,22 +480,22 @@ class OE200_LI5640_AI(InstrumentOverlay):
         InstrumentOverlay.__init__(self, name, conf=conf, prefix=prefix)
 
         self.luci: LUCI_OE200 = self.conf.get("luci")
-        self.li5640: LI5640 = self.conf.get("li5640")
+        self.lockin: LI5640 = self.conf.get("lockin")
         self.pd: LockinAnalogPD = self.conf.get("pd")
-        self.add_instruments(self.luci, self.li5640, self.pd)
+        self.add_instruments(self.luci, self.lockin, self.pd)
 
         self.init_lockin()
         self.update_gain()
 
     def init_lockin(self):
-        self.li5640.set_data1(LI5640.Data1.X)
-        self.li5640.set_data2(LI5640.Data2.Y)
-        self.li5640.set_Xoffset_enable(False)
-        self.li5640.set_Yoffset_enable(False)
-        self.li5640.set_data_normalization(LI5640.DataNormalization.OFF)
+        self.lockin.set_data1(LI5640.Data1.X)
+        self.lockin.set_data2(LI5640.Data2.Y)
+        self.lockin.set_Xoffset_enable(False)
+        self.lockin.set_Yoffset_enable(False)
+        self.lockin.set_data_normalization(LI5640.DataNormalization.OFF)
 
         #  These settings must not be changed afterwards.
-        self.li5640.lock_params(
+        self.lockin.lock_params(
             ["data1", "data2", "Xoffset_enable", "Yoffset_enable", "data_normalization"]
         )
 
@@ -504,9 +504,9 @@ class OE200_LI5640_AI(InstrumentOverlay):
         #  due to auto-setting or local operation.
         #  Fetch the necessary parameters on our timing.
 
-        volt_sens = self.li5640.get_volt_sensitivity_float()
-        data1_expand = self.li5640.get_data1_expand()
-        data2_expand = self.li5640.get_data2_expand()
+        volt_sens = self.lockin.get_volt_sensitivity_float()
+        data1_expand = self.lockin.get_data1_expand()
+        data2_expand = self.lockin.get_data2_expand()
 
         v1_gain = data1_expand * 10.0 / volt_sens
         v2_gain = data2_expand * 10.0 / volt_sens
@@ -563,7 +563,7 @@ class OE200_LI5640_AI(InstrumentOverlay):
         if key in ("led", "gain", "coupling"):
             return self.luci.set(key, value)
         else:
-            success = self.li5640.set(key, value)
+            success = self.lockin.set(key, value)
             #  set() may change the gain.
             self.update_gain()
             return success
@@ -580,26 +580,29 @@ class OE200_LI5640_AI(InstrumentOverlay):
         elif key in ("devices", "id", "pin", "product"):
             return self.luci.get(key, args)
         else:
-            return self.li5640.get(key, args)
+            return self.lockin.get(key, args)
 
     def get_param_dict_labels(self) -> list[str]:
-        return ["luci", "li5640"]
+        return ["luci", "lockin"]
 
     def get_param_dict(self, label: str = "") -> P.ParamDict[str, P.PDValue] | None:
         """Get ParamDict for `label`."""
 
         if label == "luci":
             return self.luci.get_param_dict(label)
-        elif label == "li5640":
-            return self.li5640.get_param_dict(label)
+        elif label == "lockin":
+            return self.lockin.get_param_dict(label)
         else:
             return self.pd.get_param_dict(label)
 
     def configure(self, params: dict, label: str = "") -> bool:
         if label == "luci":
-            return self.luci.configure(params, label)
-        elif label == "li5640":
-            success = self.li5640.configure(params, label)
+            success = self.luci.configure(params, label)
+            #  configure() may change the gain.
+            self.update_gain()
+            return success
+        elif label == "lockin":
+            success = self.lockin.configure(params, label)
             #  configure() may change the gain.
             self.update_gain()
             return success
@@ -621,8 +624,8 @@ class OE200_SR860_AI(InstrumentOverlay):
 
     :param luci: a LUCI_OE200 instance
     :type luci: LUCI_OE200
-    :param sr860: a SR860 instance
-    :type sr860: SR860
+    :param lockin: a SR860 instance
+    :type lockin: SR860
     :param pd: a LockinAnalogPD instance. gain should be 1.
     :type pd: LockinAnalogPD
 
@@ -632,23 +635,23 @@ class OE200_SR860_AI(InstrumentOverlay):
         InstrumentOverlay.__init__(self, name, conf=conf, prefix=prefix)
 
         self.luci: LUCI_OE200 = self.conf.get("luci")
-        self.sr860: SR860 = self.conf.get("sr860")
+        self.lockin: SR860 = self.conf.get("lockin")
         self.pd: LockinAnalogPD = self.conf.get("pd")
-        self.add_instruments(self.luci, self.sr860, self.pd)
+        self.add_instruments(self.luci, self.lockin, self.pd)
 
         self.init_lockin()
         self.update_gain()
 
     def init_lockin(self):
-        self.sr860.set_ch1_mode(False)
-        self.sr860.set_ch2_mode(False)
-        self.sr860.set_Xoffset_enable(False)
-        self.sr860.set_Yoffset_enable(False)
-        self.sr860.set_Xratio_enable(False)
-        self.sr860.set_Yratio_enable(False)
+        self.lockin.set_ch1_mode(False)
+        self.lockin.set_ch2_mode(False)
+        self.lockin.set_Xoffset_enable(False)
+        self.lockin.set_Yoffset_enable(False)
+        self.lockin.set_Xratio_enable(False)
+        self.lockin.set_Yratio_enable(False)
 
         #  These settings must not be changed afterwards.
-        self.sr860.lock_params(
+        self.lockin.lock_params(
             [
                 "ch1_mode",
                 "ch2_mode",
@@ -660,13 +663,13 @@ class OE200_SR860_AI(InstrumentOverlay):
         )
 
     def update_gain(self) -> tuple[float, float]:
-        #  It is not perfect to memoise the param values at sr860 setters
+        #  It is not perfect to memoise the param values at SR860 setters
         #  due to auto-setting or local operation.
         #  Fetch the necessary parameters on our timing.
 
-        volt_sens = self.sr860.get_sensitivity_float()
-        Xexpand = self.sr860.get_Xexpand()
-        Yexpand = self.sr860.get_Yexpand()
+        volt_sens = self.lockin.get_sensitivity_float()
+        Xexpand = self.lockin.get_Xexpand()
+        Yexpand = self.lockin.get_Yexpand()
 
         v1_gain = Xexpand * 10.0 / volt_sens
         v2_gain = Yexpand * 10.0 / volt_sens
@@ -723,7 +726,7 @@ class OE200_SR860_AI(InstrumentOverlay):
         if key in ("led", "gain", "coupling"):
             return self.luci.set(key, value)
         else:
-            success = self.sr860.set(key, value)
+            success = self.lockin.set(key, value)
             #  set() may change the gain.
             self.update_gain()
             return success
@@ -740,26 +743,29 @@ class OE200_SR860_AI(InstrumentOverlay):
         elif key in ("devices", "id", "pin", "product"):
             return self.luci.get(key, args)
         else:
-            return self.sr860.get(key, args)
+            return self.lockin.get(key, args)
 
     def get_param_dict_labels(self) -> list[str]:
-        return ["luci", "sr860"]
+        return ["luci", "lockin"]
 
     def get_param_dict(self, label: str = "") -> P.ParamDict[str, P.PDValue] | None:
         """Get ParamDict for `label`."""
 
         if label == "luci":
             return self.luci.get_param_dict(label)
-        elif label == "sr860":
-            return self.sr860.get_param_dict(label)
+        elif label == "lockin":
+            return self.lockin.get_param_dict(label)
         else:
             return self.pd.get_param_dict(label)
 
     def configure(self, params: dict, label: str = "") -> bool:
         if label == "luci":
-            return self.luci.configure(params, label)
-        elif label == "sr860":
-            success = self.sr860.configure(params, label)
+            success = self.luci.configure(params, label)
+            #  configure() may change the gain.
+            self.update_gain()
+            return success
+        elif label == "lockin":
+            success = self.lockin.configure(params, label)
             #  configure() may change the gain.
             self.update_gain()
             return success
