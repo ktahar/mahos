@@ -1056,12 +1056,12 @@ class SR860(VisaInstrument):
         return True
 
     def get_ref_imp(self) -> bool:
-        """get current reference source input impedance (True: 50 Ohm, False: 1M Ohm)."""
+        """get current reference source input impedance (True: 1M Ohm, False: 50 Ohm)."""
 
         return bool(self.inst.query("REFZ?"))
 
     def set_ref_imp(self, imp_1M: bool) -> bool:
-        """set reference source imput impedance (True: 50 Ohm, False: 1M Ohm)."""
+        """set reference source imput impedance (True: 1M Ohm, False: 50 Ohm)."""
 
         self.inst.write(f"REFZ {bool(imp_1M):d}")
         return True
@@ -1455,7 +1455,7 @@ class SR860(VisaInstrument):
             ),
             ref_source=P.EnumParam(self.RefSource, self.get_ref_source(), doc="ref source"),
             ref_edge=P.EnumParam(self.RefEdge, self.get_ref_edge(), doc="ref source edge"),
-            ref_imp=P.BoolParam(self.get_ref_imp(), doc="ref input impedance (True:50, False:1M)"),
+            ref_imp=P.BoolParam(self.get_ref_imp(), doc="ref input impedance (True:1M, False:50)"),
             input_mode=P.BoolParam(
                 self.get_input_mode(), doc="signal input mode (True: current, False: voltage)"
             ),
