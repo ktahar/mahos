@@ -1058,7 +1058,7 @@ class SR860(VisaInstrument):
     def get_ref_imp(self) -> bool:
         """get current reference source input impedance (True: 1M Ohm, False: 50 Ohm)."""
 
-        return bool(self.inst.query("REFZ?"))
+        return bool(int(self.inst.query("REFZ?")))
 
     def set_ref_imp(self, imp_1M: bool) -> bool:
         """set reference source imput impedance (True: 1M Ohm, False: 50 Ohm)."""
@@ -1069,7 +1069,7 @@ class SR860(VisaInstrument):
     def get_input_mode(self) -> bool:
         """get current signal input source (True: current, False: voltage)."""
 
-        return bool(self.inst.query("IVMD?"))
+        return bool(int(self.inst.query("IVMD?")))
 
     def set_input_mode(self, current: bool) -> bool:
         """set signal input source (True: current, False: voltage)."""
@@ -1080,7 +1080,7 @@ class SR860(VisaInstrument):
     def get_input_source(self) -> bool:
         """get current signal input source (True: A-B, False: A)."""
 
-        return bool(self.inst.query("ISRC?"))
+        return bool(int(self.inst.query("ISRC?")))
 
     def set_input_source(self, diff_input: bool) -> bool:
         """set signal input source (True: A-B, False: A)."""
@@ -1200,7 +1200,7 @@ class SR860(VisaInstrument):
     def get_ch1_mode(self) -> bool:
         """get ch1 output mode (True: R, False: X)."""
 
-        return bool(self.inst.query("COUT? 0"))
+        return bool(int(self.inst.query("COUT? 0")))
 
     def set_ch1_mode(self, output_R: bool) -> bool:
         """set ch1 output mode (True: R, False: X)."""
@@ -1211,7 +1211,7 @@ class SR860(VisaInstrument):
     def get_ch2_mode(self) -> bool:
         """get ch2 output mode (True: Theta, False: Y)."""
 
-        return bool(self.inst.query("COUT? 1"))
+        return bool(int(self.inst.query("COUT? 1")))
 
     def set_ch2_mode(self, output_Theta: bool) -> bool:
         """set ch2 output mode (True: Theta, False: Y)."""
