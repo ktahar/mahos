@@ -11,6 +11,7 @@ Typed Interface for ODMR Sweeper.
 import numpy as np
 
 from ..interface import InstrumentInterface
+from ...msgs.pulse_msgs import PulsePattern
 
 
 class ODMRSweeperInterface(InstrumentInterface):
@@ -41,3 +42,13 @@ class ODMRSweeperInterface(InstrumentInterface):
         """
 
         return self.get("bounds")
+
+    def get_pd_analog(self) -> bool:
+        """Get if this sweeper uses AnalogPD or not."""
+
+        return self.get("pd_analog")
+
+    def get_pulse_pattern(self) -> PulsePattern | None:
+        """Get current pulse pattern."""
+
+        return self.get("pulse_pattern")

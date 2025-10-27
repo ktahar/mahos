@@ -39,11 +39,13 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
         self.sg = self.conf.get("sg")
         self.pd = self.conf.get("pd")
         self.add_instruments(self.sg, self.pd)
+        self._pd_analog = self.conf.get("pd_analog", False)
 
         self._queue_size = self.conf.get("queue_size", 8)
         self._queue = LockedQueue(self._queue_size)
         self._stop_ev = self._thread = None
         self.running = False
+        self.pulse_pattern = None
 
     def _set_attrs(self, params):
         self.start_f, self.stop_f = params["start"], params["stop"]
@@ -178,6 +180,10 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
             return self.sg.get_bounds()
         elif key == "unit":
             return self.pd.get("unit")
+        elif key == "pulse_pattern":
+            return self.pulse_pattern
+        elif key == "pd_analog":
+            return self._pd_analog
         else:
             self.logger.error(f"unknown get() key: {key}")
             return None
@@ -264,6 +270,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         self._start_delay = self.conf.get("start_delay", 0.0)
         self._channel_remap = self.conf.get("channel_remap")
         self._continue_mw = False
+        self.pulse_pattern = None
 
     def load_pg_conf_preset(self):
         loader = PresetLoader(self.logger, PresetLoader.Mode.FORWARD)
@@ -418,6 +425,10 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             return self.sg.get_bounds()
         elif key == "unit":
             return self.pds[0].get("unit")
+        elif key == "pulse_pattern":
+            return self.pulse_pattern
+        elif key == "pd_analog":
+            return self._pd_analog
         else:
             self.logger.error(f"unknown get() key: {key}")
             return None
@@ -482,14 +493,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
 
     def configure_analog_pd(self, params: dict, label: str) -> bool:
         rate = params["pd"]["rate"]
-        if label != "pulse":
-            oversamp = round(params["timing"]["time_window"] * rate)
-        else:
-            # t = params["timing"]
-            # oversamp = round(t["laser_width"] * rate * t["burst_num"])
-            # won't reach here but just in case
-            self.logger.error("Pulse for Analog PD is not implemented yet.")
-            return False
+        oversamp = round(params["timing"]["time_window"] * rate)
 
         self.logger.info(f"Analog PD oversample: {oversamp}")
 

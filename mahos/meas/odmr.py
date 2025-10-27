@@ -67,6 +67,8 @@ class ODMR(BasicMeasNode):
     def __init__(self, gconf: dict, name, context=None):
         BasicMeasNode.__init__(self, gconf, name, context=context)
 
+        self.pulse_pub = self.add_pub(b"pulse")
+
         _default_sw_names = ["switch"] if "switch" in self.conf["target"]["servers"] else []
         sw_names = self.conf.get("switch_names", _default_sw_names)
         if sw_names:
@@ -206,11 +208,14 @@ class ODMR(BasicMeasNode):
         if self.state == BinaryState.ACTIVE:
             self.worker.work()
 
-    def _publish(self, publish_data: bool, publish_buffer: bool):
+    def _publish(self, publish_data: bool, publish_other: bool):
         self.status_pub.publish(BinaryStatus(state=self.state))
         if publish_data:
             self.data_pub.publish(self.worker.data_msg())
-        if publish_buffer:
+        if publish_other:
+            pulse = self.worker.pulse_msg()
+            if pulse is not None:
+                self.pulse_pub.publish(pulse)
             self.buffer_pub.publish(self.buffer)
 
     def _check_finished(self) -> bool:

@@ -14,6 +14,7 @@ import time
 import numpy as np
 
 from ..msgs.odmr_msgs import ODMRData
+from ..msgs.pulse_msgs import PulsePattern
 from ..msgs import param_msgs as P
 from ..msgs.inst.pg_msgs import TriggerType
 from ..inst.sg_interface import SGInterface
@@ -32,6 +33,12 @@ _MOD_LABELS = ["iq_ext", "am_ext", "fm_ext", "iq_int", "am_int", "fm_int"]
 class SweeperBase(Worker):
     def data_msg(self) -> ODMRData:
         return self.data
+
+    def pulse_msg(self) -> PulsePattern | None:
+        if hasattr(self, "pulse_pattern"):
+            return self.pulse_pattern
+        else:
+            return None
 
     def is_finished(self) -> bool:
         if not self.data.has_params() or not self.data.has_data():
@@ -54,7 +61,7 @@ class SweeperBase(Worker):
     def get_param_dict_labels(self) -> list:
         return ["cw", "pulse"] + _MOD_LABELS
 
-    def _make_param_dict(self, label, bounds) -> P.ParamDict[str, P.PDValue] | None:
+    def _make_param_dict(self, label, bounds, pd_analog) -> P.ParamDict[str, P.PDValue] | None:
         if label in ["cw"] + _MOD_LABELS:
             timing = P.ParamDict(
                 time_window=P.FloatParam(
@@ -91,8 +98,19 @@ class SweeperBase(Worker):
                     SI_prefix=True,
                     doc="width of trigger (<= mw_delay)",
                 ),
-                burst_num=P.IntParam(100, 1, 100_000, doc="number of bursts at each freq."),
             )
+            if pd_analog:
+                timing["time_window"] = P.FloatParam(
+                    self.conf.get("time_window", 10e-3), 0.1e-3, 10.0, unit="s", SI_prefix=True
+                )
+                timing["gate_delay"] = P.FloatParam(
+                    self.conf.get("gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
+                )
+            else:
+                timing["burst_num"] = P.IntParam(
+                    100, 1, 100_000, doc="number of bursts at each freq."
+                )
+
         else:
             self.logger.error(f"Unknown param dict label: {label}")
             return None
@@ -198,7 +216,8 @@ class SweeperOverlay(SweeperBase):
             self.logger.error("Failed to get bounds from sweeper.")
             return None
 
-        d = self._make_param_dict(label, bounds)
+        pd_analog = self.sweeper.get_pd_analog()
+        d = self._make_param_dict(label, bounds, pd_analog)
         pd = self.sweeper.get_param_dict("pd")
         if pd is not None:
             d["pd"] = pd
@@ -226,6 +245,8 @@ class SweeperOverlay(SweeperBase):
             success &= self.sweeper.configure(params, label)
         if not success:
             return self.fail_with_release("Error configuring sweeper.")
+
+        self.pulse_pattern = self.sweeper.get_pulse_pattern()
 
         success &= self.sweeper.start()
         if not success:
@@ -436,6 +457,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         self._channel_remap = self.conf.get("channel_remap")
         self._continue_mw = False
 
+        self.pulse_pattern = None
         self.data = ODMRData()
 
     def load_pg_conf_preset(self, cli):
@@ -477,7 +499,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         loader.load_preset(self.conf, cli.class_name("sg"))
 
     def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
-        d = self._make_param_dict(label, self.sg.get_bounds())
+        d = self._make_param_dict(label, self.sg.get_bounds(), self._pd_analog)
         if self._pd_analog:
             d["pd"] = P.ParamDict()
             d["pd"]["rate"] = P.FloatParam(
@@ -551,14 +573,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
 
     def start_analog_pd(self, params: dict, label: str) -> bool:
         rate = params["pd"]["rate"]
-        if label != "pulse":
-            oversamp = round(params["timing"]["time_window"] * rate)
-        else:
-            # t = params["timing"]
-            # oversamp = round(t["laser_width"] * rate * t["burst_num"])
-            # won't reach here but just in case
-            self.logger.error("Pulse for Analog PD is not implemented yet.")
-            return False
+        oversamp = round(params["timing"]["time_window"] * rate)
 
         self.logger.info(f"Analog PD oversample: {oversamp}")
 

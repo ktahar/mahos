@@ -10,7 +10,10 @@ PG sequence for ODMR.
 
 from __future__ import annotations
 
+import math
+
 from ..msgs.inst.pg_msgs import Block, Blocks, TriggerType
+from ..msgs.pulse_msgs import PulsePattern
 
 
 class ODMRPGMixin(object):
@@ -104,7 +107,153 @@ class ODMRPGMixin(object):
         if self._channel_remap is not None:
             blocks = blocks.replace(self._channel_remap)
         blocks = blocks.simplify()
-        return self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
+        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
+        if success:
+            self.pulse_pattern = PulsePattern(blocks, freq)
+        return success
+
+    def configure_pg_pulse_analog(self, params: dict, trigger_type: TriggerType) -> bool:
+        freq = self.conf["pg_freq_pulse"]
+        min_len = self._minimum_block_length
+        # gate / trigger pulse width
+        delay = round(freq * params.get("delay", 0.0))
+        bg_delay = round(freq * params.get("background_delay", 0.0))
+        background = params.get("background", False)
+
+        laser_delay, laser_width, mw_delay, mw_width, trigger_width = [
+            round(params["timing"][k] * freq)
+            for k in ("laser_delay", "laser_width", "mw_delay", "mw_width", "trigger_width")
+        ]
+        if mw_delay < trigger_width:
+            self.logger.error("mw_delay >= trigger_width must be satisfied.")
+            return False
+
+        seq_length = sum(
+            params["timing"][k] for k in ("laser_delay", "laser_width", "mw_delay", "mw_width")
+        )
+
+        # convert time_window and gate_delay to number of sequence repetitions
+        # round-up because total sequence a bit shorter than time_window can be a problem,
+        # but a bit longer sequence is not.
+        burst_num = math.ceil(params["timing"]["time_window"] / seq_length)
+        gate_delay_num = math.ceil(params["timing"].get("gate_delay", 0.0) / seq_length)
+        self.logger.info(f"Burst Num: {burst_num} Gate Delay Num: {gate_delay_num}")
+
+        blocks = []
+        if delay:
+            blk_delay = Block(
+                "Delay",
+                [
+                    (None, max(delay, min_len)),
+                ],
+                trigger=True,
+            )
+            self._adjust_block(blk_delay, 0)
+            blocks.append(blk_delay)
+
+        if gate_delay_num:
+            blk_gate_delay = Block(
+                "Gate-Delay",
+                [
+                    ("laser", laser_width),
+                    (None, mw_delay),
+                    ("mw", mw_width),
+                    (None, laser_delay),
+                ],
+                Nrep=gate_delay_num,
+                trigger=not bool(delay),
+            )
+            self._adjust_block(blk_gate_delay, 0)
+            blocks.append(blk_gate_delay)
+
+        blk_gate = Block(
+            "Gate",
+            [
+                ("laser", laser_width),
+                ("gate", trigger_width),
+                (None, mw_delay - trigger_width),
+            ],
+            trigger=not (bool(delay) or bool(gate_delay_num)),
+        )
+        self._adjust_block(blk_gate, 0)
+        blocks.append(blk_gate)
+
+        blk_main = Block(
+            "Main",
+            [
+                ("mw", mw_width),
+                (None, laser_delay),
+                ("laser", laser_width),
+                (None, mw_delay),
+            ],
+            Nrep=burst_num,
+        )
+        self._adjust_block(blk_main, 0)
+        blocks.append(blk_main)
+
+        if background:
+            if bg_delay:
+                blk_bg_delay = Block(
+                    "BG-Delay",
+                    [
+                        (None, max(bg_delay, min_len)),
+                    ],
+                )
+                self._adjust_block(blk_bg_delay, 0)
+                blocks.append(blk_bg_delay)
+
+            if gate_delay_num:
+                blk_bg_gate_delay = Block(
+                    "BG-Gate-Delay",
+                    [
+                        ("laser", laser_width),
+                        (None, mw_delay + mw_width + laser_delay),
+                    ],
+                    Nrep=gate_delay_num,
+                )
+                self._adjust_block(blk_bg_gate_delay, 0)
+                blocks.append(blk_bg_gate_delay)
+
+            blk_bg_gate = Block(
+                "BG-Gate",
+                [
+                    ("laser", laser_width),
+                    ("gate", trigger_width),
+                    (None, mw_delay - trigger_width),
+                ],
+            )
+            self._adjust_block(blk_bg_gate, 0)
+            blocks.append(blk_bg_gate)
+
+            blk_bg_main = Block(
+                "BG-Main",
+                [
+                    (None, mw_width + laser_delay),
+                    ("laser", laser_width),
+                    (None, mw_delay),
+                ],
+                Nrep=burst_num,
+            )
+            self._adjust_block(blk_bg_main, 0)
+            blocks.append(blk_bg_main)
+
+        blk_trigger = Block(
+            "Trigger",
+            [
+                ("trigger", max(trigger_width, min_len)),
+            ],
+        )
+        self._adjust_block(blk_trigger, 0)
+        blocks.append(blk_trigger)
+
+        blocks = Blocks(blocks)
+        if self._channel_remap is not None:
+            blocks = blocks.replace(self._channel_remap)
+        blocks = blocks.simplify()
+        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
+        if success:
+            self.pulse_pattern = PulsePattern(blocks, freq)
+        return success
 
     def configure_pg_CW_apd(self, params: dict, trigger_type: TriggerType) -> bool:
         freq = self.conf["pg_freq_cw"]
@@ -180,7 +329,10 @@ class ODMRPGMixin(object):
         if self._channel_remap is not None:
             blocks = blocks.replace(self._channel_remap)
         blocks = blocks.simplify()
-        return self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
+        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
+        if success:
+            self.pulse_pattern = PulsePattern(blocks, freq)
+        return success
 
     def _make_blocks_pulse_apd_nobg(
         self, delay, laser_delay, laser_width, mw_delay, mw_width, trigger_width, burst_num
@@ -336,7 +488,10 @@ class ODMRPGMixin(object):
                 delay, laser_delay, laser_width, mw_delay, mw_width, trigger_width, burst_num
             )
 
-        return self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
+        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
+        if success:
+            self.pulse_pattern = PulsePattern(blocks, freq)
+        return success
 
     def configure_pg(self, params: dict, label: str, trigger_type: TriggerType) -> bool:
         if not (self.pg.stop() and self.pg.clear()):
@@ -345,8 +500,7 @@ class ODMRPGMixin(object):
             if label != "pulse":
                 return self.configure_pg_CW_analog(params, trigger_type)
             else:
-                self.logger.error("Pulse for Analog PD is not implemented yet.")
-                return False
+                return self.configure_pg_pulse_analog(params, trigger_type)
         else:
             if label != "pulse":
                 return self.configure_pg_CW_apd(params, trigger_type)

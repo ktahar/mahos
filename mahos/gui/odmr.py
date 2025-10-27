@@ -12,6 +12,7 @@ from __future__ import annotations
 import typing as T
 import uuid
 import os
+import math
 
 import numpy as np
 import pyqtgraph as pg
@@ -529,7 +530,8 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         self.peaks = ODMRPeaksWidget(self.plot.plot, parent=self.peaksTab)
         self._peaksTab_layout.addWidget(self.peaks)
 
-        self._has_time_window = self._has_gate_delay = True
+        self._cw_has_time_window = self._cw_has_gate_delay = True
+        self._pulse_has_time_window = self._pulse_has_gate_delay = self._pulse_has_burst_num = True
 
         self.setEnabled(False)
 
@@ -566,14 +568,23 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         for w in (self.startBox, self.stopBox, self.numBox):
             w.valueChanged.connect(self.update_step_label)
 
-        for b in (
+        boxes = [
             self.laserdelayBox,
             self.laserwidthBox,
             self.mwdelayBox,
             self.mwwidthBox,
-            self.bnumBox,
-        ):
-            b.valueChanged.connect(self.update_pulse_label)
+        ]
+        if self._pulse_has_burst_num:
+            boxes.append(self.bnumBox)
+            for b in boxes:
+                b.valueChanged.connect(self.update_pulse_label_apd)
+        else:
+            if self._pulse_has_time_window:
+                boxes.append(self.windowBox)
+            if self._pulse_has_gate_delay:
+                boxes.append(self.gatedelayBox)
+            for b in boxes:
+                b.valueChanged.connect(self.update_pulse_label_analog)
 
         self.methodBox.currentIndexChanged.connect(self.switch_method)
 
@@ -597,10 +608,13 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
                     ("trigger_width", self.triggerwidthBox, 1e9),
                 ],
             )
+            self._pulse_has_time_window = "time_window" in params["timing"]
+            self._pulse_has_gate_delay = "gate_delay" in params["timing"]
+            self._pulse_has_burst_num = "burst_num" in params["timing"]
 
         params = self.cli.get_param_dict("cw")
-        self._has_time_window = "time_window" in params["timing"]
-        if self._has_time_window:
+        self._cw_has_time_window = "time_window" in params["timing"]
+        if self._cw_has_time_window:
             apply_widgets(
                 params["timing"],
                 [
@@ -609,8 +623,8 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             )
         else:
             self.windowBox.setEnabled(False)
-        self._has_gate_delay = "gate_delay" in params["timing"]
-        if self._has_gate_delay:
+        self._cw_has_gate_delay = "gate_delay" in params["timing"]
+        if self._cw_has_gate_delay:
             apply_widgets(
                 params["timing"],
                 [
@@ -661,7 +675,9 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             )
         )
 
-    def update_pulse_label(self):
+    def update_pulse_label_apd(self):
+        """For APD (SPCM) measurement, burst num is specified and windows are derived."""
+
         window = self.get_pulse_window()
         if not window:
             return  # avoid zero div
@@ -670,6 +686,22 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         single = pg.siFormat(window, suffix="s")
         rate = pg.siFormat(1.0 / window, suffix="Hz")
         self.pulseLabel.setText(f"total window: {tot} single window: {single} (rate: {rate})")
+
+    def update_pulse_label_analog(self):
+        """For Analog PD measurement, time windows are specified and burst nums are derived."""
+
+        window = self.get_pulse_window()
+        if not window:
+            return  # avoid zero div
+
+        time_window = self.windowBox.value() * 1e-3  # sec
+        gate_delay = self.gatedelayBox.value() * 1e-3  # sec
+        burst_num = math.ceil(time_window / window)
+        if self._pulse_has_gate_delay:
+            gate_delay_num = math.ceil(gate_delay / window)
+            self.pulseLabel.setText(f"Burst num: {burst_num} Gate Delay Num: {gate_delay_num}")
+        else:
+            self.pulseLabel.setText(f"Burst num: {burst_num}")
 
     def get_pulse_window(self):
         boxes = (self.laserdelayBox, self.laserwidthBox, self.mwdelayBox, self.mwwidthBox)
@@ -713,7 +745,12 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             self.mwdelayBox.setValue(timing["mw_delay"] * 1e9)
             self.mwwidthBox.setValue(timing["mw_width"] * 1e9)
             self.triggerwidthBox.setValue(timing["trigger_width"] * 1e9)
-            self.bnumBox.setValue(timing["burst_num"])
+            if "time_window" in timing:
+                self.windowBox.setValue(timing["time_window"] * 1e3)
+            if "gate_delay" in timing:
+                self.gatedelayBox.setValue(timing["gate_delay"] * 1e3)
+            if "burst_num" in timing:
+                self.bnumBox.setValue(timing["burst_num"])
 
     def save_data(self):
         default_path = str(self.gparams_cli.get_param("work_dir"))
@@ -788,9 +825,9 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         label = self.methodBox.currentText()
         if label != "pulse":
             t = {}
-            if self._has_time_window:
+            if self._cw_has_time_window:
                 t["time_window"] = self.windowBox.value() * 1e-3  # ms to s
-            if self._has_gate_delay:
+            if self._cw_has_gate_delay:
                 t["gate_delay"] = self.gatedelayBox.value() * 1e-3  # ms to s
         else:
             t = {}
@@ -799,7 +836,12 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             t["mw_delay"] = self.mwdelayBox.value() * 1e-9
             t["mw_width"] = self.mwwidthBox.value() * 1e-9
             t["trigger_width"] = self.triggerwidthBox.value() * 1e-9
-            t["burst_num"] = self.bnumBox.value()
+            if self._pulse_has_burst_num:
+                t["burst_num"] = self.bnumBox.value()
+            if self._pulse_has_time_window:
+                t["time_window"] = self.windowBox.value() * 1e-3  # ms to s
+            if self._pulse_has_gate_delay:
+                t["gate_delay"] = self.gatedelayBox.value() * 1e-3  # ms to s
         params["timing"] = t
         params["continue_mw"] = self.mwcontBox.isChecked()
 
@@ -872,8 +914,13 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         self.bgdelayBox.setEnabled(is_IDLE and self.backgroundBox.isChecked())
 
         is_pulse = self.methodBox.currentText() == "pulse"
-        self.windowBox.setEnabled(is_IDLE and self._has_time_window and not is_pulse)
-        self.gatedelayBox.setEnabled(is_IDLE and self._has_gate_delay and not is_pulse)
+        if is_pulse:
+            self.windowBox.setEnabled(is_IDLE and self._pulse_has_time_window)
+            self.gatedelayBox.setEnabled(is_IDLE and self._pulse_has_gate_delay)
+            self.bnumBox.setEnabled(is_IDLE and self._pulse_has_burst_num)
+        else:
+            self.windowBox.setEnabled(is_IDLE and self._cw_has_time_window)
+            self.gatedelayBox.setEnabled(is_IDLE and self._cw_has_gate_delay)
 
         for w in (
             self.laserdelayBox,
@@ -881,7 +928,6 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             self.mwdelayBox,
             self.mwwidthBox,
             self.triggerwidthBox,
-            self.bnumBox,
         ):
             w.setEnabled(is_IDLE and is_pulse)
 
