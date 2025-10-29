@@ -923,6 +923,7 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         else:
             self.windowBox.setEnabled(is_IDLE and self._cw_has_time_window)
             self.gatedelayBox.setEnabled(is_IDLE and self._cw_has_gate_delay)
+            self.bnumBox.setEnabled(False)
 
         for w in (
             self.laserdelayBox,
