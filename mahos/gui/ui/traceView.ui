@@ -102,6 +102,13 @@
       </widget>
      </item>
      <item>
+      <widget class="QCheckBox" name="SIprefixBox">
+       <property name="text">
+        <string>SI prefix</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QCheckBox" name="timestampBox">
        <property name="text">
         <string>Timestamp</string>

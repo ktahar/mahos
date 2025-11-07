@@ -55,6 +55,7 @@ from ..util import conv
 from ..util.plot import colors_tab20_pair
 from ..util.stat import simple_moving_average
 from ..util.timer import FPSCounter
+from ..util.unit import SI_scale
 from .gui_node import GUINode
 from .dialog import save_dialog, load_dialog, export_dialog
 from .param import apply_widgets
@@ -2287,7 +2288,11 @@ class traceView(ClientWidget, Ui_traceView):
                 self.curve0.setData(tr)
             self.curve0_sma.setData(tsma0)
 
-        self.label0.setText("PD0: {:.2e}".format(mean0))
+        if self.SIprefixBox.isChecked():
+            scale, prefix = SI_scale(mean0)
+            self.label0.setText("PD0: {:6.2f} {}".format(mean0 * scale, prefix))
+        else:
+            self.label0.setText("PD0: {:.2e}".format(mean0))
         self.fpsLabel.setText("{:.1f} fps".format(self.fps_counter.tick()))
 
     def update_dual(self, trace: Trace):
@@ -2339,9 +2344,18 @@ class traceView(ClientWidget, Ui_traceView):
                     self.curve1.setData(tr1)
                 self.curve1_sma.setData(tsma1)
 
-        self.labeltotal.setText("Total: {:.2e}".format(mean0 + mean1))
-        self.label0.setText("PD0: {:.2e}".format(mean0))
-        self.label1.setText("PD1: {:.2e}".format(mean1))
+        if self.SIprefixBox.isChecked():
+            total = mean0 + mean1
+            scale, prefix = SI_scale(total)
+            self.labeltotal.setText("Total: {:6.2f} {}".format(total * scale, prefix))
+            scale, prefix = SI_scale(mean0)
+            self.label0.setText("PD0: {:6.2f} {}".format(mean0 * scale, prefix))
+            scale, prefix = SI_scale(mean1)
+            self.label1.setText("PD1: {:6.2f} {}".format(mean1 * scale, prefix))
+        else:
+            self.labeltotal.setText("Total: {:.2e}".format(mean0 + mean1))
+            self.label0.setText("PD0: {:.2e}".format(mean0))
+            self.label1.setText("PD1: {:.2e}".format(mean1))
         self.fpsLabel.setText("{:.1f} fps".format(self.fps_counter.tick()))
 
     def toggle_total(self, show: bool):
