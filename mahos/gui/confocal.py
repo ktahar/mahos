@@ -2288,11 +2288,12 @@ class traceView(ClientWidget, Ui_traceView):
                 self.curve0.setData(tr)
             self.curve0_sma.setData(tsma0)
 
+        u = trace.yunit or ""
         if self.SIprefixBox.isChecked():
             scale, prefix = SI_scale(mean0)
-            self.label0.setText("PD0: {:6.2f} {}".format(mean0 * scale, prefix))
+            self.label0.setText("PD0: {:6.2f} {}{}".format(mean0 * scale, prefix, u))
         else:
-            self.label0.setText("PD0: {:.2e}".format(mean0))
+            self.label0.setText("PD0: {:.2e} {}".format(mean0, u))
         self.fpsLabel.setText("{:.1f} fps".format(self.fps_counter.tick()))
 
     def update_dual(self, trace: Trace):
@@ -2344,18 +2345,19 @@ class traceView(ClientWidget, Ui_traceView):
                     self.curve1.setData(tr1)
                 self.curve1_sma.setData(tsma1)
 
+        u = trace.yunit or ""
         if self.SIprefixBox.isChecked():
             total = mean0 + mean1
             scale, prefix = SI_scale(total)
-            self.labeltotal.setText("Total: {:6.2f} {}".format(total * scale, prefix))
+            self.labeltotal.setText("Total: {:6.2f} {}{}".format(total * scale, prefix, u))
             scale, prefix = SI_scale(mean0)
-            self.label0.setText("PD0: {:6.2f} {}".format(mean0 * scale, prefix))
+            self.label0.setText("PD0: {:6.2f} {}{}".format(mean0 * scale, prefix, u))
             scale, prefix = SI_scale(mean1)
-            self.label1.setText("PD1: {:6.2f} {}".format(mean1 * scale, prefix))
+            self.label1.setText("PD1: {:6.2f} {}{}".format(mean1 * scale, prefix, u))
         else:
-            self.labeltotal.setText("Total: {:.2e}".format(mean0 + mean1))
-            self.label0.setText("PD0: {:.2e}".format(mean0))
-            self.label1.setText("PD1: {:.2e}".format(mean1))
+            self.labeltotal.setText("Total: {:.2e} {}".format(mean0 + mean1, u))
+            self.label0.setText("PD0: {:.2e} {}".format(mean0, u))
+            self.label1.setText("PD1: {:.2e} {}".format(mean1, u))
         self.fpsLabel.setText("{:.1f} fps".format(self.fps_counter.tick()))
 
     def toggle_total(self, show: bool):
