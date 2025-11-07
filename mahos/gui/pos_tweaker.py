@@ -58,6 +58,8 @@ class AxisWidgets(object):
         self.is_homed = False
         self.decimals = decimals
 
+        self._target = None
+
         self.step_box.editingFinished.connect(self.update_step)
         self.update_step()
 
@@ -79,6 +81,11 @@ class AxisWidgets(object):
         self.moving_label.setText(self.fmt_moving(state["moving"]))
         self.homed_label.setText(self.fmt_homed(state["homed"]))
         self.is_homed = state["homed"]
+        self._target = state["target"]
+
+    def refresh_target_box(self):
+        if self._target is not None:
+            self.target_box.setValue(self._target)
 
 
 class PosTweakerWidget(ClientTopWidget):
@@ -103,6 +110,8 @@ class PosTweakerWidget(ClientTopWidget):
         self.gl = QtWidgets.QGridLayout()
         self.vl = QtWidgets.QVBoxLayout()
 
+        self.lock = QtWidgets.QCheckBox("Lock")
+        self.lock.setChecked(False)
         self.stop_all_button = QtWidgets.QPushButton("Stop All")
         self.home_all_button = QtWidgets.QPushButton("Home All")
         self.save_button = QtWidgets.QPushButton("Save")
@@ -112,7 +121,13 @@ class PosTweakerWidget(ClientTopWidget):
         self.save_button.pressed.connect(self.request_save)
         self.load_button.pressed.connect(self.request_load)
 
-        for b in (self.save_button, self.load_button, self.stop_all_button, self.home_all_button):
+        for b in (
+            self.lock,
+            self.save_button,
+            self.load_button,
+            self.stop_all_button,
+            self.home_all_button,
+        ):
             self.hl.addWidget(b)
         self.vl.addLayout(self.hl)
         self.vl.addLayout(self.gl)
@@ -196,12 +211,24 @@ class PosTweakerWidget(ClientTopWidget):
             self.gl.addWidget(homed_label, i, 7)
             self.gl.addWidget(home_button, i, 8)
 
+        self.lock.toggled.connect(self.toggle_lock)
         self.cli.statusUpdated.connect(self.update)
         self.adjustSize()
         self.setEnabled(True)
 
     # def sizeHint(self):
     #     return QtCore.QSize(500, 1000)
+
+    def toggle_lock(self, checked: bool):
+        enabled = not checked
+        for w in (self.load_button, self.stop_all_button, self.home_all_button):
+            w.setEnabled(enabled)
+        for i in range(self.gl.rowCount()):
+            for j in (2, 3, 4, 5, 7, 8):
+                self.gl.itemAtPosition(i, j).widget().setEnabled(enabled)
+        if enabled:
+            for widgets in self._widgets.values():
+                widgets.refresh_target_box()
 
     def update(self, status: PosTweakerStatus):
         for ax, state in status.axis_states.items():
