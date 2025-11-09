@@ -39,11 +39,14 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QLabel" name="label0">
+       <property name="mouseTracking">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>PD0: 0.0</string>
        </property>
        <property name="textFormat">
-        <enum>Qt::RichText</enum>
+        <enum>Qt::AutoText</enum>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -52,11 +55,14 @@
      </item>
      <item>
       <widget class="QLabel" name="label1">
+       <property name="mouseTracking">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>PD1: 0.0</string>
        </property>
        <property name="textFormat">
-        <enum>Qt::RichText</enum>
+        <enum>Qt::AutoText</enum>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
