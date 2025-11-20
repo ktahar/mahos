@@ -65,6 +65,8 @@ class SpectroscopyData(BasicMeasData):
 
     def get_ydata(self, last_n: int = 0, filter_n: float = 0.0):
         d = self.data[:, -last_n:]
+        if last_n < 0 and self.data.shape[1] <= -last_n:
+            return None
         if not filter_n:
             return np.mean(d, axis=1)
         df, outlier = filter_outlier_2d(d, n=filter_n, axis=1, both=False)

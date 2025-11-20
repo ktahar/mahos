@@ -226,6 +226,8 @@ class PlotWidget(QtWidgets.QWidget):
             return
 
         img = data.get_image(last_n=self.lastnimgBox.value())
+        if img.size == 0:
+            return
         self.img.updateImage(img)
         if setlevel:
             mn, mx = np.nanmin(img), np.nanmax(img)

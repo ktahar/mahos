@@ -142,6 +142,8 @@ class ODMRData(BasicMeasData, ComplexDataMixin):
 
         if not self.has_data():
             return None, None
+        if last_n < 0 and self.data.shape[1] <= -last_n:
+            return None, None
 
         if self.has_background():
             ydata0, ydata1 = self._get_ydata_bg(last_n, normalize_n, complex_conv)

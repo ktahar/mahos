@@ -147,6 +147,8 @@ class PlotWidget(QtWidgets.QWidget):
     def update_image(self, data: SpectroscopyData, setlevel=True):
         img = data.data[:, -self.lastnimgBox.value() :]
         self.img.updateImage(img)
+        if img.size == 0:
+            return
         if setlevel:
             mn, mx = np.nanmin(data.data), np.nanmax(data.data)
             if mn == mx:
@@ -163,6 +165,8 @@ class PlotWidget(QtWidgets.QWidget):
         for data, show_fit, color in data_list:
             x = data.get_xdata()
             y = data.get_ydata(last_n=self.lastnBox.value(), filter_n=self.filternBox.value())
+            if y is None:
+                continue
             n_outliers.append(
                 str(
                     data.n_outliers(last_n=self.lastnBox.value(), filter_n=self.filternBox.value())

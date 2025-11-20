@@ -167,6 +167,8 @@ class PlotWidget(QtWidgets.QWidget):
         img = data.get_image(
             last_n=self.lastnimgBox.value(), complex_conv=self.complexBox.currentText()
         )
+        if img.size == 0:
+            return
         self.img.updateImage(img)
         if setlevel:
             mn, mx = np.nanmin(img), np.nanmax(img)
@@ -201,6 +203,8 @@ class PlotWidget(QtWidgets.QWidget):
                 normalize_n=self.normalizenBox.value(),
                 complex_conv=self.complexBox.currentText(),
             )
+            if y is None:
+                continue
             if self.showstdBox.isChecked():
                 ystd, ybg_std = data.get_ydata(
                     last_n=self.lastnBox.value(),

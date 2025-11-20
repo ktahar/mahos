@@ -333,6 +333,11 @@ class SPODMRData(BasicMeasData, ComplexDataMixin):
 
         if not self.has_data():
             return None, None
+        if last_n < 0:
+            if self.partial() == 1 and self.data1.shape[1] <= -last_n:
+                return None, None
+            elif self.data0.shape[1] <= -last_n:
+                return None, None
 
         if self.is_partial():
             return conv(self._get_ydata_partial(last_n)), None
