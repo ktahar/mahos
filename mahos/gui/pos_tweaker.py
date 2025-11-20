@@ -21,6 +21,7 @@ from .gui_node import GUINode
 from .common_widget import ClientTopWidget
 from ..node.node import local_conf, join_name
 from .dialog import save_dialog, load_dialog
+from ..util.timer import OneshotTimer
 
 
 Policy = QtWidgets.QSizePolicy.Policy
@@ -99,6 +100,7 @@ class PosTweakerWidget(ClientTopWidget):
         self._decimals = decimals
         self._widgets = {}
         self._group_name = "__" + name + "__"
+        self._refresh_timer = OneshotTimer(1.0)
 
         self.cli = QPosTweakerClient(gconf, name, context=context)
         self.cli.statusUpdated.connect(self.init_with_status)
@@ -267,6 +269,12 @@ class PosTweakerWidget(ClientTopWidget):
 
         self.cli.save(fn)
 
+    def refresh_all_targets(self, status: PosTweakerStatus):
+        if self._refresh_timer.check():
+            self.cli.statusUpdated.disconnect(self.refresh_all_targets)
+        for widgets in self._widgets.values():
+            widgets.refresh_target_box()
+
     def request_load(self):
         default_path = str(self.gparams_cli.get_param("work_dir"))
         fn = load_dialog(self, default_path, "PosTweaker or measurement", "")
@@ -279,7 +287,9 @@ class PosTweakerWidget(ClientTopWidget):
             # data written within measurement Data
             group = self._group_name
 
-        self.cli.load(fn, group)
+        if self.cli.load(fn, group):
+            self._refresh_timer = OneshotTimer(1.0)
+            self.cli.statusUpdated.connect(self.refresh_all_targets)
 
 
 class PosTweakerGUI(GUINode):
