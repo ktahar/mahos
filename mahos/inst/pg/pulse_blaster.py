@@ -14,9 +14,9 @@ import sys
 import os
 import ctypes as C
 
-from ..instrument import Instrument
-from ...msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq
-from ...util.unit import SI_scale
+from mahos.inst.instrument import Instrument
+from mahos.msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq
+from mahos.util.unit import SI_scale
 
 
 class PulseBlasterStatus(T.NamedTuple):

@@ -12,9 +12,9 @@ import argparse
 
 import IPython
 
-from ..node.node import join_name
-from ..node.client import get_client
-from .util import init_gconf_host_nodes
+from mahos.node.node import join_name
+from mahos.node.client import get_client
+from mahos.cli.util import init_gconf_host_nodes
 
 
 class Clients(object):

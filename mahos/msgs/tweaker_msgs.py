@@ -11,8 +11,8 @@ Message Types for the Tweaker.
 from __future__ import annotations
 from pprint import pformat
 
-from .common_msgs import Request, Status
-from . import param_msgs as P
+from mahos.msgs.common_msgs import Request, Status
+from mahos.msgs import param_msgs as P
 
 
 class TweakerStatus(Status):

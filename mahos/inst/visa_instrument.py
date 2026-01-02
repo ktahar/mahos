@@ -9,7 +9,7 @@ Base class for visa instrument.
 
 import pyvisa
 
-from .instrument import Instrument
+from mahos.inst.instrument import Instrument
 
 
 class VisaInstrument(Instrument):

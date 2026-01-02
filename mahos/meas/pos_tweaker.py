@@ -10,16 +10,16 @@ Specialized tweaker for manually operated positioners.
 
 from __future__ import annotations
 
-from ..msgs.common_msgs import Reply
-from ..msgs import pos_tweaker_msgs
-from ..msgs.pos_tweaker_msgs import PosTweakerStatus, SetTargetReq
-from ..msgs.pos_tweaker_msgs import HomeReq, HomeAllReq, StopReq, StopAllReq, LoadReq
-from ..msgs.tweaker_msgs import SaveReq
-from ..node.node import Node
-from ..node.client import StatusClient
-from ..inst.server import MultiInstrumentClient
-from ..inst.positioner_interface import SinglePositionerInterface
-from .pos_tweaker_io import PosTweakerIO
+from mahos.msgs.common_msgs import Reply
+from mahos.msgs import pos_tweaker_msgs
+from mahos.msgs.pos_tweaker_msgs import PosTweakerStatus, SetTargetReq
+from mahos.msgs.pos_tweaker_msgs import HomeReq, HomeAllReq, StopReq, StopAllReq, LoadReq
+from mahos.msgs.tweaker_msgs import SaveReq
+from mahos.node.node import Node
+from mahos.node.client import StatusClient
+from mahos.inst.server import MultiInstrumentClient
+from mahos.inst.positioner_interface import SinglePositionerInterface
+from mahos.meas.pos_tweaker_io import PosTweakerIO
 
 
 class PosTweakerClient(StatusClient):

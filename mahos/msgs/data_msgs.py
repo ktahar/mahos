@@ -17,7 +17,7 @@ import numpy as np
 import h5py
 import msgpack
 
-from .common_msgs import Message
+from mahos.msgs.common_msgs import Message
 
 
 _H5_RESERVED_ATTRS = ("_description", "_type", "_save_time", "_version_h5_base")

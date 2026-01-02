@@ -11,8 +11,8 @@ Message Types for the pulse pattern for visualization and debug.
 from __future__ import annotations
 import uuid
 
-from .inst.pg_msgs import Block, Blocks, BlockSeq
-from .common_msgs import Message
+from mahos.msgs.inst.pg_msgs import Block, Blocks, BlockSeq
+from mahos.msgs.common_msgs import Message
 
 
 class PulsePattern(Message):

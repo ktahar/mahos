@@ -10,7 +10,7 @@ Typed Interface for Imaging ODMR Sweeper.
 
 import numpy as np
 
-from ..interface import InstrumentInterface
+from mahos.inst.interface import InstrumentInterface
 
 
 class IODMRSweeperInterface(InstrumentInterface):

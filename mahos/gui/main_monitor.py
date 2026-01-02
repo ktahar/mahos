@@ -10,19 +10,19 @@ Main monitor for MAHOS system.
 
 import os
 
-from .Qt import QtCore, QtWidgets
-from .ui.mainMonitor import Ui_MainMonitor
+from mahos.gui.Qt import QtCore, QtWidgets
+from mahos.gui.ui.mainMonitor import Ui_MainMonitor
 
-from .gui_node import GUINode
-from .common_widget import ClientTopWidget
-from ..node.node import local_conf, join_name
-from ..node.log_broker import format_log_html_color, should_show, LogEntry
-from .global_params_client import QGlobalParamsClient
-from .log_client import QLogSubscriber
-from .inst_client import QInstrumentSubscriber
-from .manager_client import QManagerSubscriber
-from ..msgs.inst.server_msgs import ServerStatus, Ident
-from ..msgs.global_params_msgs import GlobalParamsStatus
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientTopWidget
+from mahos.node.node import local_conf, join_name
+from mahos.node.log_broker import format_log_html_color, should_show, LogEntry
+from mahos.gui.global_params_client import QGlobalParamsClient
+from mahos.gui.log_client import QLogSubscriber
+from mahos.gui.inst_client import QInstrumentSubscriber
+from mahos.gui.manager_client import QManagerSubscriber
+from mahos.msgs.inst.server_msgs import ServerStatus, Ident
+from mahos.msgs.global_params_msgs import GlobalParamsStatus
 
 
 class MainMonitorWidget(ClientTopWidget, Ui_MainMonitor):

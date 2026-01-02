@@ -17,10 +17,10 @@ import numpy as np
 import pandas as pd
 import msgpack
 
-from .common_msgs import Message, Request, State, Status, BinaryState
-from .data_msgs import Data, ComplexDataMixin, FormatTimeMixin
+from mahos.msgs.common_msgs import Message, Request, State, Status, BinaryState
+from mahos.msgs.data_msgs import Data, ComplexDataMixin, FormatTimeMixin
 
-from .common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
 
 
 class ConfocalState(State):

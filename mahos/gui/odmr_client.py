@@ -8,10 +8,10 @@ Qt signal-based clients of ODMR.
 
 """
 
-from .Qt import QtCore
+from mahos.gui.Qt import QtCore
 
-from ..msgs.odmr_msgs import ODMRData, ValidateReq
-from .client import QBasicMeasClient
+from mahos.msgs.odmr_msgs import ODMRData, ValidateReq
+from mahos.gui.client import QBasicMeasClient
 
 
 class QODMRClient(QBasicMeasClient):

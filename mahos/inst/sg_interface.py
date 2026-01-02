@@ -10,7 +10,7 @@ Typed Interface for Signal Generator.
 
 from __future__ import annotations
 
-from .interface import InstrumentInterface
+from mahos.inst.interface import InstrumentInterface
 
 
 class SGInterface(InstrumentInterface):

@@ -10,8 +10,8 @@ Typed Interface for Camera.
 
 from __future__ import annotations
 
-from .interface import InstrumentInterface
-from ..msgs.inst.camera_msgs import FrameResult
+from mahos.inst.interface import InstrumentInterface
+from mahos.msgs.inst.camera_msgs import FrameResult
 
 
 class CameraInterface(InstrumentInterface):

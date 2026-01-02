@@ -10,18 +10,18 @@ Logic and instrument control part of Qdyne.
 
 from __future__ import annotations
 
-from ..msgs.common_msgs import Reply, Request, StateReq, BinaryState, BinaryStatus
-from ..msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from ..msgs.common_meas_msgs import Buffer
-from ..msgs.param_msgs import GetParamDictLabelsReq, GetParamDictReq
-from ..msgs.param_msgs import remove_label_prefix
-from ..msgs import qdyne_msgs
-from ..msgs.qdyne_msgs import QdyneData, ValidateReq, DiscardReq
-from .qdyne_io import QdyneIO
-from ..util.timer import IntervalTimer
-from .common_meas import BasicMeasClient, BasicMeasNode
-from .common_worker import DummyWorker, Switch
-from .qdyne_worker import Pulser
+from mahos.msgs.common_msgs import Reply, Request, StateReq, BinaryState, BinaryStatus
+from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.msgs.common_meas_msgs import Buffer
+from mahos.msgs.param_msgs import GetParamDictLabelsReq, GetParamDictReq
+from mahos.msgs.param_msgs import remove_label_prefix
+from mahos.msgs import qdyne_msgs
+from mahos.msgs.qdyne_msgs import QdyneData, ValidateReq, DiscardReq
+from mahos.meas.qdyne_io import QdyneIO
+from mahos.util.timer import IntervalTimer
+from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.meas.common_worker import DummyWorker, Switch
+from mahos.meas.qdyne_worker import Pulser
 
 
 class QdyneClient(BasicMeasClient):

@@ -13,12 +13,12 @@ import threading
 
 import numpy as np
 
-from .overlay import InstrumentOverlay
-from ...msgs import param_msgs as P
-from ...msgs.inst.pg_msgs import TriggerType
-from ...util.locked_queue import LockedQueue
-from ...util.conf import PresetLoader
-from ...meas.odmr_pg import ODMRPGMixin
+from mahos.inst.overlay.overlay import InstrumentOverlay
+from mahos.msgs import param_msgs as P
+from mahos.msgs.inst.pg_msgs import TriggerType
+from mahos.util.locked_queue import LockedQueue
+from mahos.util.conf import PresetLoader
+from mahos.meas.odmr_pg import ODMRPGMixin
 
 
 class ODMRSweeperCommandBase(InstrumentOverlay):

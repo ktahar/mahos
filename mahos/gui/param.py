@@ -10,9 +10,9 @@ Common widgets/utilities for GUI to deal with Generic Parameters (mahos.msgs.par
 
 from __future__ import annotations
 
-from ..msgs import param_msgs as P
-from .Qt import QtWidgets, QtCore
-from .common_widget import SpinBox
+from mahos.msgs import param_msgs as P
+from mahos.gui.Qt import QtWidgets, QtCore
+from mahos.gui.common_widget import SpinBox
 
 
 def _apply(p: P.Param, widget: QtWidgets.QWidget, coeff: float):

@@ -15,10 +15,10 @@ import typing as T
 
 import zmq
 
-from ..msgs.common_msgs import pickle_proto, Message, Request, Reply
-from ..util.typing import SubHandler, RepHandler
+from mahos.msgs.common_msgs import pickle_proto, Message, Request, Reply
+from mahos.util.typing import SubHandler, RepHandler
 
-from .log import PUBHandler, DummyLogger
+from mahos.node.log import PUBHandler, DummyLogger
 
 
 def serialize(msg: Message | T.Any) -> bytes:

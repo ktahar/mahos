@@ -11,11 +11,11 @@ Worker for Recorder.
 from __future__ import annotations
 import time
 
-from ..util.timer import IntervalTimer
-from ..msgs.recorder_msgs import RecorderData
-from ..inst.interface import InstrumentInterface
-from ..msgs import param_msgs as P
-from .common_worker import Worker
+from mahos.util.timer import IntervalTimer
+from mahos.msgs.recorder_msgs import RecorderData
+from mahos.inst.interface import InstrumentInterface
+from mahos.msgs import param_msgs as P
+from mahos.meas.common_worker import Worker
 
 
 class Collector(Worker):

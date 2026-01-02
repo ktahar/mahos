@@ -13,7 +13,7 @@ import time
 
 import numpy as np
 
-from .iodmr_sweeper import IODMRSweeperCommand
+from mahos.inst.overlay.iodmr_sweeper import IODMRSweeperCommand
 
 
 def lorentz(x, x0, gamma):

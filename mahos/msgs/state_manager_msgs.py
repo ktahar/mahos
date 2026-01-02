@@ -10,7 +10,7 @@ Message Types for the StateManager.
 
 from pprint import pformat
 
-from .common_msgs import Request, Status
+from mahos.msgs.common_msgs import Request, Status
 
 
 class ManagerStatus(Status):

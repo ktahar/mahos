@@ -12,9 +12,9 @@ from __future__ import annotations
 import os
 import ctypes as C
 
-from .instrument import Instrument
-from ..msgs import param_msgs as P
-from ..util.conv import invert_mapping
+from mahos.inst.instrument import Instrument
+from mahos.msgs import param_msgs as P
+from mahos.util.conv import invert_mapping
 
 
 class Thorlabs_FW102(Instrument):

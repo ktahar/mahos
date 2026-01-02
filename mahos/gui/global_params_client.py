@@ -8,10 +8,10 @@ Qt signal-based client of GlobalParams.
 
 """
 
-from .Qt import QtCore
+from mahos.gui.Qt import QtCore
 
-from ..msgs.global_params_msgs import GlobalParamsStatus, SetParamReq
-from .client import QStatusSubWorker, QReqClient
+from mahos.msgs.global_params_msgs import GlobalParamsStatus, SetParamReq
+from mahos.gui.client import QStatusSubWorker, QReqClient
 
 
 class QGlobalParamsClient(QReqClient):

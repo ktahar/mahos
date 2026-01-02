@@ -13,21 +13,21 @@ import os
 
 import pyqtgraph as pg
 
-from .Qt import QtCore, QtWidgets
+from mahos.gui.Qt import QtCore, QtWidgets
 
-from .ui.basic_meas import Ui_BasicMeas
-from .client import QBasicMeasClient
+from mahos.gui.ui.basic_meas import Ui_BasicMeas
+from mahos.gui.client import QBasicMeasClient
 
-from ..msgs.common_msgs import BinaryState, BinaryStatus
-from ..msgs.common_meas_msgs import Buffer
-from ..msgs.common_meas_msgs import BasicMeasData
-from ..msgs.param_msgs import filter_out_label_prefix
-from ..node.global_params import GlobalParamsClient
-from .gui_node import GUINode
-from .common_widget import ClientWidget
-from .fit_widget import FitWidget
-from .dialog import save_dialog, load_dialog, export_dialog
-from ..node.node import local_conf, join_name
+from mahos.msgs.common_msgs import BinaryState, BinaryStatus
+from mahos.msgs.common_meas_msgs import Buffer
+from mahos.msgs.common_meas_msgs import BasicMeasData
+from mahos.msgs.param_msgs import filter_out_label_prefix
+from mahos.node.global_params import GlobalParamsClient
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientWidget
+from mahos.gui.fit_widget import FitWidget
+from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.node.node import local_conf, join_name
 
 
 class PlotWidget(QtWidgets.QWidget):

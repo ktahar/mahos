@@ -10,8 +10,8 @@ mahos ls command.
 
 import argparse
 
-from ..node.node import join_name, local_conf, host_nodes, hosts, threaded_nodes
-from .util import check_load_gconf
+from mahos.node.node import join_name, local_conf, host_nodes, hosts, threaded_nodes
+from mahos.cli.util import check_load_gconf
 
 
 def parse_args(args):

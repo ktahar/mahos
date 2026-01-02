@@ -10,9 +10,9 @@ Typed Interface for Pulse Generator.
 
 from __future__ import annotations
 
-from .interface import InstrumentInterface
+from mahos.inst.interface import InstrumentInterface
 
-from ..msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq
+from mahos.msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq
 
 
 class PGInterface(InstrumentInterface):

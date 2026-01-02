@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from .interface import InstrumentInterface
-from ..msgs.inst.spectrometer_msgs import Temperature
+from mahos.inst.interface import InstrumentInterface
+from mahos.msgs.inst.spectrometer_msgs import Temperature
 
 
 class SpectrometerInterface(InstrumentInterface):

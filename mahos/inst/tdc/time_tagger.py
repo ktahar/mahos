@@ -20,9 +20,9 @@ try:
 except ImportError:
     print("mahos.inst.tdc: failed to import TimeTagger module")
 
-from ..instrument import Instrument
-from ...msgs.inst.tdc_msgs import ChannelStatus, RawEvents
-from ...util.io import save_h5
+from mahos.inst.instrument import Instrument
+from mahos.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
+from mahos.util.io import save_h5
 
 
 class TimeTagger(Instrument):

@@ -14,12 +14,12 @@ import multiprocessing as mp
 import threading as mt
 import importlib.resources
 
-from ..node.node import NodeBase, join_name
-from ..node.comm import Context
-from .Qt import QtWidgets, QtCore
-from ..util.typing import NodeName
-from . import breeze_resources
-from .breeze_resources import dark
+from mahos.node.node import NodeBase, join_name
+from mahos.node.comm import Context
+from mahos.gui.Qt import QtWidgets, QtCore
+from mahos.util.typing import NodeName
+from mahos.gui import breeze_resources
+from mahos.gui.breeze_resources import dark
 
 
 class GUINode(NodeBase):

@@ -14,18 +14,25 @@ from collections import ChainMap
 from inspect import signature, getdoc, getfile
 from functools import wraps
 
-from ..msgs.common_msgs import Request, Reply
-from ..msgs import param_msgs as P
-from ..msgs.inst import server_msgs
-from ..msgs.inst.server_msgs import Ident, ServerStatus, LockReq, ReleaseReq, CheckLockReq, CallReq
-from ..msgs.inst.server_msgs import ShutdownReq, StartReq, StopReq, PauseReq, ResumeReq
-from ..msgs.inst.server_msgs import ResetReq, ConfigureReq, SetReq, GetReq, HelpReq
-from ..msgs.inst.server_msgs import GetParamDictReq, GetParamDictLabelsReq
-from ..node.node import Node, NodeName, split_name
-from ..node.client import StatusClient
-from ..util.graph import sort_dependency
-from .instrument import Instrument
-from .overlay.overlay import InstrumentOverlay
+from mahos.msgs.common_msgs import Request, Reply
+from mahos.msgs import param_msgs as P
+from mahos.msgs.inst import server_msgs
+from mahos.msgs.inst.server_msgs import (
+    Ident,
+    ServerStatus,
+    LockReq,
+    ReleaseReq,
+    CheckLockReq,
+    CallReq,
+)
+from mahos.msgs.inst.server_msgs import ShutdownReq, StartReq, StopReq, PauseReq, ResumeReq
+from mahos.msgs.inst.server_msgs import ResetReq, ConfigureReq, SetReq, GetReq, HelpReq
+from mahos.msgs.inst.server_msgs import GetParamDictReq, GetParamDictLabelsReq
+from mahos.node.node import Node, NodeName, split_name
+from mahos.node.client import StatusClient
+from mahos.util.graph import sort_dependency
+from mahos.inst.instrument import Instrument
+from mahos.inst.overlay.overlay import InstrumentOverlay
 
 
 class OverlayConf(object):

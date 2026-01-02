@@ -9,14 +9,14 @@ GUI client of InstrumentServer to operate DigitalOut (On/Off switch) manually.
 """
 
 from functools import partial
-from .Qt import QtCore, QtWidgets, QtGui
+from mahos.gui.Qt import QtCore, QtWidgets, QtGui
 
-from ..inst.daq_interface import DigitalOutInterface
-from ..inst.server import MultiInstrumentClient
+from mahos.inst.daq_interface import DigitalOutInterface
+from mahos.inst.server import MultiInstrumentClient
 
-from .gui_node import GUINode
-from .common_widget import ClientTopWidget
-from ..node.node import local_conf, join_name
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientTopWidget
+from mahos.node.node import local_conf, join_name
 
 
 def set_fontsize(widget, fontsize: int):

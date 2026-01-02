@@ -11,11 +11,11 @@ Common measurement Workers.
 from __future__ import annotations
 import typing as T
 
-from ..msgs.inst.pg_msgs import Block, Blocks
-from ..inst.interface import InstrumentInterface
-from ..inst.pg_interface import PGInterface
-from ..inst.server import MultiInstrumentClient
-from ..util.conv import args_to_list
+from mahos.msgs.inst.pg_msgs import Block, Blocks
+from mahos.inst.interface import InstrumentInterface
+from mahos.inst.pg_interface import PGInterface
+from mahos.inst.server import MultiInstrumentClient
+from mahos.util.conv import args_to_list
 
 
 class Worker(object):

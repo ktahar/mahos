@@ -15,9 +15,9 @@ import ctypes
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
-from .instrument import Instrument
-from .daq import AnalogIn, BufferedEdgeCounter
-from ..msgs import param_msgs as P
+from mahos.inst.instrument import Instrument
+from mahos.inst.daq import AnalogIn, BufferedEdgeCounter
+from mahos.msgs import param_msgs as P
 
 
 class APDCounter(BufferedEdgeCounter):

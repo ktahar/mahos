@@ -17,12 +17,12 @@ from numpy.typing import NDArray
 import lmfit as F
 from sklearn.cluster import KMeans
 
-from ..util.nv import peaks_of_B, peaks_of_B_aligned, gamma_MHz_mT
-from ..msgs import param_msgs as P
-from ..msgs.odmr_msgs import ODMRData
-from ..msgs.fit_msgs import PeakType
-from ..node.log import DummyLogger
-from .common_fitter import gaussian, lorentzian, voigt, BaseFitter
+from mahos.util.nv import peaks_of_B, peaks_of_B_aligned, gamma_MHz_mT
+from mahos.msgs import param_msgs as P
+from mahos.msgs.odmr_msgs import ODMRData
+from mahos.msgs.fit_msgs import PeakType
+from mahos.node.log import DummyLogger
+from mahos.meas.common_fitter import gaussian, lorentzian, voigt, BaseFitter
 
 
 def normalize(data: np.ndarray) -> np.ndarray:

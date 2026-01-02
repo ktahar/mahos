@@ -10,8 +10,8 @@ Qt signal-based client of Recorder.
 
 from __future__ import annotations
 
-from .client import QBasicMeasClient
-from ..msgs.recorder_msgs import ResetReq
+from mahos.gui.client import QBasicMeasClient
+from mahos.msgs.recorder_msgs import ResetReq
 
 
 class QRecorderClient(QBasicMeasClient):

@@ -14,11 +14,18 @@ import importlib
 import argparse
 import multiprocessing as mp
 
-from ..node.node import Node, start_node_proc, join_name, local_conf, threaded_nodes, is_threaded
-from ..node.log_broker import log_broker_is_up
-from ..gui.gui_node import GUINode, start_gui_node_proc
-from .util import init_gconf_host
-from .threaded_nodes import start_threaded_nodes_proc
+from mahos.node.node import (
+    Node,
+    start_node_proc,
+    join_name,
+    local_conf,
+    threaded_nodes,
+    is_threaded,
+)
+from mahos.node.log_broker import log_broker_is_up
+from mahos.gui.gui_node import GUINode, start_gui_node_proc
+from mahos.cli.util import init_gconf_host
+from mahos.cli.threaded_nodes import start_threaded_nodes_proc
 
 
 def parse_args(args):

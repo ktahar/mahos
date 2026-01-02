@@ -14,7 +14,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from . import cui
+from mahos.util import cui
 
 
 def to_map(df, xl, yl, cl):

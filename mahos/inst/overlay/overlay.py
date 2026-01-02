@@ -10,8 +10,8 @@ Base class InstrumentOverlay for the instrument overlay.
 
 from __future__ import annotations
 
-from ..instrument import Instrument
-from ...util.conv import args_to_list
+from mahos.inst.instrument import Instrument
+from mahos.util.conv import args_to_list
 
 
 class InstrumentOverlay(Instrument):

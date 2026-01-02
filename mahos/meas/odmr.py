@@ -8,19 +8,19 @@ Logic and instrument control part of ODMR.
 
 """
 
-from ..msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
-from ..msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from ..msgs.common_meas_msgs import Buffer
-from ..msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
-from ..msgs.param_msgs import prefix_labels, remove_label_prefix
-from ..msgs import odmr_msgs
-from ..msgs.odmr_msgs import ODMRData, ValidateReq
-from ..util.timer import IntervalTimer
-from .common_meas import BasicMeasClient, BasicMeasNode
-from .common_worker import DummyWorker, Switch, PulseGen_CW
-from .odmr_worker import Sweeper, SweeperOverlay
-from .odmr_fitter import ODMRFitter
-from .odmr_io import ODMRIO
+from mahos.msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
+from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.msgs.common_meas_msgs import Buffer
+from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
+from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
+from mahos.msgs import odmr_msgs
+from mahos.msgs.odmr_msgs import ODMRData, ValidateReq
+from mahos.util.timer import IntervalTimer
+from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.meas.common_worker import DummyWorker, Switch, PulseGen_CW
+from mahos.meas.odmr_worker import Sweeper, SweeperOverlay
+from mahos.meas.odmr_fitter import ODMRFitter
+from mahos.meas.odmr_io import ODMRIO
 
 
 class ODMRClient(BasicMeasClient):

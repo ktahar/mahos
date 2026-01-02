@@ -8,8 +8,8 @@ Positioner module
 
 """
 
-from .thorlabs_kinesis import Thorlabs_KCube_DCServo, Thorlabs_CageRotator
-from .suruga import Suruga_DS102
-from .pi import PI_OneAxis_USB
+from mahos.inst.positioner.thorlabs_kinesis import Thorlabs_KCube_DCServo, Thorlabs_CageRotator
+from mahos.inst.positioner.suruga import Suruga_DS102
+from mahos.inst.positioner.pi import PI_OneAxis_USB
 
 __all__ = ["Thorlabs_KCube_DCServo", "Thorlabs_CageRotator", "Suruga_DS102", "PI_OneAxis_USB"]

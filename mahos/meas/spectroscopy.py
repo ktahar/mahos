@@ -8,19 +8,19 @@ Logic and instrument control part of Spectroscopy.
 
 """
 
-from ..msgs.common_msgs import Reply, StateReq, BinaryState
-from ..msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from ..msgs.common_meas_msgs import Buffer
-from ..msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
-from ..msgs.param_msgs import prefix_labels, remove_label_prefix
-from ..msgs import spectroscopy_msgs
-from ..msgs.spectroscopy_msgs import SpectroscopyData, SpectroscopyStatus
-from ..util.timer import IntervalTimer
-from .common_meas import BasicMeasClient, BasicMeasNode
-from .common_worker import DummyWorker, PulseGen_CW, Switch
-from .spectroscopy_worker import Repeater
-from .spectroscopy_fitter import SpectroscopyFitter
-from .spectroscopy_io import SpectroscopyIO
+from mahos.msgs.common_msgs import Reply, StateReq, BinaryState
+from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.msgs.common_meas_msgs import Buffer
+from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
+from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
+from mahos.msgs import spectroscopy_msgs
+from mahos.msgs.spectroscopy_msgs import SpectroscopyData, SpectroscopyStatus
+from mahos.util.timer import IntervalTimer
+from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.meas.common_worker import DummyWorker, PulseGen_CW, Switch
+from mahos.meas.spectroscopy_worker import Repeater
+from mahos.meas.spectroscopy_fitter import SpectroscopyFitter
+from mahos.meas.spectroscopy_io import SpectroscopyIO
 
 
 class SpectroscopyClient(BasicMeasClient):

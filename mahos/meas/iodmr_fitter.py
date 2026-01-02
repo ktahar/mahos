@@ -24,13 +24,13 @@ from numpy.typing import NDArray
 import lmfit as F
 from lmfit.model import ModelResult
 
-from . import odmr_fitter as OF
+from mahos.meas import odmr_fitter as OF
 
-from ..node.log import DummyLogger
-from ..msgs.iodmr_msgs import IODMRData
-from ..util.timer import StopWatch
-from ..util.nv import Dgs_MHz, gamma_MHz_mT
-from ..util.image import apply_binning
+from mahos.node.log import DummyLogger
+from mahos.msgs.iodmr_msgs import IODMRData
+from mahos.util.timer import StopWatch
+from mahos.util.nv import Dgs_MHz, gamma_MHz_mT
+from mahos.util.image import apply_binning
 
 
 def load_modelresult(s: str):

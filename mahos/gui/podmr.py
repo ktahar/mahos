@@ -18,29 +18,29 @@ import uuid
 import numpy as np
 import pyqtgraph as pg
 
-from . import Qt
-from .Qt import QtCore, QtWidgets, QtGui
+from mahos.gui import Qt
+from mahos.gui.Qt import QtCore, QtWidgets, QtGui
 
-from .ui.podmr import Ui_PODMR
-from .ui.podmr_nmr_table import Ui_NMRTable
-from .ui.podmr_autosave import Ui_PODMRAutoSave
-from .podmr_client import QPODMRClient
+from mahos.gui.ui.podmr import Ui_PODMR
+from mahos.gui.ui.podmr_nmr_table import Ui_NMRTable
+from mahos.gui.ui.podmr_autosave import Ui_PODMRAutoSave
+from mahos.gui.podmr_client import QPODMRClient
 
-from ..msgs.common_msgs import BinaryState
-from ..msgs.common_meas_msgs import Buffer
-from ..msgs import param_msgs as P
-from ..msgs.podmr_msgs import PODMRStatus, PODMRData
-from ..node.global_params import GlobalParamsClient
-from .gui_node import GUINode
-from .common_widget import ClientWidget
-from .fit_widget import FitWidget
-from .param import set_enabled, apply_widgets
-from .dialog import save_dialog, load_dialog, export_dialog
-from ..node.node import local_conf, join_name
-from ..util.plot import colors_tab20_pair
-from ..util.timer import seconds_to_hms
-from ..util.math_phys import round_halfint, round_evenint
-from ..util.conv import real_fft
+from mahos.msgs.common_msgs import BinaryState
+from mahos.msgs.common_meas_msgs import Buffer
+from mahos.msgs import param_msgs as P
+from mahos.msgs.podmr_msgs import PODMRStatus, PODMRData
+from mahos.node.global_params import GlobalParamsClient
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientWidget
+from mahos.gui.fit_widget import FitWidget
+from mahos.gui.param import set_enabled, apply_widgets
+from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.node.node import local_conf, join_name
+from mahos.util.plot import colors_tab20_pair
+from mahos.util.timer import seconds_to_hms
+from mahos.util.math_phys import round_halfint, round_evenint
+from mahos.util.conv import real_fft
 
 
 Policy = QtWidgets.QSizePolicy.Policy

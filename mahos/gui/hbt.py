@@ -12,25 +12,25 @@ from __future__ import annotations
 import uuid
 import os
 
-from . import Qt
-from .Qt import QtCore, QtGui, QtWidgets
+from mahos.gui import Qt
+from mahos.gui.Qt import QtCore, QtGui, QtWidgets
 
 import pyqtgraph as pg
 
-from .ui.hbt import Ui_HBT
-from .hbt_client import QHBTClient
+from mahos.gui.ui.hbt import Ui_HBT
+from mahos.gui.hbt_client import QHBTClient
 
-from ..msgs.common_msgs import BinaryState, BinaryStatus
-from ..msgs.common_meas_msgs import Buffer
-from ..msgs.hbt_msgs import HBTData
-from ..node.global_params import GlobalParamsClient
-from ..meas.confocal import ConfocalIORequester
-from .gui_node import GUINode
-from .common_widget import ClientWidget
-from .fit_widget import FitWidget
-from .param import apply_widgets
-from .dialog import save_dialog, load_dialog, export_dialog
-from ..node.node import local_conf, join_name
+from mahos.msgs.common_msgs import BinaryState, BinaryStatus
+from mahos.msgs.common_meas_msgs import Buffer
+from mahos.msgs.hbt_msgs import HBTData
+from mahos.node.global_params import GlobalParamsClient
+from mahos.meas.confocal import ConfocalIORequester
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientWidget
+from mahos.gui.fit_widget import FitWidget
+from mahos.gui.param import apply_widgets
+from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.node.node import local_conf, join_name
 
 
 Policy = QtWidgets.QSizePolicy.Policy

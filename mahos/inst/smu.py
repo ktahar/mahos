@@ -13,8 +13,8 @@ import enum
 
 import numpy as np
 
-from ..msgs import param_msgs as P
-from .visa_instrument import VisaInstrument
+from mahos.msgs import param_msgs as P
+from mahos.inst.visa_instrument import VisaInstrument
 
 
 class Mode(enum.Enum):

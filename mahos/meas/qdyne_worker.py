@@ -15,23 +15,23 @@ from itertools import chain
 
 import numpy as np
 
-from ..util.timer import IntervalTimer, StopWatch
-from ..util.io import load_h5
-from ..msgs import param_msgs as P
-from ..msgs.pulse_msgs import PulsePattern
-from ..msgs.inst.pg_msgs import Block, Blocks
-from ..msgs.inst.tdc_msgs import RawEvents
-from ..msgs.qdyne_msgs import QdyneData, TDCStatus
-from ..inst.sg_interface import SGInterface
-from ..inst.pg_interface import PGInterface
-from ..inst.tdc_interface import TDCInterface
-from ..inst.fg_interface import FGInterface
-from ..util.conf import PresetLoader
-from .common_worker import Worker
+from mahos.util.timer import IntervalTimer, StopWatch
+from mahos.util.io import load_h5
+from mahos.msgs import param_msgs as P
+from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.msgs.inst.pg_msgs import Block, Blocks
+from mahos.msgs.inst.tdc_msgs import RawEvents
+from mahos.msgs.qdyne_msgs import QdyneData, TDCStatus
+from mahos.inst.sg_interface import SGInterface
+from mahos.inst.pg_interface import PGInterface
+from mahos.inst.tdc_interface import TDCInterface
+from mahos.inst.fg_interface import FGInterface
+from mahos.util.conf import PresetLoader
+from mahos.meas.common_worker import Worker
 
-from .podmr_generator import generator_kernel as K
-from .podmr_generator.generator import make_generators
-from ..ext import cqdyne_analyzer as C
+from mahos.meas.podmr_generator import generator_kernel as K
+from mahos.meas.podmr_generator.generator import make_generators
+from mahos.ext import cqdyne_analyzer as C
 
 
 class Bounds(object):

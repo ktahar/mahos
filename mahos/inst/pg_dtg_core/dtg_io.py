@@ -12,7 +12,7 @@ import struct
 
 import numpy as np
 
-from .dtg_recids import is_interior, RECIDS, LEAF_TYPES
+from mahos.inst.pg_dtg_core.dtg_recids import is_interior, RECIDS, LEAF_TYPES
 
 
 def read_tree(data, max_bytes=10000000):

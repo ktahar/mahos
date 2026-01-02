@@ -14,18 +14,18 @@ import copy
 
 import numpy as np
 
-from ..util.timer import IntervalTimer
-from ..msgs.podmr_msgs import PODMRData, TDCStatus, is_sweepN, is_CPlike, is_correlation
-from ..msgs.pulse_msgs import PulsePattern
-from ..msgs import param_msgs as P
-from ..inst.sg_interface import SGInterface
-from ..inst.pg_interface import PGInterface
-from ..inst.tdc_interface import TDCInterface
-from ..inst.fg_interface import FGInterface
-from ..util.conf import PresetLoader
-from .common_worker import Worker
+from mahos.util.timer import IntervalTimer
+from mahos.msgs.podmr_msgs import PODMRData, TDCStatus, is_sweepN, is_CPlike, is_correlation
+from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.msgs import param_msgs as P
+from mahos.inst.sg_interface import SGInterface
+from mahos.inst.pg_interface import PGInterface
+from mahos.inst.tdc_interface import TDCInterface
+from mahos.inst.fg_interface import FGInterface
+from mahos.util.conf import PresetLoader
+from mahos.meas.common_worker import Worker
 
-from .podmr_generator.generator import make_generators
+from mahos.meas.podmr_generator.generator import make_generators
 
 
 class PODMRDataOperator(object):

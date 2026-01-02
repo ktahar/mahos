@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..instrument import Instrument
-from ...msgs.inst.spectrometer_msgs import Temperature
+from mahos.inst.instrument import Instrument
+from mahos.msgs.inst.spectrometer_msgs import Temperature
 
 
 # imports for Andor

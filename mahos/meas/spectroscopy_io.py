@@ -15,10 +15,10 @@ from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ..meas.spectroscopy_fitter import SpectroscopyFitter
-from ..msgs.spectroscopy_msgs import SpectroscopyData, update_data
-from ..node.log import DummyLogger
-from ..util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.meas.spectroscopy_fitter import SpectroscopyFitter
+from mahos.msgs.spectroscopy_msgs import SpectroscopyData, update_data
+from mahos.node.log import DummyLogger
+from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
 
 
 class SpectroscopyIO(object):

@@ -4,17 +4,17 @@ import os
 
 import pyqtgraph as pg
 
-from ..node.node import local_conf
-from ..gui.client import QBasicMeasClient
-from ..gui.Qt import QtWidgets
-from ..gui.param import apply_widgets
-from ..gui.gui_node import GUINode
-from ..gui.common_widget import ClientTopWidget, SpinBox
-from ..gui.dialog import save_dialog, load_dialog, export_dialog
-from ..msgs.common_msgs import BinaryState, BinaryStatus
-from ..node.global_params import GlobalParamsClient
+from mahos.node.node import local_conf
+from mahos.gui.client import QBasicMeasClient
+from mahos.gui.Qt import QtWidgets
+from mahos.gui.param import apply_widgets
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientTopWidget, SpinBox
+from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.msgs.common_msgs import BinaryState, BinaryStatus
+from mahos.node.global_params import GlobalParamsClient
 
-from ..msgs.iv_msgs import IVData
+from mahos.msgs.iv_msgs import IVData
 
 Policy = QtWidgets.QSizePolicy.Policy
 

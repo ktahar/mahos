@@ -13,18 +13,18 @@ import time
 
 import numpy as np
 
-from ..msgs.odmr_msgs import ODMRData
-from ..msgs.pulse_msgs import PulsePattern
-from ..msgs import param_msgs as P
-from ..msgs.inst.pg_msgs import TriggerType
-from ..inst.sg_interface import SGInterface
-from ..inst.pg_interface import PGInterface
-from ..inst.pd_interface import PDInterface
-from ..inst.daq_interface import ClockSourceInterface
-from ..inst.overlay.odmr_sweeper_interface import ODMRSweeperInterface
-from ..util.conf import PresetLoader
-from .odmr_pg import ODMRPGMixin
-from .common_worker import Worker
+from mahos.msgs.odmr_msgs import ODMRData
+from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.msgs import param_msgs as P
+from mahos.msgs.inst.pg_msgs import TriggerType
+from mahos.inst.sg_interface import SGInterface
+from mahos.inst.pg_interface import PGInterface
+from mahos.inst.pd_interface import PDInterface
+from mahos.inst.daq_interface import ClockSourceInterface
+from mahos.inst.overlay.odmr_sweeper_interface import ODMRSweeperInterface
+from mahos.util.conf import PresetLoader
+from mahos.meas.odmr_pg import ODMRPGMixin
+from mahos.meas.common_worker import Worker
 
 
 _MOD_LABELS = ["iq_ext", "am_ext", "fm_ext", "iq_int", "am_int", "fm_int"]

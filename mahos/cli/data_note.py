@@ -12,7 +12,7 @@ import argparse
 
 import h5py
 
-from ..node.log import DummyLogger
+from mahos.node.log import DummyLogger
 
 
 def parse_args(args):

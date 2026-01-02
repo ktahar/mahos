@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from .interface import InstrumentInterface
+from mahos.inst.interface import InstrumentInterface
 
-from ..msgs.inst.tdc_msgs import ChannelStatus, RawEvents
+from mahos.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
 
 
 class TDCInterface(InstrumentInterface):

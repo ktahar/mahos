@@ -15,8 +15,8 @@ import ctypes as C
 
 import numpy as np
 
-from .instrument import Instrument
-from ..msgs import param_msgs as P
+from mahos.inst.instrument import Instrument
+from mahos.msgs import param_msgs as P
 
 
 class RS_NRPZ(Instrument):

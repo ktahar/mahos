@@ -10,7 +10,7 @@ Message Types for Fitting in Meas Node.
 
 import enum
 
-from .common_msgs import Message
+from mahos.msgs.common_msgs import Message
 
 
 class PeakType(Message, enum.Enum):

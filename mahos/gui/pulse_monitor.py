@@ -11,14 +11,14 @@ GUI client for Pulse-based measurement to visualize the Pulse Pattern.
 import numpy as np
 import pyqtgraph as pg
 
-from .Qt import QtCore, QtWidgets
+from mahos.gui.Qt import QtCore, QtWidgets
 
-from .gui_node import GUINode
-from .common_widget import ClientTopWidget
-from .pulse_monitor_client import QPulseClient
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientTopWidget
+from mahos.gui.pulse_monitor_client import QPulseClient
 
-from ..node.node import local_conf, join_name
-from ..msgs.pulse_msgs import PulsePattern
+from mahos.node.node import local_conf, join_name
+from mahos.msgs.pulse_msgs import PulsePattern
 
 
 Policy = QtWidgets.QSizePolicy.Policy

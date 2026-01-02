@@ -10,16 +10,16 @@ Base implementation for Qt client for Nodes.
 
 from __future__ import annotations
 
-from .Qt import QtCore
+from mahos.gui.Qt import QtCore
 
-from ..node.comm import Context
-from ..node.client import init_node_client
-from ..node.node import join_name, get_value
-from ..msgs.common_msgs import Status, State, BinaryStatus, BinaryState, StateReq
-from ..msgs.data_msgs import Data
-from ..msgs.common_meas_msgs import BasicMeasData, Buffer
-from ..meas.common_meas import ParamDictReqMixin, BasicMeasReqMixin
-from ..util.typing import NodeName
+from mahos.node.comm import Context
+from mahos.node.client import init_node_client
+from mahos.node.node import join_name, get_value
+from mahos.msgs.common_msgs import Status, State, BinaryStatus, BinaryState, StateReq
+from mahos.msgs.data_msgs import Data
+from mahos.msgs.common_meas_msgs import BasicMeasData, Buffer
+from mahos.meas.common_meas import ParamDictReqMixin, BasicMeasReqMixin
+from mahos.util.typing import NodeName
 
 
 class QSubWorker(QtCore.QObject):

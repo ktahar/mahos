@@ -12,9 +12,9 @@ import importlib
 import time
 import multiprocessing as mp
 
-from ..node.node import Node, join_name, local_conf, start_node_thread, threaded_nodes
-from ..node.comm import Context
-from ..gui.gui_node import GUINode, start_gui_node_thread
+from mahos.node.node import Node, join_name, local_conf, start_node_thread, threaded_nodes
+from mahos.node.comm import Context
+from mahos.gui.gui_node import GUINode, start_gui_node_thread
 
 
 class ThreadedNodes(object):

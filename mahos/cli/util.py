@@ -12,7 +12,7 @@ import sys
 from os import path
 import platform
 
-from ..node.node import load_gconf, infer_name
+from mahos.node.node import load_gconf, infer_name
 
 
 def check_load_gconf(fn):

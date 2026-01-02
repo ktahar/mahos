@@ -18,12 +18,12 @@ import logging
 
 import zmq
 
-from .node import NodeBase, Node, NodeName, NAME_DELIM, split_name
-from .comm import Context
-from .client import NodeClient, SubWorker
-from .log import TOPIC_DELIM, TIME_DELIM
-from ..util.term_color import col
-from .. import LOG_DIR
+from mahos.node.node import NodeBase, Node, NodeName, NAME_DELIM, split_name
+from mahos.node.comm import Context
+from mahos.node.client import NodeClient, SubWorker
+from mahos.node.log import TOPIC_DELIM, TIME_DELIM
+from mahos.util.term_color import col
+from mahos import LOG_DIR
 
 
 class LogEntry(T.NamedTuple):

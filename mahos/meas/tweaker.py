@@ -10,15 +10,15 @@ Generic tweaker for manually-tunable Instrument's ParamDicts.
 
 from __future__ import annotations
 
-from ..msgs.common_msgs import Reply
-from ..msgs import param_msgs as P
-from ..msgs import tweaker_msgs
-from ..msgs.tweaker_msgs import TweakerStatus, ReadReq, ReadAllReq, WriteReq, WriteAllReq
-from ..msgs.tweaker_msgs import StartReq, StopReq, ResetReq, SaveReq, LoadReq
-from ..node.node import Node
-from ..node.client import NodeClient, StatusClient
-from ..inst.server import MultiInstrumentClient
-from .tweaker_io import TweakerIO
+from mahos.msgs.common_msgs import Reply
+from mahos.msgs import param_msgs as P
+from mahos.msgs import tweaker_msgs
+from mahos.msgs.tweaker_msgs import TweakerStatus, ReadReq, ReadAllReq, WriteReq, WriteAllReq
+from mahos.msgs.tweaker_msgs import StartReq, StopReq, ResetReq, SaveReq, LoadReq
+from mahos.node.node import Node
+from mahos.node.client import NodeClient, StatusClient
+from mahos.inst.server import MultiInstrumentClient
+from mahos.meas.tweaker_io import TweakerIO
 
 
 class TweakerClient(StatusClient):

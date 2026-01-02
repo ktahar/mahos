@@ -12,8 +12,8 @@ import re
 import enum
 from functools import wraps
 
-from .visa_instrument import VisaInstrument
-from ..msgs import param_msgs as P
+from mahos.inst.visa_instrument import VisaInstrument
+from mahos.msgs import param_msgs as P
 
 
 def ch_setter(channels):

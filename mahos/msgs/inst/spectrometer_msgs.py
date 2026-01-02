@@ -10,7 +10,7 @@ Message Types for Spectrometer Instruments.
 
 from __future__ import annotations
 
-from ..data_msgs import Message
+from mahos.msgs.data_msgs import Message
 
 
 class Temperature(Message):

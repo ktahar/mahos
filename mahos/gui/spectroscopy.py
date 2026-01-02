@@ -15,24 +15,24 @@ import os
 import numpy as np
 import pyqtgraph as pg
 
-from . import Qt
-from .Qt import QtCore, QtWidgets, QtGui
+from mahos.gui import Qt
+from mahos.gui.Qt import QtCore, QtWidgets, QtGui
 
-from .ui.spectroscopy import Ui_Spectroscopy
-from .spectroscopy_client import QSpectroscopyClient
+from mahos.gui.ui.spectroscopy import Ui_Spectroscopy
+from mahos.gui.spectroscopy_client import QSpectroscopyClient
 
-from ..msgs.common_msgs import BinaryState
-from ..msgs.common_meas_msgs import Buffer
-from ..msgs.spectroscopy_msgs import SpectroscopyData, SpectroscopyStatus
-from ..msgs.inst.spectrometer_msgs import Temperature
-from ..node.global_params import GlobalParamsClient
-from ..meas.confocal import ConfocalIORequester
-from .gui_node import GUINode
-from .common_widget import ClientWidget
-from .fit_widget import FitWidget
-from .dialog import save_dialog, load_dialog, export_dialog
-from .param import apply_widgets
-from ..node.node import local_conf, join_name
+from mahos.msgs.common_msgs import BinaryState
+from mahos.msgs.common_meas_msgs import Buffer
+from mahos.msgs.spectroscopy_msgs import SpectroscopyData, SpectroscopyStatus
+from mahos.msgs.inst.spectrometer_msgs import Temperature
+from mahos.node.global_params import GlobalParamsClient
+from mahos.meas.confocal import ConfocalIORequester
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientWidget
+from mahos.gui.fit_widget import FitWidget
+from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.gui.param import apply_widgets
+from mahos.node.node import local_conf, join_name
 
 
 Policy = QtWidgets.QSizePolicy.Policy

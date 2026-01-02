@@ -8,10 +8,10 @@ Qt signal-based client of StateManager.
 
 """
 
-from .Qt import QtCore
+from mahos.gui.Qt import QtCore
 
-from ..msgs.state_manager_msgs import ManagerStatus
-from .client import QNodeClient, QStatusSubWorker
+from mahos.msgs.state_manager_msgs import ManagerStatus
+from mahos.gui.client import QNodeClient, QStatusSubWorker
 
 
 class QManagerSubscriber(QNodeClient):

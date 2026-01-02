@@ -12,10 +12,10 @@ from __future__ import annotations
 import re
 
 import numpy as np
-from . import generator_kernel as K
+from mahos.meas.podmr_generator import generator_kernel as K
 
-from ...msgs import param_msgs as P
-from ...msgs.inst.pg_msgs import Channels, AnalogChannel
+from mahos.msgs import param_msgs as P
+from mahos.msgs.inst.pg_msgs import Channels, AnalogChannel
 
 
 mw_x = K.mw_x

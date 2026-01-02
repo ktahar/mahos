@@ -8,7 +8,7 @@ Commom Message Types for Instruments.
 
 """
 
-from ..common_msgs import Message
+from mahos.msgs.common_msgs import Message
 
 
 class GetResult(Message):

@@ -14,20 +14,20 @@ from itertools import cycle
 
 import pyqtgraph as pg
 
-from .Qt import QtCore, QtWidgets
+from mahos.gui.Qt import QtCore, QtWidgets
 
-from .ui.recorder import Ui_Recorder
-from .recorder_client import QRecorderClient
+from mahos.gui.ui.recorder import Ui_Recorder
+from mahos.gui.recorder_client import QRecorderClient
 
-from ..msgs.common_msgs import BinaryState, BinaryStatus
-from ..msgs.recorder_msgs import RecorderData
-from ..node.global_params import GlobalParamsClient
-from .gui_node import GUINode
-from .common_widget import ClientWidget
-from .dialog import save_dialog, load_dialog, export_dialog
-from ..node.node import local_conf, join_name
-from ..util.plot import colors_tab10
-from ..util.unit import SI_scale
+from mahos.msgs.common_msgs import BinaryState, BinaryStatus
+from mahos.msgs.recorder_msgs import RecorderData
+from mahos.node.global_params import GlobalParamsClient
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientWidget
+from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.node.node import local_conf, join_name
+from mahos.util.plot import colors_tab10
+from mahos.util.unit import SI_scale
 
 
 class PlotWidget(QtWidgets.QWidget):

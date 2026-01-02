@@ -8,10 +8,10 @@ mahos data command.
 
 """
 
-from . import data_ls
-from . import data_note
-from . import data_print
-from . import plot
+from mahos.cli import data_ls
+from mahos.cli import data_note
+from mahos.cli import data_print
+from mahos.cli import plot
 
 data_usage = """usage: mahos data COMMAND args
 

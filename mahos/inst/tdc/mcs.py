@@ -16,9 +16,9 @@ import os
 
 import numpy as np
 
-from ..instrument import Instrument
-from ...msgs.inst.tdc_msgs import ChannelStatus, RawEvents
-from ...util.io import save_h5
+from mahos.inst.instrument import Instrument
+from mahos.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
+from mahos.util.io import save_h5
 
 
 def c_str(s: str) -> C.c_char_p:

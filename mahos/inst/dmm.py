@@ -12,8 +12,8 @@ from __future__ import annotations
 import enum
 import time
 
-from ..msgs import param_msgs as P
-from .visa_instrument import VisaInstrument
+from mahos.msgs import param_msgs as P
+from mahos.inst.visa_instrument import VisaInstrument
 
 
 class Mode(enum.Enum):

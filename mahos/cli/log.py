@@ -12,8 +12,8 @@ import time
 import argparse
 from functools import partial
 
-from ..node.node import join_name, is_threaded
-from ..node.log_broker import (
+from mahos.node.node import join_name, is_threaded
+from mahos.node.log_broker import (
     LogClient,
     parse_log,
     format_log,
@@ -21,8 +21,8 @@ from ..node.log_broker import (
     should_show,
     log_broker_is_up,
 )
-from .util import init_gconf_host_node, host_is_local
-from .launch import Launcher
+from mahos.cli.util import init_gconf_host_node, host_is_local
+from mahos.cli.launch import Launcher
 
 
 def parse_args(args):

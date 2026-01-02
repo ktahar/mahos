@@ -12,19 +12,19 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..msgs.spodmr_msgs import SPODMRData, is_sweepN, is_CPlike, is_correlation
-from ..msgs.pulse_msgs import PulsePattern
-from ..msgs import param_msgs as P
-from ..inst.sg_interface import SGInterface
-from ..inst.pg_interface import PGInterface, Block, Blocks, BlockSeq
-from ..inst.pd_interface import PDInterface
-from ..inst.fg_interface import FGInterface
-from ..inst.daq_interface import ClockSourceInterface
-from ..util.conf import PresetLoader
-from .common_worker import Worker
+from mahos.msgs.spodmr_msgs import SPODMRData, is_sweepN, is_CPlike, is_correlation
+from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.msgs import param_msgs as P
+from mahos.inst.sg_interface import SGInterface
+from mahos.inst.pg_interface import PGInterface, Block, Blocks, BlockSeq
+from mahos.inst.pd_interface import PDInterface
+from mahos.inst.fg_interface import FGInterface
+from mahos.inst.daq_interface import ClockSourceInterface
+from mahos.util.conf import PresetLoader
+from mahos.meas.common_worker import Worker
 
-from .podmr_generator.generator import make_generators
-from .podmr_generator import generator_kernel as K
+from mahos.meas.podmr_generator.generator import make_generators
+from mahos.meas.podmr_generator import generator_kernel as K
 
 
 class SPODMRDataOperator(object):

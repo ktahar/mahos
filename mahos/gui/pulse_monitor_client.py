@@ -10,10 +10,10 @@ Qt signal-based clients of Pulse-based meas nodes.
 
 from __future__ import annotations
 
-from .Qt import QtCore
+from mahos.gui.Qt import QtCore
 
-from ..msgs.pulse_msgs import PulsePattern
-from .client import QSubWorker, QNodeClient
+from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.gui.client import QSubWorker, QNodeClient
 
 
 class QPulseSubWorker(QSubWorker):

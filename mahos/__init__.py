@@ -11,7 +11,7 @@ The mahos package
 import os
 
 # top level exports for frequently used functions
-from .node.node import load_gconf, local_conf
+from mahos.node.node import load_gconf, local_conf
 
 __all__ = ["cli", "gui", "inst", "meas", "msgs", "node", "util", "load_gconf", "local_conf"]
 

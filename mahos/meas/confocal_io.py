@@ -17,10 +17,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from ..msgs.confocal_msgs import Image, Trace, ScanDirection, update_image, update_trace
-from ..node.log import DummyLogger
-from ..util.io import save_pickle_or_h5, load_pickle_or_h5
-from ..util.image import save_map, plot_map, plot_map_only
+from mahos.msgs.confocal_msgs import Image, Trace, ScanDirection, update_image, update_trace
+from mahos.node.log import DummyLogger
+from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.util.image import save_map, plot_map, plot_map_only
 
 
 class ConfocalIO(object):

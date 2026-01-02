@@ -8,10 +8,10 @@ Qt signal-based clients of HBT.
 
 """
 
-from .Qt import QtCore
+from mahos.gui.Qt import QtCore
 
-from ..msgs.hbt_msgs import HBTData, UpdatePlotParamsReq
-from .client import QBasicMeasClient
+from mahos.msgs.hbt_msgs import HBTData, UpdatePlotParamsReq
+from mahos.gui.client import QBasicMeasClient
 
 
 class QHBTClient(QBasicMeasClient):

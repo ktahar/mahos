@@ -10,15 +10,15 @@ Generic data-logging measurement for time-series data.
 
 from __future__ import annotations
 
-from ..msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
-from ..msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from ..msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
-from ..msgs import recorder_msgs
-from ..msgs.recorder_msgs import RecorderData, ResetReq
-from .common_meas import BasicMeasClient, BasicMeasNode
-from ..util.timer import IntervalTimer
-from .recorder_worker import Collector
-from .recorder_io import RecorderIO
+from mahos.msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
+from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
+from mahos.msgs import recorder_msgs
+from mahos.msgs.recorder_msgs import RecorderData, ResetReq
+from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.util.timer import IntervalTimer
+from mahos.meas.recorder_worker import Collector
+from mahos.meas.recorder_io import RecorderIO
 
 
 class RecorderClient(BasicMeasClient):

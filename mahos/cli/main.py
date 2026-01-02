@@ -11,7 +11,7 @@ main entrypoint of mahos cli.
 import sys
 import os
 
-from . import run, launch, log, ls, graph, echo, shell, data, plot
+from mahos.cli import run, launch, log, ls, graph, echo, shell, data, plot
 
 main_usage = """usage: mahos COMMAND args
 

@@ -15,10 +15,10 @@ import numpy as np
 from numpy.typing import NDArray
 import msgpack
 
-from .fit_msgs import PeakType
-from ..util.comp import dict_isclose
-from .common_msgs import Request, BinaryState, Status
-from .common_meas_msgs import BasicMeasData
+from mahos.msgs.fit_msgs import PeakType
+from mahos.util.comp import dict_isclose
+from mahos.msgs.common_msgs import Request, BinaryState, Status
+from mahos.msgs.common_meas_msgs import BasicMeasData
 
 
 class ValidateReq(Request):

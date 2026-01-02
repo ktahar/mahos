@@ -15,14 +15,14 @@ from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ..msgs.spodmr_msgs import SPODMRData, update_data
-from ..meas.spodmr_worker import SPODMRDataOperator
-from ..meas.podmr_fitter import PODMRFitter
-from ..node.log import DummyLogger
-from ..util.io import save_pickle_or_h5, load_pickle_or_h5
-from ..util.unit import SI_scale
-from ..util.conv import real_fft, real_fftfreq
-from ..util.plot import colors_tab20_pair
+from mahos.msgs.spodmr_msgs import SPODMRData, update_data
+from mahos.meas.spodmr_worker import SPODMRDataOperator
+from mahos.meas.podmr_fitter import PODMRFitter
+from mahos.node.log import DummyLogger
+from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.util.unit import SI_scale
+from mahos.util.conv import real_fft, real_fftfreq
+from mahos.util.plot import colors_tab20_pair
 
 
 class SPODMRIO(object):

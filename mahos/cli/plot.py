@@ -15,15 +15,15 @@ from os import path
 import pprint
 import toml
 
-from ..msgs.fit_msgs import str_to_peak_type
-from ..meas.confocal_io import ConfocalIO
-from ..meas.odmr_io import ODMRIO
-from ..meas.podmr_io import PODMRIO
-from ..meas.spodmr_io import SPODMRIO
-from ..meas.iodmr_io import IODMRIO
-from ..meas.hbt_io import HBTIO
-from ..meas.spectroscopy_io import SpectroscopyIO
-from ..util.cui import prompt
+from mahos.msgs.fit_msgs import str_to_peak_type
+from mahos.meas.confocal_io import ConfocalIO
+from mahos.meas.odmr_io import ODMRIO
+from mahos.meas.podmr_io import PODMRIO
+from mahos.meas.spodmr_io import SPODMRIO
+from mahos.meas.iodmr_io import IODMRIO
+from mahos.meas.hbt_io import HBTIO
+from mahos.meas.spectroscopy_io import SpectroscopyIO
+from mahos.util.cui import prompt
 
 
 def plot_data(args, fn, data, plot, force=False):

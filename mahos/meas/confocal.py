@@ -11,23 +11,23 @@ Logic and instrument control part of confocal microscope.
 from __future__ import annotations
 import typing as T
 
-from ..msgs.common_msgs import Reply, StateReq, ShutdownReq, BinaryState
-from ..msgs import confocal_msgs
-from ..msgs.confocal_msgs import Axis, ConfocalState, MoveReq
-from ..msgs.confocal_msgs import SaveImageReq, ExportImageReq, ExportViewReq, LoadImageReq
-from ..msgs.confocal_msgs import SaveTraceReq, ExportTraceReq, LoadTraceReq
-from ..msgs.confocal_msgs import TraceCommand, CommandTraceReq, BufferCommand, CommandBufferReq
-from ..msgs.confocal_msgs import ConfocalStatus, TraceStatus, Image, Trace, ScanDirection
-from ..msgs.param_msgs import GetParamDictReq
-from ..node.node import Node
-from ..node.client import NodeClient
-from ..inst.server import MultiInstrumentClient
-from ..util.timer import IntervalTimer
-from .tweaker import TweakSaver
-from .common_meas import BaseMeasClientMixin
-from .common_worker import DummyWorker, PulseGen_CW, Switch
-from .confocal_worker import Piezo, Tracer, Scanner
-from .confocal_io import ConfocalIO
+from mahos.msgs.common_msgs import Reply, StateReq, ShutdownReq, BinaryState
+from mahos.msgs import confocal_msgs
+from mahos.msgs.confocal_msgs import Axis, ConfocalState, MoveReq
+from mahos.msgs.confocal_msgs import SaveImageReq, ExportImageReq, ExportViewReq, LoadImageReq
+from mahos.msgs.confocal_msgs import SaveTraceReq, ExportTraceReq, LoadTraceReq
+from mahos.msgs.confocal_msgs import TraceCommand, CommandTraceReq, BufferCommand, CommandBufferReq
+from mahos.msgs.confocal_msgs import ConfocalStatus, TraceStatus, Image, Trace, ScanDirection
+from mahos.msgs.param_msgs import GetParamDictReq
+from mahos.node.node import Node
+from mahos.node.client import NodeClient
+from mahos.inst.server import MultiInstrumentClient
+from mahos.util.timer import IntervalTimer
+from mahos.meas.tweaker import TweakSaver
+from mahos.meas.common_meas import BaseMeasClientMixin
+from mahos.meas.common_worker import DummyWorker, PulseGen_CW, Switch
+from mahos.meas.confocal_worker import Piezo, Tracer, Scanner
+from mahos.meas.confocal_io import ConfocalIO
 
 
 class ConfocalClient(NodeClient, BaseMeasClientMixin):

@@ -14,9 +14,9 @@ from os import path
 # import numpy as np
 import matplotlib.pyplot as plt
 
-from ..msgs.camera_msgs import Image
-from ..node.log import DummyLogger
-from ..util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.msgs.camera_msgs import Image
+from mahos.node.log import DummyLogger
+from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
 
 
 class CameraIO(object):

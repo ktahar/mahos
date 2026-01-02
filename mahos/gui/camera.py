@@ -12,20 +12,20 @@ import os
 
 import pyqtgraph as pg
 
-from .Qt import QtCore
+from mahos.gui.Qt import QtCore
 
-from .ui.camera import Ui_Camera
-from .camera_client import QCameraClient
+from mahos.gui.ui.camera import Ui_Camera
+from mahos.gui.camera_client import QCameraClient
 
-from ..msgs.common_msgs import BinaryState, BinaryStatus
-from ..msgs.camera_msgs import Image
-from ..node.global_params import GlobalParamsClient
-from .gui_node import GUINode
-from .common_widget import ClientTopWidget
-from .dialog import save_dialog, load_dialog
-from .param import apply_widgets
-from ..node.node import local_conf, join_name
-from ..util.timer import FPSCounter
+from mahos.msgs.common_msgs import BinaryState, BinaryStatus
+from mahos.msgs.camera_msgs import Image
+from mahos.node.global_params import GlobalParamsClient
+from mahos.gui.gui_node import GUINode
+from mahos.gui.common_widget import ClientTopWidget
+from mahos.gui.dialog import save_dialog, load_dialog
+from mahos.gui.param import apply_widgets
+from mahos.node.node import local_conf, join_name
+from mahos.util.timer import FPSCounter
 
 
 class CameraWidget(ClientTopWidget, Ui_Camera):

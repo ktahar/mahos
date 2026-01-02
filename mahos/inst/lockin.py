@@ -11,8 +11,8 @@ Lockin Amplifier module.
 from __future__ import annotations
 import enum
 
-from .visa_instrument import VisaInstrument
-from ..msgs import param_msgs as P
+from mahos.inst.visa_instrument import VisaInstrument
+from mahos.msgs import param_msgs as P
 
 
 class LI5640(VisaInstrument):

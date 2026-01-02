@@ -17,10 +17,10 @@ from typing import Callable, Optional
 import numpy as np
 import PyDAQmx as D
 
-from ..util.locked_queue import LockedQueue
-from ..util.conf import PresetLoader
-from .instrument import Instrument
-from .exceptions import InstError
+from mahos.util.locked_queue import LockedQueue
+from mahos.util.conf import PresetLoader
+from mahos.inst.instrument import Instrument
+from mahos.inst.exceptions import InstError
 
 
 def estimate_buffer_size(rate=None):

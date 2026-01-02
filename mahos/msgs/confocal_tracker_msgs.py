@@ -10,7 +10,7 @@ Message Types for ConfocalTracker.
 
 import enum
 
-from .common_msgs import Message, Status, Request, BinaryState
+from mahos.msgs.common_msgs import Message, Status, Request, BinaryState
 
 
 class OptMode(Message, enum.Enum):

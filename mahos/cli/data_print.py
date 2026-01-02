@@ -16,17 +16,17 @@ from pprint import pprint
 # from IPython.lib.pretty import pprint
 import numpy as np
 
-from ..util.io import get_attrs_h5, list_attrs_h5
-from ..node.log import DummyLogger
+from mahos.util.io import get_attrs_h5, list_attrs_h5
+from mahos.node.log import DummyLogger
 
-from ..msgs.confocal_msgs import Image, Trace
-from ..msgs.odmr_msgs import ODMRData
-from ..msgs.podmr_msgs import PODMRData
-from ..msgs.spodmr_msgs import SPODMRData
-from ..msgs.iodmr_msgs import IODMRData
-from ..msgs.hbt_msgs import HBTData
-from ..msgs.spectroscopy_msgs import SpectroscopyData
-from ..msgs.camera_msgs import Image as CameraImage
+from mahos.msgs.confocal_msgs import Image, Trace
+from mahos.msgs.odmr_msgs import ODMRData
+from mahos.msgs.podmr_msgs import PODMRData
+from mahos.msgs.spodmr_msgs import SPODMRData
+from mahos.msgs.iodmr_msgs import IODMRData
+from mahos.msgs.hbt_msgs import HBTData
+from mahos.msgs.spectroscopy_msgs import SpectroscopyData
+from mahos.msgs.camera_msgs import Image as CameraImage
 
 
 def parse_args(args):

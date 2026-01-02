@@ -10,9 +10,9 @@ Typed Interface for InstrumentClient.
 
 from __future__ import annotations
 
-from ..msgs.common_msgs import Reply
-from ..msgs import param_msgs as P
-from .server import InstrumentClient, MultiInstrumentClient
+from mahos.msgs.common_msgs import Reply
+from mahos.msgs import param_msgs as P
+from mahos.inst.server import InstrumentClient, MultiInstrumentClient
 
 
 class InstrumentInterface(object):

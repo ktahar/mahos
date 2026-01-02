@@ -8,7 +8,7 @@ Type hints for MAHOS.
 
 """
 
-from ..msgs.common_msgs import Message, Request, Reply
+from mahos.msgs.common_msgs import Message, Request, Reply
 
 from typing import NewType, Callable, Union, Tuple
 

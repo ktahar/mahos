@@ -14,7 +14,7 @@ import re
 import numpy as np
 from itertools import chain
 
-from ...msgs.inst.pg_msgs import Block, Blocks, BlockSeq, AnalogChannel
+from mahos.msgs.inst.pg_msgs import Block, Blocks, BlockSeq, AnalogChannel
 
 mw_x = AnalogChannel("mw_phase", 0)
 mw_y = AnalogChannel("mw_phase", 90)

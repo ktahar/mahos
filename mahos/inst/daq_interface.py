@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .interface import InstrumentInterface
+from mahos.inst.interface import InstrumentInterface
 
 
 class ClockSourceInterface(InstrumentInterface):

@@ -10,10 +10,10 @@ Common GUI widget implementations.
 
 import pyqtgraph as pg
 
-from .Qt import QtWidgets
+from mahos.gui.Qt import QtWidgets
 
-from .ui.compressionWidget import Ui_CompressionWidget
-from ..util.conv import args_to_list
+from mahos.gui.ui.compressionWidget import Ui_CompressionWidget
+from mahos.util.conv import args_to_list
 
 
 class CompressionWidget(QtWidgets.QWidget, Ui_CompressionWidget):

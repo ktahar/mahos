@@ -23,21 +23,21 @@ try:
 except ImportError:
     print("mahos.meas.confocal_tracker: failed to import cv2")
 
-from .. import CONFIG_DIR
-from .confocal import ConfocalClient
-from ..msgs.common_msgs import Reply, StateReq, BinaryState
-from ..msgs import confocal_msgs
-from ..msgs.confocal_msgs import Image, ScanDirection, ScanMode, PiezoPos
-from ..msgs.confocal_msgs import ConfocalState
-from ..msgs.confocal_msgs import direction_to_labels, direction_to_axes
-from ..msgs.confocal_tracker_msgs import OptMode, ConfocalTrackerStatus
-from ..msgs.confocal_tracker_msgs import SaveParamsReq, LoadParamsReq, TrackNowReq
-from ..msgs import confocal_tracker_msgs
-from ..node.node import Node
-from ..node.client import StateClient
-from ..util.timer import OneshotTimer
-from ..util import conv, fit
-from .state_manager import StateManagerClient
+from mahos import CONFIG_DIR
+from mahos.meas.confocal import ConfocalClient
+from mahos.msgs.common_msgs import Reply, StateReq, BinaryState
+from mahos.msgs import confocal_msgs
+from mahos.msgs.confocal_msgs import Image, ScanDirection, ScanMode, PiezoPos
+from mahos.msgs.confocal_msgs import ConfocalState
+from mahos.msgs.confocal_msgs import direction_to_labels, direction_to_axes
+from mahos.msgs.confocal_tracker_msgs import OptMode, ConfocalTrackerStatus
+from mahos.msgs.confocal_tracker_msgs import SaveParamsReq, LoadParamsReq, TrackNowReq
+from mahos.msgs import confocal_tracker_msgs
+from mahos.node.node import Node
+from mahos.node.client import StateClient
+from mahos.util.timer import OneshotTimer
+from mahos.util import conv, fit
+from mahos.meas.state_manager import StateManagerClient
 
 
 def optimize_pos(mode: OptMode, data, prev_data, print_fn=print):

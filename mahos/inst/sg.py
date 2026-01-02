@@ -11,7 +11,7 @@ Signal Generator module.
 from __future__ import annotations
 import enum
 
-from .visa_instrument import VisaInstrument
+from mahos.inst.visa_instrument import VisaInstrument
 
 
 class Mode(enum.Enum):

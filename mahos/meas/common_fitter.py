@@ -15,8 +15,8 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.special import wofz
 
-from ..msgs.data_msgs import Data
-from ..msgs import param_msgs as P
+from mahos.msgs.data_msgs import Data
+from mahos.msgs import param_msgs as P
 
 
 def gaussian(x, amplitude, center, sigma):

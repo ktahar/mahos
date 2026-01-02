@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .common_msgs import GetResult
+from mahos.msgs.inst.common_msgs import GetResult
 
 
 class FrameResult(GetResult):

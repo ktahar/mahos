@@ -13,9 +13,9 @@ import sys
 import time
 import threading
 
-from ..instrument import Instrument
-from ...msgs import param_msgs as P
-from ...util.conv import clip_angle_degrees
+from mahos.inst.instrument import Instrument
+from mahos.msgs import param_msgs as P
+from mahos.util.conv import clip_angle_degrees
 
 
 # imports for Thorlabs

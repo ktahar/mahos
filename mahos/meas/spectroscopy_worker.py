@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..msgs.spectroscopy_msgs import SpectroscopyData
-from ..msgs.inst.spectrometer_msgs import Temperature
-from ..msgs import param_msgs as P
-from ..inst.spectrometer_interface import SpectrometerInterface
-from .common_worker import Worker
+from mahos.msgs.spectroscopy_msgs import SpectroscopyData
+from mahos.msgs.inst.spectrometer_msgs import Temperature
+from mahos.msgs import param_msgs as P
+from mahos.inst.spectrometer_interface import SpectrometerInterface
+from mahos.meas.common_worker import Worker
 
 
 class Repeater(Worker):

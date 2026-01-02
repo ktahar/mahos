@@ -15,9 +15,9 @@ import enum
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from ..node.node import join_name, local_conf, hosts, host_nodes, threaded_nodes
-from ..util.conv import invert_mapping
-from .util import check_load_gconf
+from mahos.node.node import join_name, local_conf, hosts, host_nodes, threaded_nodes
+from mahos.util.conv import invert_mapping
+from mahos.cli.util import check_load_gconf
 
 
 def parse_args(args):
