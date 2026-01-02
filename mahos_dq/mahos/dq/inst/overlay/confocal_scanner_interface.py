@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from mahos.inst.interface import InstrumentInterface
+from mahos.core.inst.interface import InstrumentInterface
 
-from mahos.msgs.confocal_msgs import ScanMode, ScanDirection
+from mahos.dq.msgs.confocal_msgs import ScanMode, ScanDirection
 
 
 class ConfocalScannerInterface(InstrumentInterface):

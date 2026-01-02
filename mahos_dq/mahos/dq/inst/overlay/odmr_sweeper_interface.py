@@ -10,8 +10,8 @@ Typed Interface for ODMR Sweeper.
 
 import numpy as np
 
-from mahos.inst.interface import InstrumentInterface
-from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.core.inst.interface import InstrumentInterface
+from mahos.core.msgs.pulse_msgs import PulsePattern
 
 
 class ODMRSweeperInterface(InstrumentInterface):

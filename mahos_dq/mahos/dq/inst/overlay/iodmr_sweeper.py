@@ -13,8 +13,8 @@ import threading
 
 import numpy as np
 
-from mahos.inst.overlay.overlay import InstrumentOverlay
-from mahos.util.locked_queue import LockedQueue
+from mahos.core.inst.overlay.overlay import InstrumentOverlay
+from mahos.core.util.locked_queue import LockedQueue
 
 
 class IODMRSweeperCommand(InstrumentOverlay):

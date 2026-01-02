@@ -10,9 +10,9 @@ Mock class for ConfocalScanner.
 
 import numpy as np
 
-from mahos.util import conv, fit
-from mahos.inst.overlay.overlay import InstrumentOverlay
-from mahos.msgs.confocal_msgs import ScanMode
+from mahos.core.util import conv, fit
+from mahos.core.inst.overlay.overlay import InstrumentOverlay
+from mahos.dq.msgs.confocal_msgs import ScanMode
 
 
 DUMMY_CAPABILITY = (

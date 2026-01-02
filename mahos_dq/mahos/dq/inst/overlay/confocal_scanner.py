@@ -12,10 +12,10 @@ import numpy as np
 import time
 import threading
 
-from mahos.util import conv
-from mahos.inst.overlay.overlay import InstrumentOverlay
-from mahos.msgs.confocal_msgs import ScanMode, ScanDirection, LineMode
-from mahos.inst.daq import BufferedEdgeCounter, AnalogIn
+from mahos.core.util import conv
+from mahos.core.inst.overlay.overlay import InstrumentOverlay
+from mahos.dq.msgs.confocal_msgs import ScanMode, ScanDirection, LineMode
+from mahos.core.inst.daq import BufferedEdgeCounter, AnalogIn
 
 
 class ConfocalScannerMixin(object):
