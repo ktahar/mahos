@@ -422,20 +422,11 @@
 <li><p><a class="reference internal" href="#create-virtual-environment">Create virtual environment</a> (this is optional, but recommended).</p></li>
 <li><p><a class="reference internal" href="#clone-the-repository">Clone the repository</a>.</p></li>
 <li><p>Install <a class="reference internal" href="#optional-requirements">Optional requirements</a>.</p></li>
-<li><p>Install <a class="reference internal" href="#the-mahos-package">The mahos package</a> (and requirements).</p></li>
+<li><p>Install <a class="reference internal" href="#the-mahos-packages">The mahos packages</a> (and requirements).</p></li>
 </ol>
 <section id="system-requirements">
 <h2>System requirements<a class="headerlink" href="#system-requirements" title="Link to this heading">#</a></h2>
-<p>You need Python (&gt;= 3.10, &lt; 3.13) on Windows or Linux, and prerequisites for C extensions (see below).</p>
-<section id="for-c-extensions">
-<h3>For C extensions<a class="headerlink" href="#for-c-extensions" title="Link to this heading">#</a></h3>
-<p>On Windows, you have to download and install the C++ compiler <a class="reference external" href="https://visualstudio.microsoft.com/ja/visual-cpp-build-tools/">Microsoft C++ Build Tools</a> in order to build the C extensions.
-You can skip this if you have already installed Visual Studio on your computer.</p>
-<p>On Linux, install <code class="docutils literal notranslate"><span class="pre">gcc</span></code> and the dev-package for Python3.
-The <code class="docutils literal notranslate"><span class="pre">gcc</span></code> is installed by default on many distros.
-For the latter, try <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">python3-dev</span></code> on Debian-based distros
-or <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">yum</span> <span class="pre">install</span> <span class="pre">python3-devel</span></code> on RHEL-like distros.</p>
-</section>
+<p>You need Python (&gt;= 3.10, &lt; 3.13) on Windows or Linux.</p>
 </section>
 <section id="create-virtual-environment">
 <h2>Create virtual environment<a class="headerlink" href="#create-virtual-environment" title="Link to this heading">#</a></h2>
@@ -472,6 +463,17 @@ We call this directory the <cite>repository directory</cite>.</p>
 <h2>Optional requirements<a class="headerlink" href="#optional-requirements" title="Link to this heading">#</a></h2>
 <p>There are some optional requirements installation of which is not quite straightforward.
 If you want to install them, follow instructions in the subsections below.</p>
+<section id="c-compiler">
+<h3>C++ compiler<a class="headerlink" href="#c-compiler" title="Link to this heading">#</a></h3>
+<p>If you wish to install the C extensions (<a class="reference internal" href="#mahos-dq-ext">mahos-dq-ext</a> package),
+you need to install a C++ compiler.</p>
+<p>On Windows, you have to download and install <a class="reference external" href="https://visualstudio.microsoft.com/ja/visual-cpp-build-tools/">Microsoft C++ Build Tools</a> in order to build the extensions.
+You can skip this if you have already installed Visual Studio on your computer.</p>
+<p>On Linux, install <code class="docutils literal notranslate"><span class="pre">gcc</span></code> and the dev-package for Python3.
+The <code class="docutils literal notranslate"><span class="pre">gcc</span></code> is installed by default on many distros.
+For the latter, try <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">python3-dev</span></code> on Debian-based distros
+or <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">yum</span> <span class="pre">install</span> <span class="pre">python3-devel</span></code> on RHEL-like distros.</p>
+</section>
 <section id="graphviz">
 <h3>Graphviz<a class="headerlink" href="#graphviz" title="Link to this heading">#</a></h3>
 <p>You need <a class="reference external" href="https://graphviz.org/download/">Graphviz</a> for <a class="reference internal" href="cli.html#mahos-graph"><span class="std std-ref">mahos graph</span></a> command.
@@ -479,7 +481,7 @@ You can skip this if you don’t need <a class="reference internal" href="cli.ht
 See <a class="reference external" href="https://pygraphviz.github.io/documentation/stable/install.html">pygraphviz documentation</a> for details.</p>
 <section id="windows">
 <h4>Windows<a class="headerlink" href="#windows" title="Link to this heading">#</a></h4>
-<p>You have to install the <a class="reference internal" href="#for-c-extensions">C++ compiler</a> and the <a class="reference external" href="https://graphviz.org/download/#windows">graphviz binary</a> (version 2).
+<p>You have to install the <a class="reference internal" href="#c-compiler">C++ compiler</a> and the <a class="reference external" href="https://graphviz.org/download/#windows">graphviz binary</a> (version 2).
 And then, use following command to install pygraphviz.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--use-pep517<span class="w"> </span>--config-settings<span class="o">=</span><span class="s2">&quot;--global-option=build_ext&quot;</span><span class="w"> </span>--config-settings<span class="o">=</span><span class="s2">&quot;--global-option=-IC:\Program Files\Graphviz\include&quot;</span><span class="w"> </span>--config-settings<span class="o">=</span><span class="s2">&quot;--global-option=-LC:\Program Files\Graphviz\lib&quot;</span><span class="w"> </span>pygraphviz
 </pre></div>
@@ -501,18 +503,32 @@ There are several methods to install this, and the easiest are following.</p>
 </ul>
 </section>
 </section>
-<section id="the-mahos-package">
-<h2>The mahos package<a class="headerlink" href="#the-mahos-package" title="Link to this heading">#</a></h2>
-<p>In the mahos <cite>repository directory</cite>, <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span></code></p>
+<section id="the-mahos-packages">
+<h2>The mahos packages<a class="headerlink" href="#the-mahos-packages" title="Link to this heading">#</a></h2>
+<section id="mahos">
+<h3>mahos<a class="headerlink" href="#mahos" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">./pkgs/mahos</span></code></p>
 <p>Here, -e (editable) is optional but recommended.
 Basic requirements in <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> are installed by this command.</p>
 <section id="inst-requirements">
-<h3>Inst requirements<a class="headerlink" href="#inst-requirements" title="Link to this heading">#</a></h3>
+<h4>Inst requirements<a class="headerlink" href="#inst-requirements" title="Link to this heading">#</a></h4>
 <p>There are additional requirements for instrument drivers in <code class="docutils literal notranslate"><span class="pre">inst-requirements.txt</span></code>.</p>
 <ul class="simple">
-<li><p>You can install all of them by <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.[inst]</span></code> or <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">inst-requirements.txt</span></code></p></li>
+<li><p>You can install all of them by <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">./pkgs/mahos[inst]</span></code> or <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">./pkgs/mahos/inst-requirements.txt</span></code></p></li>
 <li><p>If you don’t want to install unnecessary packages, manually pick and install what you need.</p></li>
 </ul>
+</section>
+</section>
+<section id="mahos-dq">
+<h3>mahos-dq<a class="headerlink" href="#mahos-dq" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">./pkgs/mahos-dq</span></code></p>
+<p>Here, -e (editable) is optional but recommended.</p>
+</section>
+<section id="mahos-dq-ext">
+<h3>mahos-dq-ext<a class="headerlink" href="#mahos-dq-ext" title="Link to this heading">#</a></h3>
+<p>The <a class="reference internal" href="#c-compiler">C++ compiler</a> is required to install this.</p>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">./pkgs/mahos-dq-ext</span></code></p>
+<p>Here, -e (editable) is optional but recommended.</p>
 </section>
 </section>
 <section id="test">
@@ -606,13 +622,11 @@ pip<span class="w"> </span>install<span class="w"> </span>PyQt6
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#system-requirements">System requirements</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#for-c-extensions">For C extensions</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#system-requirements">System requirements</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-virtual-environment">Create virtual environment</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#clone-the-repository">Clone the repository</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optional-requirements">Optional requirements</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#c-compiler">C++ compiler</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#graphviz">Graphviz</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#windows">Windows</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#linux">Linux</a></li>
@@ -621,8 +635,13 @@ pip<span class="w"> </span>install<span class="w"> </span>PyQt6
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#opencv">OpenCV</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-mahos-package">The mahos package</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#inst-requirements">Inst requirements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-mahos-packages">The mahos packages</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos">mahos</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#inst-requirements">Inst requirements</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos-dq">mahos-dq</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos-dq-ext">mahos-dq-ext</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test">Test</a></li>

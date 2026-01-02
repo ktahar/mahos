@@ -44,7 +44,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'glossary';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="mahos.gui.camera.CameraGUI" href="gui/generated/mahos.gui.camera.CameraGUI.html" />
+    <link rel="prev" title="mahos_dq.gui.spectroscopy.SpectroscopyGUI" href="api_mahos_dq_gui/generated/mahos_dq.gui.spectroscopy.SpectroscopyGUI.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -416,15 +416,15 @@
   <section id="glossary">
 <h1>Glossary<a class="headerlink" href="#glossary" title="Link to this heading">#</a></h1>
 <dl class="simple glossary">
-<dt id="term-node">node<a class="headerlink" href="#term-node" title="Link to this term">#</a></dt><dd><p>Node is a program which is a part of distributed system. Implemented as a subclass of <a class="reference internal" href="node/Node.html#mahos.node.node.Node" title="mahos.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a> or <a class="reference internal" href="gui/generated/mahos.gui.gui_node.GUINode.html#mahos.gui.gui_node.GUINode" title="mahos.gui.gui_node.GUINode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GUINode</span></code></a>.</p>
+<dt id="term-node">node<a class="headerlink" href="#term-node" title="Link to this term">#</a></dt><dd><p>Node is a program which is a part of distributed system. Implemented as a subclass of <a class="reference internal" href="api_mahos_node/Node.html#mahos.node.node.Node" title="mahos.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a> or <a class="reference internal" href="api_mahos_gui/generated/mahos.gui.gui_node.GUINode.html#mahos.gui.gui_node.GUINode" title="mahos.gui.gui_node.GUINode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GUINode</span></code></a>.</p>
 </dd>
-<dt id="term-client">client<a class="headerlink" href="#term-client" title="Link to this term">#</a></dt><dt id="term-node-client">node client<a class="headerlink" href="#term-node-client" title="Link to this term">#</a></dt><dd><p>Interface to <a class="reference internal" href="#term-node"><span class="xref std std-term">node</span></a>’s functions. Implemented as a subclass of <a class="reference internal" href="node/NodeClient.html#mahos.node.client.NodeClient" title="mahos.node.client.NodeClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">NodeClient</span></code></a>.</p>
+<dt id="term-client">client<a class="headerlink" href="#term-client" title="Link to this term">#</a></dt><dt id="term-node-client">node client<a class="headerlink" href="#term-node-client" title="Link to this term">#</a></dt><dd><p>Interface to <a class="reference internal" href="#term-node"><span class="xref std std-term">node</span></a>’s functions. Implemented as a subclass of <a class="reference internal" href="api_mahos_node/NodeClient.html#mahos.node.client.NodeClient" title="mahos.node.client.NodeClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">NodeClient</span></code></a>.</p>
 </dd>
 <dt id="term-conf">conf<a class="headerlink" href="#term-conf" title="Link to this term">#</a></dt><dd><p>Configuration (dict) for something. Difference between params: conf is considered static (won’t change run time).</p>
 </dd>
 <dt id="term-params">params<a class="headerlink" href="#term-params" title="Link to this term">#</a></dt><dd><p>Parameters (dict) for something. Difference between conf: params is considered dynamic (will change run time).</p>
 </dd>
-<dt id="term-gparams">gparams<a class="headerlink" href="#term-gparams" title="Link to this term">#</a></dt><dt id="term-global-params">global params<a class="headerlink" href="#term-global-params" title="Link to this term">#</a></dt><dd><p>A dict with global parameters which is handled by <a class="reference internal" href="node/generated/mahos.node.global_params.GlobalParams.html#mahos.node.global_params.GlobalParams" title="mahos.node.global_params.GlobalParams"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalParams</span></code></a>.</p>
+<dt id="term-gparams">gparams<a class="headerlink" href="#term-gparams" title="Link to this term">#</a></dt><dt id="term-global-params">global params<a class="headerlink" href="#term-global-params" title="Link to this term">#</a></dt><dd><p>A dict with global parameters which is handled by <a class="reference internal" href="api_mahos_node/generated/mahos.node.global_params.GlobalParams.html#mahos.node.global_params.GlobalParams" title="mahos.node.global_params.GlobalParams"><code class="xref py py-class docutils literal notranslate"><span class="pre">GlobalParams</span></code></a>.</p>
 </dd>
 <dt id="term-Req-Rep">Req-Rep<a class="headerlink" href="#term-Req-Rep" title="Link to this term">#</a></dt><dd><p>Request-Reply communication pattern. The client sends a request and the server sends back a reply.</p>
 </dd>
@@ -432,9 +432,9 @@
 </dd>
 <dt id="term-Pub-Sub">Pub-Sub<a class="headerlink" href="#term-Pub-Sub" title="Link to this term">#</a></dt><dd><p>Publish-Subscribe communication pattern. One-to-many data distribution.</p>
 </dd>
-<dt id="term-status">status<a class="headerlink" href="#term-status" title="Link to this term">#</a></dt><dd><p>Messages expressing the node’s status. Implemented as a subclass of <a class="reference internal" href="msgs/common_msgs.html#mahos.msgs.common_msgs.Status" title="mahos.msgs.common_msgs.Status"><code class="xref py py-class docutils literal notranslate"><span class="pre">Status</span></code></a>. Usually published as topic <cite>status</cite>.</p>
+<dt id="term-status">status<a class="headerlink" href="#term-status" title="Link to this term">#</a></dt><dd><p>Messages expressing the node’s status. Implemented as a subclass of <a class="reference internal" href="api_mahos_msgs/common_msgs.html#mahos.msgs.common_msgs.Status" title="mahos.msgs.common_msgs.Status"><code class="xref py py-class docutils literal notranslate"><span class="pre">Status</span></code></a>. Usually published as topic <cite>status</cite>.</p>
 </dd>
-<dt id="term-state">state<a class="headerlink" href="#term-state" title="Link to this term">#</a></dt><dd><p>Node can have explicit state. If so, it is implemented as a subclass of <a class="reference internal" href="msgs/common_msgs.html#mahos.msgs.common_msgs.State" title="mahos.msgs.common_msgs.State"><code class="xref py py-class docutils literal notranslate"><span class="pre">State</span></code></a> and usually contained as a attribute of <a class="reference internal" href="#term-status"><span class="xref std std-term">status</span></a>.</p>
+<dt id="term-state">state<a class="headerlink" href="#term-state" title="Link to this term">#</a></dt><dd><p>Node can have explicit state. If so, it is implemented as a subclass of <a class="reference internal" href="api_mahos_msgs/common_msgs.html#mahos.msgs.common_msgs.State" title="mahos.msgs.common_msgs.State"><code class="xref py py-class docutils literal notranslate"><span class="pre">State</span></code></a> and usually contained as a attribute of <a class="reference internal" href="#term-status"><span class="xref std std-term">status</span></a>.</p>
 </dd>
 </dl>
 </section>
@@ -450,12 +450,12 @@
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="gui/generated/mahos.gui.camera.CameraGUI.html"
+       href="api_mahos_dq_gui/generated/mahos_dq.gui.spectroscopy.SpectroscopyGUI.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">mahos.gui.camera.CameraGUI</p>
+        <p class="prev-next-title">mahos_dq.gui.spectroscopy.SpectroscopyGUI</p>
       </div>
     </a>
 </div>

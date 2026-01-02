@@ -18,8 +18,8 @@ Share.lnk
 compile_commands.json
 
 # generated docs
-docs_src/*/generated
-!docs_src/img/*.svg
+docs-src/*/generated
+!docs-src/img/*.svg
 docs/.doctrees
 !docs/_images/*.svg
 

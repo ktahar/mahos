@@ -496,15 +496,15 @@ The <cite>pub_endpoint</cite> is the endpoint for Pub-Sub communication.</p>
 </div>
 </div>
 <p>As we can see, Clock is a subclass of Node and a few things are implemented.
-Work is done by a <a class="reference internal" href="node/generated/mahos.node.comm.Publisher.html#mahos.node.comm.Publisher" title="mahos.node.comm.Publisher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Publisher</span></code></a> initialized in Line 26, which is used to publish the formatted time in the main loop (Line 32).
+Work is done by a <a class="reference internal" href="api_mahos_node/generated/mahos.node.comm.Publisher.html#mahos.node.comm.Publisher" title="mahos.node.comm.Publisher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Publisher</span></code></a> initialized in Line 26, which is used to publish the formatted time in the main loop (Line 32).
 The publisher is initialized with a topic (label for the messages) <cite>time</cite>.
 Note that the type of the topic must be ASCII str (or bytes).</p>
 <p>“You said main loop but I don’t see any <cite>for</cite> or <cite>while</cite>” ?
 The loop is implemented elsewhere and automatically incorporated when using <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">run</span></code> command.
 We always define <cite>the contents of main loop</cite> as the <code class="docutils literal notranslate"><span class="pre">main()</span></code> function.
 IntervalSleeper regulates the loop interval to 1.0 secs (rate of 1 Hz).</p>
-<p>Although <a class="reference internal" href="node/generated/mahos.node.comm.Publisher.html#mahos.node.comm.Publisher" title="mahos.node.comm.Publisher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Publisher</span></code></a> can send any picklable Python object (we are sending str now),
-the dedicated types can be used for serious applications (see <a class="reference internal" href="msgs/common_msgs.html#module-mahos.msgs.common_msgs" title="mahos.msgs.common_msgs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mahos.msgs.common_msgs</span></code></a>).</p>
+<p>Although <a class="reference internal" href="api_mahos_node/generated/mahos.node.comm.Publisher.html#mahos.node.comm.Publisher" title="mahos.node.comm.Publisher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Publisher</span></code></a> can send any picklable Python object (we are sending str now),
+the dedicated types can be used for serious applications (see <a class="reference internal" href="api_mahos_msgs/common_msgs.html#module-mahos.msgs.common_msgs" title="mahos.msgs.common_msgs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mahos.msgs.common_msgs</span></code></a>).</p>
 <p>Corresponding NodeClient <code class="docutils literal notranslate"><span class="pre">ClockClient</span></code> is  defined above,
 and this is referenced as a class variable <code class="docutils literal notranslate"><span class="pre">CLIENT</span></code> in Clock.
 This is used to look up the client class from config file.
@@ -519,7 +519,7 @@ This is synchronous <a class="reference internal" href="glossary.html#term-RPC">
 In the IPython shell, use <code class="docutils literal notranslate"><span class="pre">cli.multiply(2,</span> <span class="pre">3)</span></code> to multiply the numbers.
 It is successful if you get correct answer 6, and see a log message in the terminal running the node.</p>
 <p><code class="docutils literal notranslate"><span class="pre">cli</span></code> is a MultiplierClient (defined as below) in the IPython shell.
-Obviously, <code class="docutils literal notranslate"><span class="pre">MultiplierClient</span></code> registers a <a class="reference internal" href="node/generated/mahos.node.comm.Requester.html#mahos.node.comm.Requester" title="mahos.node.comm.Requester"><code class="xref py py-class docutils literal notranslate"><span class="pre">Requester</span></code></a> (Line 39) and
+Obviously, <code class="docutils literal notranslate"><span class="pre">MultiplierClient</span></code> registers a <a class="reference internal" href="api_mahos_node/generated/mahos.node.comm.Requester.html#mahos.node.comm.Requester" title="mahos.node.comm.Requester"><code class="xref py py-class docutils literal notranslate"><span class="pre">Requester</span></code></a> (Line 39) and
 using in the <code class="docutils literal notranslate"><span class="pre">multiply()</span></code> method (Line 42).
 By calling <code class="xref py py-meth docutils literal notranslate"><span class="pre">Requester.request</span></code>, a request is sent from the client to serving node, and the response is returned.
 The <code class="docutils literal notranslate"><span class="pre">Multiplier</span></code> node defines how the request is handled.

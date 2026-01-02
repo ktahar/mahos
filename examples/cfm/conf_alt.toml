@@ -124,7 +124,7 @@ mw_i = 1
 mw_q = 0
 
 [localhost.server.instrument_overlay.scanner]
-module = "confocal_scanner"
+module = "mahos_dq.inst.overlay.confocal_scanner"
 class = "ConfocalScannerAnalog"
 [localhost.server.instrument_overlay.scanner.conf]
 clock = "$clock"
@@ -210,7 +210,7 @@ class = "Thorlabs_KCube_DCServo"
 serial = "2zzzzzzz"
 
 [localhost.confocal]
-module = "mahos.meas.confocal"
+module = "mahos_dq.meas.confocal"
 class = "Confocal"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5770"
@@ -235,7 +235,7 @@ pd1 = "localhost::server"
 switch = "localhost::server"
 
 [localhost.tracker]
-module = "mahos.meas.confocal_tracker"
+module = "mahos_dq.meas.confocal_tracker"
 class = "ConfocalTracker"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5772"
@@ -246,7 +246,7 @@ confocal = "localhost::confocal"
 manager = "localhost::manager"
 
 [localhost.hbt]
-module = "mahos.meas.hbt"
+module = "mahos_dq.meas.hbt"
 class = "HBT"
 rep_endpoint = "tcp://127.0.0.1:5774"
 pub_endpoint = "tcp://127.0.0.1:5775"
@@ -260,7 +260,7 @@ tdc = "localhost::server_tdc"
 switch = "localhost::server"
 
 [localhost.spectroscopy]
-module = "mahos.meas.spectroscopy"
+module = "mahos_dq.meas.spectroscopy"
 class = "Spectroscopy"
 rep_endpoint = "tcp://127.0.0.1:5776"
 pub_endpoint = "tcp://127.0.0.1:5777"
@@ -272,7 +272,7 @@ spectrometer = "localhost::server_spec"
 switch = "localhost::server"
 
 [localhost.odmr]
-module = "mahos.meas.odmr"
+module = "mahos_dq.meas.odmr"
 class = "ODMR"
 rep_endpoint = "tcp://127.0.0.1:5778"
 pub_endpoint = "tcp://127.0.0.1:5779"
@@ -290,7 +290,7 @@ pd0 = "localhost::server"
 pd1 = "localhost::server"
 
 [localhost.podmr]
-module = "mahos.meas.podmr"
+module = "mahos_dq.meas.podmr"
 class = "PODMR"
 # log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5780"
@@ -340,7 +340,7 @@ rep_endpoint = "tcp://127.0.0.1:5788"
 pub_endpoint = "tcp://127.0.0.1:5789"
 
 [localhost.manager.node]
-"localhost::confocal" = ["mahos.msgs.confocal_msgs", "ConfocalState"]
+"localhost::confocal" = ["mahos_dq.msgs.confocal_msgs", "ConfocalState"]
 "localhost::hbt" = ["mahos.msgs.common_msgs", "BinaryState"]
 "localhost::tracker" = ["mahos.msgs.common_msgs", "BinaryState"]
 "localhost::spectroscopy" = ["mahos.msgs.common_msgs", "BinaryState"]
@@ -360,7 +360,7 @@ class = "DigitalOutGUI"
 aom_switch = "localhost::server"
 
 [localhost.confocal_gui]
-module = "mahos.gui.confocal"
+module = "mahos_dq.gui.confocal"
 class = "ConfocalGUI"
 invert = [false, false, true]
 move_interval_ms = 20
@@ -370,7 +370,7 @@ tracker = "localhost::tracker"
 gparams = "localhost::gparams"
 
 [localhost.odmr_gui]
-module = "mahos.gui.odmr"
+module = "mahos_dq.gui.odmr"
 class = "ODMRGUI"
 [localhost.odmr_gui.target]
 odmr = "localhost::odmr"
@@ -378,14 +378,14 @@ gparams = "localhost::gparams"
 confocal = "localhost::confocal"
 
 [localhost.podmr_gui]
-module = "mahos.gui.podmr"
+module = "mahos_dq.gui.podmr"
 class = "PODMRGUI"
 [localhost.podmr_gui.target]
 podmr = "localhost::podmr"
 gparams = "localhost::gparams"
 
 [localhost.hbt_gui]
-module = "mahos.gui.hbt"
+module = "mahos_dq.gui.hbt"
 class = "HBTGUI"
 [localhost.hbt_gui.target]
 hbt = "localhost::hbt"
@@ -393,7 +393,7 @@ gparams = "localhost::gparams"
 confocal = "localhost::confocal"
 
 [localhost.spectroscopy_gui]
-module = "mahos.gui.spectroscopy"
+module = "mahos_dq.gui.spectroscopy"
 class = "SpectroscopyGUI"
 [localhost.spectroscopy_gui.target]
 spectroscopy = "localhost::spectroscopy"

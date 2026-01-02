@@ -19,7 +19,9 @@ jobs:
         run: |
           sudo apt-get install -y libgraphviz-dev
           python -m pip install --upgrade pip
-          pip install .
+          pip install ./pkgs/mahos
+          pip install ./pkgs/mahos-dq
+          pip install ./pkgs/mahos-dq-ext
       - name: Lint with flake8
         run: |
           flake8 . --statistics

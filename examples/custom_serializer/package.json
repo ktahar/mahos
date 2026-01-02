@@ -1,7 +1,7 @@
 {
   "dependencies": {
-    "msgpackr": "^1.9.9",
-    "zeromq": "^5.3.1"
+    "msgpackr": "^1.11.8",
+    "zeromq": "^6.5.0"
   },
   "name": "example_js_client",
   "version": "0.1.0",

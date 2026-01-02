@@ -1,0 +1,32 @@
+﻿mahos\_dq.msgs.spectroscopy\_msgs.SpectroscopyData
+==================================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos_dq.msgs.spectroscopy_msgs
+
+.. autoclass:: SpectroscopyData
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SpectroscopyData.__init__
+      ~SpectroscopyData.acquisitions
+      ~SpectroscopyData.can_resume
+      ~SpectroscopyData.get_xdata
+      ~SpectroscopyData.get_ydata
+      ~SpectroscopyData.has_data
+      ~SpectroscopyData.init_axes
+      ~SpectroscopyData.n_outliers
+   
+   
+
+   
+   
+   

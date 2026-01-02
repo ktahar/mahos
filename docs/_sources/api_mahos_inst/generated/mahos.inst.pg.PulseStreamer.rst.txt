@@ -1,0 +1,38 @@
+﻿mahos.inst.pg.PulseStreamer
+===========================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.inst.pg
+
+.. autoclass:: PulseStreamer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PulseStreamer.__init__
+      ~PulseStreamer.channels_to_ints
+      ~PulseStreamer.clear
+      ~PulseStreamer.configure
+      ~PulseStreamer.configure_blocks
+      ~PulseStreamer.configure_blockseq
+      ~PulseStreamer.get
+      ~PulseStreamer.reset
+      ~PulseStreamer.set
+      ~PulseStreamer.start
+      ~PulseStreamer.stop
+      ~PulseStreamer.trigger
+      ~PulseStreamer.validate_blocks
+      ~PulseStreamer.validate_blockseq
+   
+   
+
+   
+   
+   

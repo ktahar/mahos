@@ -107,7 +107,7 @@ channels = ["mw_i", "mw_q"]
 "11" = [0.35, 0.35]
 
 [localhost.server.instrument_overlay.scanner]
-module = "confocal_scanner"
+module = "mahos_dq.inst.overlay.confocal_scanner"
 class = "ConfocalScannerAnalog"
 [localhost.server.instrument_overlay.scanner.conf]
 clock = "$clock"
@@ -144,7 +144,7 @@ levels = [0.5, 0.5, 0.5]
 start_channel = 1
 
 [localhost.confocal]
-module = "mahos.meas.confocal"
+module = "mahos_dq.meas.confocal"
 class = "Confocal"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5770"
@@ -167,7 +167,7 @@ pd0 = "localhost::server"
 pd1 = "localhost::server"
 
 [localhost.tracker]
-module = "mahos.meas.confocal_tracker"
+module = "mahos_dq.meas.confocal_tracker"
 class = "ConfocalTracker"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5772"
@@ -178,7 +178,7 @@ confocal = "localhost::confocal"
 manager = "localhost::manager"
 
 [localhost.odmr]
-module = "mahos.meas.odmr"
+module = "mahos_dq.meas.odmr"
 class = "ODMR"
 rep_endpoint = "tcp://127.0.0.1:5778"
 pub_endpoint = "tcp://127.0.0.1:5779"
@@ -194,7 +194,7 @@ pd0 = "localhost::server"
 pd1 = "localhost::server"
 
 [localhost.podmr]
-module = "mahos.meas.podmr"
+module = "mahos_dq.meas.podmr"
 class = "PODMR"
 # log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5780"
@@ -218,7 +218,7 @@ rep_endpoint = "tcp://127.0.0.1:5788"
 pub_endpoint = "tcp://127.0.0.1:5789"
 
 [localhost.manager.node]
-"localhost::confocal" = ["mahos.msgs.confocal_msgs", "ConfocalState"]
+"localhost::confocal" = ["mahos_dq.msgs.confocal_msgs", "ConfocalState"]
 "localhost::tracker" = ["mahos.msgs.common_msgs", "BinaryState"]
 "localhost::odmr" = ["mahos.msgs.common_msgs", "BinaryState"]
 "localhost::podmr" = ["mahos.msgs.common_msgs", "BinaryState"]
@@ -228,7 +228,7 @@ pub_endpoint = "tcp://127.0.0.1:5789"
 "localhost::podmr" = "IDLE"
 
 [localhost.confocal_gui]
-module = "mahos.gui.confocal"
+module = "mahos_dq.gui.confocal"
 class = "ConfocalGUI"
 invert = [false, false, true]
 move_interval_ms = 20
@@ -238,7 +238,7 @@ tracker = "localhost::tracker"
 gparams = "localhost::gparams"
 
 [localhost.odmr_gui]
-module = "mahos.gui.odmr"
+module = "mahos_dq.gui.odmr"
 class = "ODMRGUI"
 [localhost.odmr_gui.target]
 odmr = "localhost::odmr"
@@ -246,7 +246,7 @@ gparams = "localhost::gparams"
 confocal = "localhost::confocal"
 
 [localhost.podmr_gui]
-module = "mahos.gui.podmr"
+module = "mahos_dq.gui.podmr"
 class = "PODMRGUI"
 [localhost.podmr_gui.target]
 podmr = "localhost::podmr"

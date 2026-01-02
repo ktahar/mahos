@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+
+"""
+Qt signal-based clients of Pulse ODMR with Slow detectors.
+
+.. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
+.. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
+
+"""
+
+from mahos.gui.Qt import QtCore
+
+from mahos_dq.msgs.spodmr_msgs import SPODMRData, SPODMRStatus
+from mahos_dq.msgs.spodmr_msgs import UpdatePlotParamsReq, ValidateReq
+from mahos.gui.client import QBasicMeasClient
+
+
+class QSPODMRClient(QBasicMeasClient):
+    """Qt-based client for SPODMR."""
+
+    statusUpdated = QtCore.pyqtSignal(SPODMRStatus)
+    dataUpdated = QtCore.pyqtSignal(SPODMRData)
+    stopped = QtCore.pyqtSignal(SPODMRData)
+
+    def update_plot_params(self, params: dict) -> bool:
+        rep = self.req.request(UpdatePlotParamsReq(params))
+        return rep.success
+
+    def validate(self, params: dict, label: str) -> bool:
+        rep = self.req.request(ValidateReq(params, label))
+        return rep.success

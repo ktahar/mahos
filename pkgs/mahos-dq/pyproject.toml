@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mahos-dq"
+version = "0.3.0"
+description = "Defect spin Qubits research protocols based on mahos"
+readme = "README.rst"
+requires-python = ">=3.10, <3.13"
+license = { text = "BSD License (BSD-3-Clause)" }
+keywords = [ "measurement automation", "laboratory automation", "instrumentation", ]
+authors = [
+    { name = "Kosuke Tahara", email = "ktaha@mosk.tytlabs.co.jp" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = ["mahos"]
+
+[project.optional-dependencies]
+ext = ["mahos-dq-ext"]
+
+[project.urls]
+Homepage = "https://github.com/ToyotaCRDL/mahos"
+Documentation = "https://toyotacrdl.github.io/mahos"
+Repository = "https://github.com/ToyotaCRDL/mahos.git"
+Changelog = "https://github.com/ToyotaCRDL/mahos/blob/main/CHANGELOG.rst"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mahos_dq*"]

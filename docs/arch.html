@@ -440,15 +440,30 @@
 </figure>
 <section id="package-layout">
 <h2>Package layout<a class="headerlink" href="#package-layout" title="Link to this heading">#</a></h2>
-<p>The mahos sub-packages are structured correspondingly, as below.</p>
+<p>Currently, mahos contains two main subpackages.</p>
+<section id="mahos">
+<h3>mahos<a class="headerlink" href="#mahos" title="Link to this heading">#</a></h3>
+<p>mahos package has core functionalities of mahos’s system and common components.</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="node/index.html#mahos-node"><span class="std std-ref">mahos.node</span></a> - Base node implementations.</p></li>
-<li><p><a class="reference internal" href="msgs/index.html#mahos-msgs"><span class="std std-ref">mahos.msgs</span></a> - Message type definitions.</p></li>
-<li><p><a class="reference internal" href="inst/index.html#mahos-inst"><span class="std std-ref">mahos.inst</span></a> - Low-level drivers for instruments. <a class="reference internal" href="inst/generated/mahos.inst.server.InstrumentServer.html#mahos.inst.server.InstrumentServer" title="mahos.inst.server.InstrumentServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentServer</span></code></a> node provides RPC with unified API.</p></li>
-<li><p><a class="reference internal" href="meas/index.html#mahos-meas"><span class="std std-ref">mahos.meas</span></a> - High-level measurement logics. (explicit state management and file I/O, etc.).</p></li>
-<li><p><a class="reference internal" href="gui/index.html#mahos-gui"><span class="std std-ref">mahos.gui</span></a> - GUI frontends.</p></li>
+<li><p><a class="reference internal" href="api_mahos_node/index.html#mahos-node"><span class="std std-ref">mahos.node</span></a> - Base node implementations.</p></li>
+<li><p><a class="reference internal" href="api_mahos_msgs/index.html#mahos-msgs"><span class="std std-ref">mahos.msgs</span></a> - Message type definitions.</p></li>
+<li><p><a class="reference internal" href="api_mahos_inst/index.html#mahos-inst"><span class="std std-ref">mahos.inst</span></a> - Low-level drivers for instruments. <a class="reference internal" href="api_mahos_inst/generated/mahos.inst.server.InstrumentServer.html#mahos.inst.server.InstrumentServer" title="mahos.inst.server.InstrumentServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentServer</span></code></a> node provides RPC with unified API.</p></li>
+<li><p><a class="reference internal" href="api_mahos_meas/index.html#mahos-meas"><span class="std std-ref">mahos.meas</span></a> - High-level measurement logics. (explicit state management and file I/O, etc.).</p></li>
+<li><p><a class="reference internal" href="api_mahos_gui/index.html#mahos-gui"><span class="std std-ref">mahos.gui</span></a> - GUI frontends.</p></li>
 <li><p><a class="reference internal" href="cli.html#mahos-cli"><span class="std std-ref">mahos.cli</span></a> - Command Line Interfaces.</p></li>
 </ul>
+</section>
+<section id="mahos-dq">
+<h3>mahos_dq<a class="headerlink" href="#mahos-dq" title="Link to this heading">#</a></h3>
+<p>mahos_dq package has logics and gui for solid-state Defect (color center) Qubits research.
+The layout of submodule is similar to mahos.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="api_mahos_dq_msgs/index.html#mahos-dq-msgs"><span class="std std-ref">mahos_dq.msgs</span></a> - Message type definitions.</p></li>
+<li><p><a class="reference internal" href="api_mahos_dq_inst/index.html#mahos-dq-inst"><span class="std std-ref">mahos_dq.inst</span></a> - <code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentOverlay</span></code> definitions.</p></li>
+<li><p><a class="reference internal" href="api_mahos_dq_meas/index.html#mahos-dq-meas"><span class="std std-ref">mahos_dq.meas</span></a> - High-level measurement logics.</p></li>
+<li><p><a class="reference internal" href="api_mahos_dq_gui/index.html#mahos-dq-gui"><span class="std std-ref">mahos_dq.gui</span></a> - GUI frontends.</p></li>
+</ul>
+</section>
 </section>
 </section>
 
@@ -499,7 +514,11 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#package-layout">Package layout</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#package-layout">Package layout</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos">mahos</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos-dq">mahos_dq</a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 

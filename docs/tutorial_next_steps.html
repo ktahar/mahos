@@ -432,10 +432,10 @@ If you have enough time or interest, try <a class="reference internal" href="#ne
 <span id="next-step-build"></span><h2>Building your own system<a class="headerlink" href="#building-your-own-system" title="Link to this heading">#</a></h2>
 <section id="writing-instrument">
 <h3>Writing Instrument<a class="headerlink" href="#writing-instrument" title="Link to this heading">#</a></h3>
-<p>If you want to build your own system, first step might be preparing the <a class="reference internal" href="inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> class for your instrument.
-You are very lucky if you can find corresponding class in <a class="reference internal" href="inst/index.html#mahos-inst"><span class="std std-ref">mahos.inst</span></a> package.
-Even this is not the case, writing your own <a class="reference internal" href="inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> is not a very hard way; you can use existing classes in <a class="reference internal" href="inst/index.html#mahos-inst"><span class="std std-ref">mahos.inst</span></a> as the examples.
-Following subsections explain several methods to write <a class="reference internal" href="inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a>.
+<p>If you want to build your own system, first step might be preparing the <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> class for your instrument.
+You are very lucky if you can find corresponding class in <a class="reference internal" href="api_mahos_inst/index.html#mahos-inst"><span class="std std-ref">mahos.inst</span></a> package.
+Even this is not the case, writing your own <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> is not a very hard way; you can use existing classes in <a class="reference internal" href="api_mahos_inst/index.html#mahos-inst"><span class="std std-ref">mahos.inst</span></a> as the examples.
+Following subsections explain several methods to write <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a>.
 It depends on the real instrument’s interface / driver provided by the manufacturer, but most of the instruments will fit into (at least) one of these.</p>
 <section id="visa">
 <h4>VISA<a class="headerlink" href="#visa" title="Link to this heading">#</a></h4>
@@ -456,28 +456,28 @@ You are lucky! This is usually the easiest case.</p>
 <section id="wrapping-c-net-library">
 <h4>Wrapping C# (.NET) library<a class="headerlink" href="#wrapping-c-net-library" title="Link to this heading">#</a></h4>
 <p>We can use <a class="reference external" href="https://github.com/pythonnet/pythonnet">pythonnet</a> library to wrap the library for C# (.NET).
-The example can be found in implementation of <code class="xref py py-class docutils literal notranslate"><span class="pre">LightField</span></code> or <a class="reference internal" href="inst/generated/mahos.inst.positioner.Thorlabs_KCube_DCServo.html#mahos.inst.positioner.Thorlabs_KCube_DCServo" title="mahos.inst.positioner.Thorlabs_KCube_DCServo"><code class="xref py py-class docutils literal notranslate"><span class="pre">Thorlabs_KCube_DCServo</span></code></a>.</p>
+The example can be found in implementation of <code class="xref py py-class docutils literal notranslate"><span class="pre">LightField</span></code> or <a class="reference internal" href="api_mahos_inst/generated/mahos.inst.positioner.Thorlabs_KCube_DCServo.html#mahos.inst.positioner.Thorlabs_KCube_DCServo" title="mahos.inst.positioner.Thorlabs_KCube_DCServo"><code class="xref py py-class docutils literal notranslate"><span class="pre">Thorlabs_KCube_DCServo</span></code></a>.</p>
 </section>
 <section id="ni-daq">
 <h4>NI-DAQ<a class="headerlink" href="#ni-daq" title="Link to this heading">#</a></h4>
-<p>We can use <a class="reference external" href="https://pythonhosted.org/PyDAQmx/">PyDAQmx</a> library to implement <a class="reference internal" href="inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> based on National Instruments DAQ.
+<p>We can use <a class="reference external" href="https://pythonhosted.org/PyDAQmx/">PyDAQmx</a> library to implement <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> based on National Instruments DAQ.
 There are several classes in <code class="docutils literal notranslate"><span class="pre">mahos.inst.daq</span></code> module.</p>
 </section>
 </section>
 <section id="writing-meas-node">
 <h3>Writing meas Node<a class="headerlink" href="#writing-meas-node" title="Link to this heading">#</a></h3>
 <p>If your measurement is not very complex,
-the easiest way to write meas node is sub-classing <a class="reference internal" href="meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a>.
+the easiest way to write meas node is sub-classing <a class="reference internal" href="api_mahos_meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a>.
 We have already seen an example in <a class="reference internal" href="tutorial_ivcurve.html"><span class="doc">Tutorial 2: Basic Measurement</span></a>.</p>
 </section>
 <section id="writing-gui-node">
 <h3>Writing gui Node<a class="headerlink" href="#writing-gui-node" title="Link to this heading">#</a></h3>
-<p>If GUI is necessary, you can try to write a <a class="reference internal" href="gui/generated/mahos.gui.gui_node.GUINode.html#mahos.gui.gui_node.GUINode" title="mahos.gui.gui_node.GUINode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GUINode</span></code></a>.
+<p>If GUI is necessary, you can try to write a <a class="reference internal" href="api_mahos_gui/generated/mahos.gui.gui_node.GUINode.html#mahos.gui.gui_node.GUINode" title="mahos.gui.gui_node.GUINode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GUINode</span></code></a>.
 Since the existing implementations are based on <a class="reference external" href="https://riverbankcomputing.com/software/pyqt/">PyQt</a>,
 you will need some experiences or practices to use it.</p>
 <p>If you are familiar with other UI (either native / web-based) technologies,
 it will be also possible to implement the gui node with that.
-In that case, your node will not be based on <a class="reference internal" href="gui/generated/mahos.gui.gui_node.GUINode.html#mahos.gui.gui_node.GUINode" title="mahos.gui.gui_node.GUINode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GUINode</span></code></a> (because this is for PyQt).</p>
+In that case, your node will not be based on <a class="reference internal" href="api_mahos_gui/generated/mahos.gui.gui_node.GUINode.html#mahos.gui.gui_node.GUINode" title="mahos.gui.gui_node.GUINode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GUINode</span></code></a> (because this is for PyQt).</p>
 </section>
 </section>
 <section id="understanding-mahos-further">

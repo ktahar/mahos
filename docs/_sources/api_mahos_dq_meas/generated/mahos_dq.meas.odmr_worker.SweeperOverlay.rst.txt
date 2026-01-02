@@ -1,0 +1,32 @@
+﻿mahos\_dq.meas.odmr\_worker.SweeperOverlay
+==========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos_dq.meas.odmr_worker
+
+.. autoclass:: SweeperOverlay
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SweeperOverlay.__init__
+      ~SweeperOverlay.append_line
+      ~SweeperOverlay.append_point
+      ~SweeperOverlay.get_param_dict
+      ~SweeperOverlay.get_param_dict_labels
+      ~SweeperOverlay.start
+      ~SweeperOverlay.stop
+      ~SweeperOverlay.work
+   
+   
+
+   
+   
+   

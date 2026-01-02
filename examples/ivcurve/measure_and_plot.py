@@ -5,7 +5,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mahos.node.node import load_gconf
+from mahos import load_gconf
 
 from ivcurve import IVCurveClient
 

@@ -1,4 +1,4 @@
-.PHONY: all test lint format docs browse clean
+.PHONY: all format lint install-dev test docs browse clean
 
 ifeq ($(OS),Windows_NT)
     OPEN := "start"
@@ -13,24 +13,28 @@ endif
 
 all: format lint test
 
-test:
-	pytest --timeout=10
+format:
+	black .
 
 lint:
 	flake8 . --show-source --statistics
 
-format:
-	black .
+install-dev:
+	python -m pip install -e ./pkgs/mahos -e ./pkgs/mahos-dq
+
+test:
+	@python -c "import mahos, mahos_dq" >/dev/null 2>&1 || $(MAKE) install-dev
+	python -m pytest --timeout=10
 
 docs:
-	sphinx-build -b html docs_src docs
+	sphinx-build -b html docs-src docs
 
 browse:
 	$(OPEN) docs/index.html
 
-ext:
-	cd mahos/ext && $(MAKE)
+dq-ext:
+	cd pkgs/mahos-dq-ext/src/mahos_dq_ext && $(MAKE)
 
 clean:
 	$(RM) -r docs
-	$(RM) -r docs_src/*/generated
+	$(RM) -r docs-src/*/generated

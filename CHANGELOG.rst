@@ -5,6 +5,11 @@ Changelog
 [Unreleased]
 ------------
 
+Changed
+^^^^^^^
+
+- Application packages mahos_dq, and mahos_dq_ext are introduced.
+
 [0.3.0] - 2025-01-29
 --------------------
 
