@@ -1,6 +1,6 @@
-#########
-mahos.ext
-#########
+############
+mahos.dq_ext
+############
 
 This module contains C++ extensions for mahos based on pybind11 library.
 Users don't have to care about build methods because it's built by setuptools on ``pip install``.
