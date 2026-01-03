@@ -12,11 +12,11 @@ from __future__ import annotations
 from os import path
 import time
 
-from mahos.inst.visa_instrument import VisaInstrument
-from mahos.msgs.inst.pg_msgs import Block, Blocks, BlockSeq
+from mahos.core.inst.visa_instrument import VisaInstrument
+from mahos.core.msgs.inst.pg_msgs import Block, Blocks, BlockSeq
 
-from mahos.inst.pg_dtg_core import dtg_io
-from mahos.inst.pg_dtg_core.dtg_core import DTGCoreMixin
+from mahos.core.inst.pg_dtg_core import dtg_io
+from mahos.core.inst.pg_dtg_core.dtg_core import DTGCoreMixin
 
 
 class DTG5000(VisaInstrument, DTGCoreMixin):

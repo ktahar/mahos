@@ -15,8 +15,8 @@ from collections import UserList
 import numpy as np
 import msgpack
 
-from mahos.msgs.common_msgs import Message, Request
-from mahos.msgs.data_msgs import Data, FormatTimeMixin
+from mahos.core.msgs.common_msgs import Message, Request
+from mahos.core.msgs.data_msgs import Data, FormatTimeMixin
 
 
 class BasicMeasData(Data, FormatTimeMixin):

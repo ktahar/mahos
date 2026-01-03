@@ -8,9 +8,9 @@ Pulse Generator module.
 
 """
 
-from mahos.inst.pg.dtg import DTG5000, DTG5078, DTG5274, DTG5334
-from mahos.inst.pg.pulse_streamer import PulseStreamer, PulseStreamerDAQTrigger
-from mahos.inst.pg.pulse_blaster import SpinCore_PulseBlasterESR_PRO
+from mahos.core.inst.pg.dtg import DTG5000, DTG5078, DTG5274, DTG5334
+from mahos.core.inst.pg.pulse_streamer import PulseStreamer, PulseStreamerDAQTrigger
+from mahos.core.inst.pg.pulse_blaster import SpinCore_PulseBlasterESR_PRO
 
 __all__ = [
     "DTG5000",

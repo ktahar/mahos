@@ -8,11 +8,11 @@ Global parameter dictionary.
 
 """
 
-from mahos.msgs.common_msgs import Reply
-from mahos.msgs import global_params_msgs
-from mahos.msgs.global_params_msgs import GlobalParamsStatus, SetParamReq
-from mahos.node.node import Node
-from mahos.node.client import StatusClient
+from mahos.core.msgs.common_msgs import Reply
+from mahos.core.msgs import global_params_msgs
+from mahos.core.msgs.global_params_msgs import GlobalParamsStatus, SetParamReq
+from mahos.core.node.node import Node
+from mahos.core.node.client import StatusClient
 
 
 class GlobalParamsClient(StatusClient):

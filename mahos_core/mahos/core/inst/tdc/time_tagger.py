@@ -18,11 +18,11 @@ import numpy as np
 try:
     import TimeTagger as tt
 except ImportError:
-    print("mahos.inst.tdc: failed to import TimeTagger module")
+    print("mahos.core.inst.tdc: failed to import TimeTagger module")
 
-from mahos.inst.instrument import Instrument
-from mahos.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
-from mahos.util.io import save_h5
+from mahos.core.inst.instrument import Instrument
+from mahos.core.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
+from mahos.core.util.io import save_h5
 
 
 class TimeTagger(Instrument):

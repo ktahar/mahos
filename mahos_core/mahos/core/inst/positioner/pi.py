@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from pipython import GCSDevice, GCSError
 
-from mahos.inst.exceptions import InstError
-from mahos.inst.instrument import Instrument
-from mahos.msgs import param_msgs as P
+from mahos.core.inst.exceptions import InstError
+from mahos.core.inst.instrument import Instrument
+from mahos.core.msgs import param_msgs as P
 
 
 class PI_OneAxis_USB(Instrument):

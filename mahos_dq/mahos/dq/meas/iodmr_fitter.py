@@ -17,20 +17,20 @@ from functools import partial
 # try:
 #     import cv2
 # except ImportError:
-#     print("mahos.meas.iodmr_fitter: failed to import cv2")
+#     print("mahos.dq.meas.iodmr_fitter: failed to import cv2")
 
 import numpy as np
 from numpy.typing import NDArray
 import lmfit as F
 from lmfit.model import ModelResult
 
-from mahos.meas import odmr_fitter as OF
+from mahos.dq.meas import odmr_fitter as OF
 
-from mahos.node.log import DummyLogger
-from mahos.msgs.iodmr_msgs import IODMRData
-from mahos.util.timer import StopWatch
-from mahos.util.nv import Dgs_MHz, gamma_MHz_mT
-from mahos.util.image import apply_binning
+from mahos.core.node.log import DummyLogger
+from mahos.dq.msgs.iodmr_msgs import IODMRData
+from mahos.core.util.timer import StopWatch
+from mahos.dq.util.nv import Dgs_MHz, gamma_MHz_mT
+from mahos.core.util.image import apply_binning
 
 
 def load_modelresult(s: str):

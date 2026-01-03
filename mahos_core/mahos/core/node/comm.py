@@ -15,10 +15,10 @@ import typing as T
 
 import zmq
 
-from mahos.msgs.common_msgs import pickle_proto, Message, Request, Reply
-from mahos.util.typing import SubHandler, RepHandler
+from mahos.core.msgs.common_msgs import pickle_proto, Message, Request, Reply
+from mahos.core.util.typing import SubHandler, RepHandler
 
-from mahos.node.log import PUBHandler, DummyLogger
+from mahos.core.node.log import PUBHandler, DummyLogger
 
 
 def serialize(msg: Message | T.Any) -> bytes:
@@ -167,7 +167,7 @@ class Context(object):
     (and provide API to get inbound message, etc.).
     In this case, only sub-thread should add inbound messages and use poll() method;
     and only main-thread should add outbound messages and use sender objects.
-    See mahos.node.client for example implementations.
+    See mahos.core.node.client for example implementations.
 
     """
 

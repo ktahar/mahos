@@ -15,10 +15,10 @@ from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mahos.meas.spectroscopy_fitter import SpectroscopyFitter
-from mahos.msgs.spectroscopy_msgs import SpectroscopyData, update_data
-from mahos.node.log import DummyLogger
-from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.dq.meas.spectroscopy_fitter import SpectroscopyFitter
+from mahos.dq.msgs.spectroscopy_msgs import SpectroscopyData, update_data
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.io import save_pickle_or_h5, load_pickle_or_h5
 
 
 class SpectroscopyIO(object):
@@ -127,7 +127,7 @@ class SpectroscopyIO(object):
         xdata = data.get_xdata()
         ydata = data.get_ydata(filter_n=params.get("filter_n", 0))
         with open(fn, "w", encoding="utf-8", newline="\n") as f:
-            f.write("# Spectroscopy data taken by mahos.meas.spectroscopy.\n")
+            f.write("# Spectroscopy data taken by mahos.dq.meas.spectroscopy.\n")
             f.write("# Wavelength Intensity\n")
             f.write("# nm counts\n")
         with open(fn, "a") as f:

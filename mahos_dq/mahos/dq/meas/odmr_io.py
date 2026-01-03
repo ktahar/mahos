@@ -15,11 +15,11 @@ from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mahos.meas.odmr_fitter import ODMRFitter
-from mahos.msgs.odmr_msgs import ODMRData, update_data
-from mahos.node.log import DummyLogger
-from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
-from mahos.util.plot import colors_tab20_pair
+from mahos.dq.meas.odmr_fitter import ODMRFitter
+from mahos.dq.msgs.odmr_msgs import ODMRData, update_data
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.core.util.plot import colors_tab20_pair
 
 
 class ODMRIO(object):
@@ -139,7 +139,7 @@ class ODMRIO(object):
         ydata = data.get_ydata()
 
         with open(fn, "w", encoding="utf-8", newline="\n") as fo:
-            fo.write("# ODMR data taken by mahos.meas.odmr.\n")
+            fo.write("# ODMR data taken by mahos.dq.meas.odmr.\n")
             fo.write(f"# {data.xlabel} {data.ylabel}\n")
             fo.write(f"# {data.xunit} {data.yunit}\n")
         with open(fn, "ab") as fo:

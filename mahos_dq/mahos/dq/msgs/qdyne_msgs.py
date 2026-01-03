@@ -13,12 +13,12 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from mahos.util.comp import dict_isclose
-from mahos.util.conv import real_fft
-from mahos.msgs.common_msgs import Request
-from mahos.msgs.common_meas_msgs import BasicMeasData
-from mahos.msgs.podmr_msgs import TDCStatus
-from mahos.msgs import param_msgs as P
+from mahos.core.util.comp import dict_isclose
+from mahos.core.util.conv import real_fft
+from mahos.core.msgs.common_msgs import Request
+from mahos.core.msgs.common_meas_msgs import BasicMeasData
+from mahos.dq.msgs.podmr_msgs import TDCStatus
+from mahos.core.msgs import param_msgs as P
 
 
 class ValidateReq(Request):

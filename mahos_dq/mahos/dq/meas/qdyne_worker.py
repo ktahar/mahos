@@ -15,23 +15,28 @@ from itertools import chain
 
 import numpy as np
 
-from mahos.util.timer import IntervalTimer, StopWatch
-from mahos.util.io import load_h5
-from mahos.msgs import param_msgs as P
-from mahos.msgs.pulse_msgs import PulsePattern
-from mahos.msgs.inst.pg_msgs import Block, Blocks
-from mahos.msgs.inst.tdc_msgs import RawEvents
-from mahos.msgs.qdyne_msgs import QdyneData, TDCStatus
-from mahos.inst.sg_interface import SGInterface
-from mahos.inst.pg_interface import PGInterface
-from mahos.inst.tdc_interface import TDCInterface
-from mahos.inst.fg_interface import FGInterface
-from mahos.util.conf import PresetLoader
-from mahos.meas.common_worker import Worker
+from mahos.core.util.timer import IntervalTimer, StopWatch
+from mahos.core.util.io import load_h5
+from mahos.core.msgs import param_msgs as P
+from mahos.core.msgs.pulse_msgs import PulsePattern
+from mahos.core.msgs.inst.pg_msgs import Block, Blocks
+from mahos.core.msgs.inst.tdc_msgs import RawEvents
+from mahos.dq.msgs.qdyne_msgs import QdyneData, TDCStatus
+from mahos.core.inst.sg_interface import SGInterface
+from mahos.core.inst.pg_interface import PGInterface
+from mahos.core.inst.tdc_interface import TDCInterface
+from mahos.core.inst.fg_interface import FGInterface
+from mahos.core.util.conf import PresetLoader
+from mahos.core.meas.common_worker import Worker
 
-from mahos.meas.podmr_generator import generator_kernel as K
-from mahos.meas.podmr_generator.generator import make_generators
-from mahos.ext import cqdyne_analyzer as C
+from mahos.dq.meas.podmr_generator import generator_kernel as K
+from mahos.dq.meas.podmr_generator.generator import make_generators
+
+try:
+    from mahos.dq_ext import cqdyne_analyzer as C
+except ImportError:
+    print("mahos.dq.meas.qdyne_worker: failed to import mahos.dq_ext")
+    C = None
 
 
 class Bounds(object):
@@ -169,7 +174,7 @@ class QdyneAnalyzer(object):
                 print(f"[{i}/{len(data.xdata)}] {i/len(data.xdata):.1%} {w.elapsed_str()}")
         return True
 
-    def analyze(self, data: QdyneData) -> bool:
+    def _analyze_ext(self, data: QdyneData) -> bool:
         """Analyze data.raw_data and set data.data and data.xdata."""
 
         if not data.has_raw_data() or data.marker_indices is None:
@@ -192,6 +197,15 @@ class QdyneAnalyzer(object):
         data.data = np.zeros(N, dtype=np.uint64)
         C.analyze(data.raw_data, data.xdata, data.data, signal_head, signal_tail)
         return True
+
+    def analyze(self, data: QdyneData) -> bool:
+        if C is None:
+            msg = "Using Python analyze function which can be very slow."
+            msg += " Consider installing mahos.dq_ext."
+            self.logger.warn(msg)
+            return self._analyze_py(data)
+        else:
+            return self._analyze_ext(data)
 
 
 class Pulser(Worker):

@@ -16,26 +16,26 @@ import uuid
 import numpy as np
 import pyqtgraph as pg
 
-from mahos.gui import Qt
-from mahos.gui.Qt import QtCore, QtGui, QtWidgets
+from mahos.core.gui import Qt
+from mahos.core.gui.Qt import QtCore, QtGui, QtWidgets
 
-from mahos.gui.ui.spodmr import Ui_SPODMR
-from mahos.gui.spodmr_client import QSPODMRClient
+from mahos.dq.gui.ui.spodmr import Ui_SPODMR
+from mahos.dq.gui.spodmr_client import QSPODMRClient
 
-from mahos.msgs.common_msgs import BinaryState
-from mahos.msgs.common_meas_msgs import Buffer
-from mahos.msgs import param_msgs as P
-from mahos.msgs.spodmr_msgs import SPODMRData, SPODMRStatus
-from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.gui_node import GUINode
-from mahos.gui.common_widget import ClientWidget
-from mahos.gui.fit_widget import FitWidget
-from mahos.gui.param import set_enabled, apply_widgets
-from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
-from mahos.node.node import local_conf, join_name
-from mahos.util.plot import colors_tab20_pair
-from mahos.util.math_phys import round_halfint, round_evenint
-from mahos.util.conv import real_fft
+from mahos.core.msgs.common_msgs import BinaryState
+from mahos.core.msgs.common_meas_msgs import Buffer
+from mahos.core.msgs import param_msgs as P
+from mahos.dq.msgs.spodmr_msgs import SPODMRData, SPODMRStatus
+from mahos.core.node.global_params import GlobalParamsClient
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.gui.common_widget import ClientWidget
+from mahos.core.gui.fit_widget import FitWidget
+from mahos.core.gui.param import set_enabled, apply_widgets
+from mahos.core.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.core.node.node import local_conf, join_name
+from mahos.core.util.plot import colors_tab20_pair
+from mahos.core.util.math_phys import round_halfint, round_evenint
+from mahos.core.util.conv import real_fft
 
 
 Policy = QtWidgets.QSizePolicy.Policy

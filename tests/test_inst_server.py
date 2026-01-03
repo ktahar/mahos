@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for inst.server.
+Tests for mahos.core.inst.server.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
@@ -11,9 +11,9 @@ Tests for inst.server.
 import pytest
 import networkx as nx
 
-from mahos.msgs.confocal_msgs import Axis
-from mahos.inst.overlay.confocal_scanner_mock import DUMMY_CAPABILITY
-from mahos.inst.server import OverlayConf
+from mahos.dq.msgs.confocal_msgs import Axis
+from mahos.dq.inst.overlay.confocal_scanner_mock import DUMMY_CAPABILITY
+from mahos.core.inst.server import OverlayConf
 
 from fixtures import ctx, gconf, server_2clients
 
@@ -114,10 +114,10 @@ def test_overlay(server_2clients):
 
     # names
     assert client.module_class_names("scanner") == (
-        "confocal_scanner_mock",
+        "mahos.dq.inst.overlay.confocal_scanner_mock",
         "ConfocalScanner_mock",
     )
-    assert client.module_name("scanner") == "confocal_scanner_mock"
+    assert client.module_name("scanner") == "mahos.dq.inst.overlay.confocal_scanner_mock"
     assert client.class_name("scanner") == "ConfocalScanner_mock"
 
     # func name and argument errors

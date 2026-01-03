@@ -13,12 +13,12 @@ from __future__ import annotations
 import numpy as np
 import msgpack
 
-from mahos.msgs.common_msgs import Status, BinaryState
-from mahos.msgs.common_meas_msgs import BasicMeasData
-from mahos.msgs.fit_msgs import PeakType
-from mahos.msgs.inst.spectrometer_msgs import Temperature
+from mahos.core.msgs.common_msgs import Status, BinaryState
+from mahos.core.msgs.common_meas_msgs import BasicMeasData
+from mahos.core.msgs.fit_msgs import PeakType
+from mahos.core.msgs.inst.spectrometer_msgs import Temperature
 
-from mahos.util.stat import filter_outlier_2d
+from mahos.core.util.stat import filter_outlier_2d
 
 
 class SpectroscopyStatus(Status):

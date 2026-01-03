@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-mahos data plot command.
+Implementaions from mahos.dq for mahos data plot command.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
@@ -15,15 +15,15 @@ from os import path
 import pprint
 import toml
 
-from mahos.msgs.fit_msgs import str_to_peak_type
-from mahos.meas.confocal_io import ConfocalIO
-from mahos.meas.odmr_io import ODMRIO
-from mahos.meas.podmr_io import PODMRIO
-from mahos.meas.spodmr_io import SPODMRIO
-from mahos.meas.iodmr_io import IODMRIO
-from mahos.meas.hbt_io import HBTIO
-from mahos.meas.spectroscopy_io import SpectroscopyIO
-from mahos.util.cui import prompt
+from mahos.core.msgs.fit_msgs import str_to_peak_type
+from mahos.dq.meas.confocal_io import ConfocalIO
+from mahos.dq.meas.odmr_io import ODMRIO
+from mahos.dq.meas.podmr_io import PODMRIO
+from mahos.dq.meas.spodmr_io import SPODMRIO
+from mahos.dq.meas.iodmr_io import IODMRIO
+from mahos.dq.meas.hbt_io import HBTIO
+from mahos.dq.meas.spectroscopy_io import SpectroscopyIO
+from mahos.core.util.cui import prompt
 
 
 def plot_data(args, fn, data, plot, force=False):
@@ -46,6 +46,23 @@ def plot_files(args, load, plot):
         if data is None:
             continue
         plot_data(args, fn, data, plot)
+
+
+def make_default_params(args):
+    figsize = [float(i) for i in args.figsize.split(",")]
+    if len(figsize) != 2:
+        raise ValueError(f"Invalid figsize: {args.figsize}")
+
+    return {
+        "figsize": figsize,
+        "fontsize": args.fontsize,
+        "dpi": args.dpi,
+        "legend": args.legend,
+        "xmax": args.xmax,
+        "xmin": args.xmin,
+        "ymax": args.ymax,
+        "ymin": args.ymin,
+    }
 
 
 def plot_confocal_image(args):
@@ -341,23 +358,6 @@ def plot_spec(args):
     else:
         data = [io.load_data(n) for n in args.names]
         io.export_data(args.one_figure, data, params)
-
-
-def make_default_params(args):
-    figsize = [float(i) for i in args.figsize.split(",")]
-    if len(figsize) != 2:
-        raise ValueError(f"Invalid figsize: {args.figsize}")
-
-    return {
-        "figsize": figsize,
-        "fontsize": args.fontsize,
-        "dpi": args.dpi,
-        "legend": args.legend,
-        "xmax": args.xmax,
-        "xmin": args.xmin,
-        "ymax": args.ymax,
-        "ymin": args.ymin,
-    }
 
 
 def add_common_args(parser, default_limits=((None, None), (None, None))):
@@ -784,9 +784,7 @@ def add_spec_parser(sub_parsers):
     p.set_defaults(func=plot_spec)
 
 
-def parse_args(args):
-    parser = argparse.ArgumentParser(prog="mahos data plot", description="(Re-)plot data file(s).")
-    sub_parsers = parser.add_subparsers(help="type of the files")
+def add_parsers(sub_parsers):
     add_confocal_image_parser(sub_parsers)
     add_confocal_trace_parser(sub_parsers)
     add_odmr_parser(sub_parsers)
@@ -796,6 +794,12 @@ def parse_args(args):
     add_iodmr_fit_parser(sub_parsers)
     add_hbt_parser(sub_parsers)
     add_spec_parser(sub_parsers)
+
+
+def parse_args(args):
+    parser = argparse.ArgumentParser(prog="mahos data plot", description="(Re-)plot data file(s).")
+    sub_parsers = parser.add_subparsers(help="type of the files")
+    add_parsers(sub_parsers)
 
     args = parser.parse_args(args)
 

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
 """
-Tests for msgs.inst.pg_msgs.
+Tests for mahos.core.msgs.inst.pg_msgs.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
 
 """
 
-from mahos.msgs.inst.pg_msgs import Block, Blocks, BlockSeq
-from mahos.msgs.inst.pg_msgs import AnalogChannel as A
+from mahos.core.msgs.inst.pg_msgs import Block, Blocks, BlockSeq
+from mahos.core.msgs.inst.pg_msgs import AnalogChannel as A
 
 
 def ch_upper(channels):

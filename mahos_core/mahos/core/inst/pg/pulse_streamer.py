@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import pulsestreamer
 
-from mahos.inst.instrument import Instrument
-from mahos.msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq, AnalogChannel
+from mahos.core.inst.instrument import Instrument
+from mahos.core.msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq, AnalogChannel
 
 
 class PulseStreamer(Instrument):
@@ -421,7 +421,7 @@ class PulseStreamerDAQTrigger(PulseStreamer):
         do_conf = {"lines": [self.conf["do_line"]]}
 
         # import here to make PulseStreamer usable on PC without DAQ
-        from mahos.inst.daq import DigitalOut
+        from mahos.core.inst.daq import DigitalOut
 
         self._do = DigitalOut(do_name, do_conf, prefix=prefix)
         self._set_idle_logic()

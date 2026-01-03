@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for msgs.param_msgs.
+Tests for mahos.core.msgs.param_msgs.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
@@ -14,8 +14,8 @@ import enum
 import pytest
 import h5py
 
-from mahos.msgs.param_msgs import FloatParam, IntParam, StrParam, EnumParam
-from mahos.msgs.param_msgs import ParamDict, isclose
+from mahos.core.msgs.param_msgs import FloatParam, IntParam, StrParam, EnumParam
+from mahos.core.msgs.param_msgs import ParamDict, isclose
 
 
 class E(enum.Enum):

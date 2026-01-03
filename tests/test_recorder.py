@@ -8,8 +8,8 @@ Tests for Recorder.
 
 """
 
-from mahos.meas.recorder import RecorderClient, RecorderIO
-from mahos.msgs.common_msgs import BinaryState
+from mahos.core.meas.recorder import RecorderClient, RecorderIO
+from mahos.core.msgs.common_msgs import BinaryState
 from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, recorder, server_conf, recorder_conf
 

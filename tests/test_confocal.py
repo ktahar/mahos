@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for meas.confocal.
+Tests for mahos.dq.meas.confocal.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
@@ -12,12 +12,12 @@ import time
 import uuid
 from io import BytesIO
 
-from mahos.meas.confocal import ConfocalClient, ConfocalIO
-from mahos.msgs.common_msgs import BinaryState
-from mahos.msgs.confocal_msgs import ConfocalState, Axis, ScanDirection, ScanMode, LineMode
-from mahos.msgs.confocal_tracker_msgs import OptMode
-from mahos.inst.overlay.confocal_scanner_mock import DUMMY_CAPABILITY
-from mahos.util.comp import dict_equal_inspect
+from mahos.dq.meas.confocal import ConfocalClient, ConfocalIO
+from mahos.core.msgs.common_msgs import BinaryState
+from mahos.dq.msgs.confocal_msgs import ConfocalState, Axis, ScanDirection, ScanMode, LineMode
+from mahos.dq.msgs.confocal_tracker_msgs import OptMode
+from mahos.dq.inst.overlay.confocal_scanner_mock import DUMMY_CAPABILITY
+from mahos.core.util.comp import dict_equal_inspect
 
 from util import get_some, expect_value
 from fixtures import ctx, gconf, server, confocal, tracker, manager, confocal_conf

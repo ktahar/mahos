@@ -102,7 +102,7 @@
   <customwidget>
    <class>ParamTable</class>
    <extends>QTableWidget</extends>
-   <header>mahos.gui.param</header>
+   <header>mahos.core.gui.param</header>
   </customwidget>
  </customwidgets>
  <tabstops>

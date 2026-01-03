@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from mahos.msgs.camera_msgs import Image
-from mahos.msgs import param_msgs as P
-from mahos.inst.camera_interface import CameraInterface
-from mahos.msgs.inst.camera_msgs import FrameResult
-from mahos.meas.common_worker import Worker
+from mahos.core.msgs.camera_msgs import Image
+from mahos.core.msgs import param_msgs as P
+from mahos.core.inst.camera_interface import CameraInterface
+from mahos.core.msgs.inst.camera_msgs import FrameResult
+from mahos.core.meas.common_worker import Worker
 
 
 class Poller(Worker):

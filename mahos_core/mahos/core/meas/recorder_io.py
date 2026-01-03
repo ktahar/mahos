@@ -15,9 +15,9 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 
-from mahos.msgs.recorder_msgs import RecorderData, update_data
-from mahos.node.log import DummyLogger
-from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.core.msgs.recorder_msgs import RecorderData, update_data
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.io import save_pickle_or_h5, load_pickle_or_h5
 
 
 class RecorderIO(object):

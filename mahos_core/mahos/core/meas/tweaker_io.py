@@ -13,8 +13,8 @@ from os import path
 
 import h5py
 
-from mahos.msgs import param_msgs as P
-from mahos.node.log import DummyLogger
+from mahos.core.msgs import param_msgs as P
+from mahos.core.node.log import DummyLogger
 
 
 class TweakerIO(object):

@@ -397,7 +397,7 @@
   <customwidget>
    <class>CompressionWidget</class>
    <extends>QWidget</extends>
-   <header>mahos.gui.common_widget</header>
+   <header>mahos.core.gui.common_widget</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

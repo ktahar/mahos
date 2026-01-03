@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from mahos.msgs.common_msgs import Request
-from mahos.msgs.common_meas_msgs import BasicMeasData
+from mahos.core.msgs.common_msgs import Request
+from mahos.core.msgs.common_meas_msgs import BasicMeasData
 
 
 class UpdatePlotParamsReq(Request):

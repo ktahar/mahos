@@ -11,8 +11,8 @@ Base class for instrument.
 from __future__ import annotations
 import typing as T
 
-from mahos.node.log import init_topic_logger
-from mahos.msgs import param_msgs as P
+from mahos.core.node.log import init_topic_logger
+from mahos.core.msgs import param_msgs as P
 
 
 class Instrument(object):

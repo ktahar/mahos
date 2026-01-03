@@ -7,8 +7,8 @@ from os import path
 
 import numpy as np
 
-from mahos.inst.pg_dtg_core import dtg_io
-from mahos.msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq
+from mahos.core.inst.pg_dtg_core import dtg_io
+from mahos.core.msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq
 
 
 def gen_block(length, blockid, name):

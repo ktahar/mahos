@@ -8,19 +8,19 @@ Logic and instrument control part of HBT Interferometer.
 
 """
 
-from mahos.msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
-from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.msgs.common_meas_msgs import Buffer
-from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
-from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
-from mahos.msgs import hbt_msgs
-from mahos.msgs.hbt_msgs import HBTData, UpdatePlotParamsReq
-from mahos.util.timer import IntervalTimer
-from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
-from mahos.meas.common_worker import DummyWorker, PulseGen_CW, Switch
-from mahos.meas.hbt_worker import Listener
-from mahos.meas.hbt_fitter import HBTFitter
-from mahos.meas.hbt_io import HBTIO
+from mahos.core.msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
+from mahos.core.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.core.msgs.common_meas_msgs import Buffer
+from mahos.core.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
+from mahos.core.msgs.param_msgs import prefix_labels, remove_label_prefix
+from mahos.dq.msgs import hbt_msgs
+from mahos.dq.msgs.hbt_msgs import HBTData, UpdatePlotParamsReq
+from mahos.core.util.timer import IntervalTimer
+from mahos.core.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.core.meas.common_worker import DummyWorker, PulseGen_CW, Switch
+from mahos.dq.meas.hbt_worker import Listener
+from mahos.dq.meas.hbt_fitter import HBTFitter
+from mahos.dq.meas.hbt_io import HBTIO
 
 
 class HBTClient(BasicMeasClient):

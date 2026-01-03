@@ -8,10 +8,10 @@ Qt signal-based client of InstrumentServer.
 
 """
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.msgs.inst.server_msgs import ServerStatus
-from mahos.gui.client import QStatusSubscriber
+from mahos.core.msgs.inst.server_msgs import ServerStatus
+from mahos.core.gui.client import QStatusSubscriber
 
 
 class QInstrumentSubscriber(QStatusSubscriber):

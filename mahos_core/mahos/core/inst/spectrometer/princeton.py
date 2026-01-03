@@ -14,8 +14,8 @@ import os
 
 import numpy as np
 
-from mahos.inst.instrument import Instrument
-from mahos.msgs.spectroscopy_msgs import Temperature
+from mahos.core.inst.instrument import Instrument
+from mahos.core.msgs.spectroscopy_msgs import Temperature
 
 
 # imports for LightField
@@ -40,7 +40,9 @@ try:
 
     # from PrincetonInstruments.LightField.AddIns import DeviceType
 except (ImportError, KeyError):
-    print("mahos.inst.spectrometer: failed to import pythonnet or PrincetonInstruments modules")
+    print(
+        "mahos.core.inst.spectrometer: failed to import pythonnet or PrincetonInstruments modules"
+    )
 
 
 class Princeton_LightField(Instrument):

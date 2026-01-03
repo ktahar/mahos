@@ -10,7 +10,7 @@ Common dialogs
 
 from __future__ import annotations
 
-from mahos.gui import Qt
+from mahos.core.gui import Qt
 
 
 def save_dialog(

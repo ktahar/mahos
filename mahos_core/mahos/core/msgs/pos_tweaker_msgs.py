@@ -11,7 +11,7 @@ Message Types for the PosTweaker.
 from __future__ import annotations
 from pprint import pformat
 
-from mahos.msgs.common_msgs import Request, Status
+from mahos.core.msgs.common_msgs import Request, Status
 
 
 class PosTweakerStatus(Status):

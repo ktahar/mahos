@@ -11,7 +11,7 @@ Common utilities for tests.
 import time
 from io import BytesIO
 
-from mahos.util.comp import dict_equal_inspect
+from mahos.core.util.comp import dict_equal_inspect
 
 
 def get_some(get, poll_timeout_ms, trials=500):

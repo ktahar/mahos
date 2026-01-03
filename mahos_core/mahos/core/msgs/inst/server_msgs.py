@@ -13,7 +13,7 @@ import copy
 import uuid
 from pprint import pformat
 
-from mahos.msgs.common_msgs import Message, Request, Status
+from mahos.core.msgs.common_msgs import Message, Request, Status
 
 
 class ServerStatus(Status):

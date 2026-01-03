@@ -12,10 +12,10 @@ import sys
 import importlib
 import argparse
 
-from mahos.node.node import Node, join_name
-from mahos.gui.gui_node import GUINode
-from mahos.cli.util import init_gconf_host_node
-from mahos.cli.threaded_nodes import ThreadedNodes
+from mahos.core.node.node import Node, join_name
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.cli.util import init_gconf_host_node
+from mahos.core.cli.threaded_nodes import ThreadedNodes
 
 
 def parse_args(args):

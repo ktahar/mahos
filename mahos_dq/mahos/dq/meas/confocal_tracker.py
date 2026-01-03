@@ -21,23 +21,23 @@ import numpy as np
 try:
     import cv2
 except ImportError:
-    print("mahos.meas.confocal_tracker: failed to import cv2")
+    print("mahos.dq.meas.confocal_tracker: failed to import cv2")
 
-from mahos import CONFIG_DIR
-from mahos.meas.confocal import ConfocalClient
-from mahos.msgs.common_msgs import Reply, StateReq, BinaryState
-from mahos.msgs import confocal_msgs
-from mahos.msgs.confocal_msgs import Image, ScanDirection, ScanMode, PiezoPos
-from mahos.msgs.confocal_msgs import ConfocalState
-from mahos.msgs.confocal_msgs import direction_to_labels, direction_to_axes
-from mahos.msgs.confocal_tracker_msgs import OptMode, ConfocalTrackerStatus
-from mahos.msgs.confocal_tracker_msgs import SaveParamsReq, LoadParamsReq, TrackNowReq
-from mahos.msgs import confocal_tracker_msgs
-from mahos.node.node import Node
-from mahos.node.client import StateClient
-from mahos.util.timer import OneshotTimer
-from mahos.util import conv, fit
-from mahos.meas.state_manager import StateManagerClient
+from mahos.core import CONFIG_DIR
+from mahos.dq.meas.confocal import ConfocalClient
+from mahos.core.msgs.common_msgs import Reply, StateReq, BinaryState
+from mahos.dq.msgs import confocal_msgs
+from mahos.dq.msgs.confocal_msgs import Image, ScanDirection, ScanMode, PiezoPos
+from mahos.dq.msgs.confocal_msgs import ConfocalState
+from mahos.dq.msgs.confocal_msgs import direction_to_labels, direction_to_axes
+from mahos.dq.msgs.confocal_tracker_msgs import OptMode, ConfocalTrackerStatus
+from mahos.dq.msgs.confocal_tracker_msgs import SaveParamsReq, LoadParamsReq, TrackNowReq
+from mahos.dq.msgs import confocal_tracker_msgs
+from mahos.core.node.node import Node
+from mahos.core.node.client import StateClient
+from mahos.core.util.timer import OneshotTimer
+from mahos.core.util import conv, fit
+from mahos.core.meas.state_manager import StateManagerClient
 
 
 def optimize_pos(mode: OptMode, data, prev_data, print_fn=print):

@@ -15,10 +15,10 @@ from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mahos.meas.hbt_fitter import HBTFitter
-from mahos.msgs.hbt_msgs import HBTData, update_data
-from mahos.node.log import DummyLogger
-from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.dq.meas.hbt_fitter import HBTFitter
+from mahos.dq.msgs.hbt_msgs import HBTData, update_data
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.io import save_pickle_or_h5, load_pickle_or_h5
 
 
 class HBTIO(object):
@@ -123,7 +123,7 @@ class HBTIO(object):
         xdata = data.get_xdata()
         ydata = data.get_ydata()
         with open(fn, "w", encoding="utf-8", newline="\n") as fo:
-            fo.write("# HBT data taken by mahos.meas.hbt.\n")
+            fo.write("# HBT data taken by mahos.dq.meas.hbt.\n")
             fo.write("# Time Events\n")
             fo.write("# ns counts\n")
         with open(fn, "ab") as fo:

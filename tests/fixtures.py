@@ -14,24 +14,24 @@ import time
 
 import pytest
 
-from mahos.node.node import split_name, load_gconf, local_conf, start_node_proc, Node
-from mahos.node.log_broker import LogBroker, LogClient
-from mahos.node.global_params import GlobalParams, GlobalParamsClient
-from mahos.inst.server import InstrumentServer, InstrumentClient
-from mahos.meas.confocal import Confocal, ConfocalClient
-from mahos.meas.confocal_tracker import ConfocalTracker, ConfocalTrackerClient
-from mahos.meas.odmr import ODMR, ODMRClient
-from mahos.meas.podmr import PODMR, PODMRClient
-from mahos.meas.spodmr import SPODMR, SPODMRClient
-from mahos.meas.iodmr import IODMR, IODMRClient
-from mahos.meas.qdyne import Qdyne, QdyneClient
-from mahos.meas.hbt import HBT, HBTClient
-from mahos.meas.spectroscopy import Spectroscopy, SpectroscopyClient
-from mahos.meas.camera import Camera, CameraClient
-from mahos.meas.state_manager import StateManager, StateManagerClient
-from mahos.meas.tweaker import Tweaker, TweakerClient
-from mahos.meas.pos_tweaker import PosTweaker, PosTweakerClient
-from mahos.meas.recorder import Recorder, RecorderClient
+from mahos.core.node.node import split_name, load_gconf, local_conf, start_node_proc, Node
+from mahos.core.node.log_broker import LogBroker, LogClient
+from mahos.core.node.global_params import GlobalParams, GlobalParamsClient
+from mahos.core.inst.server import InstrumentServer, InstrumentClient
+from mahos.dq.meas.confocal import Confocal, ConfocalClient
+from mahos.dq.meas.confocal_tracker import ConfocalTracker, ConfocalTrackerClient
+from mahos.dq.meas.odmr import ODMR, ODMRClient
+from mahos.dq.meas.podmr import PODMR, PODMRClient
+from mahos.dq.meas.spodmr import SPODMR, SPODMRClient
+from mahos.dq.meas.iodmr import IODMR, IODMRClient
+from mahos.dq.meas.qdyne import Qdyne, QdyneClient
+from mahos.dq.meas.hbt import HBT, HBTClient
+from mahos.dq.meas.spectroscopy import Spectroscopy, SpectroscopyClient
+from mahos.core.meas.camera import Camera, CameraClient
+from mahos.core.meas.state_manager import StateManager, StateManagerClient
+from mahos.core.meas.tweaker import Tweaker, TweakerClient
+from mahos.core.meas.pos_tweaker import PosTweaker, PosTweakerClient
+from mahos.core.meas.recorder import Recorder, RecorderClient
 
 
 script_dir = path.dirname(path.realpath(__file__))

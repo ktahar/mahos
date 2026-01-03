@@ -8,7 +8,7 @@ Time to Digital Converter (Time Digitizer) module
 
 """
 
-from mahos.inst.tdc.mcs import MCS
-from mahos.inst.tdc.time_tagger import TimeTagger
+from mahos.core.inst.tdc.mcs import MCS
+from mahos.core.inst.tdc.time_tagger import TimeTagger
 
 __all__ = ["MCS", "TimeTagger"]

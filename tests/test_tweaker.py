@@ -11,7 +11,7 @@ Tests for Tweaker.
 from util import get_some
 
 from fixtures import ctx, gconf, server, tweaker, tweaker_conf
-import mahos.msgs.param_msgs as P
+import mahos.core.msgs.param_msgs as P
 
 
 def test_tweaker(server, tweaker, tweaker_conf):

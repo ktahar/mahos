@@ -11,40 +11,31 @@ mahos data ls command.
 from os import path
 import argparse
 
-from mahos.util.io import list_attrs_h5
-from mahos.node.log import DummyLogger
+from mahos.core.util.io import list_attrs_h5
+from mahos.core.node.log import DummyLogger
 
-from mahos.msgs.confocal_msgs import Image, Trace
-from mahos.msgs.odmr_msgs import ODMRData
-from mahos.msgs.podmr_msgs import PODMRData
-from mahos.msgs.spodmr_msgs import SPODMRData
-from mahos.msgs.iodmr_msgs import IODMRData
-from mahos.msgs.hbt_msgs import HBTData
-from mahos.msgs.spectroscopy_msgs import SpectroscopyData
-from mahos.msgs.camera_msgs import Image as CameraImage
+from mahos.core.msgs.camera_msgs import Image as CameraImage
+
+exts_to_data = {
+    ".camera.h5": CameraImage,
+}
+try:
+    from mahos.dq.cli import data as dq
+
+    exts_to_data.update(dq.exts_to_data)
+except ImportError:
+    pass
 
 
 def parse_args(args):
     parser = argparse.ArgumentParser(
-        prog="mahos data print", description="Print list attributes and types of h5 data file(s)."
+        prog="mahos data ls", description="Print list attributes and types of h5 data file(s)."
     )
     parser.add_argument("names", nargs="+", help="file names")
     args = parser.parse_args(args)
 
     return args
 
-
-exts_to_data = {
-    ".scan.h5": Image,
-    ".trace.h5": Trace,
-    ".odmr.h5": ODMRData,
-    ".podmr.h5": PODMRData,
-    ".spodmr.h5": SPODMRData,
-    ".iodmr.h5": IODMRData,
-    ".hbt.h5": HBTData,
-    ".spec.h5": SpectroscopyData,
-    ".camera.h5": CameraImage,
-}
 
 logger = DummyLogger()
 

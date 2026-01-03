@@ -16,11 +16,11 @@ import numpy as np
 import lmfit as F
 from sklearn.cluster import KMeans
 
-from mahos.msgs import param_msgs as P
-from mahos.msgs.spectroscopy_msgs import SpectroscopyData
-from mahos.msgs.fit_msgs import PeakType
-from mahos.node.log import DummyLogger
-from mahos.meas.common_fitter import gaussian, lorentzian, voigt, BaseFitter
+from mahos.core.msgs import param_msgs as P
+from mahos.dq.msgs.spectroscopy_msgs import SpectroscopyData
+from mahos.core.msgs.fit_msgs import PeakType
+from mahos.core.node.log import DummyLogger
+from mahos.core.meas.common_fitter import gaussian, lorentzian, voigt, BaseFitter
 
 
 def guess_background(ydata, bins=40):

@@ -10,13 +10,13 @@ Qt signal-based client of Tweaker.
 
 from __future__ import annotations
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.msgs import param_msgs as P
-from mahos.msgs.tweaker_msgs import TweakerStatus, ReadReq, ReadAllReq, WriteReq, WriteAllReq
-from mahos.msgs.tweaker_msgs import StartReq, StopReq, ResetReq, SaveReq, LoadReq
-from mahos.node.node import get_value
-from mahos.gui.client import QStatusSubscriber
+from mahos.core.msgs import param_msgs as P
+from mahos.core.msgs.tweaker_msgs import TweakerStatus, ReadReq, ReadAllReq, WriteReq, WriteAllReq
+from mahos.core.msgs.tweaker_msgs import StartReq, StopReq, ResetReq, SaveReq, LoadReq
+from mahos.core.node.node import get_value
+from mahos.core.gui.client import QStatusSubscriber
 
 
 class QTweakerClient(QStatusSubscriber):

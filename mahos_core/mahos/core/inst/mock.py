@@ -14,14 +14,14 @@ import enum
 
 import numpy as np
 
-from mahos.inst.instrument import Instrument
-from mahos.inst.pg_dtg_core.dtg_core import DTGCoreMixin
-from mahos.msgs.confocal_msgs import Axis
-from mahos.msgs.inst.camera_msgs import FrameResult
-from mahos.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
-from mahos.msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq, AnalogChannel
-from mahos.msgs.inst.spectrometer_msgs import Temperature
-from mahos.msgs import param_msgs as P
+from mahos.core.inst.instrument import Instrument
+from mahos.core.inst.pg_dtg_core.dtg_core import DTGCoreMixin
+from mahos.core.msgs.inst.piezo_msgs import Axis
+from mahos.core.msgs.inst.camera_msgs import FrameResult
+from mahos.core.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
+from mahos.core.msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq, AnalogChannel
+from mahos.core.msgs.inst.spectrometer_msgs import Temperature
+from mahos.core.msgs import param_msgs as P
 
 
 class Clock_mock(Instrument):

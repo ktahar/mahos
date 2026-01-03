@@ -8,19 +8,19 @@ Logic and instrument control part of ODMR.
 
 """
 
-from mahos.msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
-from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.msgs.common_meas_msgs import Buffer
-from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
-from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
-from mahos.msgs import odmr_msgs
-from mahos.msgs.odmr_msgs import ODMRData, ValidateReq
-from mahos.util.timer import IntervalTimer
-from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
-from mahos.meas.common_worker import DummyWorker, Switch, PulseGen_CW
-from mahos.meas.odmr_worker import Sweeper, SweeperOverlay
-from mahos.meas.odmr_fitter import ODMRFitter
-from mahos.meas.odmr_io import ODMRIO
+from mahos.core.msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
+from mahos.core.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.core.msgs.common_meas_msgs import Buffer
+from mahos.core.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
+from mahos.core.msgs.param_msgs import prefix_labels, remove_label_prefix
+from mahos.dq.msgs import odmr_msgs
+from mahos.dq.msgs.odmr_msgs import ODMRData, ValidateReq
+from mahos.core.util.timer import IntervalTimer
+from mahos.core.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.core.meas.common_worker import DummyWorker, Switch, PulseGen_CW
+from mahos.dq.meas.odmr_worker import Sweeper, SweeperOverlay
+from mahos.dq.meas.odmr_fitter import ODMRFitter
+from mahos.dq.meas.odmr_io import ODMRIO
 
 
 class ODMRClient(BasicMeasClient):
@@ -40,8 +40,9 @@ class ODMR(BasicMeasNode):
     There are two options for the worker (sweeper, measurement logic).
     See docs of sweeper below for sweeper parameters.
 
-    - :class:`Sweeper <mahos.meas.odmr_worker.Sweeper>` : fast logic based on hardware triggering.
-    - :class:`SweeperOverlay <mahos.meas.odmr_worker.SweeperOverlay>` : interface to overlay.
+    - :class:`Sweeper <mahos.dq.meas.odmr_worker.Sweeper>` : fast logic based on
+    hardware triggering.
+    - :class:`SweeperOverlay <mahos.dq.meas.odmr_worker.SweeperOverlay>` : interface to overlay.
 
     :param target.servers: The InstrumentServer targets (instrument name, server full name).
         If target 'sweeper' is given, use of SweeperOverlay is implied.

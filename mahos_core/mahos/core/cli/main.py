@@ -11,7 +11,7 @@ main entrypoint of mahos cli.
 import sys
 import os
 
-from mahos.cli import run, launch, log, ls, graph, echo, shell, data, plot
+from mahos.core.cli import run, launch, log, ls, graph, echo, shell, data, data_plot
 
 main_usage = """usage: mahos COMMAND args
 
@@ -47,7 +47,7 @@ def main():
     elif "data".startswith(pkg):
         return data.main(sys.argv[2:])
     elif "plot".startswith(pkg):
-        return plot.main(sys.argv[2:])
+        return data_plot.main(sys.argv[2:])
     else:
         print(main_usage)
         return 1

@@ -13,9 +13,9 @@ import sys
 import time
 import threading
 
-from mahos.inst.instrument import Instrument
-from mahos.msgs import param_msgs as P
-from mahos.util.conv import clip_angle_degrees
+from mahos.core.inst.instrument import Instrument
+from mahos.core.msgs import param_msgs as P
+from mahos.core.util.conv import clip_angle_degrees
 
 
 # imports for Thorlabs
@@ -34,7 +34,7 @@ try:
     from Thorlabs.MotionControl.IntegratedStepperMotorsCLI import CageRotator  # noqa: E402
     from Thorlabs.MotionControl.KCube import DCServoCLI  # noqa: E402
 except ImportError:
-    print("mahos.inst.positioner: failed to import pythonnet or Thorlabs Kinesis modules")
+    print("mahos.core.inst.positioner: failed to import pythonnet or Thorlabs Kinesis modules")
 
 
 class _Thorlabs_Kinesis(Instrument):

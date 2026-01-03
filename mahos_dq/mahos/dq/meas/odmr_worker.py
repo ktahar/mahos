@@ -13,18 +13,18 @@ import time
 
 import numpy as np
 
-from mahos.msgs.odmr_msgs import ODMRData
-from mahos.msgs.pulse_msgs import PulsePattern
-from mahos.msgs import param_msgs as P
-from mahos.msgs.inst.pg_msgs import TriggerType
-from mahos.inst.sg_interface import SGInterface
-from mahos.inst.pg_interface import PGInterface
-from mahos.inst.pd_interface import PDInterface
-from mahos.inst.daq_interface import ClockSourceInterface
-from mahos.inst.overlay.odmr_sweeper_interface import ODMRSweeperInterface
-from mahos.util.conf import PresetLoader
-from mahos.meas.odmr_pg import ODMRPGMixin
-from mahos.meas.common_worker import Worker
+from mahos.dq.msgs.odmr_msgs import ODMRData
+from mahos.core.msgs.pulse_msgs import PulsePattern
+from mahos.core.msgs import param_msgs as P
+from mahos.core.msgs.inst.pg_msgs import TriggerType
+from mahos.core.inst.sg_interface import SGInterface
+from mahos.core.inst.pg_interface import PGInterface
+from mahos.core.inst.pd_interface import PDInterface
+from mahos.core.inst.daq_interface import ClockSourceInterface
+from mahos.dq.inst.overlay.odmr_sweeper_interface import ODMRSweeperInterface
+from mahos.core.util.conf import PresetLoader
+from mahos.dq.meas.odmr_pg import ODMRPGMixin
+from mahos.core.meas.common_worker import Worker
 
 
 _MOD_LABELS = ["iq_ext", "am_ext", "fm_ext", "iq_int", "am_int", "fm_int"]
@@ -187,7 +187,7 @@ class SweeperBase(Worker):
 class SweeperOverlay(SweeperBase):
     """Sweeper using Overlay.
 
-    Refer to :mod:`mahos.inst.overlay.odmr_sweeper` for docs of target overlay.
+    Refer to :mod:`mahos.dq.inst.overlay.odmr_sweeper` for docs of target overlay.
 
     """
 

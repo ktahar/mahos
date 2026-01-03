@@ -30,10 +30,10 @@ import pprint
 import numpy as np
 import h5py
 
-from mahos.msgs.common_msgs import Request
-from mahos.util.unit import SI_scale
-from mahos.util.comp import dict_isclose, has_compatible_types
-from mahos.util.conv import args_to_list
+from mahos.core.msgs.common_msgs import Request
+from mahos.core.util.unit import SI_scale
+from mahos.core.util.comp import dict_isclose, has_compatible_types
+from mahos.core.util.conv import args_to_list
 
 
 LABEL_DELIM = "::"

@@ -10,7 +10,7 @@ Typed Interface for Piezo Stage.
 
 from __future__ import annotations
 
-from mahos.inst.interface import InstrumentInterface
+from mahos.core.inst.interface import InstrumentInterface
 
 
 class PiezoInterface(InstrumentInterface):

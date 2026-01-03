@@ -21,12 +21,12 @@ import numpy as np
 from pipython import GCSDevice
 import pyvisa
 
-from mahos.inst.instrument import Instrument
-from mahos.inst.visa_instrument import VisaInstrument
-from mahos.inst.exceptions import InstError
-from mahos.inst.daq import AnalogIn, AnalogOut, ClockSource
-from mahos.msgs.confocal_msgs import Axis
-from mahos.util.conf import PresetLoader
+from mahos.core.inst.instrument import Instrument
+from mahos.core.inst.visa_instrument import VisaInstrument
+from mahos.core.inst.exceptions import InstError
+from mahos.core.inst.daq import AnalogIn, AnalogOut, ClockSource
+from mahos.core.msgs.inst.piezo_msgs import Axis
+from mahos.core.util.conf import PresetLoader
 
 
 class BasePiezo3Axes(Instrument):

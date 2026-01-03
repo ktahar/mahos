@@ -10,13 +10,13 @@ Qt signal-based client of PosTweaker.
 
 from __future__ import annotations
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.msgs.pos_tweaker_msgs import PosTweakerStatus, SetTargetReq
-from mahos.msgs.pos_tweaker_msgs import HomeReq, HomeAllReq, StopReq, StopAllReq, LoadReq
-from mahos.msgs.tweaker_msgs import SaveReq
-from mahos.node.node import get_value
-from mahos.gui.client import QStatusSubscriber
+from mahos.core.msgs.pos_tweaker_msgs import PosTweakerStatus, SetTargetReq
+from mahos.core.msgs.pos_tweaker_msgs import HomeReq, HomeAllReq, StopReq, StopAllReq, LoadReq
+from mahos.core.msgs.tweaker_msgs import SaveReq
+from mahos.core.node.node import get_value
+from mahos.core.gui.client import QStatusSubscriber
 
 
 class QPosTweakerClient(QStatusSubscriber):

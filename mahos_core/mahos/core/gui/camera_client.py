@@ -8,10 +8,10 @@ Qt signal-based clients of Camera stream.
 
 """
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.msgs.camera_msgs import Image
-from mahos.gui.client import QBasicMeasClient
+from mahos.core.msgs.camera_msgs import Image
+from mahos.core.gui.client import QBasicMeasClient
 
 
 class QCameraClient(QBasicMeasClient):

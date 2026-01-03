@@ -12,16 +12,16 @@ from __future__ import annotations
 from functools import partial
 import math
 
-from mahos.gui.Qt import QtCore, QtWidgets, QtGui, question_yn
+from mahos.core.gui.Qt import QtCore, QtWidgets, QtGui, question_yn
 
-from mahos.msgs.pos_tweaker_msgs import PosTweakerStatus
-from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.pos_tweaker_client import QPosTweakerClient
-from mahos.gui.gui_node import GUINode
-from mahos.gui.common_widget import ClientTopWidget
-from mahos.node.node import local_conf, join_name
-from mahos.gui.dialog import save_dialog, load_dialog
-from mahos.util.timer import OneshotTimer
+from mahos.core.msgs.pos_tweaker_msgs import PosTweakerStatus
+from mahos.core.node.global_params import GlobalParamsClient
+from mahos.core.gui.pos_tweaker_client import QPosTweakerClient
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.gui.common_widget import ClientTopWidget
+from mahos.core.node.node import local_conf, join_name
+from mahos.core.gui.dialog import save_dialog, load_dialog
+from mahos.core.util.timer import OneshotTimer
 
 
 Policy = QtWidgets.QSizePolicy.Policy

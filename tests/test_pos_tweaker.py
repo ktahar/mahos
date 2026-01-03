@@ -8,7 +8,7 @@ Tests for PosTweaker.
 
 """
 
-from mahos.meas.pos_tweaker import PosTweakerClient
+from mahos.core.meas.pos_tweaker import PosTweakerClient
 from util import get_some, expect_value
 
 from fixtures import ctx, gconf, server, pos_tweaker, pos_tweaker_conf

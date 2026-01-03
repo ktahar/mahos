@@ -14,22 +14,22 @@ from functools import partial
 import uuid
 import enum
 
-from mahos.gui import Qt
-from mahos.gui.Qt import QtCore, QtGui, QtWidgets
+from mahos.core.gui import Qt
+from mahos.core.gui.Qt import QtCore, QtGui, QtWidgets
 
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from pyqtgraph.functions import mkPen
 
-from mahos.gui.ui.confocal import Ui_Confocal
-from mahos.gui.ui.scanDialog import Ui_scanDialog
-from mahos.gui.ui.trackDialog import Ui_trackDialog
-from mahos.gui.ui.imageDialog import Ui_imageDialog
-from mahos.gui.ui.traceView import Ui_traceView
+from mahos.dq.gui.ui.confocal import Ui_Confocal
+from mahos.dq.gui.ui.scanDialog import Ui_scanDialog
+from mahos.dq.gui.ui.trackDialog import Ui_trackDialog
+from mahos.dq.gui.ui.imageDialog import Ui_imageDialog
+from mahos.dq.gui.ui.traceView import Ui_traceView
 
-from mahos.msgs.common_msgs import BinaryState
-from mahos.msgs.confocal_msgs import (
+from mahos.core.msgs.common_msgs import BinaryState
+from mahos.dq.msgs.confocal_msgs import (
     Axis,
     ConfocalStatus,
     ConfocalState,
@@ -39,27 +39,32 @@ from mahos.msgs.confocal_msgs import (
     Image,
     Trace,
 )
-from mahos.msgs.confocal_msgs import direction_to_str, str_to_direction, mode_to_str, str_to_mode
-from mahos.msgs.confocal_msgs import line_mode_to_str, str_to_line_mode
-from mahos.msgs.confocal_tracker_msgs import OptMode
-from mahos.meas.confocal_worker import DEFAULT_TRACER_SIZE
-from mahos.gui.confocal_client import (
+from mahos.dq.msgs.confocal_msgs import (
+    direction_to_str,
+    str_to_direction,
+    mode_to_str,
+    str_to_mode,
+)
+from mahos.dq.msgs.confocal_msgs import line_mode_to_str, str_to_line_mode
+from mahos.dq.msgs.confocal_tracker_msgs import OptMode
+from mahos.dq.meas.confocal_worker import DEFAULT_TRACER_SIZE
+from mahos.dq.gui.confocal_client import (
     QConfocalClient,
     QConfocalTrackerClient,
     QTracerClient,
     QTraceNodeClient,
 )
-from mahos.node.global_params import GlobalParamsClient
-from mahos.node.node import local_conf, join_name
-from mahos.util import conv
-from mahos.util.plot import colors_tab20_pair
-from mahos.util.stat import simple_moving_average
-from mahos.util.timer import FPSCounter
-from mahos.util.unit import SI_scale
-from mahos.gui.gui_node import GUINode
-from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
-from mahos.gui.param import apply_widgets
-from mahos.gui.common_widget import ClientWidget
+from mahos.core.node.global_params import GlobalParamsClient
+from mahos.core.node.node import local_conf, join_name
+from mahos.core.util import conv
+from mahos.core.util.plot import colors_tab20_pair
+from mahos.core.util.stat import simple_moving_average
+from mahos.core.util.timer import FPSCounter
+from mahos.core.util.unit import SI_scale
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.core.gui.param import apply_widgets
+from mahos.core.gui.common_widget import ClientWidget
 
 Policy = QtWidgets.QSizePolicy.Policy
 

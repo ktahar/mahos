@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import math
 
-from mahos.msgs.inst.pg_msgs import Block, Blocks, TriggerType
-from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.core.msgs.inst.pg_msgs import Block, Blocks, TriggerType
+from mahos.core.msgs.pulse_msgs import PulsePattern
 
 
 class ODMRPGMixin(object):

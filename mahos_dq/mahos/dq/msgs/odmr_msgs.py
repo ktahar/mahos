@@ -14,11 +14,11 @@ import numpy as np
 from numpy.typing import NDArray
 import msgpack
 
-from mahos.msgs.common_msgs import Request
-from mahos.msgs.data_msgs import ComplexDataMixin
-from mahos.msgs.common_meas_msgs import BasicMeasData
-from mahos.msgs.fit_msgs import PeakType
-from mahos.util import conv
+from mahos.core.msgs.common_msgs import Request
+from mahos.core.msgs.data_msgs import ComplexDataMixin
+from mahos.core.msgs.common_meas_msgs import BasicMeasData
+from mahos.core.msgs.fit_msgs import PeakType
+from mahos.core.util import conv
 
 
 class ValidateReq(Request):

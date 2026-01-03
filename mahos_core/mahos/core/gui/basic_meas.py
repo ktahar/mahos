@@ -13,21 +13,21 @@ import os
 
 import pyqtgraph as pg
 
-from mahos.gui.Qt import QtCore, QtWidgets
+from mahos.core.gui.Qt import QtCore, QtWidgets
 
-from mahos.gui.ui.basic_meas import Ui_BasicMeas
-from mahos.gui.client import QBasicMeasClient
+from mahos.core.gui.ui.basic_meas import Ui_BasicMeas
+from mahos.core.gui.client import QBasicMeasClient
 
-from mahos.msgs.common_msgs import BinaryState, BinaryStatus
-from mahos.msgs.common_meas_msgs import Buffer
-from mahos.msgs.common_meas_msgs import BasicMeasData
-from mahos.msgs.param_msgs import filter_out_label_prefix
-from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.gui_node import GUINode
-from mahos.gui.common_widget import ClientWidget
-from mahos.gui.fit_widget import FitWidget
-from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
-from mahos.node.node import local_conf, join_name
+from mahos.core.msgs.common_msgs import BinaryState, BinaryStatus
+from mahos.core.msgs.common_meas_msgs import Buffer
+from mahos.core.msgs.common_meas_msgs import BasicMeasData
+from mahos.core.msgs.param_msgs import filter_out_label_prefix
+from mahos.core.node.global_params import GlobalParamsClient
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.gui.common_widget import ClientWidget
+from mahos.core.gui.fit_widget import FitWidget
+from mahos.core.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.core.node.node import local_conf, join_name
 
 
 class PlotWidget(QtWidgets.QWidget):

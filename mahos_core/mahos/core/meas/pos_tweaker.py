@@ -10,16 +10,16 @@ Specialized tweaker for manually operated positioners.
 
 from __future__ import annotations
 
-from mahos.msgs.common_msgs import Reply
-from mahos.msgs import pos_tweaker_msgs
-from mahos.msgs.pos_tweaker_msgs import PosTweakerStatus, SetTargetReq
-from mahos.msgs.pos_tweaker_msgs import HomeReq, HomeAllReq, StopReq, StopAllReq, LoadReq
-from mahos.msgs.tweaker_msgs import SaveReq
-from mahos.node.node import Node
-from mahos.node.client import StatusClient
-from mahos.inst.server import MultiInstrumentClient
-from mahos.inst.positioner_interface import SinglePositionerInterface
-from mahos.meas.pos_tweaker_io import PosTweakerIO
+from mahos.core.msgs.common_msgs import Reply
+from mahos.core.msgs import pos_tweaker_msgs
+from mahos.core.msgs.pos_tweaker_msgs import PosTweakerStatus, SetTargetReq
+from mahos.core.msgs.pos_tweaker_msgs import HomeReq, HomeAllReq, StopReq, StopAllReq, LoadReq
+from mahos.core.msgs.tweaker_msgs import SaveReq
+from mahos.core.node.node import Node
+from mahos.core.node.client import StatusClient
+from mahos.core.inst.server import MultiInstrumentClient
+from mahos.core.inst.positioner_interface import SinglePositionerInterface
+from mahos.core.meas.pos_tweaker_io import PosTweakerIO
 
 
 class PosTweakerClient(StatusClient):
@@ -68,7 +68,8 @@ class PosTweaker(Node):
     """Specialized tweaker for manually operated positioners.
 
     The target instrument must provide
-    :class:`SinglePositionerInterface <mahos.inst.positioner_interface.SinglePositionerInterface>`.
+    :class:`SinglePositionerInterface
+    <mahos.core.inst.positioner_interface.SinglePositionerInterface>`.
 
     :param target.servers: The InstrumentServer targets (instrument name, server full name).
     :type target.servers: dict[str, str]

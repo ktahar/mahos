@@ -14,10 +14,10 @@ from collections import ChainMap
 from inspect import signature, getdoc, getfile
 from functools import wraps
 
-from mahos.msgs.common_msgs import Request, Reply
-from mahos.msgs import param_msgs as P
-from mahos.msgs.inst import server_msgs
-from mahos.msgs.inst.server_msgs import (
+from mahos.core.msgs.common_msgs import Request, Reply
+from mahos.core.msgs import param_msgs as P
+from mahos.core.msgs.inst import server_msgs
+from mahos.core.msgs.inst.server_msgs import (
     Ident,
     ServerStatus,
     LockReq,
@@ -25,14 +25,14 @@ from mahos.msgs.inst.server_msgs import (
     CheckLockReq,
     CallReq,
 )
-from mahos.msgs.inst.server_msgs import ShutdownReq, StartReq, StopReq, PauseReq, ResumeReq
-from mahos.msgs.inst.server_msgs import ResetReq, ConfigureReq, SetReq, GetReq, HelpReq
-from mahos.msgs.inst.server_msgs import GetParamDictReq, GetParamDictLabelsReq
-from mahos.node.node import Node, NodeName, split_name
-from mahos.node.client import StatusClient
-from mahos.util.graph import sort_dependency
-from mahos.inst.instrument import Instrument
-from mahos.inst.overlay.overlay import InstrumentOverlay
+from mahos.core.msgs.inst.server_msgs import ShutdownReq, StartReq, StopReq, PauseReq, ResumeReq
+from mahos.core.msgs.inst.server_msgs import ResetReq, ConfigureReq, SetReq, GetReq, HelpReq
+from mahos.core.msgs.inst.server_msgs import GetParamDictReq, GetParamDictLabelsReq
+from mahos.core.node.node import Node, NodeName, split_name
+from mahos.core.node.client import StatusClient
+from mahos.core.util.graph import sort_dependency
+from mahos.core.inst.instrument import Instrument
+from mahos.core.inst.overlay.overlay import InstrumentOverlay
 
 
 class OverlayConf(object):
@@ -572,26 +572,26 @@ class InstrumentServer(Node):
     Multiple clients can use the resource.
     Each client can lock some instruments for exclusive procedure execution.
 
-    An :class:`Instrument <mahos.inst.instrument.Instrument>` config is defined
+    An :class:`Instrument <mahos.core.inst.instrument.Instrument>` config is defined
     under ``instrument`` dictionary in this node's conf.
     The key of that is the instrument name, and value (dict) is instrument configuration.
     Following three keys are given in value (dict).
 
     - ``module``: The module name holding the Instrument class.
-      It must be an importable Python module, but leading ``mahos.inst.`` can be omitted
-      if a submodule in ``mahos.inst`` package is used.
+      It must be an importable Python module, but leading ``mahos.core.inst.`` can be omitted
+      if a submodule in ``mahos.core.inst`` package is used.
     - ``class``: The Instrument class name. The class must be an attribute of the ``module``.
     - ``conf``: The configuration dictionary for the Instrument
       (this is optional, but usually necessary).
 
-    An :class:`InstrumentOverlay <mahos.inst.overlay.overlay.InstrumentOverlay>` config is
+    An :class:`InstrumentOverlay <mahos.core.inst.overlay.overlay.InstrumentOverlay>` config is
     defined under ``instrument_overlay`` dictionary in the conf.
     The key of that is the overlay name, and value (dict) is overlay configuration.
     Following three keys are given in value (dict).
 
     - ``module``: The module name holding the InstrumentOverlay class.
-      It must be an importable Python module, but leading ``mahos.inst.overlay.`` can be omitted
-      if a submodule in ``mahos.inst.overlay`` package is used.
+      It must be an importable Python module, but leading ``mahos.core.inst.overlay.`` can be
+      omitted if a submodule in ``mahos.core.inst.overlay`` package is used.
     - ``class``: The InstrumentOverlay class name.
       The class must be an attribute of the ``module``.
     - ``conf``: The configuration dictionary for the InstrumentOverlay.
@@ -664,9 +664,8 @@ class InstrumentServer(Node):
         for inst, idict in self.conf["instrument"].items():
             if self._is_excluded(inst):
                 continue
-            C = self._get_class(
-                ["mahos.inst." + idict["module"], idict["module"]], idict["class"], Instrument
-            )
+            mods = ["mahos.core.inst." + idict["module"], idict["module"]]
+            C = self._get_class(mods, idict["class"], Instrument)
             prefix = self.joined_name()
 
             try:
@@ -686,11 +685,8 @@ class InstrumentServer(Node):
                 if self._is_excluded(lay):
                     continue
                 ldict = conf.get(lay)
-                C = self._get_class(
-                    ["mahos.inst.overlay." + ldict["module"], ldict["module"]],
-                    ldict["class"],
-                    InstrumentOverlay,
-                )
+                mods = ["mahos.core.inst.overlay." + ldict["module"], ldict["module"]]
+                C = self._get_class(mods, ldict["class"], InstrumentOverlay)
                 prefix = self.joined_name()
                 try:
                     self._overlays[lay] = C(lay, conf=conf.resolved_conf(lay), prefix=prefix)

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
 """
-Tests for meas.hbt.
+Tests for mahos.dq.meas.hbt.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
 
 """
 
-from mahos.meas.hbt import HBTClient, HBTIO
-from mahos.msgs.common_msgs import BinaryState
+from mahos.dq.meas.hbt import HBTClient, HBTIO
+from mahos.core.msgs.common_msgs import BinaryState
 from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, hbt, server_conf, hbt_conf
 

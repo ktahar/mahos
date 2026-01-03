@@ -10,11 +10,11 @@ Measurement state manager.
 
 import importlib
 
-from mahos.msgs.common_msgs import Reply
-from mahos.msgs import state_manager_msgs
-from mahos.msgs.state_manager_msgs import ManagerStatus, RestoreReq, CommandReq
-from mahos.node.node import Node
-from mahos.node.client import StateClient, StatusClient
+from mahos.core.msgs.common_msgs import Reply
+from mahos.core.msgs import state_manager_msgs
+from mahos.core.msgs.state_manager_msgs import ManagerStatus, RestoreReq, CommandReq
+from mahos.core.node.node import Node
+from mahos.core.node.client import StateClient, StatusClient
 
 
 class StateManagerClient(StatusClient):

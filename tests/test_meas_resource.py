@@ -8,8 +8,8 @@ Tests for resource conflicts by multiple meas nodes.
 
 """
 
-from mahos.msgs.confocal_msgs import ConfocalState
-from mahos.msgs.common_msgs import BinaryState
+from mahos.dq.msgs.confocal_msgs import ConfocalState
+from mahos.core.msgs.common_msgs import BinaryState
 from util import expect_value
 
 from fixtures import ctx, gconf, server, confocal_ev, odmr_ev, server_conf, confocal_conf

@@ -10,11 +10,11 @@ Qt signal-based clients of Confocal.
 
 from __future__ import annotations
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.msgs.common_msgs import ShutdownReq, BinaryState, BinaryStatus
-from mahos.msgs.param_msgs import GetParamDictReq
-from mahos.msgs.confocal_msgs import (
+from mahos.core.msgs.common_msgs import ShutdownReq, BinaryState, BinaryStatus
+from mahos.core.msgs.param_msgs import GetParamDictReq
+from mahos.dq.msgs.confocal_msgs import (
     Axis,
     ConfocalStatus,
     ConfocalState,
@@ -35,8 +35,8 @@ from mahos.msgs.confocal_msgs import (
     CommandTraceReq,
     TraceCommand,
 )
-from mahos.msgs.confocal_tracker_msgs import SaveParamsReq, LoadParamsReq, TrackNowReq
-from mahos.gui.client import QStatusSubWorker, QStateReqClient, QReqClient, QStateClient
+from mahos.dq.msgs.confocal_tracker_msgs import SaveParamsReq, LoadParamsReq, TrackNowReq
+from mahos.core.gui.client import QStatusSubWorker, QStateReqClient, QReqClient, QStateClient
 
 
 class QConfocalSubWorker(QStatusSubWorker):

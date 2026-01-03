@@ -21,11 +21,11 @@ import matplotlib as mpl
 from matplotlib.patches import Rectangle
 from lmfit.model import ModelResult
 
-from mahos.msgs.iodmr_msgs import IODMRData
-from mahos.node.log import DummyLogger
-from mahos.util.io import save_pickle_or_h5, load_pickle, load_h5
-from mahos.util.image import save_image
-from mahos.meas.iodmr_fitter import IODMRFitResult, IODMRFitter
+from mahos.dq.msgs.iodmr_msgs import IODMRData
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.io import save_pickle_or_h5, load_pickle, load_h5
+from mahos.core.util.image import save_image
+from mahos.dq.meas.iodmr_fitter import IODMRFitResult, IODMRFitter
 
 
 class IODMRIO(object):

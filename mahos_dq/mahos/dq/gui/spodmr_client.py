@@ -8,11 +8,11 @@ Qt signal-based clients of Pulse ODMR with Slow detectors.
 
 """
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.msgs.spodmr_msgs import SPODMRData, SPODMRStatus
-from mahos.msgs.spodmr_msgs import UpdatePlotParamsReq, ValidateReq
-from mahos.gui.client import QBasicMeasClient
+from mahos.dq.msgs.spodmr_msgs import SPODMRData, SPODMRStatus
+from mahos.dq.msgs.spodmr_msgs import UpdatePlotParamsReq, ValidateReq
+from mahos.core.gui.client import QBasicMeasClient
 
 
 class QSPODMRClient(QBasicMeasClient):

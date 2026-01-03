@@ -10,19 +10,19 @@ Logic and instrument control part of Pulse ODMR with Slow detectors.
 
 from __future__ import annotations
 
-from mahos.msgs.common_msgs import Reply, Request, StateReq, BinaryState
-from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.msgs.common_meas_msgs import Buffer
-from mahos.msgs.param_msgs import GetParamDictLabelsReq, GetParamDictReq
-from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
-from mahos.msgs import spodmr_msgs
-from mahos.msgs.spodmr_msgs import SPODMRStatus, SPODMRData, UpdatePlotParamsReq, ValidateReq
-from mahos.util.timer import IntervalTimer
-from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
-from mahos.meas.common_worker import DummyWorker, Switch
-from mahos.meas.podmr_fitter import PODMRFitter
-from mahos.meas.spodmr_worker import Pulser, DebugPulser, SPODMRDataOperator
-from mahos.meas.spodmr_io import SPODMRIO
+from mahos.core.msgs.common_msgs import Reply, Request, StateReq, BinaryState
+from mahos.core.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.core.msgs.common_meas_msgs import Buffer
+from mahos.core.msgs.param_msgs import GetParamDictLabelsReq, GetParamDictReq
+from mahos.core.msgs.param_msgs import prefix_labels, remove_label_prefix
+from mahos.dq.msgs import spodmr_msgs
+from mahos.dq.msgs.spodmr_msgs import SPODMRStatus, SPODMRData, UpdatePlotParamsReq, ValidateReq
+from mahos.core.util.timer import IntervalTimer
+from mahos.core.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.core.meas.common_worker import DummyWorker, Switch
+from mahos.dq.meas.podmr_fitter import PODMRFitter
+from mahos.dq.meas.spodmr_worker import Pulser, DebugPulser, SPODMRDataOperator
+from mahos.dq.meas.spodmr_io import SPODMRIO
 
 
 class SPODMRClient(BasicMeasClient):

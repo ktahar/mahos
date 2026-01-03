@@ -8,10 +8,10 @@ Qt signal-based clients of Imaging IODMR.
 
 """
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.msgs.iodmr_msgs import IODMRData
-from mahos.gui.client import QBasicMeasClient
+from mahos.dq.msgs.iodmr_msgs import IODMRData
+from mahos.core.gui.client import QBasicMeasClient
 
 
 class QIODMRClient(QBasicMeasClient):

@@ -13,8 +13,8 @@ import copy
 
 import numpy as np
 
-from mahos.util.timer import IntervalTimer
-from mahos.msgs.confocal_msgs import (
+from mahos.core.util.timer import IntervalTimer
+from mahos.dq.msgs.confocal_msgs import (
     PiezoPos,
     Image,
     Trace,
@@ -23,12 +23,12 @@ from mahos.msgs.confocal_msgs import (
     ScanMode,
     LineMode,
 )
-from mahos.msgs import param_msgs as P
-from mahos.inst.piezo_interface import PiezoInterface
-from mahos.inst.daq_interface import ClockSourceInterface
-from mahos.inst.pd_interface import PDInterface
-from mahos.inst.overlay.confocal_scanner_interface import ConfocalScannerInterface
-from mahos.meas.common_worker import Worker
+from mahos.core.msgs import param_msgs as P
+from mahos.core.inst.piezo_interface import PiezoInterface
+from mahos.core.inst.daq_interface import ClockSourceInterface
+from mahos.core.inst.pd_interface import PDInterface
+from mahos.dq.inst.overlay.confocal_scanner_interface import ConfocalScannerInterface
+from mahos.core.meas.common_worker import Worker
 
 DEFAULT_TRACER_SIZE = 500
 

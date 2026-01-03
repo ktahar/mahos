@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for meas.qdyne.
+Tests for mahos.dq.meas.qdyne.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
@@ -10,11 +10,11 @@ Tests for meas.qdyne.
 
 import numpy as np
 
-from mahos.meas.qdyne import QdyneIO
-from mahos.msgs.qdyne_msgs import QdyneData
-from mahos.meas.qdyne_worker import QdyneAnalyzer
-from mahos.msgs.common_msgs import BinaryState
-import mahos.ext.cqdyne_analyzer as C
+from mahos.dq.meas.qdyne import QdyneIO
+from mahos.dq.msgs.qdyne_msgs import QdyneData
+from mahos.dq.meas.qdyne_worker import QdyneAnalyzer
+from mahos.core.msgs.common_msgs import BinaryState
+import mahos.dq_ext.cqdyne_analyzer as C
 from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, qdyne, server_conf, qdyne_conf
 

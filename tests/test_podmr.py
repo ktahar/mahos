@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for meas.podmr.
+Tests for mahos.dq.meas.podmr.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
@@ -12,10 +12,10 @@ import copy
 
 import numpy as np
 
-from mahos.meas.podmr import PODMRClient, PODMRIO
-from mahos.msgs.podmr_msgs import PODMRData
-from mahos.msgs.common_msgs import BinaryState
-from mahos.meas.podmr_generator.generator import make_generators
+from mahos.dq.meas.podmr import PODMRClient, PODMRIO
+from mahos.dq.msgs.podmr_msgs import PODMRData
+from mahos.core.msgs.common_msgs import BinaryState
+from mahos.dq.meas.podmr_generator.generator import make_generators
 from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, podmr, server_conf, podmr_conf
 from podmr_patterns import patterns

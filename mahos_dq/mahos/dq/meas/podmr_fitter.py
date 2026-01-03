@@ -16,13 +16,13 @@ import numpy as np
 from numpy.typing import NDArray
 import lmfit as F
 
-from mahos.msgs.podmr_msgs import PODMRData
-from mahos.msgs.fit_msgs import PeakType
-from mahos.msgs import param_msgs as P
-from mahos.node.log import DummyLogger
-from mahos.util.conv import real_fft
-from mahos.meas.common_fitter import gaussian, lorentzian, voigt, BaseFitter
-from mahos.meas.odmr_fitter import guess_single_peak, guess_multi_peak, guess_background
+from mahos.dq.msgs.podmr_msgs import PODMRData
+from mahos.core.msgs.fit_msgs import PeakType
+from mahos.core.msgs import param_msgs as P
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.conv import real_fft
+from mahos.core.meas.common_fitter import gaussian, lorentzian, voigt, BaseFitter
+from mahos.dq.meas.odmr_fitter import guess_single_peak, guess_multi_peak, guess_background
 
 
 class Fitter(BaseFitter):

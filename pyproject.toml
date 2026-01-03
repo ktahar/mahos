@@ -1,7 +1,3 @@
-[build-system]
-requires = ["setuptools", "wheel", "pybind11>=2.6.2"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "mahos"
 version = "0.3.0"
@@ -30,16 +26,7 @@ mahos = "mahos.cli.main:main"
 [tool.setuptools]
 zip-safe = false
 
-[tool.setuptools.packages.find]
-include = ["mahos*"]
-
-[tool.setuptools.dynamic.dependencies]
-file = ["requirements.txt"]
-
-[tool.setuptools.dynamic.optional-dependencies.inst]
-file = ["inst-requirements.txt"]
-
 [tool.black]
 line-length = 99
-# mahos/gui/ui/*.py is auto-generated. test/podmr_patterns.py is too large.
-extend-exclude = "(mahos/gui/ui|tests/podmr_patterns.py)"
+# gui/ui/*.py is auto-generated. test/podmr_patterns.py is too large.
+extend-exclude = "(mahos_core/mahos/core/gui/ui|mahos_dq/mahos/dq/gui/ui|tests/podmr_patterns.py)"

@@ -15,14 +15,14 @@ from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mahos.msgs.spodmr_msgs import SPODMRData, update_data
-from mahos.meas.spodmr_worker import SPODMRDataOperator
-from mahos.meas.podmr_fitter import PODMRFitter
-from mahos.node.log import DummyLogger
-from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
-from mahos.util.unit import SI_scale
-from mahos.util.conv import real_fft, real_fftfreq
-from mahos.util.plot import colors_tab20_pair
+from mahos.dq.msgs.spodmr_msgs import SPODMRData, update_data
+from mahos.dq.meas.spodmr_worker import SPODMRDataOperator
+from mahos.dq.meas.podmr_fitter import PODMRFitter
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.core.util.unit import SI_scale
+from mahos.core.util.conv import real_fft, real_fftfreq
+from mahos.core.util.plot import colors_tab20_pair
 
 
 class SPODMRIO(object):
@@ -144,7 +144,7 @@ class SPODMRIO(object):
             return False
 
     def _export_data_csv(self, fn, data: SPODMRData) -> bool:
-        header = "# Pulse ODMR data taken by mahos.meas.spodmr.\n"
+        header = "# Pulse ODMR data taken by mahos.dq.meas.spodmr.\n"
         header += f"# {data.xlabel} {data.ylabel}\n"
         header += f"# {data.xunit} {data.yunit}\n"
 

@@ -10,8 +10,8 @@ Suruga part of Positioner module.
 
 from __future__ import annotations
 
-from mahos.inst.visa_instrument import VisaInstrument
-from mahos.msgs import param_msgs as P
+from mahos.core.inst.visa_instrument import VisaInstrument
+from mahos.core.msgs import param_msgs as P
 
 
 class Suruga_DS102(VisaInstrument):

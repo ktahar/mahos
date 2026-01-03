@@ -17,10 +17,11 @@ import numpy as np
 import pandas as pd
 import msgpack
 
-from mahos.msgs.common_msgs import Message, Request, State, Status, BinaryState
-from mahos.msgs.data_msgs import Data, ComplexDataMixin, FormatTimeMixin
+from mahos.core.msgs.common_msgs import Message, Request, State, Status, BinaryState
+from mahos.core.msgs.data_msgs import Data, ComplexDataMixin, FormatTimeMixin
 
-from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.core.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.core.msgs.inst.piezo_msgs import Axis
 
 
 class ConfocalState(State):
@@ -28,12 +29,6 @@ class ConfocalState(State):
     PIEZO = 1  # move piezo position (piezo)
     INTERACT = 2  # move piezo position and trace PD outputs. (piezo, daq)
     SCAN = 3  # do scan. (piezo, daq)
-
-
-class Axis(Message, enum.Enum):
-    X = 0
-    Y = 1
-    Z = 2
 
 
 class ScanDirection(Message, enum.Enum):

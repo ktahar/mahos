@@ -17,27 +17,28 @@ import math
 import numpy as np
 import pyqtgraph as pg
 
-from mahos.gui import Qt
-from mahos.gui.Qt import QtCore, QtWidgets, QtGui
+from mahos.core.gui import Qt
+from mahos.core.gui.Qt import QtCore, QtWidgets, QtGui
 
-from mahos.gui.ui.odmr import Ui_ODMR
-from mahos.gui.ui.odmr_peaks import Ui_ODMRPeaks
-from mahos.gui.odmr_client import QODMRClient
+from mahos.dq.gui.ui.odmr import Ui_ODMR
+from mahos.dq.gui.ui.odmr_peaks import Ui_ODMRPeaks
+from mahos.dq.gui.odmr_client import QODMRClient
 
-from mahos.msgs.common_msgs import BinaryState, BinaryStatus
-from mahos.msgs.common_meas_msgs import Buffer
-from mahos.msgs.odmr_msgs import ODMRData
-from mahos.msgs import param_msgs as P
-from mahos.node.global_params import GlobalParamsClient
-from mahos.meas.confocal import ConfocalIORequester
-from mahos.util import conv, nv
-from mahos.util.plot import colors_tab20_pair
-from mahos.gui.gui_node import GUINode
-from mahos.gui.common_widget import ClientWidget
-from mahos.gui.fit_widget import FitWidget
-from mahos.gui.param import apply_widgets
-from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
-from mahos.node.node import local_conf, join_name
+from mahos.core.msgs.common_msgs import BinaryState, BinaryStatus
+from mahos.core.msgs.common_meas_msgs import Buffer
+from mahos.dq.msgs.odmr_msgs import ODMRData
+from mahos.core.msgs import param_msgs as P
+from mahos.core.node.global_params import GlobalParamsClient
+from mahos.dq.meas.confocal import ConfocalIORequester
+from mahos.core.util import conv
+from mahos.dq.util import nv
+from mahos.core.util.plot import colors_tab20_pair
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.gui.common_widget import ClientWidget
+from mahos.core.gui.fit_widget import FitWidget
+from mahos.core.gui.param import apply_widgets
+from mahos.core.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.core.node.node import local_conf, join_name
 
 
 Policy = QtWidgets.QSizePolicy.Policy

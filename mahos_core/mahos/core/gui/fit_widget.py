@@ -11,15 +11,15 @@ Common widgets/utilities for GUI to deal with Data Buffer/Fitting functions of B
 from __future__ import annotations
 from itertools import cycle
 
-from mahos.gui import Qt
-from mahos.gui.Qt import QtCore, QtWidgets, QtGui
+from mahos.core.gui import Qt
+from mahos.core.gui.Qt import QtCore, QtWidgets, QtGui
 
 import matplotlib as mpl
 
-from mahos.gui.ui.fitWidget import Ui_FitWidget
+from mahos.core.gui.ui.fitWidget import Ui_FitWidget
 
-from mahos.msgs.common_meas_msgs import BasicMeasData, Buffer
-from mahos.msgs.param_msgs import filter_label_prefix, join_labels
+from mahos.core.msgs.common_meas_msgs import BasicMeasData, Buffer
+from mahos.core.msgs.param_msgs import filter_label_prefix, join_labels
 
 
 _colors = [mpl.colors.to_hex(c) for c in mpl.colormaps.get("tab10").colors]

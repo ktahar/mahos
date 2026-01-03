@@ -13,7 +13,7 @@ import time
 
 import numpy as np
 
-from mahos.msgs.data_msgs import Data
+from mahos.core.msgs.data_msgs import Data
 
 
 class IODMRData(Data):

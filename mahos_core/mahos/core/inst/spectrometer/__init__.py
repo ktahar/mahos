@@ -8,7 +8,7 @@ Spectrometer module
 
 """
 
-from mahos.inst.spectrometer.princeton import Princeton_LightField
-from mahos.inst.spectrometer.andor import Andor_Spectrometer
+from mahos.core.inst.spectrometer.princeton import Princeton_LightField
+from mahos.core.inst.spectrometer.andor import Andor_Spectrometer
 
 __all__ = ["Princeton_LightField", "Andor_Spectrometer"]

@@ -8,10 +8,10 @@ Qt signal-based client of LogBroker.
 
 """
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.node.log_broker import parse_log, LogEntry
-from mahos.gui.client import QSubWorker, QNodeClient
+from mahos.core.node.log_broker import parse_log, LogEntry
+from mahos.core.gui.client import QSubWorker, QNodeClient
 
 
 class QLogSubWorker(QSubWorker):

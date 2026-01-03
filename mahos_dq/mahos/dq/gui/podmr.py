@@ -18,29 +18,29 @@ import uuid
 import numpy as np
 import pyqtgraph as pg
 
-from mahos.gui import Qt
-from mahos.gui.Qt import QtCore, QtWidgets, QtGui
+from mahos.core.gui import Qt
+from mahos.core.gui.Qt import QtCore, QtWidgets, QtGui
 
-from mahos.gui.ui.podmr import Ui_PODMR
-from mahos.gui.ui.podmr_nmr_table import Ui_NMRTable
-from mahos.gui.ui.podmr_autosave import Ui_PODMRAutoSave
-from mahos.gui.podmr_client import QPODMRClient
+from mahos.dq.gui.ui.podmr import Ui_PODMR
+from mahos.dq.gui.ui.podmr_nmr_table import Ui_NMRTable
+from mahos.dq.gui.ui.podmr_autosave import Ui_PODMRAutoSave
+from mahos.dq.gui.podmr_client import QPODMRClient
 
-from mahos.msgs.common_msgs import BinaryState
-from mahos.msgs.common_meas_msgs import Buffer
-from mahos.msgs import param_msgs as P
-from mahos.msgs.podmr_msgs import PODMRStatus, PODMRData
-from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.gui_node import GUINode
-from mahos.gui.common_widget import ClientWidget
-from mahos.gui.fit_widget import FitWidget
-from mahos.gui.param import set_enabled, apply_widgets
-from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
-from mahos.node.node import local_conf, join_name
-from mahos.util.plot import colors_tab20_pair
-from mahos.util.timer import seconds_to_hms
-from mahos.util.math_phys import round_halfint, round_evenint
-from mahos.util.conv import real_fft
+from mahos.core.msgs.common_msgs import BinaryState
+from mahos.core.msgs.common_meas_msgs import Buffer
+from mahos.core.msgs import param_msgs as P
+from mahos.dq.msgs.podmr_msgs import PODMRStatus, PODMRData
+from mahos.core.node.global_params import GlobalParamsClient
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.gui.common_widget import ClientWidget
+from mahos.core.gui.fit_widget import FitWidget
+from mahos.core.gui.param import set_enabled, apply_widgets
+from mahos.core.gui.dialog import save_dialog, load_dialog, export_dialog
+from mahos.core.node.node import local_conf, join_name
+from mahos.core.util.plot import colors_tab20_pair
+from mahos.core.util.timer import seconds_to_hms
+from mahos.core.util.math_phys import round_halfint, round_evenint
+from mahos.core.util.conv import real_fft
 
 
 Policy = QtWidgets.QSizePolicy.Policy

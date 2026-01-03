@@ -10,12 +10,12 @@ Worker for HBT.
 
 from __future__ import annotations
 
-from mahos.util.timer import IntervalTimer
-from mahos.msgs.hbt_msgs import HBTData
-from mahos.msgs import param_msgs as P
-from mahos.inst.tdc_interface import TDCInterface
-from mahos.util.conf import PresetLoader
-from mahos.meas.common_worker import Worker
+from mahos.core.util.timer import IntervalTimer
+from mahos.dq.msgs.hbt_msgs import HBTData
+from mahos.core.msgs import param_msgs as P
+from mahos.core.inst.tdc_interface import TDCInterface
+from mahos.core.util.conf import PresetLoader
+from mahos.core.meas.common_worker import Worker
 
 
 class Listener(Worker):

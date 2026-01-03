@@ -8,11 +8,11 @@ Qt signal-based clients of Pulse ODMR.
 
 """
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.msgs.podmr_msgs import PODMRData, PODMRStatus
-from mahos.msgs.podmr_msgs import UpdatePlotParamsReq, ValidateReq, DiscardReq
-from mahos.gui.client import QBasicMeasClient
+from mahos.dq.msgs.podmr_msgs import PODMRData, PODMRStatus
+from mahos.dq.msgs.podmr_msgs import UpdatePlotParamsReq, ValidateReq, DiscardReq
+from mahos.core.gui.client import QBasicMeasClient
 
 
 class QPODMRClient(QBasicMeasClient):

@@ -14,9 +14,9 @@ from os import path
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mahos.msgs.iv_msgs import IVData, update_data
-from mahos.node.log import DummyLogger
-from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.core.msgs.iv_msgs import IVData, update_data
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.io import save_pickle_or_h5, load_pickle_or_h5
 
 # from ..msgs.common_msgs import Reply, BinaryState
 # from ..msgs.common_msgs import LoadDataReq
@@ -95,7 +95,7 @@ class IVIO(object):
         xdata = data.get_xdata()
         ydata = data.get_ydata()
         with open(fn, "w", encoding="utf-8", newline="\n") as fo:
-            fo.write("# IV  data taken by mahos.meas.iv.\n")
+            fo.write("# IV  data taken by mahos.core.meas.iv.\n")
             fo.write("# Voltage (V)\n")
             fo.write("# Current (A)\n")
         with open(fn, "ab") as fo:

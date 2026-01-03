@@ -8,14 +8,14 @@ Logic and instrument control part of Imaging ODMR.
 
 """
 
-from mahos.msgs.common_msgs import Reply, StateReq, BinaryState, BinaryStatus
-from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.msgs.param_msgs import GetParamDictReq
-from mahos.msgs import iodmr_msgs
-from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
-from mahos.meas.common_worker import DummyWorker, Switch
-from mahos.meas.iodmr_worker import ISweeperOverlay, ISweeperDirect, WorkStatus
-from mahos.meas.iodmr_io import IODMRIO
+from mahos.core.msgs.common_msgs import Reply, StateReq, BinaryState, BinaryStatus
+from mahos.core.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.core.msgs.param_msgs import GetParamDictReq
+from mahos.dq.msgs import iodmr_msgs
+from mahos.core.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.core.meas.common_worker import DummyWorker, Switch
+from mahos.dq.meas.iodmr_worker import ISweeperOverlay, ISweeperDirect, WorkStatus
+from mahos.dq.meas.iodmr_io import IODMRIO
 
 
 class IODMRClient(BasicMeasClient):

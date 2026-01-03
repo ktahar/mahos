@@ -10,17 +10,17 @@ GUI frontend for Tweaker.
 
 from __future__ import annotations
 
-from mahos.gui.ui.tweaker import Ui_TweakerWidget
+from mahos.core.gui.ui.tweaker import Ui_TweakerWidget
 
-from mahos.msgs.tweaker_msgs import TweakerStatus
-from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.common_widget import ClientTopWidget
-from mahos.gui.tweaker_client import QTweakerClient
-from mahos.gui.param import ParamTable
-from mahos.node.node import local_conf, join_name
-from mahos.gui.gui_node import GUINode
-from mahos.gui.dialog import save_dialog, load_dialog
-from mahos.gui.Qt import QtWidgets
+from mahos.core.msgs.tweaker_msgs import TweakerStatus
+from mahos.core.node.global_params import GlobalParamsClient
+from mahos.core.gui.common_widget import ClientTopWidget
+from mahos.core.gui.tweaker_client import QTweakerClient
+from mahos.core.gui.param import ParamTable
+from mahos.core.node.node import local_conf, join_name
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.gui.dialog import save_dialog, load_dialog
+from mahos.core.gui.Qt import QtWidgets
 
 
 class TweakerWidget(ClientTopWidget, Ui_TweakerWidget):

@@ -13,8 +13,8 @@ from __future__ import annotations
 import numpy as np
 import msgpack
 
-from mahos.msgs.common_msgs import Request
-from mahos.msgs.common_meas_msgs import BasicMeasData
+from mahos.core.msgs.common_msgs import Request
+from mahos.core.msgs.common_meas_msgs import BasicMeasData
 
 
 class ResetReq(Request):

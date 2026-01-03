@@ -10,8 +10,8 @@ Message Types for Camera stream.
 
 from __future__ import annotations
 
-from mahos.msgs.data_msgs import Data
-from mahos.msgs.inst.camera_msgs import FrameResult
+from mahos.core.msgs.data_msgs import Data
+from mahos.core.msgs.inst.camera_msgs import FrameResult
 
 
 class Image(Data):

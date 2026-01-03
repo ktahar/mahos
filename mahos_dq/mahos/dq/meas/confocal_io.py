@@ -17,10 +17,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from mahos.msgs.confocal_msgs import Image, Trace, ScanDirection, update_image, update_trace
-from mahos.node.log import DummyLogger
-from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
-from mahos.util.image import save_map, plot_map, plot_map_only
+from mahos.dq.msgs.confocal_msgs import Image, Trace, ScanDirection, update_image, update_trace
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.io import save_pickle_or_h5, load_pickle_or_h5
+from mahos.core.util.image import save_map, plot_map, plot_map_only
 
 
 class ConfocalIO(object):
@@ -287,7 +287,7 @@ class ConfocalIO(object):
     def _export_trace_text(self, fn, trace: Trace):
         tim = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
         with open(fn, "w", encoding="utf-8", newline="\n") as fo:
-            fo.write("# PD trace data taken by mahos.meas.confocal. Saved at: %s\n" % (tim,))
+            fo.write("# PD trace data taken by mahos.dq.meas.confocal. Saved at: %s\n" % (tim,))
             fo.write("# {}\n".format(" ".join([f"PD{i}" for i in range(trace.channels())])))
             fo.write("# {}\n".format(" ".join([trace.yunit] * trace.channels())))
         with open(fn, "ab") as fo:

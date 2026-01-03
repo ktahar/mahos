@@ -10,10 +10,10 @@ Overlay for Photo Detector + Programmable Amplifier.
 
 import numpy as np
 
-from mahos.inst.overlay.overlay import InstrumentOverlay
-from mahos.msgs import param_msgs as P
-from mahos.inst.lockin import LI5640, SR860
-from mahos.inst.pd import LUCI_OE200, AnalogPD, LockinAnalogPD
+from mahos.core.inst.overlay.overlay import InstrumentOverlay
+from mahos.core.msgs import param_msgs as P
+from mahos.core.inst.lockin import LI5640, SR860
+from mahos.core.inst.pd import LUCI_OE200, AnalogPD, LockinAnalogPD
 
 
 class AnalogPDMM(InstrumentOverlay):

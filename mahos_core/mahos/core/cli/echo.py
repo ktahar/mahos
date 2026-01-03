@@ -13,9 +13,9 @@ import argparse
 import sys
 import importlib
 
-from mahos.node.node import join_name
-from mahos.node.client import EchoSubscriber
-from mahos.cli.util import init_gconf_host_node
+from mahos.core.node.node import join_name
+from mahos.core.node.client import EchoSubscriber
+from mahos.core.cli.util import init_gconf_host_node
 
 
 def parse_args(args):

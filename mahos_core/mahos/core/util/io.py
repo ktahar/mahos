@@ -14,7 +14,7 @@ import bz2
 
 import h5py
 
-from mahos.msgs.data_msgs import Data
+from mahos.core.msgs.data_msgs import Data
 
 
 def save_pickle(

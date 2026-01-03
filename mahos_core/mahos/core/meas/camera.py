@@ -8,14 +8,14 @@ Logic and instrument control part of Camera stream.
 
 """
 
-from mahos.msgs.common_msgs import Reply, StateReq, BinaryState, BinaryStatus
-from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
-from mahos.msgs import camera_msgs
-from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
-from mahos.meas.common_worker import DummyWorker, PulseGen_CW, Switch
-from mahos.meas.camera_worker import Poller
-from mahos.meas.camera_io import CameraIO
+from mahos.core.msgs.common_msgs import Reply, StateReq, BinaryState, BinaryStatus
+from mahos.core.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.core.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
+from mahos.core.msgs import camera_msgs
+from mahos.core.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.core.meas.common_worker import DummyWorker, PulseGen_CW, Switch
+from mahos.core.meas.camera_worker import Poller
+from mahos.core.meas.camera_io import CameraIO
 
 
 class CameraClient(BasicMeasClient):

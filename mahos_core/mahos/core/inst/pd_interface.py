@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from mahos.inst.daq_interface import BufferedReaderInterface
+from mahos.core.inst.daq_interface import BufferedReaderInterface
 
 
 class PDInterface(BufferedReaderInterface):

@@ -244,7 +244,7 @@
   <customwidget>
    <class>NotePlainTextEdit</class>
    <extends>QPlainTextEdit</extends>
-   <header>mahos.gui.main_monitor_widget</header>
+   <header>mahos.core.gui.main_monitor_widget</header>
   </customwidget>
  </customwidgets>
  <tabstops>

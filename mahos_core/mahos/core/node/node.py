@@ -17,11 +17,11 @@ import logging
 
 import toml
 
-from mahos.node.comm import Context, Publisher, Request
-from mahos.node.log import DummyLogger
-from mahos.util.typing import NodeName, RepHandler
-from mahos.util.conv import args_to_list
-from mahos.msgs.common_msgs import Reply
+from mahos.core.node.comm import Context, Publisher, Request
+from mahos.core.node.log import DummyLogger
+from mahos.core.util.typing import NodeName, RepHandler
+from mahos.core.util.conv import args_to_list
+from mahos.core.msgs.common_msgs import Reply
 
 
 # name

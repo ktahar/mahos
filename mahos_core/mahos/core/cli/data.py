@@ -8,10 +8,10 @@ mahos data command.
 
 """
 
-from mahos.cli import data_ls
-from mahos.cli import data_note
-from mahos.cli import data_print
-from mahos.cli import plot
+from mahos.core.cli import data_ls
+from mahos.core.cli import data_note
+from mahos.core.cli import data_print
+from mahos.core.cli import data_plot
 
 data_usage = """usage: mahos data COMMAND args
 
@@ -33,7 +33,7 @@ def main(args):
     elif "note".startswith(pkg):
         return data_note.main(args[1:])
     elif "plot".startswith(pkg):
-        return plot.main(args[1:])
+        return data_plot.main(args[1:])
     elif "print".startswith(pkg):
         return data_print.main(args[1:])
     else:

@@ -17,9 +17,9 @@ import enum
 import numpy as np
 from pypylon import pylon
 
-from mahos.inst.instrument import Instrument
-from mahos.util.locked_queue import LockedQueue
-from mahos.msgs.inst.camera_msgs import FrameResult
+from mahos.core.inst.instrument import Instrument
+from mahos.core.util.locked_queue import LockedQueue
+from mahos.core.msgs.inst.camera_msgs import FrameResult
 
 
 class ThorlabsCamera(Instrument):

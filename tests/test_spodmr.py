@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
 """
-Tests for meas.spodmr.
+Tests for mahos.dq.meas.spodmr.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
 
 """
 
-from mahos.meas.spodmr import SPODMRClient, SPODMRIO
-from mahos.msgs.spodmr_msgs import SPODMRData
-from mahos.msgs.common_msgs import BinaryState
+from mahos.dq.meas.spodmr import SPODMRClient, SPODMRIO
+from mahos.dq.msgs.spodmr_msgs import SPODMRData
+from mahos.core.msgs.common_msgs import BinaryState
 from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, spodmr, server_conf, spodmr_conf
 

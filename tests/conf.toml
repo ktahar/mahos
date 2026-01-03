@@ -3,7 +3,7 @@ req_timeout_ms = 60000
 poll_timeout_ms = 100
 
 [localhost.log]
-module = "mahos.node.log_broker"
+module = "mahos.core.node.log_broker"
 class = "LogBroker"
 target = { log = "localhost::log" }
 xpub_endpoint = "tcp://127.0.0.1:5555"
@@ -11,14 +11,14 @@ xsub_endpoint = "tcp://127.0.0.1:5556"
 file = false
 
 [localhost.gparams]
-module = "mahos.node.global_params"
+module = "mahos.core.node.global_params"
 class = "GlobalParams"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5557"
 pub_endpoint = "tcp://127.0.0.1:5558"
 
 [localhost.server]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 target = { log = "localhost::log" }
 log_level = "DEBUG"
@@ -130,7 +130,7 @@ module = "mock"
 class = "Positioner_mock"
 
 [localhost.server.instrument_overlay.scanner]
-module = "confocal_scanner_mock"
+module = "mahos.dq.inst.overlay.confocal_scanner_mock"
 class = "ConfocalScanner_mock"
 [localhost.server.instrument_overlay.scanner.conf]
 piezo = "$piezo"
@@ -138,14 +138,14 @@ pd0 = "$pd0"
 pd1 = "$pd1"
 
 [localhost.server.instrument_overlay.isweeper]
-module = "iodmr_sweeper_mock"
+module = "mahos.dq.inst.overlay.iodmr_sweeper_mock"
 class = "IODMRSweeperCommand_mock"
 [localhost.server.instrument_overlay.isweeper.conf]
 sg = "$sg"
 camera = "$camera"
 
 [localhost.confocal]
-module = "mahos.meas.confocal"
+module = "mahos.dq.meas.confocal"
 class = "Confocal"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5570"
@@ -169,7 +169,7 @@ pd0 = "localhost::server"
 pd1 = "localhost::server"
 
 [localhost.tracker]
-module = "mahos.meas.confocal_tracker"
+module = "mahos.dq.meas.confocal_tracker"
 class = "ConfocalTracker"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5572"
@@ -180,7 +180,7 @@ confocal = "localhost::confocal"
 manager = "localhost::manager"
 
 [localhost.odmr]
-module = "mahos.meas.odmr"
+module = "mahos.dq.meas.odmr"
 class = "ODMR"
 rep_endpoint = "tcp://127.0.0.1:5574"
 pub_endpoint = "tcp://127.0.0.1:5575"
@@ -196,7 +196,7 @@ pd0 = "localhost::server"
 pd1 = "localhost::server"
 
 [localhost.hbt]
-module = "mahos.meas.hbt"
+module = "mahos.dq.meas.hbt"
 class = "HBT"
 rep_endpoint = "tcp://127.0.0.1:5576"
 pub_endpoint = "tcp://127.0.0.1:5577"
@@ -207,7 +207,7 @@ tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker
 tdc = "localhost::server"
 
 [localhost.podmr]
-module = "mahos.meas.podmr"
+module = "mahos.dq.meas.podmr"
 class = "PODMR"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5578"
@@ -225,7 +225,7 @@ pg = "localhost::server"
 fg = "localhost::server"
 
 [localhost.spodmr]
-module = "mahos.meas.spodmr"
+module = "mahos.dq.meas.spodmr"
 class = "SPODMR"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5580"
@@ -245,7 +245,7 @@ pd0 = "localhost::server"
 clock = "localhost::server"
 
 [localhost.iodmr]
-module = "mahos.meas.iodmr"
+module = "mahos.dq.meas.iodmr"
 class = "IODMR"
 rep_endpoint = "tcp://127.0.0.1:5582"
 pub_endpoint = "tcp://127.0.0.1:5583"
@@ -255,7 +255,7 @@ log = "localhost::log"
 isweeper = "localhost::server"
 
 [localhost.spectroscopy]
-module = "mahos.meas.spectroscopy"
+module = "mahos.dq.meas.spectroscopy"
 class = "Spectroscopy"
 rep_endpoint = "tcp://127.0.0.1:5584"
 pub_endpoint = "tcp://127.0.0.1:5585"
@@ -266,7 +266,7 @@ tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker
 spectrometer = "localhost::server"
 
 [localhost.camera]
-module = "mahos.meas.camera"
+module = "mahos.core.meas.camera"
 class = "Camera"
 rep_endpoint = "tcp://127.0.0.1:5586"
 pub_endpoint = "tcp://127.0.0.1:5587"
@@ -277,7 +277,7 @@ tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker
 camera = "localhost::server"
 
 [localhost.qdyne]
-module = "mahos.meas.qdyne"
+module = "mahos.dq.meas.qdyne"
 class = "Qdyne"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5588"
@@ -292,24 +292,24 @@ pg = "localhost::server"
 fg = "localhost::server"
 
 [localhost.manager]
-module = "mahos.meas.state_manager"
+module = "mahos.core.meas.state_manager"
 class = "StateManager"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5590"
 pub_endpoint = "tcp://127.0.0.1:5591"
 
 [localhost.manager.node]
-"localhost::hbt" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::odmr" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::podmr" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::confocal" = ["mahos.msgs.confocal_msgs", "ConfocalState"]
-"localhost::tracker" = ["mahos.msgs.common_msgs", "BinaryState"]
+"localhost::hbt" = ["mahos.core.msgs.common_msgs", "BinaryState"]
+"localhost::odmr" = ["mahos.core.msgs.common_msgs", "BinaryState"]
+"localhost::podmr" = ["mahos.core.msgs.common_msgs", "BinaryState"]
+"localhost::confocal" = ["mahos.dq.msgs.confocal_msgs", "ConfocalState"]
+"localhost::tracker" = ["mahos.core.msgs.common_msgs", "BinaryState"]
 
 [localhost.manager.command]
 prepare_scan = { "localhost::odmr" = "IDLE" , "localhost::hbt" = "IDLE", "localhost::podmr" = "IDLE" }
 
 [localhost.tweaker]
-module = "mahos.meas.tweaker"
+module = "mahos.core.meas.tweaker"
 class = "Tweaker"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5592"
@@ -320,7 +320,7 @@ paramX = "localhost::server"
 paramY = "localhost::server"
 
 [localhost.tweaker2]
-module = "mahos.meas.tweaker"
+module = "mahos.core.meas.tweaker"
 class = "Tweaker"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5594"
@@ -330,7 +330,7 @@ param_dicts = ["paramZ::labelA"]
 paramZ = "localhost::server"
 
 [localhost.pos_tweaker]
-module = "mahos.meas.pos_tweaker"
+module = "mahos.core.meas.pos_tweaker"
 class = "PosTweaker"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5596"
@@ -340,7 +340,7 @@ pos_x = "localhost::server"
 pos_y = "localhost::server"
 
 [localhost.recorder]
-module = "mahos.meas.recorder"
+module = "mahos.core.meas.recorder"
 class = "Recorder"
 rep_endpoint = "tcp://127.0.0.1:5598"
 pub_endpoint = "tcp://127.0.0.1:5599"
@@ -367,7 +367,7 @@ dmm0 = ["dmm0", "ch1_dcv"]
 dmm1 = ["dmm1", "ch1_dcv"]
 
 [localhost.confocal_gui]
-module = "mahos.gui.confocal"
+module = "mahos.dq.gui.confocal"
 class = "ConfocalGUI"
 move_interval_ms = 10
 [localhost.confocal_gui.target]
@@ -376,7 +376,7 @@ tracker = "localhost::tracker"
 gparams = "localhost::gparams"
 
 [localhost.odmr_gui]
-module = "mahos.gui.odmr"
+module = "mahos.dq.gui.odmr"
 class = "ODMRGUI"
 [localhost.odmr_gui.target]
 odmr = "localhost::odmr"
@@ -384,35 +384,35 @@ gparams = "localhost::gparams"
 confocal = "localhost::confocal"
 
 [localhost.hbt_gui]
-module = "mahos.gui.hbt"
+module = "mahos.dq.gui.hbt"
 class = "HBTGUI"
 [localhost.hbt_gui.target]
 hbt = "localhost::hbt"
 gparams = "localhost::gparams"
 
 [localhost.podmr_gui]
-module = "mahos.gui.podmr"
+module = "mahos.dq.gui.podmr"
 class = "PODMRGUI"
 [localhost.podmr_gui.target]
 podmr = "localhost::podmr"
 gparams = "localhost::gparams"
 
 [localhost.spodmr_gui]
-module = "mahos.gui.spodmr"
+module = "mahos.dq.gui.spodmr"
 class = "SPODMRGUI"
 [localhost.spodmr_gui.target]
 spodmr = "localhost::spodmr"
 gparams = "localhost::gparams"
 
 [localhost.iodmr_gui]
-module = "mahos.gui.iodmr"
+module = "mahos.dq.gui.iodmr"
 class = "IODMRGUI"
 [localhost.iodmr_gui.target]
 iodmr = "localhost::iodmr"
 gparams = "localhost::gparams"
 
 [localhost.spectroscopy_gui]
-module = "mahos.gui.spectroscopy"
+module = "mahos.dq.gui.spectroscopy"
 class = "SpectroscopyGUI"
 [localhost.spectroscopy_gui.target]
 spectroscopy = "localhost::spectroscopy"
@@ -420,54 +420,54 @@ gparams = "localhost::gparams"
 confocal = "localhost::confocal"
 
 [localhost.camera_gui]
-module = "mahos.gui.camera"
+module = "mahos.core.gui.camera"
 class = "CameraGUI"
 [localhost.camera_gui.target]
 camera = "localhost::camera"
 gparams = "localhost::gparams"
 
 [localhost.tweaker_gui]
-module = "mahos.gui.tweaker"
+module = "mahos.core.gui.tweaker"
 class = "TweakerGUI"
 [localhost.tweaker_gui.target]
 tweaker = "localhost::tweaker"
 gparams = "localhost::gparams"
 
 [localhost.tweaker2_gui]
-module = "mahos.gui.tweaker"
+module = "mahos.core.gui.tweaker"
 class = "TweakerGUI"
 [localhost.tweaker2_gui.target]
 tweaker = "localhost::tweaker2"
 gparams = "localhost::gparams"
 
 [localhost.pos_tweaker_gui]
-module = "mahos.gui.pos_tweaker"
+module = "mahos.core.gui.pos_tweaker"
 class = "PosTweakerGUI"
 [localhost.pos_tweaker_gui.target]
 pos_tweaker = "localhost::pos_tweaker"
 gparams = "localhost::gparams"
 
 [localhost.recorder_gui]
-module = "mahos.gui.recorder"
+module = "mahos.core.gui.recorder"
 class = "RecorderGUI"
 [localhost.recorder_gui.target]
 recorder = "localhost::recorder"
 gparams = "localhost::gparams"
 
 [localhost.pulse_monitor]
-module = "mahos.gui.pulse_monitor"
+module = "mahos.core.gui.pulse_monitor"
 class = "PulseMonitor"
 [localhost.pulse_monitor.target]
 pulse = "localhost::podmr"
 
 [localhost.pulse_monitor_spodmr]
-module = "mahos.gui.pulse_monitor"
+module = "mahos.core.gui.pulse_monitor"
 class = "PulseMonitor"
 [localhost.pulse_monitor_spodmr.target]
 pulse = "localhost::spodmr"
 
 [localhost.main_monitor]
-module = "mahos.gui.main_monitor"
+module = "mahos.core.gui.main_monitor"
 class = "MainMonitor"
 work_dir = "~"
 [localhost.main_monitor.target]

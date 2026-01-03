@@ -8,10 +8,10 @@ Qt signal-based clients of Spectroscopy.
 
 """
 
-from mahos.gui.Qt import QtCore
+from mahos.core.gui.Qt import QtCore
 
-from mahos.msgs.spectroscopy_msgs import SpectroscopyData, SpectroscopyStatus
-from mahos.gui.client import QBasicMeasClient
+from mahos.dq.msgs.spectroscopy_msgs import SpectroscopyData, SpectroscopyStatus
+from mahos.core.gui.client import QBasicMeasClient
 
 
 class QSpectroscopyClient(QBasicMeasClient):

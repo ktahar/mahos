@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import numpy as np
 
-from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
-from mahos.meas.common_worker import Worker
-from mahos.msgs.common_msgs import Reply, StateReq, BinaryState, BinaryStatus
-from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
-from mahos.msgs import param_msgs as P
-from mahos.meas.iv_io import IVIO
+from mahos.core.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.core.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.core.meas.common_worker import Worker
+from mahos.core.msgs.common_msgs import Reply, StateReq, BinaryState, BinaryStatus
+from mahos.core.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
+from mahos.core.msgs import param_msgs as P
+from mahos.core.meas.iv_io import IVIO
 
-from mahos.msgs import iv_msgs
-from mahos.msgs.iv_msgs import IVData
+from mahos.core.msgs import iv_msgs
+from mahos.core.msgs.iv_msgs import IVData
 
-from mahos.inst.smu_interface import SMUInterface
+from mahos.core.inst.smu_interface import SMUInterface
 
 
 class IVClient(BasicMeasClient):

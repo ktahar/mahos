@@ -8,7 +8,7 @@ Custom widgets for the MainMonitor.
 
 """
 
-from mahos.gui.Qt import QtWidgets, QtCore, QtGui
+from mahos.core.gui.Qt import QtWidgets, QtCore, QtGui
 
 
 class NotePlainTextEdit(QtWidgets.QPlainTextEdit):

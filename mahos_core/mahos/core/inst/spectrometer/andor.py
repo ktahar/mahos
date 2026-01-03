@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from mahos.inst.instrument import Instrument
-from mahos.msgs.inst.spectrometer_msgs import Temperature
+from mahos.core.inst.instrument import Instrument
+from mahos.core.msgs.inst.spectrometer_msgs import Temperature
 
 
 # imports for Andor
@@ -26,7 +26,7 @@ try:
     SPC_OK = ATSpectrograph.ATSPECTROGRAPH_SUCCESS
 
 except ImportError:
-    print("mahos.inst.spectrometer: failed to import pyAndor modules")
+    print("mahos.core.inst.spectrometer: failed to import pyAndor modules")
 
 
 class Andor_Spectrometer(Instrument):

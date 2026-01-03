@@ -10,25 +10,25 @@ Logic and instrument control part of Pulse ODMR.
 
 from __future__ import annotations
 
-from mahos.msgs.common_msgs import Reply, Request, StateReq, BinaryState
-from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.msgs.common_meas_msgs import Buffer
-from mahos.msgs.param_msgs import GetParamDictLabelsReq, GetParamDictReq
-from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
-from mahos.msgs import podmr_msgs
-from mahos.msgs.podmr_msgs import (
+from mahos.core.msgs.common_msgs import Reply, Request, StateReq, BinaryState
+from mahos.core.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
+from mahos.core.msgs.common_meas_msgs import Buffer
+from mahos.core.msgs.param_msgs import GetParamDictLabelsReq, GetParamDictReq
+from mahos.core.msgs.param_msgs import prefix_labels, remove_label_prefix
+from mahos.dq.msgs import podmr_msgs
+from mahos.dq.msgs.podmr_msgs import (
     PODMRStatus,
     PODMRData,
     UpdatePlotParamsReq,
     ValidateReq,
     DiscardReq,
 )
-from mahos.util.timer import IntervalTimer
-from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
-from mahos.meas.common_worker import DummyWorker, Switch
-from mahos.meas.podmr_worker import Pulser, PODMRDataOperator
-from mahos.meas.podmr_fitter import PODMRFitter
-from mahos.meas.podmr_io import PODMRIO
+from mahos.core.util.timer import IntervalTimer
+from mahos.core.meas.common_meas import BasicMeasClient, BasicMeasNode
+from mahos.core.meas.common_worker import DummyWorker, Switch
+from mahos.dq.meas.podmr_worker import Pulser, PODMRDataOperator
+from mahos.dq.meas.podmr_fitter import PODMRFitter
+from mahos.dq.meas.podmr_io import PODMRIO
 
 
 class PODMRClient(BasicMeasClient):

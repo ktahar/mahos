@@ -15,21 +15,21 @@ import os
 import numpy as np
 import pyqtgraph as pg
 
-from mahos.gui import Qt
-from mahos.gui.Qt import QtCore, QtWidgets, QtGui
+from mahos.core.gui import Qt
+from mahos.core.gui.Qt import QtCore, QtWidgets, QtGui
 
-from mahos.gui.ui.iodmr import Ui_IODMR
-from mahos.gui.iodmr_client import QIODMRClient
+from mahos.dq.gui.ui.iodmr import Ui_IODMR
+from mahos.dq.gui.iodmr_client import QIODMRClient
 
-from mahos.msgs.common_msgs import BinaryState, BinaryStatus
-from mahos.msgs.param_msgs import FloatParam, IntParam
-from mahos.msgs.iodmr_msgs import IODMRData
-from mahos.node.global_params import GlobalParamsClient
-from mahos.util import conv
-from mahos.gui.gui_node import GUINode
-from mahos.gui.common_widget import ClientMainWindow
-from mahos.gui.dialog import save_dialog, load_dialog
-from mahos.node.node import local_conf
+from mahos.core.msgs.common_msgs import BinaryState, BinaryStatus
+from mahos.core.msgs.param_msgs import FloatParam, IntParam
+from mahos.dq.msgs.iodmr_msgs import IODMRData
+from mahos.core.node.global_params import GlobalParamsClient
+from mahos.core.util import conv
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.gui.common_widget import ClientMainWindow
+from mahos.core.gui.dialog import save_dialog, load_dialog
+from mahos.core.node.node import local_conf
 
 
 Policy = QtWidgets.QSizePolicy.Policy
