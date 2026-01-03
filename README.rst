@@ -15,7 +15,7 @@ This package currently includes the following.
 
 - Base system for distributed measurement automation.
 - Implementations of microscopy / optically detected magnetic resonance (ODMR) system
-  for solid-state color center research, based on above.
+  for solid-state defect (color center) spin qubit research, based on above.
 
 Documentation
 =============
@@ -40,7 +40,7 @@ In short, we recommend editable installation with cloned repository:
 Run
 ===
 
-To use the mahos-based system, you have to write a toml `configuration file <https://toyotacrdl.github.io/mahos/conf.html>`_ first.
+To use the mahos-based system, you need to write a toml `configuration file <https://toyotacrdl.github.io/mahos/conf.html>`_ first.
 With your config, use the `command line interface <https://toyotacrdl.github.io/mahos/cli.html>`_ to start the nodes and interact with them.
 
 - The `tutorial <https://toyotacrdl.github.io/mahos/tutorial.html>`_ and corresponding `examples <https://github.com/ToyotaCRDL/mahos/tree/main/examples>`_ are provided to get used to these concepts.
@@ -65,10 +65,10 @@ The mahos project is licensed under the `3-Clause BSD License <https://github.co
 Redistribution
 --------------
 
-The `GUI theme <https://github.com/ToyotaCRDL/mahos/tree/main/mahos/gui/breeze_resources>`_ is taken from `BreezeStyleSheets <https://github.com/Alexhuszagh/BreezeStyleSheets>`_ project,
+The `GUI theme <https://github.com/ToyotaCRDL/mahos/tree/main/mahos_core/mahos/core/gui/breeze_resources>`_ is taken from `BreezeStyleSheets <https://github.com/Alexhuszagh/BreezeStyleSheets>`_ project,
 which is licensed under the `MIT license: Copyright 2013-2014 Colin Duquesnoy and 2015-2016 Alex Huszagh <https://github.com/Alexhuszagh/BreezeStyleSheets/blob/main/LICENSE.md>`_.
 
-A `file <https://github.com/ToyotaCRDL/mahos/blob/main/mahos/util/unit.py>`_ includes a function from the `pyqtgraph <https://github.com/pyqtgraph/pyqtgraph>`_ project,
+A `file <https://github.com/ToyotaCRDL/mahos/blob/main/mahos_core/mahos/core/util/unit.py>`_ includes a function from the `pyqtgraph <https://github.com/pyqtgraph/pyqtgraph>`_ project,
 which is licensed under the `MIT license: Copyright 2012 Luke Campagnola, University of North Carolina at Chapel Hill <https://github.com/pyqtgraph/pyqtgraph/blob/master/LICENSE.txt>`_.
 
 Contributing

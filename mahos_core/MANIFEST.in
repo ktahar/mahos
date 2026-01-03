@@ -1,0 +1,2 @@
+include mahos/core/gui/breeze_resources/dark/*.svg
+include mahos/core/gui/breeze_resources/dark/*.qss

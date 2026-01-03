@@ -5,6 +5,11 @@ Changelog
 [Unreleased]
 ------------
 
+Changed
+^^^^^^^
+
+- Subpackages mahos.core, mahos.dq, and mahos.dq_ext are introduced.
+
 [0.3.0] - 2025-01-29
 --------------------
 
