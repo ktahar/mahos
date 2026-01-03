@@ -20,12 +20,6 @@ Documentation = "https://toyotacrdl.github.io/mahos"
 Repository = "https://github.com/ToyotaCRDL/mahos.git"
 Changelog = "https://github.com/ToyotaCRDL/mahos/blob/main/CHANGELOG.rst"
 
-[project.scripts]
-mahos = "mahos.cli.main:main"
-
-[tool.setuptools]
-zip-safe = false
-
 [tool.black]
 line-length = 99
 # gui/ui/*.py is auto-generated. test/podmr_patterns.py is too large.
