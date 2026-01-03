@@ -1,0 +1,28 @@
+﻿mahos.core.inst.pd\_interface.PDInterface
+=========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.pd_interface
+
+.. autoclass:: PDInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PDInterface.pop_all_block
+      ~PDInterface.pop_all_opt
+      ~PDInterface.pop_block
+      ~PDInterface.pop_opt
+   
+   
+
+   
+   
+   

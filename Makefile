@@ -23,7 +23,7 @@ format:
 	black .
 
 docs:
-	sphinx-build -b html docs_src docs
+	sphinx-build -b html docs-src docs
 
 browse:
 	$(OPEN) docs/index.html
@@ -33,4 +33,4 @@ ext:
 
 clean:
 	$(RM) -r docs
-	$(RM) -r docs_src/*/generated
+	$(RM) -r docs-src/*/generated

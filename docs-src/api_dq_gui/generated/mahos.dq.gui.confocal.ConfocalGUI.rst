@@ -1,0 +1,25 @@
+﻿mahos.dq.gui.confocal.ConfocalGUI
+=================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.dq.gui.confocal
+
+.. autoclass:: ConfocalGUI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ConfocalGUI.init_widget
+   
+   
+
+   
+   
+   

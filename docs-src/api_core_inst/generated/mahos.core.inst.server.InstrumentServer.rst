@@ -1,0 +1,33 @@
+﻿mahos.core.inst.server.InstrumentServer
+=======================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.server
+
+.. autoclass:: InstrumentServer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~InstrumentServer.__init__
+      ~InstrumentServer.close_resources
+      ~InstrumentServer.handle_req
+      ~InstrumentServer.main
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

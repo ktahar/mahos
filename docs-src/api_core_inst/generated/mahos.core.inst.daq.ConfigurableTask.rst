@@ -1,0 +1,30 @@
+﻿mahos.core.inst.daq.ConfigurableTask
+====================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.daq
+
+.. autoclass:: ConfigurableTask
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ConfigurableTask.__init__
+      ~ConfigurableTask.close_resources
+      ~ConfigurableTask.get_device_type
+      ~ConfigurableTask.join
+      ~ConfigurableTask.start
+      ~ConfigurableTask.stop
+   
+   
+
+   
+   
+   

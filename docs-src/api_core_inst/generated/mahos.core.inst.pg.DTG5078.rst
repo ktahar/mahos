@@ -1,0 +1,33 @@
+﻿mahos.core.inst.pg.DTG5078
+==========================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.pg
+
+.. autoclass:: DTG5078
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DTG5078.block_granularity
+      ~DTG5078.max_block_len
+      ~DTG5078.max_freq
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DTG5078.MIN_BLOCK_LENGTH
+   
+   

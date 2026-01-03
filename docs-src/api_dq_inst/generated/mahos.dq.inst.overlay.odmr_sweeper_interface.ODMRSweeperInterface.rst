@@ -1,0 +1,30 @@
+﻿mahos.dq.inst.overlay.odmr\_sweeper\_interface.ODMRSweeperInterface
+===================================================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.dq.inst.overlay.odmr_sweeper_interface
+
+.. autoclass:: ODMRSweeperInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ODMRSweeperInterface.get_bounds
+      ~ODMRSweeperInterface.get_line
+      ~ODMRSweeperInterface.get_pd_analog
+      ~ODMRSweeperInterface.get_point
+      ~ODMRSweeperInterface.get_pulse_pattern
+      ~ODMRSweeperInterface.get_unit
+   
+   
+
+   
+   
+   

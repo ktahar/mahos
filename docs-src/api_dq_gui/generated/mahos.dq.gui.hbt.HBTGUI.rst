@@ -1,0 +1,25 @@
+﻿mahos.dq.gui.hbt.HBTGUI
+=======================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.dq.gui.hbt
+
+.. autoclass:: HBTGUI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~HBTGUI.init_widget
+   
+   
+
+   
+   
+   

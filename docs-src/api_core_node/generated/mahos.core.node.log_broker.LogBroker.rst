@@ -1,0 +1,32 @@
+﻿mahos.core.node.log\_broker.LogBroker
+=====================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.node.log_broker
+
+.. autoclass:: LogBroker
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LogBroker.__init__
+      ~LogBroker.close_resources
+      ~LogBroker.xsub_handler
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

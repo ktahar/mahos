@@ -1,0 +1,25 @@
+﻿mahos.core.gui.camera.CameraGUI
+===============================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.gui.camera
+
+.. autoclass:: CameraGUI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CameraGUI.init_widget
+   
+   
+
+   
+   
+   

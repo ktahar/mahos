@@ -1,0 +1,28 @@
+﻿mahos.core.inst.pd.AnalogPD
+===========================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.pd
+
+.. autoclass:: AnalogPD
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AnalogPD.__init__
+      ~AnalogPD.get
+      ~AnalogPD.read_on_demand
+      ~AnalogPD.set
+   
+   
+
+   
+   
+   

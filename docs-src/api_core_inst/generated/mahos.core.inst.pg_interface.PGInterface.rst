@@ -1,0 +1,33 @@
+﻿mahos.core.inst.pg\_interface.PGInterface
+=========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.pg_interface
+
+.. autoclass:: PGInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PGInterface.clear
+      ~PGInterface.configure_blocks
+      ~PGInterface.configure_blockseq
+      ~PGInterface.get_length
+      ~PGInterface.get_offsets
+      ~PGInterface.get_opc
+      ~PGInterface.trigger
+      ~PGInterface.validate_blocks
+      ~PGInterface.validate_blockseq
+   
+   
+
+   
+   
+   

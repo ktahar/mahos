@@ -1,0 +1,27 @@
+﻿mahos.core.inst.daq\_interface.AnalogOutInterface
+=================================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.daq_interface
+
+.. autoclass:: AnalogOutInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AnalogOutInterface.configure_clock
+      ~AnalogOutInterface.configure_command
+      ~AnalogOutInterface.set_output_once
+   
+   
+
+   
+   
+   

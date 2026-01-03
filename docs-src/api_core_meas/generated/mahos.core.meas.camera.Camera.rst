@@ -1,0 +1,39 @@
+﻿mahos.core.meas.camera.Camera
+=============================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.meas.camera
+
+.. autoclass:: Camera
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Camera.__init__
+      ~Camera.change_state
+      ~Camera.close_resources
+      ~Camera.export_data
+      ~Camera.get_param_dict
+      ~Camera.get_param_dict_labels
+      ~Camera.load_data
+      ~Camera.main
+      ~Camera.save_data
+      ~Camera.wait
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

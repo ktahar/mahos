@@ -1,0 +1,25 @@
+﻿mahos.core.inst.daq\_interface.ClockSourceInterface
+===================================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.daq_interface
+
+.. autoclass:: ClockSourceInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ClockSourceInterface.get_internal_output
+   
+   
+
+   
+   
+   

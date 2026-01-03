@@ -1,0 +1,25 @@
+﻿mahos.dq.gui.odmr.ODMRGUI
+=========================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.dq.gui.odmr
+
+.. autoclass:: ODMRGUI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ODMRGUI.init_widget
+   
+   
+
+   
+   
+   

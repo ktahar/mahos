@@ -1,0 +1,28 @@
+﻿mahos.core.inst.daq.SingleShotTask
+==================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.daq
+
+.. autoclass:: SingleShotTask
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SingleShotTask.__init__
+      ~SingleShotTask.close_resources
+      ~SingleShotTask.start
+      ~SingleShotTask.stop
+   
+   
+
+   
+   
+   
