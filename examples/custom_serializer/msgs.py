@@ -5,7 +5,7 @@ import datetime
 
 import msgpack
 
-from mahos.msgs.common_msgs import Message, Request, Reply
+from mahos.core.msgs.common_msgs import Message, Request, Reply
 
 
 class DatetimeMP(Message):

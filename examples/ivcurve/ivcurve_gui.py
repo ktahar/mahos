@@ -3,13 +3,13 @@
 import numpy as np
 import pyqtgraph as pg
 
-from mahos.node.node import local_conf
-from mahos.gui.client import QBasicMeasClient
-from mahos.gui.Qt import QtWidgets
-from mahos.gui.param import apply_widgets
-from mahos.gui.gui_node import GUINode
-from mahos.gui.common_widget import ClientTopWidget
-from mahos.msgs.common_msgs import BinaryState, BinaryStatus
+from mahos.core.node.node import local_conf
+from mahos.core.gui.client import QBasicMeasClient
+from mahos.core.gui.Qt import QtWidgets
+from mahos.core.gui.param import apply_widgets
+from mahos.core.gui.gui_node import GUINode
+from mahos.core.gui.common_widget import ClientTopWidget
+from mahos.core.msgs.common_msgs import BinaryState, BinaryStatus
 
 from ivcurve_msgs import IVCurveData
 

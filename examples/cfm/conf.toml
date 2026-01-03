@@ -3,7 +3,7 @@ req_timeout_ms = 30_000
 poll_timeout_ms = 100
 
 [localhost.log]
-module = "mahos.node.log_broker"
+module = "mahos.core.node.log_broker"
 class = "LogBroker"
 target = { log = "localhost::log" }
 xpub_endpoint = "tcp://127.0.0.1:5755"
@@ -11,14 +11,14 @@ xsub_endpoint = "tcp://127.0.0.1:5756"
 file = true
 
 [localhost.gparams]
-module = "mahos.node.global_params"
+module = "mahos.core.node.global_params"
 class = "GlobalParams"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5757"
 pub_endpoint = "tcp://127.0.0.1:5758"
 
 [localhost.server]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 target = { log = "localhost::log" }
 log_level = "DEBUG"
@@ -126,7 +126,7 @@ channels = ["mw_i", "mw_q"]
 "11" = [0.35, 0.35]
 
 [localhost.server.instrument_overlay.scanner]
-module = "confocal_scanner"
+module = "mahos.dq.inst.overlay.confocal_scanner"
 class = "ConfocalScannerAnalog"
 [localhost.server.instrument_overlay.scanner.conf]
 clock = "$clock"
@@ -136,7 +136,7 @@ pd1 = "$pd1"
 
 # Dedicated server: tdc involves heavy operation.
 [localhost.server_tdc]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 req_timeout_ms = 300_000
 target = { log = "localhost::log" }
@@ -164,7 +164,7 @@ start_channel = 1
 
 # Dedicated server: spectrometer may be immature and rather independent.
 [localhost.server_spec]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 target = { log = "localhost::log" }
 log_level = "DEBUG"
@@ -177,7 +177,7 @@ class = "Princeton_LightField"
 
 # Dedicated server: camera sometimes requires fast loop.
 [localhost.server_camera]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 poll_timeout_ms = 5
 target = { log = "localhost::log" }
@@ -194,7 +194,7 @@ frame_rate_control = false
 
 # Dedicated server: positioner is independent.
 [localhost.server_pos]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 target = { log = "localhost::log" }
 log_level = "DEBUG"
@@ -221,7 +221,7 @@ class = "Thorlabs_KCube_DCServo"
 serial = "2zzzzzzz"
 
 [localhost.confocal]
-module = "mahos.meas.confocal"
+module = "mahos.dq.meas.confocal"
 class = "Confocal"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5770"
@@ -246,7 +246,7 @@ pd1 = "localhost::server"
 switch = "localhost::server"
 
 [localhost.tracker]
-module = "mahos.meas.confocal_tracker"
+module = "mahos.dq.meas.confocal_tracker"
 class = "ConfocalTracker"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5772"
@@ -257,7 +257,7 @@ confocal = "localhost::confocal"
 manager = "localhost::manager"
 
 [localhost.hbt]
-module = "mahos.meas.hbt"
+module = "mahos.dq.meas.hbt"
 class = "HBT"
 rep_endpoint = "tcp://127.0.0.1:5774"
 pub_endpoint = "tcp://127.0.0.1:5775"
@@ -271,7 +271,7 @@ tdc = "localhost::server_tdc"
 switch = "localhost::server"
 
 [localhost.spectroscopy]
-module = "mahos.meas.spectroscopy"
+module = "mahos.dq.meas.spectroscopy"
 class = "Spectroscopy"
 rep_endpoint = "tcp://127.0.0.1:5776"
 pub_endpoint = "tcp://127.0.0.1:5777"
@@ -283,7 +283,7 @@ spectrometer = "localhost::server_spec"
 switch = "localhost::server"
 
 [localhost.odmr]
-module = "mahos.meas.odmr"
+module = "mahos.dq.meas.odmr"
 class = "ODMR"
 rep_endpoint = "tcp://127.0.0.1:5778"
 pub_endpoint = "tcp://127.0.0.1:5779"
@@ -301,7 +301,7 @@ pd0 = "localhost::server"
 pd1 = "localhost::server"
 
 [localhost.podmr]
-module = "mahos.meas.podmr"
+module = "mahos.dq.meas.podmr"
 class = "PODMR"
 # log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5780"
@@ -320,7 +320,7 @@ pg = "localhost::server"
 fg = "localhost::server"
 
 [localhost.camera]
-module = "mahos.meas.camera"
+module = "mahos.core.meas.camera"
 class = "Camera"
 poll_timeout_ms = 10
 rep_endpoint = "tcp://127.0.0.1:5782"
@@ -331,7 +331,7 @@ log = "localhost::log"
 camera = "localhost::server_camera"
 
 [localhost.pos_tweaker]
-module = "mahos.meas.pos_tweaker"
+module = "mahos.core.meas.pos_tweaker"
 class = "PosTweaker"
 poll_timeout_ms = 100
 rep_endpoint = "tcp://127.0.0.1:5786"
@@ -345,19 +345,19 @@ y = "localhost::server_pos"
 z = "localhost::server_pos"
 
 [localhost.manager]
-module = "mahos.meas.state_manager"
+module = "mahos.core.meas.state_manager"
 class = "StateManager"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5788"
 pub_endpoint = "tcp://127.0.0.1:5789"
 
 [localhost.manager.node]
-"localhost::confocal" = ["mahos.msgs.confocal_msgs", "ConfocalState"]
-"localhost::hbt" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::tracker" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::spectroscopy" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::odmr" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::podmr" = ["mahos.msgs.common_msgs", "BinaryState"]
+"localhost::confocal" = ["mahos.dq.msgs.confocal_msgs", "ConfocalState"]
+"localhost::hbt" = ["mahos.core.msgs.common_msgs", "BinaryState"]
+"localhost::tracker" = ["mahos.core.msgs.common_msgs", "BinaryState"]
+"localhost::spectroscopy" = ["mahos.core.msgs.common_msgs", "BinaryState"]
+"localhost::odmr" = ["mahos.core.msgs.common_msgs", "BinaryState"]
+"localhost::podmr" = ["mahos.core.msgs.common_msgs", "BinaryState"]
 
 [localhost.manager.command.prepare_scan]
 "localhost::hbt" = "IDLE"
@@ -366,13 +366,13 @@ pub_endpoint = "tcp://127.0.0.1:5789"
 "localhost::podmr" = "IDLE"
 
 [localhost.digital_out_gui]
-module = "mahos.gui.digital_out"
+module = "mahos.core.gui.digital_out"
 class = "DigitalOutGUI"
 [localhost.digital_out_gui.target.servers]
 aom_switch = "localhost::server"
 
 [localhost.confocal_gui]
-module = "mahos.gui.confocal"
+module = "mahos.dq.gui.confocal"
 class = "ConfocalGUI"
 invert = [false, false, true]
 move_interval_ms = 20
@@ -382,7 +382,7 @@ tracker = "localhost::tracker"
 gparams = "localhost::gparams"
 
 [localhost.odmr_gui]
-module = "mahos.gui.odmr"
+module = "mahos.dq.gui.odmr"
 class = "ODMRGUI"
 [localhost.odmr_gui.target]
 odmr = "localhost::odmr"
@@ -390,14 +390,14 @@ gparams = "localhost::gparams"
 confocal = "localhost::confocal"
 
 [localhost.podmr_gui]
-module = "mahos.gui.podmr"
+module = "mahos.dq.gui.podmr"
 class = "PODMRGUI"
 [localhost.podmr_gui.target]
 podmr = "localhost::podmr"
 gparams = "localhost::gparams"
 
 [localhost.hbt_gui]
-module = "mahos.gui.hbt"
+module = "mahos.dq.gui.hbt"
 class = "HBTGUI"
 [localhost.hbt_gui.target]
 hbt = "localhost::hbt"
@@ -405,7 +405,7 @@ gparams = "localhost::gparams"
 confocal = "localhost::confocal"
 
 [localhost.spectroscopy_gui]
-module = "mahos.gui.spectroscopy"
+module = "mahos.dq.gui.spectroscopy"
 class = "SpectroscopyGUI"
 [localhost.spectroscopy_gui.target]
 spectroscopy = "localhost::spectroscopy"
@@ -413,14 +413,14 @@ gparams = "localhost::gparams"
 confocal = "localhost::confocal"
 
 [localhost.camera_gui]
-module = "mahos.gui.camera"
+module = "mahos.core.gui.camera"
 class = "CameraGUI"
 [localhost.camera_gui.target]
 camera = "localhost::camera"
 gparams = "localhost::gparams"
 
 [localhost.pos_tweaker_gui]
-module = "mahos.gui.pos_tweaker"
+module = "mahos.core.gui.pos_tweaker"
 class = "PosTweakerGUI"
 [localhost.pos_tweaker_gui.target]
 pos_tweaker = "localhost::pos_tweaker"
@@ -428,13 +428,13 @@ gparams = "localhost::gparams"
 fontsize = 26
 
 [localhost.pulse_monitor]
-module = "mahos.gui.pulse_monitor"
+module = "mahos.core.gui.pulse_monitor"
 class = "PulseMonitor"
 [localhost.pulse_monitor.target]
 pulse = "localhost::podmr"
 
 [localhost.main_monitor]
-module = "mahos.gui.main_monitor"
+module = "mahos.core.gui.main_monitor"
 class = "MainMonitor"
 work_dir = "~"
 [localhost.main_monitor.target]

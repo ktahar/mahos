@@ -2,8 +2,8 @@
 
 import matplotlib.pyplot as plt
 
-from mahos import load_gconf
-from mahos.meas.odmr import ODMRClient, BinaryState
+from mahos.core import load_gconf
+from mahos.dq.meas.odmr import ODMRClient, BinaryState
 
 
 def main():

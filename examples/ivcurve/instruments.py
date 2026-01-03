@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from mahos.inst.instrument import Instrument
-from mahos.inst.interface import InstrumentInterface
+from mahos.core.inst.instrument import Instrument
+from mahos.core.inst.interface import InstrumentInterface
 
 
 class VoltageSource_mock(Instrument):

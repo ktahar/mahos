@@ -3,21 +3,21 @@ req_timeout_ms = 60000
 poll_timeout_ms = 100
 
 [localhost.log]
-module = "mahos.node.log_broker"
+module = "mahos.core.node.log_broker"
 class = "LogBroker"
 target = { log = "localhost::log" }
 xpub_endpoint = "tcp://127.0.0.1:5555"
 xsub_endpoint = "tcp://127.0.0.1:5556"
 
 [localhost.gparams]
-module = "mahos.node.global_params"
+module = "mahos.core.node.global_params"
 class = "GlobalParams"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5557"
 pub_endpoint = "tcp://127.0.0.1:5558"
 
 [localhost.server]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 target = { log = "localhost::log" }
 log_level = "DEBUG"
@@ -37,15 +37,15 @@ class = "Multimeter_mock"
 resource = "VISA::DUMMY1"
 
 [localhost.server.instrument.pos_x]
-module = "mahos.inst.mock"
+module = "mahos.core.inst.mock"
 class = "Positioner_mock"
 
 [localhost.server.instrument.pos_y]
-module = "mahos.inst.mock"
+module = "mahos.core.inst.mock"
 class = "Positioner_mock"
 
 [localhost.tweaker]
-module = "mahos.meas.tweaker"
+module = "mahos.core.meas.tweaker"
 class = "Tweaker"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5561"
@@ -55,7 +55,7 @@ param_dicts = ["source::ch1", "source::ch2"]
 source = "localhost::server"
 
 [localhost.pos_tweaker]
-module = "mahos.meas.pos_tweaker"
+module = "mahos.core.meas.pos_tweaker"
 class = "PosTweaker"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5563"
@@ -65,7 +65,7 @@ pos_x = "localhost::server"
 pos_y = "localhost::server"
 
 [localhost.recorder]
-module = "mahos.meas.recorder"
+module = "mahos.core.meas.recorder"
 class = "Recorder"
 rep_endpoint = "tcp://127.0.0.1:5565"
 pub_endpoint = "tcp://127.0.0.1:5566"
@@ -80,28 +80,28 @@ meter_voltage = ["meter", "voltage"]
 meter_current = ["meter", "current"]
 
 [localhost.tweaker_gui]
-module = "mahos.gui.tweaker"
+module = "mahos.core.gui.tweaker"
 class = "TweakerGUI"
 [localhost.tweaker_gui.target]
 tweaker = "localhost::tweaker"
 gparams = "localhost::gparams"
 
 [localhost.pos_tweaker_gui]
-module = "mahos.gui.pos_tweaker"
+module = "mahos.core.gui.pos_tweaker"
 class = "PosTweakerGUI"
 [localhost.pos_tweaker_gui.target]
 pos_tweaker = "localhost::pos_tweaker"
 gparams = "localhost::gparams"
 
 [localhost.recorder_gui]
-module = "mahos.gui.recorder"
+module = "mahos.core.gui.recorder"
 class = "RecorderGUI"
 [localhost.recorder_gui.target]
 recorder = "localhost::recorder"
 gparams = "localhost::gparams"
 
 [localhost.main_monitor]
-module = "mahos.gui.main_monitor"
+module = "mahos.core.gui.main_monitor"
 class = "MainMonitor"
 work_dir = "~"
 [localhost.main_monitor.target]

@@ -3,8 +3,8 @@
 import numpy as np
 import time
 
-from mahos.node.node import Node, local_conf
-from mahos.node.client import NodeClient
+from mahos.core.node.node import Node, local_conf
+from mahos.core.node.client import NodeClient
 
 
 class Client(NodeClient):

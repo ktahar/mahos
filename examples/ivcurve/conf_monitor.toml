@@ -3,14 +3,14 @@ req_timeout_ms = 60000
 poll_timeout_ms = 100
 
 [localhost.log]
-module = "mahos.node.log_broker"
+module = "mahos.core.node.log_broker"
 class = "LogBroker"
 target = { log = "localhost::log" }
 xpub_endpoint = "tcp://127.0.0.1:5555"
 xsub_endpoint = "tcp://127.0.0.1:5556"
 
 [localhost.server]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 target = { log = "localhost::log" }
 log_level = "DEBUG"
@@ -47,7 +47,7 @@ class = "IVCurveGUI"
 ivcurve = "localhost::ivcurve"
 
 [localhost.main_monitor]
-module = "mahos.gui.main_monitor"
+module = "mahos.core.gui.main_monitor"
 class = "MainMonitor"
 [localhost.main_monitor.target]
 log = "localhost::log"

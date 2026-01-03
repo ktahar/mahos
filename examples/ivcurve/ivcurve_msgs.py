@@ -3,7 +3,7 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from mahos.msgs.common_meas_msgs import BasicMeasData
+from mahos.core.msgs.common_meas_msgs import BasicMeasData
 
 
 class IVCurveData(BasicMeasData):

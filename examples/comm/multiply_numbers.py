@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from mahos.node.node import load_gconf
+from mahos.core.node.node import load_gconf
 from nodes import MultiplierClient
 
 

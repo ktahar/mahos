@@ -5,8 +5,8 @@ import time
 import numpy as np
 from numpy.typing import NDArray
 
-from mahos.inst.overlay.overlay import InstrumentOverlay
-from mahos.inst.interface import InstrumentInterface
+from mahos.core.inst.overlay.overlay import InstrumentOverlay
+from mahos.core.inst.interface import InstrumentInterface
 
 
 class IVSweeper(InstrumentOverlay):

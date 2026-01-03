@@ -3,7 +3,7 @@ req_timeout_ms = 30_000
 poll_timeout_ms = 100
 
 [localhost.log]
-module = "mahos.node.log_broker"
+module = "mahos.core.node.log_broker"
 class = "LogBroker"
 target = { log = "localhost::log" }
 xpub_endpoint = "tcp://127.0.0.1:5755"
@@ -11,14 +11,14 @@ xsub_endpoint = "tcp://127.0.0.1:5756"
 file = true
 
 [localhost.gparams]
-module = "mahos.node.global_params"
+module = "mahos.core.node.global_params"
 class = "GlobalParams"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5757"
 pub_endpoint = "tcp://127.0.0.1:5758"
 
 [localhost.server]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 target = { log = "localhost::log" }
 log_level = "DEBUG"
@@ -107,7 +107,7 @@ channels = ["mw_i", "mw_q"]
 "11" = [0.35, 0.35]
 
 [localhost.server.instrument_overlay.scanner]
-module = "confocal_scanner"
+module = "mahos.dq.inst.overlay.confocal_scanner"
 class = "ConfocalScannerAnalog"
 [localhost.server.instrument_overlay.scanner.conf]
 clock = "$clock"
@@ -117,7 +117,7 @@ pd1 = "$pd1"
 
 # Dedicated server: tdc involves heavy operation.
 [localhost.server_tdc]
-module = "mahos.inst.server"
+module = "mahos.core.inst.server"
 class = "InstrumentServer"
 req_timeout_ms = 300_000
 target = { log = "localhost::log" }
@@ -144,7 +144,7 @@ levels = [0.5, 0.5, 0.5]
 start_channel = 1
 
 [localhost.confocal]
-module = "mahos.meas.confocal"
+module = "mahos.dq.meas.confocal"
 class = "Confocal"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5770"
@@ -167,7 +167,7 @@ pd0 = "localhost::server"
 pd1 = "localhost::server"
 
 [localhost.tracker]
-module = "mahos.meas.confocal_tracker"
+module = "mahos.dq.meas.confocal_tracker"
 class = "ConfocalTracker"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5772"
@@ -178,7 +178,7 @@ confocal = "localhost::confocal"
 manager = "localhost::manager"
 
 [localhost.odmr]
-module = "mahos.meas.odmr"
+module = "mahos.dq.meas.odmr"
 class = "ODMR"
 rep_endpoint = "tcp://127.0.0.1:5778"
 pub_endpoint = "tcp://127.0.0.1:5779"
@@ -194,7 +194,7 @@ pd0 = "localhost::server"
 pd1 = "localhost::server"
 
 [localhost.podmr]
-module = "mahos.meas.podmr"
+module = "mahos.dq.meas.podmr"
 class = "PODMR"
 # log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5780"
@@ -211,24 +211,24 @@ pg = "localhost::server"
 fg = "localhost::server"
 
 [localhost.manager]
-module = "mahos.meas.state_manager"
+module = "mahos.core.meas.state_manager"
 class = "StateManager"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5788"
 pub_endpoint = "tcp://127.0.0.1:5789"
 
 [localhost.manager.node]
-"localhost::confocal" = ["mahos.msgs.confocal_msgs", "ConfocalState"]
-"localhost::tracker" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::odmr" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::podmr" = ["mahos.msgs.common_msgs", "BinaryState"]
+"localhost::confocal" = ["mahos.dq.msgs.confocal_msgs", "ConfocalState"]
+"localhost::tracker" = ["mahos.core.msgs.common_msgs", "BinaryState"]
+"localhost::odmr" = ["mahos.core.msgs.common_msgs", "BinaryState"]
+"localhost::podmr" = ["mahos.core.msgs.common_msgs", "BinaryState"]
 
 [localhost.manager.command.prepare_scan]
 "localhost::odmr" = "IDLE"
 "localhost::podmr" = "IDLE"
 
 [localhost.confocal_gui]
-module = "mahos.gui.confocal"
+module = "mahos.dq.gui.confocal"
 class = "ConfocalGUI"
 invert = [false, false, true]
 move_interval_ms = 20
@@ -238,7 +238,7 @@ tracker = "localhost::tracker"
 gparams = "localhost::gparams"
 
 [localhost.odmr_gui]
-module = "mahos.gui.odmr"
+module = "mahos.dq.gui.odmr"
 class = "ODMRGUI"
 [localhost.odmr_gui.target]
 odmr = "localhost::odmr"
@@ -246,14 +246,14 @@ gparams = "localhost::gparams"
 confocal = "localhost::confocal"
 
 [localhost.podmr_gui]
-module = "mahos.gui.podmr"
+module = "mahos.dq.gui.podmr"
 class = "PODMRGUI"
 [localhost.podmr_gui.target]
 podmr = "localhost::podmr"
 gparams = "localhost::gparams"
 
 [localhost.main_monitor]
-module = "mahos.gui.main_monitor"
+module = "mahos.core.gui.main_monitor"
 class = "MainMonitor"
 work_dir = "~"
 [localhost.main_monitor.target]

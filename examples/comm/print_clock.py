@@ -2,7 +2,7 @@
 
 import time
 
-from mahos.node.node import load_gconf
+from mahos.core.node.node import load_gconf
 from nodes import ClockClient
 
 
