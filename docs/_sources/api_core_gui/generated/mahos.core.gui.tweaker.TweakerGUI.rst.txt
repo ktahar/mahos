@@ -1,0 +1,25 @@
+﻿mahos.core.gui.tweaker.TweakerGUI
+=================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.gui.tweaker
+
+.. autoclass:: TweakerGUI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TweakerGUI.init_widget
+   
+   
+
+   
+   
+   

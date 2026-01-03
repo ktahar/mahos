@@ -1,0 +1,26 @@
+﻿mahos.core.inst.pd\_interface.APDCounterInterface
+=================================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.pd_interface
+
+.. autoclass:: APDCounterInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~APDCounterInterface.correct_cps
+      ~APDCounterInterface.get_correction_factor
+   
+   
+
+   
+   
+   

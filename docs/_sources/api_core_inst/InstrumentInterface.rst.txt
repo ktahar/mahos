@@ -1,0 +1,32 @@
+mahos.core.inst.interface.InstrumentInterface
+=============================================
+
+.. currentmodule:: mahos.core.inst.interface
+
+.. autoclass:: InstrumentInterface
+
+Standard Instrument API calls
+-----------------------------
+
+Below is the list of standard instrument API calls.
+
+   .. automethod:: InstrumentInterface.start
+   .. automethod:: InstrumentInterface.stop
+   .. automethod:: InstrumentInterface.shutdown
+   .. automethod:: InstrumentInterface.pause
+   .. automethod:: InstrumentInterface.resume
+   .. automethod:: InstrumentInterface.reset
+   .. automethod:: InstrumentInterface.set
+   .. automethod:: InstrumentInterface.get
+   .. automethod:: InstrumentInterface.configure
+   .. automethod:: InstrumentInterface.get_param_dict
+   .. automethod:: InstrumentInterface.get_param_dict_labels
+
+.. rubric:: Other Methods
+
+.. autosummary::
+
+   ~InstrumentInterface.lock
+   ~InstrumentInterface.release
+   ~InstrumentInterface.is_locked
+   ~InstrumentInterface.help

@@ -1,7 +1,7 @@
 Glossary
 ========
 
-.. currentmodule:: mahos
+.. currentmodule:: mahos.core
 
 .. glossary::
 
@@ -32,7 +32,7 @@ Glossary
       Publish-Subscribe communication pattern. One-to-many data distribution.
 
    status
-      Messages expressing the node's status. Implemented as a subclass of :class:`Status <mahos.msgs.common_msgs.Status>`. Usually published as topic `status`.
+      Messages expressing the node's status. Implemented as a subclass of :class:`Status <mahos.core.msgs.common_msgs.Status>`. Usually published as topic `status`.
 
    state
-      Node can have explicit state. If so, it is implemented as a subclass of :class:`State <mahos.msgs.common_msgs.State>` and usually contained as a attribute of :term:`status`.
+      Node can have explicit state. If so, it is implemented as a subclass of :class:`State <mahos.core.msgs.common_msgs.State>` and usually contained as a attribute of :term:`status`.

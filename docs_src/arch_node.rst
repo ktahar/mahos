@@ -2,15 +2,15 @@ Node, Client, and Communication
 ===============================
 
 MAHOS helps to build `distributed` measurement automation systems, which consist of multiple programs (processes) communicating with each other.
-We call these programs :term:`nodes <node>` (:class:`Node <mahos.node.node.Node>`).
+We call these programs :term:`nodes <node>` (:class:`Node <mahos.core.node.node.Node>`).
 A node usually provides some services for other nodes.
-The :term:`node client` (:class:`NodeClient <mahos.node.client.NodeClient>`) provides the standard way to access the node's functions.
-The core functionalities of node systems are implemented in the :ref:`mahos.node` package.
+The :term:`node client` (:class:`NodeClient <mahos.core.node.client.NodeClient>`) provides the standard way to access the node's functions.
+The core functionalities of node systems are implemented in the :ref:`mahos.core.node` package.
 
 Data transport and serialization
 --------------------------------
 
-The node :class:`communication <mahos.node.comm.Context>` is currently based on the `ZeroMQ <https://zeromq.org/>`_ library.
+The node :class:`communication <mahos.core.node.comm.Context>` is currently based on the `ZeroMQ <https://zeromq.org/>`_ library.
 The transport layer is abstracted by ZeroMQ, and we can choose different transports by changing a configuration (the endpoint) only.
 We recommend using TCP as the default.
 By choosing TCP, multi-host (multi-computer) configuration is quite straightforward.
@@ -21,15 +21,15 @@ in a single process and using intra-process transportation.
 See :ref:`conf threading` for how to configure such transportation.
 
 ZeroMQ doesn't specify the data serialization format; it provides methods to send/receive byte arrays of arbitrary length.
-By default, we define the message types (classes) in the :ref:`mahos.msgs` package and serialize the instances
+By default, we define the message types (classes) in the :ref:`mahos.core.msgs` package and serialize the instances
 using Python standard pickle.
 This approach is adopted due to pickle's high compatibility with Python objects and moderate performance.
 
 However, the pickle-based serialization practically limits the messaging within Python only.
 The other serialization can also be utilized to support different programming languages.
-For that, serializer methods must be overridden in your :class:`Message <mahos.msgs.common_msgs.Message>` classes
-and they must be passed when :meth:`add_sub <mahos.node.client.NodeClient.add_sub>`,
-:meth:`add_req<mahos.node.client.NodeClient.add_req>`, or :meth:`add_rep <mahos.node.node.Node.add_rep>`.
+For that, serializer methods must be overridden in your :class:`Message <mahos.core.msgs.common_msgs.Message>` classes
+and they must be passed when :meth:`add_sub <mahos.core.node.client.NodeClient.add_sub>`,
+:meth:`add_req<mahos.core.node.client.NodeClient.add_req>`, or :meth:`add_rep <mahos.core.node.node.Node.add_rep>`.
 See ``examples/custom_serializer`` for the examples of this approach.
 
 Communication patterns
@@ -60,10 +60,10 @@ Client usage
 
 It can be said that a node `provides` functions via Rep and Pub;
 the corresponding client uses them via Req and Sub.
-Thus, :class:`Node <mahos.node.node.Node>` has ways to :meth:`add_rep <mahos.node.node.Node.add_rep>`
-and :meth:`add_pub <mahos.node.node.Node.add_pub>`.
-:class:`NodeClient <mahos.node.client.NodeClient>` has :meth:`add_req <mahos.node.client.NodeClient.add_req>`
-and :meth:`add_sub <mahos.node.client.NodeClient.add_sub>`.
+Thus, :class:`Node <mahos.core.node.node.Node>` has ways to :meth:`add_rep <mahos.core.node.node.Node.add_rep>`
+and :meth:`add_pub <mahos.core.node.node.Node.add_pub>`.
+:class:`NodeClient <mahos.core.node.client.NodeClient>` has :meth:`add_req <mahos.core.node.client.NodeClient.add_req>`
+and :meth:`add_sub <mahos.core.node.client.NodeClient.add_sub>`.
 
 Nodes can internally use the clients to access the others.
 The custom programs can utilize them as well.

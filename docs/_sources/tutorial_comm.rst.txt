@@ -85,7 +85,7 @@ Let's find the node implementation: ``Clock`` class defined in module nodes (fil
            self.time_pub.publish(dt.strftime("%F %T"))
 
 As we can see, Clock is a subclass of Node and a few things are implemented.
-Work is done by a :class:`Publisher <mahos.node.comm.Publisher>` initialized in Line 26, which is used to publish the formatted time in the main loop (Line 32).
+Work is done by a :class:`Publisher <mahos.core.node.comm.Publisher>` initialized in Line 26, which is used to publish the formatted time in the main loop (Line 32).
 The publisher is initialized with a topic (label for the messages) `time`.
 Note that the type of the topic must be ASCII str (or bytes).
 
@@ -94,8 +94,8 @@ The loop is implemented elsewhere and automatically incorporated when using ``ma
 We always define `the contents of main loop` as the ``main()`` function.
 IntervalSleeper regulates the loop interval to 1.0 secs (rate of 1 Hz).
 
-Although :class:`Publisher <mahos.node.comm.Publisher>` can send any picklable Python object (we are sending str now),
-the dedicated types can be used for serious applications (see :mod:`mahos.msgs.common_msgs`).
+Although :class:`Publisher <mahos.core.node.comm.Publisher>` can send any picklable Python object (we are sending str now),
+the dedicated types can be used for serious applications (see :mod:`mahos.core.msgs.common_msgs`).
 
 Corresponding NodeClient ``ClockClient`` is  defined above,
 and this is referenced as a class variable ``CLIENT`` in Clock.
@@ -115,9 +115,9 @@ In the IPython shell, use ``cli.multiply(2, 3)`` to multiply the numbers.
 It is successful if you get correct answer 6, and see a log message in the terminal running the node.
 
 ``cli`` is a MultiplierClient (defined as below) in the IPython shell.
-Obviously, ``MultiplierClient`` registers a :class:`Requester <mahos.node.comm.Requester>` (Line 39) and
+Obviously, ``MultiplierClient`` registers a :class:`Requester <mahos.core.node.comm.Requester>` (Line 39) and
 using in the ``multiply()`` method (Line 42).
-By calling :meth:`Requester.request <mahos.node.comm.Requester.request>`, a request is sent from the client to serving node, and the response is returned.
+By calling :meth:`Requester.request <mahos.core.node.comm.Requester.request>`, a request is sent from the client to serving node, and the response is returned.
 The ``Multiplier`` node defines how the request is handled.
 A handler method ``handle_multiply`` is registered in Line 51.
 This method does the calculation, send a log message, and return the answer (Line 55-57).

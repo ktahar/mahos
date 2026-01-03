@@ -84,7 +84,7 @@ First of all, :doc:`install <installation>` the library.
 
 To use the existing nodes to construct the system,
 you have to write (or customize existing ones) a :doc:`configuration file <conf>`.
-Once the configuration file is done, you can run the system by using the :ref:`command line interface<mahos.cli>` (:ref:`mahos run` or :ref:`mahos launch`).
+Once the configuration file is done, you can run the system by using the :ref:`command line interface<mahos.core.cli>` (:ref:`mahos run` or :ref:`mahos launch`).
 
 :doc:`tutorial` will help you to get used to these concepts,
 as well as how to write your own programs.

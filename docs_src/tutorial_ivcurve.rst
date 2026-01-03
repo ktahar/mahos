@@ -64,7 +64,7 @@ Since mahos adopted a distributed system,
 the sources of logs (i.e., :term:`nodes <node>`) are running on multiple processes.
 In order to sort out the distributed logs, it seems good to gather the logs to single node,
 and then redistribute.
-The :class:`LogBroker <mahos.node.log_broker.LogBroker>` is implemented for this purpose.
+The :class:`LogBroker <mahos.core.node.log_broker.LogBroker>` is implemented for this purpose.
 
 It is highly recommended to define a `log` in ``conf.toml``, as in the file for this tutorial.
 You can see arrows labeled `log` are coming from `server` and `ivcurve` to the `log` node in the graph.
@@ -75,7 +75,7 @@ These arrows are corresponding to Line 15 and Line 37-38 in ``conf.toml``.
 server
 ------
 
-The `server` (:class:`InstrumentServer <mahos.inst.server.InstrumentServer>`) is defined as below.
+The `server` (:class:`InstrumentServer <mahos.core.inst.server.InstrumentServer>`) is defined as below.
 
 .. code-block:: toml
    :linenos:
@@ -83,7 +83,7 @@ The `server` (:class:`InstrumentServer <mahos.inst.server.InstrumentServer>`) is
    :caption: conf.toml
 
    [localhost.server]
-   module = "mahos.inst.server"
+   module = "mahos.core.inst.server"
    class = "InstrumentServer"
    target = { log = "localhost::log" }
    log_level = "DEBUG"
@@ -102,11 +102,11 @@ The `server` (:class:`InstrumentServer <mahos.inst.server.InstrumentServer>`) is
    [localhost.server.instrument.meter.conf]
    resource = "VISA::DUMMY1"
 
-:class:`InstrumentServer <mahos.inst.server.InstrumentServer>` is the node for :doc:`arch_inst` to provide :term:`RPC` for instrument drivers.
-Thus, you don't need to write a :term:`node` for this purpose; you write instrument driver classes (:class:`Instrument <mahos.inst.instrument.Instrument>`) instead.
+:class:`InstrumentServer <mahos.core.inst.server.InstrumentServer>` is the node for :doc:`arch_inst` to provide :term:`RPC` for instrument drivers.
+Thus, you don't need to write a :term:`node` for this purpose; you write instrument driver classes (:class:`Instrument <mahos.core.inst.instrument.Instrument>`) instead.
 The second group above ``[localhost.server.instrument.source]`` defines
 an instrument `source` inside the `server`.
-The `VoltageSource_mock` is an example of :class:`Instrument <mahos.inst.instrument.Instrument>` class here.
+The `VoltageSource_mock` is an example of :class:`Instrument <mahos.core.inst.instrument.Instrument>` class here.
 
 .. code-block:: python
    :linenos:
@@ -156,12 +156,12 @@ We assume an output relay for voltage source, that is turned on/off by ``set_out
 The output voltage can be set by ``set_voltage()``.
 
 Line 27 and below makes these adapted to the :ref:`instrument-api`.
-The ``set_output()`` is wrapped by :meth:`start <mahos.inst.instrument.Instrument.start>` and :meth:`stop <mahos.inst.instrument.Instrument.stop>`.
-And ``set_voltage()`` is by :meth:`set <mahos.inst.instrument.Instrument.set>`.
-Note that most of the :ref:`instrument-api` (excepting :meth:`get <mahos.inst.instrument.Instrument.get>`) must return bool (True on success).
+The ``set_output()`` is wrapped by :meth:`start <mahos.core.inst.instrument.Instrument.start>` and :meth:`stop <mahos.core.inst.instrument.Instrument.stop>`.
+And ``set_voltage()`` is by :meth:`set <mahos.core.inst.instrument.Instrument.set>`.
+Note that most of the :ref:`instrument-api` (excepting :meth:`get <mahos.core.inst.instrument.Instrument.get>`) must return bool (True on success).
 
-In :ref:`instrument-api`, :meth:`set <mahos.inst.instrument.Instrument.set>`, :meth:`get <mahos.inst.instrument.Instrument.get>`, and :meth:`configure <mahos.inst.instrument.Instrument.configure>` accept some arguments and the type information of the arguments are lost (function signature of e.g. ``set_voltage()`` cannot be seen from the client).
-We can define :class:`InstrumentInterface <mahos.inst.interface.InstrumentInterface>` to recover this, as below.
+In :ref:`instrument-api`, :meth:`set <mahos.core.inst.instrument.Instrument.set>`, :meth:`get <mahos.core.inst.instrument.Instrument.get>`, and :meth:`configure <mahos.core.inst.instrument.Instrument.configure>` accept some arguments and the type information of the arguments are lost (function signature of e.g. ``set_voltage()`` cannot be seen from the client).
+We can define :class:`InstrumentInterface <mahos.core.inst.interface.InstrumentInterface>` to recover this, as below.
 This procedure looks like a duplication of effort, but the positive side is that
 we can define an explicit interface (which method is exported and which is not, as in static programming languages).
 
@@ -240,16 +240,16 @@ Here, ``get_data()`` returns ``IVCurveData`` defined in ``ivcurve_msgs.py``,
 and ``data.data`` is the measurement result: a 2D numpy array of shape `(number of voltage points (params["num"]), number of sweeps)`.
 
 For a bit more meaningful application, try executing file ``measure_and_plot.py`` and understanding it.
-``cli.get_param_dict()`` returns a :ref:`param-dict`, str-keyed dict of :class:`Param <mahos.msgs.param_msgs.Param>`.
-:class:`Param <mahos.msgs.param_msgs.Param>` is wrapper of basic (mostly builtin) types with default value, bounds (for int or float), etc.
-You can set values of parameters by :meth:`set() <mahos.msgs.param_msgs.Param.set>` and pass it to ``cli.start()`` as in ``measure_and_plot.py``.
+``cli.get_param_dict()`` returns a :ref:`param-dict`, str-keyed dict of :class:`Param <mahos.core.msgs.param_msgs.Param>`.
+:class:`Param <mahos.core.msgs.param_msgs.Param>` is wrapper of basic (mostly builtin) types with default value, bounds (for int or float), etc.
+You can set values of parameters by :meth:`set() <mahos.core.msgs.param_msgs.Param.set>` and pass it to ``cli.start()`` as in ``measure_and_plot.py``.
 
 Reading IVCurve node
 ^^^^^^^^^^^^^^^^^^^^
 
 What happens at ivcurve node side?
 Look at implementation of ``IVCurve`` node in ``ivcurve.py``.
-``IVCurve`` is subclass of :class:`BasicMeasNode <mahos.meas.common_meas.BasicMeasNode>`,
+``IVCurve`` is subclass of :class:`BasicMeasNode <mahos.core.meas.common_meas.BasicMeasNode>`,
 which is a convenient Node implementation for simple measurement nodes.
 We explain how this node works by following ``main()`` method line by line.
 
@@ -266,7 +266,7 @@ We explain how this node works by following ``main()`` method line by line.
 
 First line of ``main()`` (Line 173) calls ``poll()``.
 Here, this node checks incoming requests, and if there is a request, the handler is called.
-The handler is implemented in :class:`BasicMeasNode <mahos.meas.common_meas.BasicMeasNode>` (read the implementation if you are interested in) and it calls ``change_state()`` or ``get_param_dict()`` [#f1]_ according to the request.
+The handler is implemented in :class:`BasicMeasNode <mahos.core.meas.common_meas.BasicMeasNode>` (read the implementation if you are interested in) and it calls ``change_state()`` or ``get_param_dict()`` [#f1]_ according to the request.
 
 When ``cli.get_param_dict()`` is called, request is sent to ivcurve and the result of ``IVCurve.get_param_dict()`` is returned.
 The result of this method is hard-coded here; however, the parameter bounds may be determined by instruments for real application.
@@ -325,7 +325,7 @@ See :ref:`conf threading` section in the configuration file document for details
 Overlay
 ^^^^^^^
 
-If you need to reduce overhead of TCP communication between measurement node (IVCurve) and the InstrumentServer, :class:`InstrumentOverlay <mahos.inst.overlay.overlay.InstrumentOverlay>` would also help.
+If you need to reduce overhead of TCP communication between measurement node (IVCurve) and the InstrumentServer, :class:`InstrumentOverlay <mahos.core.inst.overlay.overlay.InstrumentOverlay>` would also help.
 The IVCurve node was sending the commands to ``source`` and ``meter`` for each data points in a voltage sweep.
 By using the overlay, the sweep operation can be executed at InstrumentServer side.
 The modified example using overlay is defined in ``conf_overlay.toml``,

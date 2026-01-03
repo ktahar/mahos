@@ -40,8 +40,7 @@ class ODMR(BasicMeasNode):
     There are two options for the worker (sweeper, measurement logic).
     See docs of sweeper below for sweeper parameters.
 
-    - :class:`Sweeper <mahos.dq.meas.odmr_worker.Sweeper>` : fast logic based on
-    hardware triggering.
+    - :class:`Sweeper <mahos.dq.meas.odmr_worker.Sweeper>` : fast logic with hardware trigger.
     - :class:`SweeperOverlay <mahos.dq.meas.odmr_worker.SweeperOverlay>` : interface to overlay.
 
     :param target.servers: The InstrumentServer targets (instrument name, server full name).

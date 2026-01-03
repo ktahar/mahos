@@ -1,0 +1,41 @@
+﻿mahos.core.inst.sg\_interface.SGInterface
+=========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.sg_interface
+
+.. autoclass:: SGInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SGInterface.configure_am_ext
+      ~SGInterface.configure_am_int
+      ~SGInterface.configure_cw
+      ~SGInterface.configure_cw_iq_ext
+      ~SGInterface.configure_fm_ext
+      ~SGInterface.configure_fm_int
+      ~SGInterface.configure_iq_ext
+      ~SGInterface.configure_iq_int
+      ~SGInterface.configure_point_trig_freq_sweep
+      ~SGInterface.get_bounds
+      ~SGInterface.get_opc
+      ~SGInterface.set_abort
+      ~SGInterface.set_dm
+      ~SGInterface.set_dm_source
+      ~SGInterface.set_init_cont
+      ~SGInterface.set_modulation
+      ~SGInterface.set_output
+   
+   
+
+   
+   
+   

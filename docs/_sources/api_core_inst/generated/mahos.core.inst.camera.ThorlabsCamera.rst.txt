@@ -1,0 +1,33 @@
+﻿mahos.core.inst.camera.ThorlabsCamera
+=====================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.camera
+
+.. autoclass:: ThorlabsCamera
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ThorlabsCamera.__init__
+      ~ThorlabsCamera.close_resources
+      ~ThorlabsCamera.configure
+      ~ThorlabsCamera.configure_continuous
+      ~ThorlabsCamera.get
+      ~ThorlabsCamera.get_frame
+      ~ThorlabsCamera.poll_continuous
+      ~ThorlabsCamera.start
+      ~ThorlabsCamera.stop
+   
+   
+
+   
+   
+   

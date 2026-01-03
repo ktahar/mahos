@@ -1,0 +1,40 @@
+﻿mahos.core.meas.pos\_tweaker.PosTweaker
+=======================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.meas.pos_tweaker
+
+.. autoclass:: PosTweaker
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PosTweaker.__init__
+      ~PosTweaker.handle_req
+      ~PosTweaker.home
+      ~PosTweaker.home_all
+      ~PosTweaker.load
+      ~PosTweaker.main
+      ~PosTweaker.save
+      ~PosTweaker.set_target
+      ~PosTweaker.stop
+      ~PosTweaker.stop_all
+      ~PosTweaker.wait
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

@@ -7,23 +7,12 @@ Steps to install mahos:
 #. `Create virtual environment`_ (this is optional, but recommended).
 #. `Clone the repository`_.
 #. Install `Optional requirements`_.
-#. Install `The mahos package`_ (and requirements).
+#. Install `The mahos packages`_ (and requirements).
 
 System requirements
 -------------------
 
-You need Python (>= 3.10, < 3.13) on Windows or Linux, and prerequisites for C extensions (see below).
-
-For C extensions
-^^^^^^^^^^^^^^^^
-
-On Windows, you have to download and install the C++ compiler `Microsoft C++ Build Tools <https://visualstudio.microsoft.com/ja/visual-cpp-build-tools/>`_ in order to build the C extensions.
-You can skip this if you have already installed Visual Studio on your computer.
-
-On Linux, install ``gcc`` and the dev-package for Python3.
-The ``gcc`` is installed by default on many distros.
-For the latter, try ``sudo apt install python3-dev`` on Debian-based distros
-or ``sudo yum install python3-devel`` on RHEL-like distros.
+You need Python (>= 3.10, < 3.13) on Windows or Linux.
 
 Create virtual environment
 --------------------------
@@ -66,6 +55,20 @@ Optional requirements
 There are some optional requirements installation of which is not quite straightforward.
 If you want to install them, follow instructions in the subsections below.
 
+C++ compiler
+^^^^^^^^^^^^
+
+If you wish to install the C extensions (`mahos.dq_ext`_ package),
+you need to install a C++ compiler.
+
+On Windows, you have to download and install `Microsoft C++ Build Tools <https://visualstudio.microsoft.com/ja/visual-cpp-build-tools/>`_ in order to build the extensions.
+You can skip this if you have already installed Visual Studio on your computer.
+
+On Linux, install ``gcc`` and the dev-package for Python3.
+The ``gcc`` is installed by default on many distros.
+For the latter, try ``sudo apt install python3-dev`` on Debian-based distros
+or ``sudo yum install python3-devel`` on RHEL-like distros.
+
 Graphviz
 ^^^^^^^^
 
@@ -76,7 +79,7 @@ See `pygraphviz documentation <https://pygraphviz.github.io/documentation/stable
 Windows
 .......
 
-You have to install the `C++ compiler <For C extensions_>`_ and the `graphviz binary <https://graphviz.org/download/#windows>`_ (version 2).
+You have to install the `C++ compiler`_ and the `graphviz binary <https://graphviz.org/download/#windows>`_ (version 2).
 And then, use following command to install pygraphviz.
 
 .. code-block:: bash
@@ -98,21 +101,40 @@ There are several methods to install this, and the easiest are following.
 - Windows: ``pip install opencv-python`` to install CPU-only binary
 - Linux: the pre-compiled package (e.g. ``sudo apt install python3-opencv`` for Ubuntu/Debian)
 
-The mahos package
------------------
+The mahos packages
+------------------
 
-In the mahos `repository directory`, ``pip install -e .``
+mahos.core
+^^^^^^^^^^
+
+In the `repository directory`, ``cd mahos_core``, and then ``pip install -e .``
 
 Here, -e (editable) is optional but recommended.
 Basic requirements in ``requirements.txt`` are installed by this command.
 
 Inst requirements
-^^^^^^^^^^^^^^^^^
+.................
 
 There are additional requirements for instrument drivers in ``inst-requirements.txt``.
 
 - You can install all of them by ``pip install -e .[inst]`` or ``pip install -r inst-requirements.txt``
 - If you don't want to install unnecessary packages, manually pick and install what you need.
+
+mahos.dq
+^^^^^^^^
+
+In the `repository directory`, ``cd mahos_dq``, and then ``pip install -e .``
+
+Here, -e (editable) is optional but recommended.
+
+mahos.dq_ext
+^^^^^^^^^^^^
+
+The `C++ compiler`_ is required to install this.
+
+In the `repository directory`, ``cd mahos_dq_ext``, and then ``pip install -e .``
+
+Here, -e (editable) is optional but recommended.
 
 Test
 ----

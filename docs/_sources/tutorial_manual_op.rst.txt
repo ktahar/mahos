@@ -26,7 +26,7 @@ These windows correspond to generic measurement nodes explained below.
 Tweaker
 -------
 
-:class:`Tweaker <mahos.meas.tweaker.Tweaker>` is a generic node for manual-tuning of instrument parameters.
+:class:`Tweaker <mahos.core.meas.tweaker.Tweaker>` is a generic node for manual-tuning of instrument parameters.
 
 To use the Tweaker, instrument must provide :ref:`inst-params-interface`,
 which is the counterpart to :ref:`inst-instrument-interface` explained in :doc:`tutorial_ivcurve`.
@@ -47,8 +47,8 @@ because ``reset()`` method is not implemented in ``VoltageSource_mock``.
 PosTweaker
 ----------
 
-:class:`PosTweaker <mahos.meas.pos_tweaker.PosTweaker>` is a generic node for manual-tuning of positioners.
-Its role is similar to :class:`Tweaker <mahos.meas.tweaker.Tweaker>`,
+:class:`PosTweaker <mahos.core.meas.pos_tweaker.PosTweaker>` is a generic node for manual-tuning of positioners.
+Its role is similar to :class:`Tweaker <mahos.core.meas.tweaker.Tweaker>`,
 but PosTweaker has dedicated interface and GUI for positioners.
 
 In this example, two ``Positioner_mock`` instances, ``pos_x`` and ``pos_y``, are configured.
@@ -57,7 +57,7 @@ You can operate PosTweaker GUI and check if it works in the log message (Dummy m
 Recorder
 --------
 
-:class:`Recorder <mahos.meas.recorder.Recorder>` is a generic node for recording of time-series data from instruments.
+:class:`Recorder <mahos.core.meas.recorder.Recorder>` is a generic node for recording of time-series data from instruments.
 
 To use Recorder, instrument must implement following APIs: ``get_param_dict_labels()``, ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, ``get("unit")``, and ``get("data")``.
 In this example, the ``Multimeter_mock`` class is implemented to demonstrate Recorder's feature.

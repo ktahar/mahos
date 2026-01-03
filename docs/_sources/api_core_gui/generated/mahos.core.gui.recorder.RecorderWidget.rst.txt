@@ -1,0 +1,44 @@
+﻿mahos.core.gui.recorder.RecorderWidget
+======================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.gui.recorder
+
+.. autoclass:: RecorderWidget
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RecorderWidget.__init__
+      ~RecorderWidget.apply_widgets
+      ~RecorderWidget.export_data
+      ~RecorderWidget.finalize
+      ~RecorderWidget.init_connection
+      ~RecorderWidget.init_with_status
+      ~RecorderWidget.load_data
+      ~RecorderWidget.refresh_plot
+      ~RecorderWidget.request_reset
+      ~RecorderWidget.request_start
+      ~RecorderWidget.request_stop
+      ~RecorderWidget.save_data
+      ~RecorderWidget.update_data
+      ~RecorderWidget.update_param_table
+      ~RecorderWidget.update_state
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

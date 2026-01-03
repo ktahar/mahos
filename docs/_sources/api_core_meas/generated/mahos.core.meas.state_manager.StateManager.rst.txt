@@ -1,0 +1,37 @@
+﻿mahos.core.meas.state\_manager.StateManager
+===========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.meas.state_manager
+
+.. autoclass:: StateManager
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~StateManager.__init__
+      ~StateManager.command
+      ~StateManager.get_states
+      ~StateManager.handle_req
+      ~StateManager.main
+      ~StateManager.restore
+      ~StateManager.store_states
+      ~StateManager.wait
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

@@ -1,4 +1,4 @@
-.. _mahos.cli:
+.. _mahos.core.cli:
 
 Command Line Interface
 ======================

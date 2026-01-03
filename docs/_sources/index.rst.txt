@@ -12,7 +12,7 @@ This package currently includes the following.
 
 * Base system for distributed measurement automation.
 * Implementations of microscopy / optically detected magnetic resonance (ODMR) system
-  for solid-state color center research, based on above.
+  for solid-state defect (color center) spin qubit research, based on above.
 
 .. toctree::
    :maxdepth: 2

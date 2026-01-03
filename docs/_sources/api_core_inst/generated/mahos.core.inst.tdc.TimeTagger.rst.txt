@@ -1,0 +1,47 @@
+﻿mahos.core.inst.tdc.TimeTagger
+==============================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.tdc
+
+.. autoclass:: TimeTagger
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TimeTagger.__init__
+      ~TimeTagger.clear
+      ~TimeTagger.close_resources
+      ~TimeTagger.configure
+      ~TimeTagger.configure_correlation
+      ~TimeTagger.configure_histogram
+      ~TimeTagger.configure_raw_events
+      ~TimeTagger.get
+      ~TimeTagger.get_data
+      ~TimeTagger.get_data_normalized
+      ~TimeTagger.get_data_roi
+      ~TimeTagger.get_range_bin
+      ~TimeTagger.get_raw_events
+      ~TimeTagger.get_status
+      ~TimeTagger.get_timebin
+      ~TimeTagger.log_from_time_tagger
+      ~TimeTagger.resume
+      ~TimeTagger.set
+      ~TimeTagger.set_duration
+      ~TimeTagger.set_range_bin
+      ~TimeTagger.set_reference_clock
+      ~TimeTagger.start
+      ~TimeTagger.stop
+   
+   
+
+   
+   
+   

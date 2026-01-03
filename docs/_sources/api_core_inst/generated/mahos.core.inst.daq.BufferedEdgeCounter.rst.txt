@@ -1,0 +1,34 @@
+﻿mahos.core.inst.daq.BufferedEdgeCounter
+=======================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.daq
+
+.. autoclass:: BufferedEdgeCounter
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BufferedEdgeCounter.__init__
+      ~BufferedEdgeCounter.configure
+      ~BufferedEdgeCounter.get
+      ~BufferedEdgeCounter.get_buffer_size
+      ~BufferedEdgeCounter.get_max_rate
+      ~BufferedEdgeCounter.pop_all_block
+      ~BufferedEdgeCounter.pop_all_opt
+      ~BufferedEdgeCounter.pop_block
+      ~BufferedEdgeCounter.pop_opt
+      ~BufferedEdgeCounter.set_buffer_size
+   
+   
+
+   
+   
+   

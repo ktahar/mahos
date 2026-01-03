@@ -1,0 +1,34 @@
+﻿mahos.core.inst.daq.AnalogOut
+=============================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.daq
+
+.. autoclass:: AnalogOut
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AnalogOut.__init__
+      ~AnalogOut.clip
+      ~AnalogOut.configure
+      ~AnalogOut.get
+      ~AnalogOut.get_buffer_size
+      ~AnalogOut.get_onboard_buffer_size
+      ~AnalogOut.load_conf_preset
+      ~AnalogOut.set
+      ~AnalogOut.set_output
+      ~AnalogOut.set_output_once
+   
+   
+
+   
+   
+   

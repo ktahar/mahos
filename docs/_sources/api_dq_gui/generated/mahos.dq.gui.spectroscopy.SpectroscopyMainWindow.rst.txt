@@ -1,0 +1,31 @@
+﻿mahos.dq.gui.spectroscopy.SpectroscopyMainWindow
+================================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.dq.gui.spectroscopy
+
+.. autoclass:: SpectroscopyMainWindow
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SpectroscopyMainWindow.__init__
+      ~SpectroscopyMainWindow.closeEvent
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

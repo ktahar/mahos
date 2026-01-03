@@ -1,0 +1,30 @@
+﻿mahos.core.inst.fg\_interface.FGInterface
+=========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.fg_interface
+
+.. autoclass:: FGInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~FGInterface.configure_burst
+      ~FGInterface.configure_cw
+      ~FGInterface.configure_gate
+      ~FGInterface.get_bounds
+      ~FGInterface.get_opc
+      ~FGInterface.set_output
+   
+   
+
+   
+   
+   

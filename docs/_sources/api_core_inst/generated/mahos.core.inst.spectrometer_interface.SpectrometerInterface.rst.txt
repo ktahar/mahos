@@ -1,0 +1,32 @@
+﻿mahos.core.inst.spectrometer\_interface.SpectrometerInterface
+=============================================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.spectrometer_interface
+
+.. autoclass:: SpectrometerInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SpectrometerInterface.configure_acquisition
+      ~SpectrometerInterface.get_base_config
+      ~SpectrometerInterface.get_base_configs
+      ~SpectrometerInterface.get_data
+      ~SpectrometerInterface.get_temperature
+      ~SpectrometerInterface.set_center_wavelength
+      ~SpectrometerInterface.set_exposure_time
+      ~SpectrometerInterface.set_exposures
+   
+   
+
+   
+   
+   

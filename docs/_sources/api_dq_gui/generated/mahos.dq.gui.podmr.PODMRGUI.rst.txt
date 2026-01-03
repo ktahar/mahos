@@ -1,0 +1,25 @@
+﻿mahos.dq.gui.podmr.PODMRGUI
+===========================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.dq.gui.podmr
+
+.. autoclass:: PODMRGUI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PODMRGUI.init_widget
+   
+   
+
+   
+   
+   

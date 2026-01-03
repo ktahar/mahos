@@ -1,0 +1,31 @@
+﻿mahos.dq.gui.podmr.PODMRMainWindow
+==================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.dq.gui.podmr
+
+.. autoclass:: PODMRMainWindow
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PODMRMainWindow.__init__
+      ~PODMRMainWindow.closeEvent
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

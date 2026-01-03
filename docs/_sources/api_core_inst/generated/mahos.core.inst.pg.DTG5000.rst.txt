@@ -1,0 +1,43 @@
+﻿mahos.core.inst.pg.DTG5000
+==========================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.inst.pg
+
+.. autoclass:: DTG5000
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DTG5000.__init__
+      ~DTG5000.block_granularity
+      ~DTG5000.check_error
+      ~DTG5000.configure
+      ~DTG5000.configure_blocks
+      ~DTG5000.configure_blockseq
+      ~DTG5000.get
+      ~DTG5000.get_sequencer_status
+      ~DTG5000.min_block_len
+      ~DTG5000.set
+      ~DTG5000.start
+      ~DTG5000.start_loop
+      ~DTG5000.start_once
+      ~DTG5000.stop
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

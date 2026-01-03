@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 from mahos.core.inst.instrument import Instrument
-from mahos.core.msgs.spectroscopy_msgs import Temperature
+from mahos.core.msgs.inst.spectrometer_msgs import Temperature
 
 
 # imports for LightField

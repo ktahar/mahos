@@ -1,0 +1,33 @@
+﻿mahos.core.node.global\_params.GlobalParams
+===========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.core.node.global_params
+
+.. autoclass:: GlobalParams
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~GlobalParams.__init__
+      ~GlobalParams.handle_req
+      ~GlobalParams.main
+      ~GlobalParams.set_param
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

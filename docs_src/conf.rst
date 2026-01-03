@@ -15,14 +15,14 @@ Here, we put the configuration file for :doc:`tutorial_ivcurve` as a reference.
    poll_timeout_ms = 100
 
    [localhost.log]
-   module = "mahos.node.log_broker"
+   module = "mahos.core.node.log_broker"
    class = "LogBroker"
    target = { log = "localhost::log" }
    xpub_endpoint = "tcp://127.0.0.1:5555"
    xsub_endpoint = "tcp://127.0.0.1:5556"
 
    [localhost.server]
-   module = "mahos.inst.server"
+   module = "mahos.core.inst.server"
    class = "InstrumentServer"
    target = { log = "localhost::log" }
    log_level = "DEBUG"
@@ -83,7 +83,7 @@ The fully qualified name of a node consists of the hostname and nodename,
 and expressed as ``<hostname>::<nodename>`` (e.g. ``localhost::server``).
 The configuration of each node (local config) is written as a dictionary under the nodename
 (under the block ``[<hostname>::<nodename>]``),
-and this dictionary is binded as ``conf`` attribute of the :class:`Node class <mahos.node.node.Node>`.
+and this dictionary is binded as ``conf`` attribute of the :class:`Node class <mahos.core.node.node.Node>`.
 
 Fundamental keys
 ----------------
@@ -92,8 +92,8 @@ Several keys define fundamental properties of node's function and they are used 
 
 - ``module``: The module name holding the Node class. It must be an importable Python module.
 - ``class``: The Node class name. The class must be an attribute of the ``module``.
-- ``poll_timeout_ms``: timeout for polling of inbound request (:meth:`poll <mahos.node.node.Node.poll>`). It roughly defines rate of main loop (without any requests).
-- ``req_timeout_ms``: timeout for REQ-REP communication. It is referenced if the Node sends requests through :class:`NodeClients <mahos.node.client.NodeClient>`.
+- ``poll_timeout_ms``: timeout for polling of inbound request (:meth:`poll <mahos.core.node.node.Node.poll>`). It roughly defines rate of main loop (without any requests).
+- ``req_timeout_ms``: timeout for REQ-REP communication. It is referenced if the Node sends requests through :class:`NodeClients <mahos.core.node.client.NodeClient>`.
 - ``rep_endpoint``: endpoint for REQ-REP communication. It is necessary if the Node accepts requests.
 - ``pub_endpoint``: endpoint for PUB-SUB communication. It is necessary if the Node publishes data.
 
@@ -105,22 +105,22 @@ This is also a dictionary with string keys, and values can take following three 
 
 - ``str`` (full name of the node) if the target is only one node (as ``log = "localhost::log"`` in example above).
 - ``list[str]`` (list of full names) if the target can be multiple nodes.
-- ``dict[str, str]`` (instrument name to full name of :class:`InstrumentServer <mahos.inst.server.InstrumentServer>`) this is special case for measurement nodes using InstrumentServers and simultaneously defines the instruments to be used (see line 39-41 in example above).
+- ``dict[str, str]`` (instrument name to full name of :class:`InstrumentServer <mahos.core.inst.server.InstrumentServer>`) this is special case for measurement nodes using InstrumentServers and simultaneously defines the instruments to be used (see line 39-41 in example above).
 
 InstrumentServer
 ----------------
 
-The :class:`InstrumentServer <mahos.inst.server.InstrumentServer>` holds :class:`Instruments <mahos.inst.instrument.Instrument>` and :class:`InstrumentOverlays <mahos.inst.overlay.overlay.InstrumentOverlay>`.
+The :class:`InstrumentServer <mahos.core.inst.server.InstrumentServer>` holds :class:`Instruments <mahos.core.inst.instrument.Instrument>` and :class:`InstrumentOverlays <mahos.core.inst.overlay.overlay.InstrumentOverlay>`.
 
 An Instrument config is defined under ``[<hostname>.<nodename>.instrument.<instname>]`` (as in ``[localhost.server.instrument.source]`` in line 20), where following three keys are given.
 
-- ``module``: The module name holding the Instrument class. It must be an importable Python module, but leading ``mahos.inst.`` can be omitted if a submodule in ``mahos.inst`` package is used.
+- ``module``: The module name holding the Instrument class. It must be an importable Python module, but leading ``mahos.core.inst.`` can be omitted if a submodule in ``mahos.core.inst`` package is used.
 - ``class``: The Instrument class name. The class must be an attribute of the ``module``.
 - ``conf``: The configuration dictionary for the Instrument (this is optional, but usually necessary).
 
 An InstrumentOverlay config is defined under ``[<hostname>.<nodename>.instrument_overlay.<instname>]``, where following three keys are given.
 
-- ``module``: The module name holding the InstrumentOverlay class. It must be an importable Python module, but leading ``mahos.inst.overlay.`` can be omitted if a submodule in ``mahos.inst.overlay`` package is used.
+- ``module``: The module name holding the InstrumentOverlay class. It must be an importable Python module, but leading ``mahos.core.inst.overlay.`` can be omitted if a submodule in ``mahos.core.inst.overlay`` package is used.
 - ``class``: The InstrumentOverlay class name. The class must be an attribute of the ``module``.
 - ``conf``: The configuration dictionary for the InstrumentOverlay. If a value in this dictionary is a string starting with ``$``, it is considered a reference to Instrument / InstrumentOverlay in the same server. The overlay receives resolved value, i.e., an Instrument / InstrumentOverlay instance instead of a string.
 
@@ -131,7 +131,7 @@ Threading
 ---------
 
 By default, each node run as a process, and TCP is used for inter-process communication.
-When you need to reduce overhead of TCP communication, 
+When you need to reduce overhead of TCP communication,
 the nodes can be run as individual threads inside single process.
 To enable this feature, you need to make slight modifications in the configuration file.
 Here, we put an example of modified configuration file for :doc:`tutorial_ivcurve`.
@@ -148,14 +148,14 @@ Here, we put an example of modified configuration file for :doc:`tutorial_ivcurv
    server_ivcurve = ["server", "ivcurve"]
 
    [localhost.log]
-   module = "mahos.node.log_broker"
+   module = "mahos.core.node.log_broker"
    class = "LogBroker"
    target = { log = "localhost::log" }
    xpub_endpoint = "tcp://127.0.0.1:5555"
    xsub_endpoint = "tcp://127.0.0.1:5556"
 
    [localhost.server]
-   module = "mahos.inst.server"
+   module = "mahos.core.inst.server"
    class = "InstrumentServer"
    target = { log = "localhost::log" }
    log_level = "DEBUG"
@@ -205,10 +205,10 @@ The ``mahos graph`` command can visualize the threaded nodes like below.
 
 The endpoint must be changed to take advantage of threaded nodes.
 The line 20-21 defines endpoints with inprocess protocols (``inproc://``).
-This protocol is implemented (by ZeroMQ) with shared memory, 
+This protocol is implemented (by ZeroMQ) with shared memory,
 and thus it can boost the transfer rate of the large data.
 
-To run a set of threaded nodes, execute command like ``mahos run -t server_ivcurve`` 
+To run a set of threaded nodes, execute command like ``mahos run -t server_ivcurve``
 (``-t`` is necessary to tell that you want to run threaded nodes instead of normal node).
-The ``mahos launch`` command automatically detects threaded nodes and start all of them 
+The ``mahos launch`` command automatically detects threaded nodes and start all of them
 with matching hostname.
