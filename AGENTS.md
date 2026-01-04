@@ -6,11 +6,12 @@ The repository is a Python monorepo with multiple packages. Core sources live in
 `mahos-core/`, with additional packages in `mahos-dq/` and `mahos-dq-ext/`.
 Tests are under `tests/` (e.g., `tests/core/test_*.py`), and example configs and usage
 are in `examples/`. Sphinx documentation sources live in `docs-src/` and build
-to `docs/`. Miscellaneous tooling and scripts live in `misc/`.
+to `docs/`. Non-code contents in `misc/` can be ignored safely.
 
 ## Build, Test, and Development Commands
 
-- `pip install -e ./mahos-core`, `pip install -e ./mahos-dq`, and `pip install -e ./mahos-dq-ext`: install the all the packages.
+- `pip install -e ./mahos-core`, `pip install -e ./mahos-dq`,
+  and `pip install -e ./mahos-dq-ext`: build and install all the packages.
 - `make test` (or `pytest --timeout=10`): run the test suite with timeouts.
 - `make lint`: run flake8 across the repo.
 - `make format`: format Python code with Black.
@@ -28,7 +29,7 @@ from formatting and linting.
 ## Testing Guidelines
 
 Tests use pytest and live in `tests/`. Name tests `test_*.py` and focus new unit
-tests on the module you change. Run targeted tests with `pytest tests/test_x.py`
+tests on the module you change. Run targeted tests with `pytest tests/core/test_x.py`
 or the full suite with `make test`. An example configuration for tests is in
 `tests/conf.toml`.
 

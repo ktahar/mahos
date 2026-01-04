@@ -9,7 +9,7 @@ Development
 ===========
 
 We assume Linux or compatible environment (properly installed gcc and pybind11) for development.
-The `make <Makefile>`_ can be used to compile the extension.
+``make`` can be used to compile the extension.
 
 setup.py
 --------

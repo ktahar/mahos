@@ -28,8 +28,8 @@ docs:
 browse:
 	$(OPEN) docs/index.html
 
-ext:
-	cd mahos/ext && $(MAKE)
+dq-ext:
+	cd mahos-dq-ext/mahos/dq_ext && $(MAKE)
 
 clean:
 	$(RM) -r docs
