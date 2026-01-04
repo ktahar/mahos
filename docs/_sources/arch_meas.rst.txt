@@ -5,14 +5,14 @@ Common components of meas (measurement) layer are implemented in :ref:`mahos.cor
 The nodes in the meas layer provides the core functionalities of the measurement automation.
 To keep flexibility, there is almost no restriction on node implementation.
 
-However, meas nodes are advised to have explicit :term:`state`, i.e., to publish topic :term:`status` (:class:`Status <mahos.core.msgs.common_msgs.Status>` type) having :term:`state` attribute (:class:`State <mahos.msgs.common_msgs.State>` type).
+However, meas nodes are advised to have explicit :term:`state`, i.e., to publish topic :term:`status` (:class:`Status <mahos.core.msgs.common_msgs.Status>` type) having :term:`state` attribute (:class:`State <mahos.core.msgs.common_msgs.State>` type).
 If the node has :term:`state`, we can use `StateManager`_ for the state management.
 
 BasicMeasNode
 -------------
 
 :class:`BasicMeasNode <mahos.core.meas.common_meas.BasicMeasNode>` can be utilized as a base class to implement basic measurment nodes.
-This class assumes :term:`state` of type :class:`BinaryState <mahos.core.msgs.common_msgs.BinaryState>` and :term:`status` of type :class:`BinaryStatus <mahos.msgs.common_msgs.BinaryStatus>`.
+This class assumes :term:`state` of type :class:`BinaryState <mahos.core.msgs.common_msgs.BinaryState>` and :term:`status` of type :class:`BinaryStatus <mahos.core.msgs.common_msgs.BinaryStatus>`.
 It also provides additional data management features like fitting and data buffering.
 
 .. _meas-tweaker:
