@@ -6,8 +6,10 @@ The repository is a Python monorepo with multiple packages. Core package live in
 `pkgs/mahos/`, with additional packages in `pkgs/mahos-dq/` and `pkgs/mahos-dq-ext/`.
 Each package uses the src-layout.
 Tests are under `tests/` (e.g., `tests/mahos/test_*.py`), and example configs and usage
-are in `examples/`. Sphinx documentation sources live in `docs-src/` and build
-to `docs/`. Non-code contents in `misc/` can be ignored safely.
+are in `examples/`. Sphinx documentation sources live in `docs-src/` and build to `docs/`.
+Ignore following directories when inspecting or editing:
+- `docs/`: generated documentation.
+- `misc/`: miscellaneous files which are not directly related to codes or documents.
 
 ## Build, Test, and Development Commands
 
