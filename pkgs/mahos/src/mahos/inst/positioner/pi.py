@@ -9,6 +9,7 @@ PI part of Positioner module.
 """
 
 from __future__ import annotations
+import time
 
 from pipython import GCSDevice, GCSError
 
@@ -37,12 +38,23 @@ class PI_OneAxis_USB(Instrument):
 
         self.check_required_conf(["dev", "range"])
         self.dev = GCSDevice(self.conf["dev"])
-        devs = self.dev.EnumerateUSB(mask=self.conf.get("mask", self.conf["dev"]))
-        if len(devs) != 1:
-            raise InstError(
-                self.full_name(),
-                f"Cannot initialize as there's no device or multiple devices: {devs}",
-            )
+
+        _retry_period = self.conf.get("retry_period", 1.0)
+        _retry_num = self.conf.get("retry_num", 10)
+        for _ in range(_retry_num):
+            devs = self.dev.EnumerateUSB(mask=self.conf.get("mask", self.conf["dev"]))
+            if len(devs) == 1:
+                break
+            if len(devs) > 1:
+                raise InstError(
+                    self.full_name(),
+                    f"Cannot initialize as multiple devices are found: {devs}",
+                )
+            self.logger.info(f"Cannot find device. Retrying in {_retry_period:.1f} sec...")
+            time.sleep(_retry_period)
+        else:
+            raise InstError(self.full_name(), f"No device found after {_retry_num:d} trials.")
+
         self.dev.ConnectUSB(devs[0])
         self.logger.info(f"Connected to {devs[0]}.")
 
