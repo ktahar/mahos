@@ -11,7 +11,7 @@ mahos
 
 MAHOS: Measurement Automation Handling and Orchestration System.
 
-This `mahos` package provides base system for distributed measurement automation.
+This ``mahos`` package provides base system for distributed measurement automation.
 
 Documentation
 =============
@@ -67,7 +67,6 @@ which is licensed under the `MIT license: Copyright 2013-2014 Colin Duquesnoy an
 
 A `file <https://github.com/ToyotaCRDL/mahos/blob/main/pkgs/mahos/src/mahos/util/unit.py>`_ includes a function from the `pyqtgraph <https://github.com/pyqtgraph/pyqtgraph>`_ project,
 which is licensed under the `MIT license: Copyright 2012 Luke Campagnola, University of North Carolina at Chapel Hill <https://github.com/pyqtgraph/pyqtgraph/blob/master/LICENSE.txt>`_.
-
 
 Contributing
 ============

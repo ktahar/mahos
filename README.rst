@@ -13,10 +13,10 @@ MAHOS: Measurement Automation Handling and Orchestration System.
 
 This repository currently includes the following packages.
 
-- `mahos` Base system for distributed measurement automation.
-- `mahos-dq` Implementations of microscopy / optically detected magnetic resonance (ODMR) system
+- ``mahos``: Base system for distributed measurement automation.
+- ``mahos-dq``: Implementations of microscopy / optically detected magnetic resonance (ODMR) system
   for solid-state defect (color center) spin qubit research, based on above.
-- `mahos-dq-ext` C++ extension module for `mahos-dq`.
+- ``mahos-dq-ext``: C++ extension module for ``mahos-dq``.
 
 Documentation
 =============

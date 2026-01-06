@@ -2,7 +2,7 @@
 mahos-dq-ext
 ############
 
-This package contains C++ extensions for mahos-dq based on pybind11 library.
+This package contains C++ extensions for ``mahos-dq`` based on pybind11 library.
 Users don't have to care about build methods because it's built by setuptools on ``pip install``.
 
 Development
@@ -14,7 +14,7 @@ We assume Linux or compatible environment (properly installed gcc and pybind11) 
 setup.py
 --------
 
-When a new module is added, update ``setup.py`` which defines the correspondence between 
+When a new module is added, update ``setup.py`` which defines the correspondence between
 Python module and C++ source code.
 
 clangd
