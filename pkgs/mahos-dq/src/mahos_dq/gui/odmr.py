@@ -166,7 +166,9 @@ class PlotWidget(QtWidgets.QWidget):
 
     def update_image(self, data: ODMRData, setlevel=True):
         img = data.get_image(
-            last_n=self.lastnimgBox.value(), complex_conv=self.complexBox.currentText()
+            last_n=self.lastnimgBox.value(),
+            complex_conv=self.complexBox.currentText(),
+            allow_nan=True,
         )
         if img.size == 0:
             return
