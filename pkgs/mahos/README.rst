@@ -41,7 +41,7 @@ To use the mahos-based system, you need to write a toml `configuration file <htt
 With your config, use the `command line interface <https://ktahar.github.io/mahos/cli.html>`_ to start the nodes and interact with them.
 
 - The `tutorial <https://ktahar.github.io/mahos/tutorial.html>`_ and corresponding `examples <https://github.com/ktahar/mahos/tree/main/examples>`_ are provided to get used to these concepts.
-- `Realistic examples <https://github.com/ktahar/mahos/tree/main/examples/cfm>`_ are provided for confocal microscope / ODMR system for color centers.
+- `Realistic examples <https://github.com/ktahar/mahos/tree/main/examples/cfm>`_ are provided for confocal microscope / ODMR system using ``mahos-dq``.
 - There is an `example config <https://github.com/ktahar/mahos/blob/main/tests/conf.toml>`_ for the unit test too.
   Here you can observe main built-in measurement logics and GUIs with mock instruments.
 
