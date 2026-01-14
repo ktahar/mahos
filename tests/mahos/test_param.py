@@ -136,4 +136,4 @@ def test_param_dict_io():
         valid1.to_h5(f)
     with h5py.File(bio, "r") as f:
         loaded = ParamDict.of_h5(f)
-    assert isclose(valid1.flatten().unwrap_enum(), loaded)
+    assert isclose(valid1.flatten().unwrap_h5(), loaded)

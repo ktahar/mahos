@@ -457,16 +457,19 @@ class ParamDict(UserDict):
 
         return all((validate_key(k) and validate_val(v) for k, v in self.data.items()))
 
-    def _unwrap(self, process_unknown, enum_to_int) -> dict[str, RawPDValue]:
+    def _unwrap(self, process_unknown, h5) -> dict[str, RawPDValue]:
         """Unwrap values of given ParamDict to get RawParamDict."""
 
         def unwrap_val(val):
-            if enum_to_int and isinstance(val, EnumParam):
-                return val.value().value
+            if h5 and isinstance(val, EnumParam):
+                return val.some_value().value
             elif isinstance(val, Param):
-                return val.value()
+                if h5:
+                    return val.some_value()
+                else:
+                    return val.value()
             elif isinstance(val, (dict, ParamDict)):
-                return ParamDict(val)._unwrap(process_unknown, enum_to_int)
+                return ParamDict(val)._unwrap(process_unknown, h5)
             elif isinstance(val, (list, tuple)):
                 return [unwrap_val(elem) for elem in val]
             else:
@@ -484,10 +487,12 @@ class ParamDict(UserDict):
 
         return self._unwrap(lambda v: v, False)
 
-    def unwrap_enum(self) -> dict[str, RawPDValue]:
-        """Unwrap this ParamDict to get RawParamDict.
+    def unwrap_h5(self) -> dict[str, RawPDValue]:
+        """Unwrap this ParamDict to get RawParamDict for saving in h5.
 
-        This function (as opposed to unwrap) unwraps the enum to int too.
+        Differences to unwrap:
+        - unwrap the enum to int.
+        - retrieve Param value by some_value() instead of value() (avoid None).
 
         """
 
@@ -545,7 +550,7 @@ class ParamDict(UserDict):
 
         """
 
-        for key, val in self.flatten().unwrap_enum().items():
+        for key, val in self.flatten().unwrap_h5().items():
             group.attrs[key] = val
 
     @classmethod
