@@ -165,28 +165,23 @@ class Hubner_Cobolt(VisaInstrument):
             # read only params
             actual_power=P.FloatParam(
                 self.get_actual_power(),
-                optional=True,
-                enable=False,
+                read_only=True,
                 unit="W",
                 SI_prefix=True,
                 doc="Measured Power",
             ),
             actual_current=P.FloatParam(
                 self.get_actual_current(),
-                optional=True,
-                enable=False,
+                read_only=True,
                 unit="A",
                 SI_prefix=True,
                 doc="Measured Current",
             ),
-            hours=P.FloatParam(
-                self.get_hours(), optional=True, enable=False, doc="Operation hours"
-            ),
-            fault=P.IntParam(self.get_fault(), optional=True, enable=False, doc="Fault status"),
+            hours=P.FloatParam(self.get_hours(), read_only=True, doc="Operation hours"),
+            fault=P.IntParam(self.get_fault(), read_only=True, doc="Fault status"),
             interlock=P.BoolParam(
                 self.get_interlock(),
-                optional=True,
-                enable=False,
+                read_only=True,
                 doc="Interlock status (True: closed)",
             ),
         )
