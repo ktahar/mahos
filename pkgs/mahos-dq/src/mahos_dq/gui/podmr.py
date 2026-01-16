@@ -1178,8 +1178,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
             if "fg" in self.data.params:
                 params = self.data.params["fg"]
             else:
-                print("params['fg'] is not found.")
-                params = {}
+                return
 
         for b in self.fg_buttons.buttons():
             b.setChecked(False)
@@ -1189,7 +1188,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         fgmodeButton.setChecked(True)
 
         wave_dict = {"Sinusoid": 0, "Square": 1}
-        self.fg_waveBox.setCurrentIndex(wave_dict[params.get("wave", 0)])
+        self.fg_waveBox.setCurrentIndex(wave_dict[params.get("wave", "Sinusoid")])
         self.fg_freqBox.setValue(params.get("freq", 1e6) * 1e-3)  # Hz to kHz
         self.fg_amplBox.setValue(params.get("ampl", 0.0))
         self.fg_phaseBox.setValue(params.get("phase", 0.0))
