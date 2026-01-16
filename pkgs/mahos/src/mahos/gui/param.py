@@ -221,7 +221,11 @@ class ParamTable(QtWidgets.QTableWidget):
             self.setCellWidget(i, 4, btn)
 
             # enable
-            if param.optional():
+            if param.read_only():
+                widget.setEnabled(False)
+                btn.setEnabled(False)
+                add_label_item(i, 2, "Read Only")
+            elif param.optional():
                 checkbox = self._add_checkbox(param, widget, btn)
                 self.setCellWidget(i, 2, checkbox)
             else:

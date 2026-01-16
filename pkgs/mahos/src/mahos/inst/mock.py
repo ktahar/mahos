@@ -810,7 +810,9 @@ class Params_mock(Instrument):
     def get_param_dict(self, label: str = "") -> P.ParamDict[str, P.PDValue] | None:
         if label == "labelA":
             return P.ParamDict(
-                paramA=P.IntParam(self.paramA, 0, 10), paramB=P.FloatParam(self.paramB, 0.0, 1.0)
+                paramA=P.IntParam(self.paramA, 0, 10),
+                paramB=P.FloatParam(self.paramB, 0.0, 1.0),
+                paramRO=P.FloatParam(-123.450, read_only=True),
             )
         elif label == "labelB":
             return P.ParamDict(paramC=P.StrParam(self.paramC), paramD=P.BoolParam(self.paramD))

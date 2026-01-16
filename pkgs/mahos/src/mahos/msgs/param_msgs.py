@@ -40,16 +40,24 @@ LABEL_DELIM = "::"
 
 
 class Param(object):
-    """Base class for all Param types."""
+    """Base class for all Param types.
 
-    def __init__(self, typ, default, optional: bool, enable: bool, doc: str):
+    :param optional: If True, the Param can be enabled/disabled via :meth:`set_enable`.
+        When disabled, :meth:`value` returns None.
+    :param enable: Initial enabled state.
+    :param read_only: If True, :meth:`set` is rejected.
+
+    """
+
+    def __init__(self, typ, default, optional: bool, enable: bool, read_only: bool, doc: str):
         self._type = typ
         self._default = default
         self._optional = optional
         self._enabled = enable
+        self._read_only = read_only
         self._doc = doc
 
-        if not self.restore_default():
+        if not self._set_value(self._default):
             raise ValueError(f"Default value {default} is invalid.")
 
     def __repr__(self):
@@ -81,8 +89,8 @@ class Param(object):
     def validate(self, value) -> bool:
         return True
 
-    def set(self, value) -> bool:
-        """Set value of this Param. Return True on success."""
+    def _set_value(self, value) -> bool:
+        """set value with type conversion and validation."""
 
         if not isinstance(value, self._type):
             try:
@@ -96,10 +104,17 @@ class Param(object):
         self._value = value
         return True
 
+    def set(self, value) -> bool:
+        """Set value of this Param. Return True on success."""
+
+        if self.read_only():
+            return False
+        return self._set_value(value)
+
     def set_enable(self, enable: bool = True) -> bool:
         """Set enable or disable of this Param. Return True on success."""
 
-        if not self._optional:
+        if not self._optional or self._read_only:
             return False
 
         self._enabled = enable
@@ -119,6 +134,11 @@ class Param(object):
 
         return self._enabled
 
+    def read_only(self) -> bool:
+        """Return True if this Param is read-only (cannot be modified)."""
+
+        return self._read_only
+
     def doc(self) -> str:
         """Get help documentation of this Param."""
 
@@ -134,7 +154,19 @@ class NumberParam(Param):
     """Base class for Param types represents a number."""
 
     def __init__(
-        self, typ, default, minimum, maximum, unit, SI_prefix, digit, step, optional, enable, doc
+        self,
+        typ,
+        default,
+        minimum,
+        maximum,
+        unit,
+        SI_prefix,
+        digit,
+        step,
+        optional,
+        enable,
+        read_only,
+        doc,
     ):
         self._minimum = minimum
         self._maximum = maximum
@@ -143,7 +175,7 @@ class NumberParam(Param):
         self._digit = digit
         self._step = step
 
-        Param.__init__(self, typ, default, optional, enable, doc)
+        Param.__init__(self, typ, default, optional, enable, read_only, doc)
 
     def value_to_str(self, val=None, digits: int = 3) -> str:
         if val is None:
@@ -227,10 +259,10 @@ class NumberParam(Param):
 class ChoiceParam(Param):
     """Base class for Param types expressing a choice from finite set `options`."""
 
-    def __init__(self, typ, default, options, optional, enable, doc):
+    def __init__(self, typ, default, options, optional, enable, read_only, doc):
         self._options = tuple(options)
 
-        Param.__init__(self, typ, default, optional, enable, doc)
+        Param.__init__(self, typ, default, optional, enable, read_only, doc)
 
     def __repr__(self):
         options = ", ".join([str(v) for v in self.options()])
@@ -249,16 +281,27 @@ class StrParam(Param):
     """Param type of builtin str."""
 
     def __init__(
-        self, default: str = "", optional: bool = False, enable: bool = True, doc: str = ""
+        self,
+        default: str = "",
+        optional: bool = False,
+        enable: bool = True,
+        read_only: bool = False,
+        doc: str = "",
     ):
-        Param.__init__(self, str, default, optional, enable, doc)
+        Param.__init__(self, str, default, optional, enable, read_only, doc)
 
 
 class UUIDParam(Param):
     """Param type of uuid.UUID."""
 
-    def __init__(self, optional: bool = False, enable: bool = True, doc: str = ""):
-        Param.__init__(self, uuid.UUID, uuid.uuid4(), optional, enable, doc)
+    def __init__(
+        self,
+        optional: bool = False,
+        enable: bool = True,
+        read_only: bool = False,
+        doc: str = "",
+    ):
+        Param.__init__(self, uuid.UUID, uuid.uuid4(), optional, enable, read_only, doc)
 
 
 class IntParam(NumberParam):
@@ -275,6 +318,7 @@ class IntParam(NumberParam):
         step: int = 1,
         optional: bool = False,
         enable: bool = True,
+        read_only: bool = False,
         doc: str = "",
     ):
         NumberParam.__init__(
@@ -289,6 +333,7 @@ class IntParam(NumberParam):
             step,
             optional,
             enable,
+            read_only,
             doc,
         )
 
@@ -307,6 +352,7 @@ class FloatParam(NumberParam):
         step: float = 1.0,
         optional: bool = False,
         enable: bool = True,
+        read_only: bool = False,
         doc: str = "",
     ):
         NumberParam.__init__(
@@ -321,6 +367,7 @@ class FloatParam(NumberParam):
             step,
             optional,
             enable,
+            read_only,
             doc,
         )
 
@@ -328,8 +375,15 @@ class FloatParam(NumberParam):
 class BoolParam(ChoiceParam):
     """Param type of builtin bool."""
 
-    def __init__(self, default: bool, optional: bool = False, enable: bool = True, doc: str = ""):
-        ChoiceParam.__init__(self, bool, default, (True, False), optional, enable, doc)
+    def __init__(
+        self,
+        default: bool,
+        optional: bool = False,
+        enable: bool = True,
+        read_only: bool = False,
+        doc: str = "",
+    ):
+        ChoiceParam.__init__(self, bool, default, (True, False), optional, enable, read_only, doc)
 
 
 class EnumParam(ChoiceParam):
@@ -342,11 +396,12 @@ class EnumParam(ChoiceParam):
         options=None,
         optional: bool = False,
         enable: bool = True,
+        read_only: bool = False,
         doc: str = "",
     ):
         if options is None:
             options = tuple(typ)
-        ChoiceParam.__init__(self, typ, default, options, optional, enable, doc)
+        ChoiceParam.__init__(self, typ, default, options, optional, enable, read_only, doc)
 
 
 class StrChoiceParam(ChoiceParam):
@@ -358,9 +413,10 @@ class StrChoiceParam(ChoiceParam):
         options: tuple[str],
         optional: bool = False,
         enable: bool = True,
+        read_only: bool = False,
         doc: str = "",
     ):
-        ChoiceParam.__init__(self, str, default, options, optional, enable, doc)
+        ChoiceParam.__init__(self, str, default, options, optional, enable, read_only, doc)
 
 
 class IntChoiceParam(ChoiceParam):
@@ -372,9 +428,10 @@ class IntChoiceParam(ChoiceParam):
         options: tuple[int],
         optional: bool = False,
         enable: bool = True,
+        read_only: bool = False,
         doc: str = "",
     ):
-        ChoiceParam.__init__(self, int, default, options, optional, enable, doc)
+        ChoiceParam.__init__(self, int, default, options, optional, enable, read_only, doc)
 
 
 _key_pattern = re.compile(r"\.?(?P<word>[\w-]+)|\[(?P<num>\d+)\]")

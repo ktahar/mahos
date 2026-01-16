@@ -221,7 +221,7 @@ class Tweaker(Node):
                 continue
             for key, lp in pds[pid].items():
                 if (param := params.getf(key)) is not None:
-                    if not param.set(lp):
+                    if not param.read_only() and not param.set(lp):
                         self.logger.error(f"Cannot set {pid}[{key}] to {lp}")
         return Reply(True, ret=self._param_dicts)
 
