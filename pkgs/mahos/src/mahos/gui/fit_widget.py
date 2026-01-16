@@ -167,6 +167,9 @@ class FitWidget(QtWidgets.QWidget, Ui_FitWidget):
             if data.has_data() and self.is_checked(i, 1):
                 show_fit = self.is_checked(i, 2)
                 data_list.append((data, show_fit, colors))
+
+        if self.reverseBox.isChecked():
+            data_list.reverse()
         return data_list
 
     def load(self):
