@@ -14,7 +14,7 @@ from operator import add
 
 import numpy as np
 import lmfit as F
-from sklearn.cluster import KMeans
+from scipy.cluster.vq import kmeans2
 
 from mahos.msgs import param_msgs as P
 from mahos_dq.msgs.spectroscopy_msgs import SpectroscopyData
@@ -43,8 +43,8 @@ def guess_multi_peak(xdata, ydata, n_peaks: int, n_samples: int = 10):
 
     idx = np.argpartition(ydata, kth=-n_samples)[-n_samples:]
     xs = xdata[idx]
-    km = KMeans(n_clusters=n_peaks, init="k-means++", n_init="auto").fit(xs.reshape(-1, 1))
-    return sorted(km.cluster_centers_[:, 0])
+    centroids, _ = kmeans2(xs, n_peaks, minit="++")
+    return sorted(centroids)
 
 
 class Fitter(BaseFitter):
