@@ -390,7 +390,14 @@ class SweeperOverlay(SweeperBase):
 
 
 class Sweeper(SweeperBase, ODMRPGMixin):
-    """Worker for fast ODMR sweep using mutual triggering between SG and PG.
+    """Worker for fast ODMR sweep using hardware triggered SG and/or PG.
+
+    For some SGs with "frequency settled" output signal, SG and PG can be mutually triggered;
+    PG is triggered by "frequency settled" of SG,
+    and SG's freq sweep step is triggered at last of PG sequence.
+
+    For SGs without such output, PG can be configured to run continuously (pg_immediate = True);
+    SG's freq sweep step is continuously triggered by PG.
 
     :param sweeper.pd_clock: DAQ terminal name for PD's clock (gate)
     :type sweeper.pd_clock: str
@@ -404,8 +411,12 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :param sweeper.start_delay: (default: 0.0) delay time (sec.) before starting SG/PG output.
     :type sweeper.start_delay: float
     :param sweeper.sg_first: (has preset) if True, turn on SG first and PG second.
-        This mode is for SGs which won't start the point sweep by software command.
+        This mode is for a SG which cannot start the point_freq_sweep mode without affecting PG.
     :type sweeper.sg_first: bool
+    :param sweeper.pg_immediate: (has preset) if True, PG runs IMMEDIATE mode without trigger.
+        This mode is for a SG which doesn't have "frequency settled" output signal.
+        pg_immediate takes precedence over sg_first; when this is True, sg_first has no effect.
+    :type sweeper.pg_immediate: bool
 
     :param sweeper.pg_freq_cw: (has preset) PG frequency for CW mode.
     :type sweeper.pg_freq_cw: float
@@ -454,6 +465,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         self._block_base = self.conf["block_base"]
         self._start_delay = self.conf.get("start_delay", 0.0)
         self._sg_first = self.conf.get("sg_first", False)
+        self._pg_immediate = self.conf.get("pg_immediate", False)
         self._channel_remap = self.conf.get("channel_remap")
         self._continue_mw = False
 
@@ -488,12 +500,20 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             "N5182B",
             [
                 ("sg_first", False),
+                ("pg_immediate", False),
             ],
         )
         loader.add_preset(
             "MG3710E",
             [
                 ("sg_first", True),
+                ("pg_immediate", False),
+            ],
+        )
+        loader.add_preset(
+            "DS_SG",
+            [
+                ("pg_immediate", True),
             ],
         )
         loader.load_preset(self.conf, cli.class_name("sg"))
@@ -550,6 +570,11 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         if params.get("background", False):
             num *= 2
         buffer_size = num * self.conf.get("buffer_size_coeff", 20)
+        # when sg_first or pg_immediate,
+        # drop the first line because it contains invalid data at the first point
+        # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
+        #  SG is unknown state at the first point of the first line)
+        drop_first = 1 if self._sg_first or self._pg_immediate else 0
         params_pd = {
             "clock": self._pd_clock,
             "cb_samples": num,
@@ -558,10 +583,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             "rate": rate,
             "finite": False,
             "every": False,
-            # drop the first line because it contains invalid data at the first point
-            # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
-            #  SG is unknown state at the first point of the first line)
-            "drop_first": int(self._sg_first),
+            "drop_first": drop_first,
             "gate": True,
             "time_window": time_window,
         }
@@ -593,6 +615,11 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         if params.get("background", False):
             num *= 2
         buffer_size = num * self.conf.get("buffer_size_coeff", 20)
+        # when sg_first or pg_immediate,
+        # drop the first line because it contains invalid data at the first point
+        # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
+        #  SG is unknown state at the first point of the first line)
+        drop_first = 1 if self._sg_first or self._pg_immediate else 0
         params_pd = {
             "clock": clock_pd,
             "cb_samples": num,
@@ -601,10 +628,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             "rate": rate,
             "finite": False,
             "every": False,
-            # drop the first line because it contains invalid data at the first point
-            # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
-            #  SG is unknown state at the first point of the first line)
-            "drop_first": int(self._sg_first),
+            "drop_first": drop_first,
             "clock_mode": True,
             "oversample": oversamp,
             "bounds": params["pd"].get("bounds", (-10.0, 10.0)),
@@ -639,7 +663,11 @@ class Sweeper(SweeperBase, ODMRPGMixin):
 
         if not self.configure_sg(self.data.params, self.data.label):
             return self.fail_with_release("Failed to configure SG.")
-        if not self.configure_pg(self.data.params, self.data.label, TriggerType.HARDWARE_RISING):
+        if self._pg_immediate:
+            trig = TriggerType.IMMEDIATE
+        else:
+            trig = TriggerType.HARDWARE_RISING
+        if not self.configure_pg(self.data.params, self.data.label, trig):
             return self.fail_with_release("Failed to configure PG.")
         if self._pd_analog:
             if not self.start_analog_pd(self.data.params, self.data.label):
@@ -650,12 +678,16 @@ class Sweeper(SweeperBase, ODMRPGMixin):
 
         time.sleep(self._start_delay)
 
-        if self._sg_first:
+        if self._sg_first or self._pg_immediate:
             if not (self.sg.set_output(True) and self.sg.start() and self.sg.get_opc()):
                 return self.fail_with_release("Failed to start SG.")
             if not (self.pg.start() and self.pg.get_opc()):
                 return self.fail_with_release("Failed to start PG.")
-            self.pg.trigger()
+            if not self._pg_immediate:
+                # implies sg_first mode, but better to have "if not pg_immediate" here
+                # because pg_immediate takes precedence over sg_first.
+                # (sg_first = pg_immediate = True is also a valid config)
+                self.pg.trigger()
         else:
             if not (self.pg.start() and self.pg.get_opc()):
                 return self.fail_with_release("Failed to start PG.")
@@ -671,15 +703,15 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         return True
 
     def _roll_line(self, line):
-        """Fix the rolling of data due to sg_first operation.
+        """Fix the rolling of data due to sg_first or pg_immediate operation.
 
-        When sg_first is True, the data will be like
+        When sg_first or pg_immediate, the data will be like
         [f_N-1, f0, f1, ..., f_N-2] instead of [f0, f1, ..., f_N-1].
         Fix the former to the latter by rolling the array.
 
         """
 
-        if self._sg_first:
+        if self._sg_first or self._pg_immediate:
             return np.roll(line, -1)
         else:
             return line
