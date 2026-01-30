@@ -559,7 +559,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             "finite": False,
             "every": False,
             # drop the first line because it contains invalid data at the first point
-            # (line will be [f_N, f_0, f_1, ..., f_N-1) in general, however,
+            # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
             #  SG is unknown state at the first point of the first line)
             "drop_first": int(self._sg_first),
             "gate": True,
@@ -602,7 +602,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             "finite": False,
             "every": False,
             # drop the first line because it contains invalid data at the first point
-            # (line will be [f_N, f_0, f_1, ..., f_N-1) in general, however,
+            # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
             #  SG is unknown state at the first point of the first line)
             "drop_first": int(self._sg_first),
             "clock_mode": True,
@@ -674,7 +674,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         """Fix the rolling of data due to sg_first operation.
 
         When sg_first is True, the data will be like
-        [f_N, f0, f1, ..., f_N-1] instead of [f0, f1, ..., f_N].
+        [f_N-1, f0, f1, ..., f_N-2] instead of [f0, f1, ..., f_N-1].
         Fix the former to the latter by rolling the array.
 
         """
