@@ -13,6 +13,7 @@ import importlib
 from collections import ChainMap
 from inspect import signature, getdoc, getfile
 from functools import wraps
+import traceback
 
 from mahos.msgs.common_msgs import Request, Reply
 from mahos.msgs import param_msgs as P
@@ -707,15 +708,16 @@ class InstrumentServer(Node):
         return (self.include and inst not in self.include) or inst in self.exclude
 
     def _get_class(self, module_names, class_name, Class_T):
+        tbs = ""
         for name in module_names:
             try:
                 m = importlib.import_module(name)
                 break
             except ModuleNotFoundError:
-                pass
+                tbs += f"[{name}]\n" + traceback.format_exc()
         else:
-            msg = "Failed to import all modules: {}".format(module_names)
-            self.logger.error(msg)
+            print(f"Tracebacks of all import attemps:\n{tbs}")
+            msg = f"Failed to import all modules: {module_names}"
             raise ModuleNotFoundError(msg)
 
         C = getattr(m, class_name)
