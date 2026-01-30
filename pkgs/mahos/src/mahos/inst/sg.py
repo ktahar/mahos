@@ -12,6 +12,7 @@ from __future__ import annotations
 import enum
 
 from mahos.inst.visa_instrument import VisaInstrument
+from mahos.util.conv import num_to_step
 
 
 class Mode(enum.Enum):
@@ -1898,5 +1899,249 @@ class DS_SG(VisaInstrument):
             return self.fail_with(msg)
 
         success = self.abort() and self.set_init_cont(False)
+        self.logger.info("Stopped point_trig_freq_sweep.")
+        return success
+
+
+class Windfreak_SynthHD(VisaInstrument):
+    """Windfreak SynthHD Signal Generator.
+
+    :param power_bounds: Power bounds in dBm (min, max).
+    :type power_bounds: tuple[float, float]
+    :param freq_bounds: Frequency bounds in Hz (min, max).
+    :type freq_bounds: tuple[float, float]
+
+    """
+
+    def __init__(self, name, conf, prefix=None):
+        conf["write_termination"] = ""
+        conf["read_termination"] = "\n"
+        conf["baud_rate"] = 57600
+        if "timeout" not in conf:
+            conf["timeout"] = 10_000.0
+
+        VisaInstrument.__init__(self, name, conf, prefix=prefix)
+
+        self.power_min, self.power_max = self.conf.get("power_bounds", (-40.0, 0.0))
+        self.freq_min, self.freq_max = self.conf.get("freq_bounds", (10e6, 24e9))
+        self._mode = Mode.UNCONFIGURED
+        self._ch = self.get_channel()
+
+    def get_channel(self) -> int:
+        return int(self.inst.query("C?"))
+
+    def set_channel(self, ch: int) -> bool:
+        if ch == self._ch:
+            return True
+        if ch not in (0, 1):
+            return self.fail_with(f"Invalid channel {ch}")
+
+        self.inst.write(f"C{ch:d}")
+        self._ch = ch
+        return True
+
+    def get_power_bounds(self):
+        return self.power_min, self.power_max
+
+    def get_freq_bounds(self):
+        return self.freq_min, self.freq_max
+
+    def get_bounds(self):
+        return {
+            "power": self.get_power_bounds(),
+            "freq": self.get_freq_bounds(),
+        }
+
+    def set_output(self, on: bool, ch: int = 0, silent: bool = False) -> bool:
+        if not self.set_channel(ch):
+            return False
+        if on:
+            self.inst.write("E1r1")
+            if not silent:
+                self.logger.info(f"SG{ch} Output ON")
+        else:
+            self.inst.write("E0r0")
+            if not silent:
+                self.logger.info(f"SG{ch} Output OFF")
+        return True
+
+    def set_init_cont(self, on: bool, ch: int = 0) -> bool:
+        if not self.set_channel(ch):
+            return False
+        if on:
+            self.inst.write("c1")
+        else:
+            self.inst.write("c0")
+        return True
+
+    def _fmt_freq(self, freq: float) -> str:
+        """Format frequency as string, in MHz."""
+
+        if freq < self.freq_min or freq > self.freq_max:
+            raise ValueError("Invalid frequency.")
+        return f"{freq*1e-6:.7f}"
+
+    def set_freq_CW(self, freq, ch: int = 0) -> bool:
+        if not self.set_channel(ch):
+            return False
+        f = self._fmt_freq(freq)
+        self.inst.write("f" + f)
+        return True
+
+    def set_freq_range(self, start, stop, ch: int = 0) -> bool:
+        if not self.set_channel(ch):
+            return False
+        start, stop = self._fmt_freq(start), self._fmt_freq(stop)
+        self.inst.write("l" + start + "u" + stop)
+        return True
+
+    def set_sweep_step(self, freq_step: float, ch: int = 0) -> bool:
+        if not self.set_channel(ch):
+            return False
+        step = self._fmt_freq(freq_step)
+        self.inst.write("s" + step)
+        return True
+
+    def set_power(self, power_dBm, ch: int = 0) -> bool:
+        if not self.set_channel(ch):
+            return False
+        if power_dBm < self.power_min or power_dBm > self.power_max:
+            return self.fail_with("Invalid power.")
+
+        self.inst.write(f"W{power_dBm:.3f}")
+        return True
+
+    def set_trigger_function(self, func: int, ch: int = 0) -> bool:
+        if not self.set_channel(ch):
+            return False
+        if func not in (0, 1, 2, 3, 4, 5, 8, 9):
+            return self.fail_with(f"Invalid func {func}")
+
+        self.inst.write(f"w{func:d}")
+        return True
+
+    def set_sweep_type(self, linear=True, ch: int = 0) -> bool:
+        if not self.set_channel(ch):
+            return False
+        if linear:
+            self.inst.write("X0")
+        else:
+            self.inst.write("X1")
+        return True
+
+    def set_sweep_direction(self, ascending=True, ch: int = 0) -> bool:
+        if not self.set_channel(ch):
+            return False
+        if ascending:
+            self.inst.write("^1")
+        else:
+            self.inst.write("^0")
+        return True
+
+    def configure_cw(self, freq, power, ch: int = 0) -> bool:
+        """Setup Continuous Wave output with fixed freq and power."""
+
+        self._mode = Mode.UNCONFIGURED
+        success = self.set_freq_CW(freq, ch=ch) and self.set_power(power, ch=ch)
+        if success:
+            self._mode = Mode.CW
+            self.logger.info("Configured CW output.")
+        else:
+            self.logger.info("Failed to configure CW output.")
+        return success
+
+    def configure_point_trig_freq_sweep(self, start, stop, num, power, ch: int = 0) -> bool:
+        """Convenient function to set up triggered frequency sweep.
+
+        sweep can be initiated by start() after this function.
+        set_output(True) should be called before initiation if you want actual RF output.
+
+        """
+
+        step = num_to_step(start, stop, num)
+
+        self._mode = Mode.UNCONFIGURED
+        success = (
+            self.set_sweep_type(linear=True, ch=ch)
+            and self.set_sweep_direction(ascending=True, ch=ch)
+            and self.set_trigger_function(2, ch=ch)
+            and self.set_freq_range(start, stop, ch=ch)
+            and self.set_sweep_step(step, ch=ch)
+            and self.set_power(power)
+        )
+        if success:
+            self._mode = Mode.POINT_TRIG_FREQ_SWEEP
+            self.logger.info("Configured point trigger freq sweep.")
+        else:
+            self.logger.info("Failed to configure point trigger freq sweep.")
+        return success
+
+    # Standard API
+
+    def get(self, key: str, args=None, label: str = ""):
+        if key == "opc":
+            return True
+        elif key == "bounds":
+            return self.get_bounds()
+        else:
+            self.logger.error(f"unknown get() key: {key}")
+            return None
+
+    def set(self, key: str, value=None, label: str = "") -> bool:
+        if key == "output":
+            if label.endswith("1"):
+                return self.set_output(value, ch=1)
+            else:
+                return self.set_output(value, ch=0)
+        elif key == "init_cont":
+            if label.endswith("1"):
+                return self.set_init_cont(value, ch=1)
+            else:
+                return self.set_init_cont(value, ch=0)
+        else:
+            self.logger.error("Unknown set() key.")
+            return False
+
+    def configure(self, params: dict, label: str = "") -> bool:
+        label = label.lower()
+        if label.startswith("point_trig_freq_sweep"):
+            ch = 1 if label.endswith("1") else 0
+            if not self.check_required_params(params, ("start", "stop", "num", "power")):
+                return False
+            return self.configure_point_trig_freq_sweep(
+                params["start"],
+                params["stop"],
+                params["num"],
+                params["power"],
+                ch=ch,
+            )
+        elif label.startswith("cw"):
+            if not self.check_required_params(params, ("freq", "power")):
+                return False
+            ch = 1 if label.endswith("1") else 0
+            return self.configure_cw(params["freq"], params["power"], ch=ch)
+        else:
+            self.logger.error(f"Unknown label {label}")
+            return False
+
+    def start(self, label: str = "") -> bool:
+        if self._mode != Mode.POINT_TRIG_FREQ_SWEEP:
+            msg = f"start() is only for point_trig_freq_sweep (current mode: {self._mode}).\n"
+            msg += "use set_output(True) to turn on RF output."
+            return self.fail_with(msg)
+
+        ch = 1 if label.endswith("1") else 0
+        success = self.set_init_cont(True, ch=ch)
+        self.logger.info("Started point_trig_freq_sweep.")
+        return success
+
+    def stop(self, label: str = "") -> bool:
+        if self._mode != Mode.POINT_TRIG_FREQ_SWEEP:
+            msg = f"stop() is only for point_trig_freq_sweep (current mode: {self._mode}).\n"
+            msg += "use set_output(False) to turn off RF output."
+            return self.fail_with(msg)
+
+        ch = 1 if label.endswith("1") else 0
+        success = self.set_init_cont(False, ch=ch)
         self.logger.info("Stopped point_trig_freq_sweep.")
         return success
