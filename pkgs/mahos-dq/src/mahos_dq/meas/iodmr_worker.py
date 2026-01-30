@@ -231,7 +231,10 @@ class ISweeperDirect(ISweeperBase):
 
         # Camera
         if not self.camera.configure_hard_trigger(
-            params["exposure_time"], binning=params.get("binning", 0), roi=params.get("roi")
+            params["exposure_time"],
+            burst_num=params.get("burst_num", 1),
+            binning=params.get("binning", 0),
+            roi=params.get("roi"),
         ):
             self.logger.error("Failed to configure Camera.")
             return False

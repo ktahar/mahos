@@ -729,23 +729,28 @@ class Camera_mock(Instrument):
             return FrameResult(frame=None)
 
     def configure(self, params: dict, label: str = "") -> bool:
-        if not self.check_required_params(params, ("mode",)):
-            return False
-
-        mode = params["mode"].lower()
-        if mode == "continuous":
+        if label == "continuous":
             if not self.check_required_params(params, ("exposure_time",)):
                 return False
             return self.configure_continuous(params["exposure_time"])
+        elif label == "soft_trigger":
+            if not self.check_required_params(params, ("exposure_time",)):
+                return False
+            return self.configure_soft_trigger(
+                params["exposure_time"],
+                burst_num=params.get("burst_num", 1),
+                binning=params.get("binning", 0),
+                roi=params.get("roi"),
+            )
         else:
-            return self.fail_with(f"Unknown mode {mode}.")
+            return self.fail_with(f"Unknown label {label}.")
 
     def start(self, label: str = "") -> bool:
         if self._running:
             self.logger.warn("start() is called while running.")
             return True
 
-        if self._mode is None:
+        if self._mode == self.Mode.UNCONFIGURED:
             self.logger.error("Must be configured before start().")
             return False
 

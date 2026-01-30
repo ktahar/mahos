@@ -37,6 +37,12 @@ class ThorlabsCamera(Instrument):
 
     """
 
+    class Mode(enum.Enum):
+        UNCONFIGURED = 0
+        CONTINUOUS = 1
+        SOFT_TRIGGER = 2
+        # HARD_TRIGGER = 3  # yet to be implemented
+
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf, prefix=prefix)
 
@@ -77,11 +83,12 @@ class ThorlabsCamera(Instrument):
             self.camera = self.sdk.open_camera(self.conf["serial"])
             self.logger.info(f"Opened camera {self.camera.model} ({self.conf['serial']})")
 
-        self._mode = None
+        self._mode = self.Mode.UNCONFIGURED
         self._queue_size = self.conf.get("queue_size", 8)
         self._queue = LockedQueue(self._queue_size)
         self._frame_rate_control = self.conf.get("frame_rate_control", True)
-        self.running = False
+        self._running = False
+        self._burst_num = 1
 
     def close_resources(self):
         if hasattr(self, "camera"):
@@ -95,7 +102,7 @@ class ThorlabsCamera(Instrument):
         self.camera.exposure_time_us = int(round(exposure_time_sec * 1e6))
         self.camera.frames_per_trigger_zero_for_unlimited = 0
         self.camera.image_poll_timeout_ms = 0
-        self._mode = "continuous"
+        self._mode = self.Mode.CONTINUOUS
 
         if self._frame_rate_control:
             if frame_rate_Hz is not None:
@@ -111,6 +118,27 @@ class ThorlabsCamera(Instrument):
         self.logger.info("Configured for continuous capture.")
         return True
 
+    def configure_soft_trigger(
+        self,
+        exposure_time_sec: float,
+        burst_num: int = 1,
+        binning: int = 0,
+        roi: dict | None = None,
+    ) -> bool:
+        if binning != 0 or roi is not None:
+            return self.fail_with("binning or roi not supported")
+
+        self.camera.exposure_time_us = int(round(exposure_time_sec * 1e6))
+        self.camera.frames_per_trigger_zero_for_unlimited = burst_num
+        self.camera.image_poll_timeout_ms = int(round(exposure_time_sec * 1e3)) * 10
+        self._mode = self.Mode.SOFT_TRIGGER
+        self._burst_num = burst_num
+
+        self._queue = LockedQueue(self._queue_size)
+
+        self.logger.info("Configured for software capture.")
+        return True
+
     def poll_continuous(self, ev: threading.Event):
         while not ev.is_set():
             frame = self.camera.get_pending_frame_or_null()
@@ -123,35 +151,65 @@ class ThorlabsCamera(Instrument):
                     )
                 )
 
+    def _process_burst_frames(self, frames: list[np.array]) -> np.array:
+        if len(frames) == 1:
+            return frames[0]
+        return np.array(frames).mean(axis=0)
+
+    def get_frame_soft_trig_imm(self) -> np.ndarray | None:
+        self.camera.issue_software_trigger()
+        frames = []
+        for i in range(self._burst_num):
+            frame = self.camera.get_pending_frame_or_null()
+            if frame is None:
+                self.logger.error(f"Timeout on readout of {i}-th frame")
+                return None
+            # copy is required because image_buffer can be overwritten by next get...().
+            frames.append(np.copy(frame.image_buffer))
+        return self._process_burst_frames(frames)
+
     def get_frame(self) -> FrameResult:
-        if self._queue is None:
-            return FrameResult(frame=None)
-        return self._queue.pop_block()
+        if not self._running:
+            return self.fail_with("get_frame() is called but not running.")
+
+        if self._mode == self.Mode.CONTINUOUS:
+            if self._queue is None:
+                return FrameResult(frame=None)
+            return self._queue.pop_block()
+        elif self._mode == self.Mode.SOFT_TRIGGER:
+            return FrameResult(frame=self.get_frame_soft_trig_imm())
+        else:
+            return self.fail_with("get_frame() is called but not configured correctly.")
 
     # Standard API
 
     def configure(self, params: dict, label: str = "") -> bool:
-        if not self.check_required_params(params, ("mode",)):
-            return False
-
-        mode = params["mode"].lower()
-        if mode == "continuous":
+        if label == "continuous":
             if not self.check_required_params(params, ("exposure_time",)):
                 return False
             return self.configure_continuous(params["exposure_time"], params.get("frame_rate"))
+        elif label == "soft_trigger":
+            if not self.check_required_params(params, ("exposure_time",)):
+                return False
+            return self.configure_soft_trigger(
+                params["exposure_time"],
+                burst_num=params.get("burst_num", 1),
+                binning=params.get("binning", 0),
+                roi=params.get("roi"),
+            )
         else:
-            return self.fail_with(f"Unknown mode {mode}.")
+            return self.fail_with(f"Unknown label {label}.")
 
     def start(self, label: str = "") -> bool:
-        if self.running:
+        if self._running:
             self.logger.warn("start() is called while running.")
             return True
 
-        if self._mode is None:
+        if self._mode == self.Mode.UNCONFIGURED:
             self.logger.error("Must be configured before start().")
             return False
 
-        if self._mode == "continuous":
+        if self._mode == self.Mode.CONTINUOUS:
             self.camera.arm(2)
             self.camera.issue_software_trigger()
             self.poll_stop_ev = threading.Event()
@@ -159,23 +217,29 @@ class ThorlabsCamera(Instrument):
                 target=self.poll_continuous, args=(self.poll_stop_ev,)
             )
             self.poll_thread.start()
-
-            self.running = True
-
+            self._running = True
+            return True
+        elif self._mode == self.Mode.SOFT_TRIGGER:
+            self.camera.arm(2)
+            self._running = True
             return True
         else:
             return False
 
     def stop(self, label: str = "") -> bool:
-        if not self.running:
+        if not self._running:
             return True
-        self.running = False
+        self._running = False
 
-        if self._mode == "continuous":
+        if self._mode == self.Mode.CONTINUOUS:
             self.poll_stop_ev.set()
             self.poll_thread.join()
             self.camera.disarm()
-            self._mode = None
+            self._mode = self.Mode.UNCONFIGURED
+            return True
+        elif self._mode == self.Mode.SOFT_TRIGGER:
+            self.camera.disarm()
+            self._mode = self.Mode.UNCONFIGURED
             return True
         else:
             return False
@@ -654,11 +718,7 @@ class BaslerPylonCamera(Instrument):
     # Standard API
 
     def configure(self, params: dict, label: str = "") -> bool:
-        if not self.check_required_params(params, ("mode",)):
-            return False
-
-        mode = params["mode"].lower()
-        if mode == "continuous":
+        if label == "continuous":
             if not self.check_required_params(params, ("exposure_time",)):
                 return False
             return self.configure_continuous(
@@ -667,24 +727,26 @@ class BaslerPylonCamera(Instrument):
                 binning=params.get("binning", 0),
                 roi=params.get("roi"),
             )
-        elif mode == "soft_trigger":
+        elif label == "soft_trigger":
             if not self.check_required_params(params, ("exposure_time",)):
                 return False
             return self.configure_soft_trigger(
                 params["exposure_time"],
+                burst_num=params.get("burst_num", 1),
                 binning=params.get("binning", 0),
                 roi=params.get("roi"),
             )
-        elif mode == "hard_trigger":
+        elif label == "hard_trigger":
             if not self.check_required_params(params, ("exposure_time",)):
                 return False
             return self.configure_hard_trigger(
                 params["exposure_time"],
+                burst_num=params.get("burst_num", 1),
                 binning=params.get("binning", 0),
                 roi=params.get("roi"),
             )
         else:
-            return self.fail_with(f"Unknown mode {mode}.")
+            return self.fail_with(f"Unknown label {label}.")
 
     def start(self, label: str = "") -> bool:
         if self._running:
