@@ -250,7 +250,7 @@ class ISweeperDirect(ISweeperBase):
         if not (
             self.camera.start()
             and self.sg.set_output(True)
-            and self.sg.set_init_cont(True)
+            and self.sg.start()
             and self.pg.start()
         ):
             return self.fail_with_release("Error starting isweeper.")
@@ -331,8 +331,7 @@ class ISweeperDirect(ISweeperBase):
             and self.pg.stop()
             and self.pg.release()
             and self.sg.set_output(False)
-            and self.sg.set_abort()
-            and self.sg.set_init_cont(False)
+            and self.sg.stop()
             and self.sg.release()
         )
 

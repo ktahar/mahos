@@ -1676,6 +1676,7 @@ class DS_SG(VisaInstrument):
         self.power_min, self.power_max = self.conf.get("power_bounds", (-20.0, 10.0))
         self.freq_min, self.freq_max = self.conf.get("freq_bounds", (25e6, 6e9))
         self.set_buzzer(False)
+        self._mode = Mode.UNCONFIGURED
 
     def get_power_bounds(self):
         return self.power_min, self.power_max
@@ -1788,36 +1789,39 @@ class DS_SG(VisaInstrument):
     def configure_cw(self, freq, power) -> bool:
         """Setup Continuous Wave output with fixed freq and power."""
 
+        self._mode = Mode.UNCONFIGURED
         success = (
             # self.rst() and
             self.set_freq_CW(freq)
             and self.set_power(power)
         )
+        if success:
+            self._mode = Mode.CW
+            self.logger.info("Configured CW output.")
+        else:
+            self.logger.error("Failed to configure CW output.")
 
         return success
 
     def configure_point_trig_freq_sweep(self, start, stop, num, power) -> bool:
         """Convenient function to set up triggered frequency sweep.
 
-        sweep can be initiated by calling initiate() or set_init_cont(True)
-        after this function. set_output(True) should be called before initiation
-        if you want actual RF output.
+        sweep can be initiated by start() or initiate() after this function.
+        set_output(True) should be called before initiation if you want actual RF output.
+        start() is usually preferred because it is similar to the other SGs.
 
-        if set_init_cont(True):
-            Sweep is started automatically.
+        start() (or set_init_cont(True)):
             On first trigger, the start frequency is out.
             On the trigger after the stop frequency, the start frequency is out.
-            this behaviour is similar to N5182B.configure_freq_sweep()
-            with start_trig=BUS(EXT), point_trig=BUS(EXT) and set_init_cont(True).
 
-        if set_init_cont(False):
-            Sweep is not started automatically.
+        initiate():
             On first trigger, the start frequency is out.
             On the trigger after the stop frequency, the stop frequency is still out.
             The next trigger after the stop frequency, the start frequency is out.
 
         """
 
+        self._mode = Mode.UNCONFIGURED
         success = (
             # self.rst() and
             self.set_trigger_mode(True)
@@ -1826,8 +1830,11 @@ class DS_SG(VisaInstrument):
             and self.set_sweep_points(num)
             and self.set_power(power)
         )
-
-        self.logger.info("Configured freq sweep")
+        if success:
+            self._mode = Mode.POINT_TRIG_FREQ_SWEEP
+            self.logger.info("Configured point trigger freq sweep.")
+        else:
+            self.logger.info("Failed to configure point trigger freq sweep.")
 
         return success
 
@@ -1873,3 +1880,23 @@ class DS_SG(VisaInstrument):
         else:
             self.logger.error(f"Unknown label {label}")
             return False
+
+    def start(self, label: str = "") -> bool:
+        if self._mode != Mode.POINT_TRIG_FREQ_SWEEP:
+            msg = f"start() is only for point_trig_freq_sweep (current mode: {self._mode}).\n"
+            msg += "use set_output(True) to turn on RF output."
+            return self.fail_with(msg)
+
+        success = self.set_init_cont(True)
+        self.logger.info("Started point_trig_freq_sweep.")
+        return success
+
+    def stop(self, label: str = "") -> bool:
+        if self._mode != Mode.POINT_TRIG_FREQ_SWEEP:
+            msg = f"stop() is only for point_trig_freq_sweep (current mode: {self._mode}).\n"
+            msg += "use set_output(False) to turn off RF output."
+            return self.fail_with(msg)
+
+        success = self.abort() and self.set_init_cont(False)
+        self.logger.info("Stopped point_trig_freq_sweep.")
+        return success
