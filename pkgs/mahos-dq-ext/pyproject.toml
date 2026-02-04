@@ -7,7 +7,7 @@ name = "mahos-dq-ext"
 version = "0.3.0"
 description = "C extension for mahos_dq"
 readme = "README.rst"
-requires-python = ">=3.10, <3.13"
+requires-python = ">=3.10, <3.14"
 license = { text = "BSD License (BSD-3-Clause)" }
 keywords = [ "measurement automation", "laboratory automation", "instrumentation", ]
 authors = [
