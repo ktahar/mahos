@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1219</width>
-    <height>142</height>
+    <height>149</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -267,7 +267,7 @@
         <string>w0: </string>
        </property>
        <property name="maximum">
-        <number>1920</number>
+        <number>10000</number>
        </property>
       </widget>
      </item>
@@ -280,7 +280,7 @@
         <number>10</number>
        </property>
        <property name="maximum">
-        <number>1920</number>
+        <number>10000</number>
        </property>
        <property name="value">
         <number>100</number>
@@ -293,7 +293,7 @@
         <string>h0: </string>
        </property>
        <property name="maximum">
-        <number>1080</number>
+        <number>10000</number>
        </property>
       </widget>
      </item>
@@ -306,7 +306,7 @@
         <number>10</number>
        </property>
        <property name="maximum">
-        <number>1200</number>
+        <number>10000</number>
        </property>
        <property name="value">
         <number>100</number>
