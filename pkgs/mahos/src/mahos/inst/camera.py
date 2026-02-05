@@ -51,7 +51,11 @@ class ThorlabsCamera(Instrument):
             os.environ["PATH"] += os.pathsep + p
             os.add_dll_directory(p)
 
-        from thorlabs_tsi_sdk.tl_camera import TLCameraSDK
+        # import here because we don't want import on loading of this module
+        from thorlabs_tsi_sdk.tl_camera import TLCameraSDK, ROI, TLCameraError
+
+        self._ROI = ROI
+        self._TLCameraError = TLCameraError
 
         self.sdk = TLCameraSDK()
         cameras = self.sdk.discover_available_cameras()
@@ -83,10 +87,28 @@ class ThorlabsCamera(Instrument):
             self.camera = self.sdk.open_camera(self.conf["serial"])
             self.logger.info(f"Opened camera {self.camera.model} ({self.conf['serial']})")
 
+        try:
+            _ = self.camera.roi_range
+            self._roi_supported = True
+        except self._TLCameraError:
+            self._roi_supported = False
+            self.logger.warn("ROI is not supported by this camera.")
+        try:
+            _ = self.camera.binx_range
+            self._binning_supported = True
+        except self._TLCameraError:
+            self._binning_supported = False
+            self.logger.warn("Binning is not supported by this camera.")
+        try:
+            r = self.camera.frame_rate_control_value_range
+            self._frame_rate_control_supported = r.max > 0
+        except self._TLCameraError:
+            self._frame_rate_control_supported = False
+            self.logger.warn("Frame rate control is not supported by this camera.")
+
         self._mode = self.Mode.UNCONFIGURED
         self._queue_size = self.conf.get("queue_size", 8)
         self._queue = LockedQueue(self._queue_size)
-        self._frame_rate_control = self.conf.get("frame_rate_control", True)
         self._running = False
         self._burst_num = 1
 
@@ -96,22 +118,94 @@ class ThorlabsCamera(Instrument):
         if hasattr(self, "sdk"):
             self.sdk.dispose()
 
-    def configure_continuous(
-        self, exposure_time_sec: float, frame_rate_Hz: float | None = None
-    ) -> bool:
-        self.camera.exposure_time_us = int(round(exposure_time_sec * 1e6))
-        self.camera.frames_per_trigger_zero_for_unlimited = 0
-        self.camera.image_poll_timeout_ms = 0
-        self._mode = self.Mode.CONTINUOUS
-
-        if self._frame_rate_control:
-            if frame_rate_Hz is not None:
-                self.camera.is_frame_rate_control_enabled = True
-                self.camera.frame_rate_control_value = frame_rate_Hz
+    def set_binning(self, binning: int) -> bool:
+        if not self._binning_supported:
+            if binning in (0, 1):
+                return True
             else:
-                self.camera.is_frame_rate_control_enabled = False
+                self.logger.error("Binning is given but not supported.")
+                return False
+
+        # Special value to skip
+        if binning == 0:
+            return True
+
+        try:
+            self.camera.binx = binning
+            self.camera.biny = binning
+            return True
+        except self._TLCameraError:
+            self.logger.exception("Failed to set binning.")
+            return False
+
+    def set_roi(self, roi: dict | None = None) -> bool:
+        if not self._roi_supported:
+            if roi is None or not roi:
+                return True
+            else:
+                self.logger.error("ROI is given but not supported.")
+                return False
+        try:
+            if (
+                roi is None
+                or not roi
+                or any([roi.get(k) is None for k in ("width", "height", "woffset", "hoffset")])
+            ):
+                self.logger.info("Setting full-frame ROI.")
+
+                rr = self.camera.roi_range
+                roi = self._ROI(
+                    upper_left_x_pixels=rr.upper_left_x_pixels_min,
+                    upper_left_y_pixels=rr.upper_left_y_pixels_min,
+                    lower_right_x_pixels=rr.lower_right_x_pixels_max,
+                    lower_right_y_pixels=rr.lower_right_y_pixels_max,
+                )
+            else:
+                roi = self._ROI(
+                    upper_left_x_pixels=roi["woffset"],
+                    upper_left_y_pixels=roi["hoffset"],
+                    lower_right_x_pixels=roi["woffset"] + roi["width"],
+                    lower_right_y_pixels=roi["hoffset"] + roi["height"],
+                )
+            self.camera.roi = roi
+            return True
+        except self._TLCameraError:
+            self.logger.exception("Failed to set ROI.")
+            return False
+
+    def configure_continuous(
+        self,
+        exposure_time_sec: float,
+        frame_rate_Hz: float | None = None,
+        binning: int = 0,
+        roi: dict | None = None,
+    ) -> bool:
+        if not self.set_binning(binning):
+            return False
+        if not self.set_roi(roi):
+            return False
+        try:
+            self.camera.exposure_time_us = int(round(exposure_time_sec * 1e6))
+            self.camera.frames_per_trigger_zero_for_unlimited = 0
+            self.camera.image_poll_timeout_ms = 0
+        except self._TLCameraError:
+            self.logger.exception("Error in setting exposure.")
+            return False
+
+        if self._frame_rate_control_supported:
+            try:
+                if frame_rate_Hz is not None:
+                    self.camera.is_frame_rate_control_enabled = True
+                    self.camera.frame_rate_control_value = frame_rate_Hz
+                else:
+                    self.camera.is_frame_rate_control_enabled = False
+            except self._TLCameraError:
+                self.logger.exception("Error in setting frame rate.")
+                return False
         elif frame_rate_Hz is not None:
             self.logger.warn("frame_rate is given but frame rate control is not available.")
+
+        self._mode = self.Mode.CONTINUOUS
 
         self._queue = LockedQueue(self._queue_size)
 
@@ -125,12 +219,18 @@ class ThorlabsCamera(Instrument):
         binning: int = 0,
         roi: dict | None = None,
     ) -> bool:
-        if binning != 0 or roi is not None:
-            return self.fail_with("binning or roi not supported")
+        if not self.set_binning(binning):
+            return False
+        if not self.set_roi(roi):
+            return False
+        try:
+            self.camera.exposure_time_us = int(round(exposure_time_sec * 1e6))
+            self.camera.frames_per_trigger_zero_for_unlimited = burst_num
+            self.camera.image_poll_timeout_ms = int(round(exposure_time_sec * 1e3)) * 10
+        except self._TLCameraError:
+            self.logger.exception("Error in setting exposure")
+            return False
 
-        self.camera.exposure_time_us = int(round(exposure_time_sec * 1e6))
-        self.camera.frames_per_trigger_zero_for_unlimited = burst_num
-        self.camera.image_poll_timeout_ms = int(round(exposure_time_sec * 1e3)) * 10
         self._mode = self.Mode.SOFT_TRIGGER
         self._burst_num = burst_num
 
@@ -187,7 +287,12 @@ class ThorlabsCamera(Instrument):
         if label == "continuous":
             if not self.check_required_params(params, ("exposure_time",)):
                 return False
-            return self.configure_continuous(params["exposure_time"], params.get("frame_rate"))
+            return self.configure_continuous(
+                params["exposure_time"],
+                params.get("frame_rate"),
+                binning=params.get("binning", 0),
+                roi=params.get("roi"),
+            )
         elif label == "soft_trigger":
             if not self.check_required_params(params, ("exposure_time",)):
                 return False
