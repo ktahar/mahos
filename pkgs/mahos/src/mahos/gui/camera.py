@@ -191,6 +191,11 @@ class CameraWidget(ClientTopWidget, Ui_Camera):
             self.exposuretimeBox,
             self.binningBox,
             self.framerateenableBox,
+            self.roiBox,
+            self.widthBox,
+            self.heightBox,
+            self.woffsetBox,
+            self.hoffsetBox,
         ):
             w.setEnabled(state == BinaryState.IDLE)
 

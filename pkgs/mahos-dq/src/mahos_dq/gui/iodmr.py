@@ -97,6 +97,11 @@ class IODMRWidget(QtWidgets.QWidget, Ui_IODMR):
             self.burstBox,
             self.sweepsBox,
             self.binningBox,
+            self.roiBox,
+            self.widthBox,
+            self.heightBox,
+            self.woffsetBox,
+            self.hoffsetBox,
         ):
             w.setEnabled(state == BinaryState.IDLE)
 
