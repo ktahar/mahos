@@ -34,6 +34,9 @@ class ThorlabsCamera(Instrument):
     :param serial: (default: "") Serial string to discriminate multiple cameras.
         Blank is fine if only one Thorlabs camera is connected.
     :type serial: str
+    :param infinite_wait: (default: True) If True, wait infinitely on soft trigger mode.
+        If False, get_frames() returns None when timeout happens.
+    :type infinite_wait: bool
 
     """
 
@@ -112,6 +115,8 @@ class ThorlabsCamera(Instrument):
         self._queue = LockedQueue(self._queue_size)
         self._running = False
         self._burst_num = 1
+
+        self._inf_wait = self.conf.get("infinite_wait", True)
 
     def close_resources(self):
         if hasattr(self, "camera"):
@@ -272,11 +277,16 @@ class ThorlabsCamera(Instrument):
     def get_frame_soft_trig_imm(self) -> np.ndarray | None:
         self.camera.issue_software_trigger()
         frames = []
-        for i in range(self._burst_num):
+        while len(frames) < self._burst_num:
             frame = self.camera.get_pending_frame_or_null()
             if frame is None:
-                self.logger.error(f"Timeout on readout of {i}-th frame")
-                return None
+                i = len(frames)
+                if self._inf_wait:
+                    self.logger.warn(f"Timeout on readout of {i}-th frame")
+                    continue
+                else:
+                    self.logger.error(f"Timeout on readout of {i}-th frame")
+                    return None
             # copy is required because image_buffer can be overwritten by next get...().
             frames.append(np.copy(frame.image_buffer))
         return self._process_burst_frames(frames)
