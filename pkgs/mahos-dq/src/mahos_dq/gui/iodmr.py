@@ -22,12 +22,12 @@ from mahos_dq.gui.ui.iodmr import Ui_IODMR
 from mahos_dq.gui.iodmr_client import QIODMRClient
 
 from mahos.msgs.common_msgs import BinaryState, BinaryStatus
-from mahos.msgs.param_msgs import FloatParam, IntParam
 from mahos_dq.msgs.iodmr_msgs import IODMRData
 from mahos.node.global_params import GlobalParamsClient
 from mahos.util import conv
 from mahos.gui.gui_node import GUINode
 from mahos.gui.common_widget import ClientMainWindow
+from mahos.gui.param import apply_widgets
 from mahos.gui.dialog import save_dialog, load_dialog
 from mahos.node.node import local_conf
 
@@ -51,25 +51,19 @@ class IODMRWidget(QtWidgets.QWidget, Ui_IODMR):
             print("[ERROR] Failed to get params.")
             return
 
-        power: FloatParam = params["power"]
-        self.powerBox.setMinimum(power.minimum())
-        self.powerBox.setMaximum(power.maximum())
-        self.powerBox.setValue(power.value())
-
-        start: FloatParam = params["start"]
-        self.startBox.setMinimum(start.minimum() * 1e-6)  # Hz -> MHz
-        self.startBox.setMaximum(start.maximum() * 1e-6)
-        self.startBox.setValue(start.value() * 1e-6)
-
-        stop: FloatParam = params["stop"]
-        self.stopBox.setMinimum(stop.minimum() * 1e-6)  # Hz -> MHz
-        self.stopBox.setMaximum(stop.maximum() * 1e-6)
-        self.stopBox.setValue(stop.value() * 1e-6)
-
-        num: IntParam = params["num"]
-        self.numBox.setMinimum(num.minimum())
-        self.numBox.setMaximum(num.maximum())
-        self.numBox.setValue(num.value())
+        apply_widgets(
+            params,
+            [
+                ("start", self.startBox, 1e-6),
+                ("stop", self.stopBox, 1e-6),
+                ("num", self.numBox),
+                ("power", self.powerBox),
+                ("binning", self.binningBox),
+                ("exposure_delay", self.exposuredelayBox, 1e3),
+                ("exposure_time", self.exposuretimeBox, 1e3),
+                ("burst_num", self.burstBox),
+            ],
+        )
 
     def init_connection(self):
         self.roiBox.stateChanged.connect(self.update_roi_boxes)

@@ -46,6 +46,8 @@ class IODMR(BasicMeasNode):
         else:
             self.switch = DummyWorker()
 
+        self._pub_each = self.conf.get("publish_each", False)
+
         self._direct = "isweeper" not in self.conf["target"]["servers"]
         if self._direct:
             self.isweeper = ISweeperDirect(self.cli, self.logger)
@@ -119,8 +121,10 @@ class IODMR(BasicMeasNode):
         self.poll()
         status = self._work()
         finished = self._check_finished(status == WorkStatus.Error)
-        # self._publish(status == WorkStatus.SweepDone)
-        self._publish(finished)
+        if self._pub_each:
+            self._publish(finished or status == WorkStatus.SweepDone)
+        else:
+            self._publish(finished)
 
     def _work(self) -> WorkStatus:
         if self.state == BinaryState.ACTIVE:

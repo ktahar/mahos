@@ -249,6 +249,7 @@ module = "mahos_dq.meas.iodmr"
 class = "IODMR"
 rep_endpoint = "tcp://127.0.0.1:5582"
 pub_endpoint = "tcp://127.0.0.1:5583"
+# publish_each = true
 [localhost.iodmr.target]
 log = "localhost::log"
 [localhost.iodmr.target.servers]
