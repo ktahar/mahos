@@ -52,10 +52,11 @@ class ThorlabsCamera(Instrument):
             os.add_dll_directory(p)
 
         # import here because we don't want import on loading of this module
-        from thorlabs_tsi_sdk.tl_camera import TLCameraSDK, ROI, TLCameraError
+        from thorlabs_tsi_sdk.tl_camera import TLCameraSDK, ROI, TLCameraError, OPERATION_MODE
 
         self._ROI = ROI
         self._TLCameraError = TLCameraError
+        self._OPERATION_MODE = OPERATION_MODE
 
         self.sdk = TLCameraSDK()
         cameras = self.sdk.discover_available_cameras()
@@ -180,6 +181,11 @@ class ThorlabsCamera(Instrument):
         binning: int = 0,
         roi: dict | None = None,
     ) -> bool:
+        try:
+            self.camera.operation_mode = self._OPERATION_MODE.SOFTWARE_TRIGGERED
+        except self._TLCameraError:
+            self.logger.exception("Error in setting operation mode.")
+            return False
         if not self.set_binning(binning):
             return False
         if not self.set_roi(roi):
@@ -219,6 +225,11 @@ class ThorlabsCamera(Instrument):
         binning: int = 0,
         roi: dict | None = None,
     ) -> bool:
+        try:
+            self.camera.operation_mode = self._OPERATION_MODE.SOFTWARE_TRIGGERED
+        except self._TLCameraError:
+            self.logger.exception("Error in setting operation mode.")
+            return False
         if not self.set_binning(binning):
             return False
         if not self.set_roi(roi):
@@ -226,7 +237,7 @@ class ThorlabsCamera(Instrument):
         try:
             self.camera.exposure_time_us = int(round(exposure_time_sec * 1e6))
             self.camera.frames_per_trigger_zero_for_unlimited = burst_num
-            self.camera.image_poll_timeout_ms = int(round(exposure_time_sec * 1e3)) * 10
+            self.camera.image_poll_timeout_ms = max(10_000, int(round(exposure_time_sec * 1e3)) * 10)
         except self._TLCameraError:
             self.logger.exception("Error in setting exposure")
             return False
@@ -325,7 +336,7 @@ class ThorlabsCamera(Instrument):
             self._running = True
             return True
         elif self._mode == self.Mode.SOFT_TRIGGER:
-            self.camera.arm(2)
+            self.camera.arm(max(2, self._burst_num))
             self._running = True
             return True
         else:
