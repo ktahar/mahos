@@ -1919,6 +1919,7 @@ class Windfreak_SynthHD(VisaInstrument):
         conf["baud_rate"] = 57600
         if "timeout" not in conf:
             conf["timeout"] = 10_000.0
+        conf["query_idn"] = False
 
         VisaInstrument.__init__(self, name, conf, prefix=prefix)
 
