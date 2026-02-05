@@ -237,7 +237,9 @@ class ThorlabsCamera(Instrument):
         try:
             self.camera.exposure_time_us = int(round(exposure_time_sec * 1e6))
             self.camera.frames_per_trigger_zero_for_unlimited = burst_num
-            self.camera.image_poll_timeout_ms = max(10_000, int(round(exposure_time_sec * 1e3)) * 10)
+            self.camera.image_poll_timeout_ms = max(
+                10_000, int(round(exposure_time_sec * 1e3)) * 10
+            )
         except self._TLCameraError:
             self.logger.exception("Error in setting exposure")
             return False
