@@ -79,7 +79,6 @@ class CameraWidget(ClientTopWidget, Ui_Camera):
         self.stopButton.clicked.connect(self.request_stop)
         self.saveButton.clicked.connect(self.save_data)
         self.loadButton.clicked.connect(self.load_data)
-        self.roiBox.stateChanged.connect(self.update_roi_boxes)
 
     def init_widget(self):
         # fire the event
@@ -97,10 +96,6 @@ class CameraWidget(ClientTopWidget, Ui_Camera):
                 ("frame_rate", self.framerateBox),
             ],
         )
-
-    def update_roi_boxes(self):
-        for b in (self.woffsetBox, self.widthBox, self.hoffsetBox, self.heightBox):
-            b.setEnabled(self.roiBox.isChecked())
 
     def save_data(self):
         default_path = str(self.gparams_cli.get_param("work_dir"))
@@ -192,12 +187,15 @@ class CameraWidget(ClientTopWidget, Ui_Camera):
             self.binningBox,
             self.framerateenableBox,
             self.roiBox,
+        ):
+            w.setEnabled(state == BinaryState.IDLE)
+        for w in (
             self.widthBox,
             self.heightBox,
             self.woffsetBox,
             self.hoffsetBox,
         ):
-            w.setEnabled(state == BinaryState.IDLE)
+            w.setEnabled(state == BinaryState.IDLE and self.roiBox.isChecked())
 
         self.stopButton.setEnabled(state == BinaryState.ACTIVE)
         self.framerateBox.setEnabled(

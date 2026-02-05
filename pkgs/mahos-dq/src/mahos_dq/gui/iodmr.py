@@ -66,8 +66,6 @@ class IODMRWidget(QtWidgets.QWidget, Ui_IODMR):
         )
 
     def init_connection(self):
-        self.roiBox.stateChanged.connect(self.update_roi_boxes)
-
         for w in (self.startBox, self.stopBox, self.numBox):
             w.valueChanged.connect(self.update_step)
 
@@ -77,10 +75,6 @@ class IODMRWidget(QtWidgets.QWidget, Ui_IODMR):
                 conv.num_to_step(self.startBox.value(), self.stopBox.value(), self.numBox.value())
             )
         )
-
-    def update_roi_boxes(self):
-        for b in (self.woffsetBox, self.widthBox, self.hoffsetBox, self.heightBox):
-            b.setEnabled(self.roiBox.isChecked())
 
     def update_state(self, state: BinaryState, last_state: BinaryState):
         for w in (
@@ -98,12 +92,15 @@ class IODMRWidget(QtWidgets.QWidget, Ui_IODMR):
             self.sweepsBox,
             self.binningBox,
             self.roiBox,
+        ):
+            w.setEnabled(state == BinaryState.IDLE)
+        for w in (
             self.widthBox,
             self.heightBox,
             self.woffsetBox,
             self.hoffsetBox,
         ):
-            w.setEnabled(state == BinaryState.IDLE)
+            w.setEnabled(state == BinaryState.IDLE and self.roiBox.isChecked())
 
         self.stopButton.setEnabled(state == BinaryState.ACTIVE)
 
