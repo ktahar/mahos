@@ -1906,6 +1906,9 @@ class DS_SG(VisaInstrument):
 class Windfreak_SynthHD(VisaInstrument):
     """Windfreak SynthHD Signal Generator.
 
+    TODO: hard-triggered frequency sweep (configure_point_trig_freq_sweep()) has not been tested
+    with real hardware. The hardware behavior needs to be verified.
+
     :param power_bounds: Power bounds in dBm (min, max).
     :type power_bounds: tuple[float, float]
     :param freq_bounds: Frequency bounds in Hz (min, max).
