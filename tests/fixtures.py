@@ -32,6 +32,7 @@ from mahos.meas.state_manager import StateManager, StateManagerClient
 from mahos.meas.tweaker import Tweaker, TweakerClient
 from mahos.meas.pos_tweaker import PosTweaker, PosTweakerClient
 from mahos.meas.recorder import Recorder, RecorderClient
+from mahos.meas.sweeper import Sweeper, SweeperClient
 
 
 script_dir = path.dirname(path.realpath(__file__))
@@ -43,6 +44,7 @@ manager_name = "localhost::manager"
 tweaker_name = "localhost::tweaker"
 pos_tweaker_name = "localhost::pos_tweaker"
 recorder_name = "localhost::recorder"
+sweeper_name = "localhost::sweeper"
 confocal_name = "localhost::confocal"
 tracker_name = "localhost::tracker"
 odmr_name = "localhost::odmr"
@@ -124,6 +126,7 @@ def gconf():
     local_conf(gconf, pos_tweaker_name)["poll_timeout_ms"] = 50
     local_conf(gconf, recorder_name)["poll_timeout_ms"] = 50
     local_conf(gconf, recorder_name)["collector"]["interval_sec"] = 0.05
+    local_conf(gconf, sweeper_name)["poll_timeout_ms"] = 50
 
     # add conf for dummy
     n = split_name(dummy_name)
@@ -165,6 +168,11 @@ def pos_tweaker_conf(gconf):
 @pytest.fixture
 def recorder_conf(gconf):
     return local_conf(gconf, recorder_name)
+
+
+@pytest.fixture
+def sweeper_conf(gconf):
+    return local_conf(gconf, sweeper_name)
 
 
 @pytest.fixture
@@ -313,6 +321,15 @@ def pos_tweaker(ctx, gconf):
 def recorder(ctx, gconf):
     proc, shutdown_ev = start_node_proc(ctx, Recorder, gconf, recorder_name)
     client = RecorderClient(gconf, recorder_name)
+    yield client
+    client.close()
+    stop_proc(proc, shutdown_ev)
+
+
+@pytest.fixture
+def sweeper(ctx, gconf):
+    proc, shutdown_ev = start_node_proc(ctx, Sweeper, gconf, sweeper_name)
+    client = SweeperClient(gconf, sweeper_name)
     yield client
     client.close()
     stop_proc(proc, shutdown_ev)

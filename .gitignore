@@ -1,6 +1,7 @@
-# editors
+# editors / agents
 !/.editorconfig
 .vscode
+.claude
 *~
 
 # binaries / caches / generated data

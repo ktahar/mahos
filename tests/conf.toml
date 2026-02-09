@@ -315,8 +315,9 @@ class = "Tweaker"
 target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5592"
 pub_endpoint = "tcp://127.0.0.1:5593"
-param_dicts = ["paramX::labelA", "paramY::labelB"]
+param_dicts = ["dmm0::ch1_dcv", "paramX::labelA", "paramY::labelB"]
 [localhost.tweaker.target.servers]
+dmm0 = "localhost::server"
 paramX = "localhost::server"
 paramY = "localhost::server"
 
@@ -366,6 +367,29 @@ dmm1_i2 = ["dmm1", "ch2_dci"]
 [localhost.recorder.mode.few]
 dmm0 = ["dmm0", "ch1_dcv"]
 dmm1 = ["dmm1", "ch1_dcv"]
+
+[localhost.sweeper]
+module = "mahos.meas.sweeper"
+class = "Sweeper"
+rep_endpoint = "tcp://127.0.0.1:5600"
+pub_endpoint = "tcp://127.0.0.1:5601"
+[localhost.sweeper.target]
+log = "localhost::log"
+tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+[localhost.sweeper.target.servers]
+sg = "localhost::server"
+dmm0 = "localhost::server"
+[localhost.sweeper.sweep]
+inst = "sg"
+key = "freq"
+label = ""
+unit = "Hz"
+SI_prefix = true
+[localhost.sweeper.measure]
+inst = "dmm0"
+key = "data"
+label = "ch1_dcv"
+unit = "V"
 
 [localhost.confocal_gui]
 module = "mahos_dq.gui.confocal"
@@ -453,6 +477,13 @@ module = "mahos.gui.recorder"
 class = "RecorderGUI"
 [localhost.recorder_gui.target]
 recorder = "localhost::recorder"
+gparams = "localhost::gparams"
+
+[localhost.sweeper_gui]
+module = "mahos.gui.sweeper"
+class = "SweeperGUI"
+[localhost.sweeper_gui.target]
+sweeper = "localhost::sweeper"
 gparams = "localhost::gparams"
 
 [localhost.pulse_monitor]

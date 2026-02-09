@@ -20,7 +20,7 @@ def test_tweaker(server, tweaker, tweaker_conf):
     tweaker.wait()
 
     param_dict_ids = get_some(tweaker.get_status, poll_timeout_ms).param_dict_ids
-    assert param_dict_ids == ["paramX::labelA", "paramY::labelB"]
+    assert param_dict_ids == ["dmm0::ch1_dcv", "paramX::labelA", "paramY::labelB"]
     pX_A = tweaker.read("paramX::labelA")
     pX_A_A: P.IntParam = pX_A["paramA"]
     pX_A_B: P.FloatParam = pX_A["paramB"]

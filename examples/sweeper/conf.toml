@@ -1,0 +1,100 @@
+# Sweeper example configuration
+#
+# This example demonstrates a 1D parameter sweep measurement.
+# The sweep and measurement parameters are configurable.
+
+[global]
+req_timeout_ms = 10_000
+poll_timeout_ms = 100
+
+[localhost.log]
+module = "mahos.node.log_broker"
+class = "LogBroker"
+target = { log = "localhost::log" }
+xpub_endpoint = "tcp://127.0.0.1:5555"
+xsub_endpoint = "tcp://127.0.0.1:5556"
+
+[localhost.gparams]
+module = "mahos.node.global_params"
+class = "GlobalParams"
+target = { log = "localhost::log" }
+rep_endpoint = "tcp://127.0.0.1:5557"
+pub_endpoint = "tcp://127.0.0.1:5558"
+
+[localhost.server]
+module = "mahos.inst.server"
+class = "InstrumentServer"
+target = { log = "localhost::log" }
+log_level = "DEBUG"
+rep_endpoint = "tcp://127.0.0.1:5559"
+pub_endpoint = "tcp://127.0.0.1:5560"
+
+# Example mock instruments - replace with your actual instruments
+[localhost.server.instrument.source]
+module = "instruments"
+class = "VoltageSource_mock"
+[localhost.server.instrument.source.conf]
+resource = "VISA::DUMMY0"
+
+[localhost.server.instrument.meter]
+module = "instruments"
+class = "Multimeter_mock"
+[localhost.server.instrument.meter.conf]
+resource = "VISA::DUMMY1"
+
+# Sweeper node
+[localhost.sweeper]
+module = "mahos.meas.sweeper"
+class = "Sweeper"
+rep_endpoint = "tcp://127.0.0.1:5561"
+pub_endpoint = "tcp://127.0.0.1:5562"
+
+[localhost.sweeper.target]
+log = "localhost::log"
+tweaker = "localhost::tweaker"
+[localhost.sweeper.target.servers]
+source = "localhost::server"
+meter = "localhost::server"
+
+# Sweep configuration - which instrument/key to sweep
+[localhost.sweeper.sweep]
+inst = "source"           # key in target.servers
+key = "voltage"           # key for inst.set(key, value)
+label = "ch1"             # optional label for set()
+unit = "V"                # display unit
+bounds = [-10.0, 10.0]    # parameter bounds (optional, can get from instrument)
+SI_prefix = true          # (GUI option) enable SI prefix for display unit
+digit = 6                 # (GUI option) digit for input
+
+# Measure configuration - which instrument/key to measure
+[localhost.sweeper.measure]
+inst = "meter"            # key in target.servers
+key = "current"           # key for inst.get(key)
+label = ""                # optional label for get()
+unit = "A"                # display unit
+
+# Sweeper node works in good combination with Tweaker
+[localhost.tweaker]
+module = "mahos.meas.tweaker"
+class = "Tweaker"
+target = { log = "localhost::log" }
+rep_endpoint = "tcp://127.0.0.1:5563"
+pub_endpoint = "tcp://127.0.0.1:5564"
+param_dicts = ["source::ch1", "meter::current"]
+[localhost.tweaker.target.servers]
+source = "localhost::server"
+meter = "localhost::server"
+
+[localhost.sweeper_gui]
+module = "mahos.gui.sweeper"
+class = "SweeperGUI"
+[localhost.sweeper_gui.target]
+sweeper = "localhost::sweeper"
+gparams = "localhost::gparams"
+
+[localhost.tweaker_gui]
+module = "mahos.gui.tweaker"
+class = "TweakerGUI"
+[localhost.tweaker_gui.target]
+tweaker = "localhost::tweaker"
+gparams = "localhost::gparams"

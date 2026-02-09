@@ -163,6 +163,8 @@ class SG_mock(Instrument):
     def set(self, key: str, value=None, label: str = "") -> bool:
         if key == "output":
             return self.set_output(value)
+        elif key == "freq":
+            return self.set_freq_CW(value)
         elif key == "dm_source":
             return self.set_dm_source(value)
         elif key == "dm":
