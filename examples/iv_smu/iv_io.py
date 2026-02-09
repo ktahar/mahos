@@ -14,12 +14,9 @@ from os import path
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mahos.msgs.iv_msgs import IVData, update_data
+from iv_msgs import IVData, update_data
 from mahos.node.log import DummyLogger
 from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
-
-# from ..msgs.common_msgs import Reply, BinaryState
-# from ..msgs.common_msgs import LoadDataReq
 
 
 class IVIO(object):

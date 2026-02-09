@@ -10,10 +10,10 @@ from mahos.meas.common_worker import Worker
 from mahos.msgs.common_msgs import Reply, StateReq, BinaryState, BinaryStatus
 from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
 from mahos.msgs import param_msgs as P
-from mahos.meas.iv_io import IVIO
 
-from mahos.msgs import iv_msgs
-from mahos.msgs.iv_msgs import IVData
+from iv_io import IVIO
+import iv_msgs
+from iv_msgs import IVData
 
 from mahos.inst.smu_interface import SMUInterface
 

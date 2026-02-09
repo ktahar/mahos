@@ -14,7 +14,7 @@ from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
 from mahos.msgs.common_msgs import BinaryState, BinaryStatus
 from mahos.node.global_params import GlobalParamsClient
 
-from mahos.msgs.iv_msgs import IVData
+from iv_msgs import IVData
 
 Policy = QtWidgets.QSizePolicy.Policy
 
