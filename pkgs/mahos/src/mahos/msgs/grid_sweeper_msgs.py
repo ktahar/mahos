@@ -119,13 +119,14 @@ class GridSweeperData(ImageMeasData):
 
         if self.data is None:
             return None
-        if last_n < 0 and self.data.shape[2] <= -last_n:
+
+        stack = self.data
+        if not include_incomplete and self.has_incomplete():
+            stack = stack[:, :, :-1]
+        if last_n < 0 and stack.shape[2] <= -last_n:
             return None
 
-        if not include_incomplete and self.has_incomplete():
-            img = self.data[:, :, -last_n:-1]
-        else:
-            img = self.data[:, :, -last_n:]
+        img = stack[:, :, -last_n:]
         if img.size == 0:
             return None
         # return without nanmean() call to suppress "Mean of empty slice" warning

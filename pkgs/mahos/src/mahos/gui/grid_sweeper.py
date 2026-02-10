@@ -133,7 +133,9 @@ class PlotWidget(QtWidgets.QWidget):
 
     def _select_image(self, data: GridSweeperData) -> np.ndarray | None:
         if self.meanBox.isChecked():
-            return data.get_mean_image(last_n=self.lastnBox.value())
+            return data.get_mean_image(
+                last_n=self.lastnBox.value(), include_incomplete=self.meanincompBox.isChecked()
+            )
         return data.get_image(self.sweepidxBox.value())
 
     def update_image(self, data: GridSweeperData):
