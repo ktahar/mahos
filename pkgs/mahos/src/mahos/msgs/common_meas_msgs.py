@@ -148,6 +148,44 @@ class BasicMeasData(Data, FormatTimeMixin):
         return {"fit_result": self._h5_read_fit_result}
 
 
+class ImageMeasData(BasicMeasData):
+    """Base Data class for image-style measurements with x/y axes and z values."""
+
+    def get_image(self):
+        raise NotImplementedError("get_image() is not implemented")
+
+    # Image-style measurements do not support line fitting by default.
+    # Keeping no-op interface functions for compatibility.
+
+    def get_fit_xdata(self):
+        return None
+
+    def get_fit_ydata(self):
+        return None
+
+    def set_fit_data(self, x, y, params, label, result):
+        return None
+
+    def remove_fit_data(self):
+        return None
+
+    def init_axes(self):
+        self.xlabel: str = ""
+        self.xunit: str = ""
+        self.ylabel: str = ""
+        self.yunit: str = ""
+        self.zlabel: str = ""
+        self.zunit: str = ""
+        self.xscale: str = "linear"
+        self.yscale: str = "linear"
+
+    def _h5_dataset_writers(self) -> dict:
+        return {}
+
+    def _h5_readers(self) -> dict:
+        return {}
+
+
 class Buffer(Message, UserList):
     def file_names(self) -> list[str]:
         return [n for n, data in self.data]

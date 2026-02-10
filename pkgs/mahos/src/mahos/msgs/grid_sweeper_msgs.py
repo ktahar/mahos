@@ -10,15 +10,13 @@ Message types for GridSweeper measurement.
 
 from __future__ import annotations
 
-import time
-
 import numpy as np
 from numpy.typing import NDArray
 
-from mahos.msgs.common_meas_msgs import BasicMeasData
+from mahos.msgs.common_meas_msgs import ImageMeasData
 
 
-class GridSweeperData(BasicMeasData):
+class GridSweeperData(ImageMeasData):
     """Data class for 2D planar sweep (x, y) with repeated sweeps."""
 
     def __init__(self, params: dict | None = None):
@@ -29,16 +27,8 @@ class GridSweeperData(BasicMeasData):
         self.data: NDArray[np.float64] | None = None
         self.completed_sweeps: int = 0
 
-    def init_attrs(self):
-        self.running: bool = False
-        self.start_time: float = time.time()
-        self.finish_time: float | None = None
-        self.paused_periods: np.ndarray | None = None
-        self._saved: bool = False
-
-        self.init_axes()
-
     def init_axes(self):
+        super().init_axes()
         if self.params is not None:
             x_params = self.params.get("x", {})
             y_params = self.params.get("y", {})

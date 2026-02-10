@@ -305,16 +305,20 @@ class SweeperWidget(ClientTopWidget):
                     ("logx", self.logxBox),
                 ],
             )
+            for l, w in (
+                ("start", self.startBox),
+                ("stop", self.stopBox),
+                ("delay", self.delayBox),
+            ):
+                p = params[l]
+                w.setOpts(
+                    suffix=p.unit(),
+                    siPrefix=p.SI_prefix(),
+                    decimals=p.digit(),
+                    step=p.step(),
+                )
         else:
             print("[ERROR] Failed to get param dict")
-        for w, l in zip((self.startBox, self.stopBox, self.delayBox), ("start", "stop", "delay")):
-            p = params[l]
-            w.setOpts(
-                suffix=p.unit(),
-                siPrefix=p.SI_prefix(),
-                decimals=p.digit(),
-                step=p.step(),
-            )
 
         self.update_state(status.state, last_state=BinaryState.IDLE)
         self.cli.stateUpdated.connect(self.update_state)
