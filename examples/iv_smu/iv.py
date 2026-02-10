@@ -65,7 +65,7 @@ class Sweeper(Worker):
             bounds["current"][1],
             doc="current compliance",
         )
-        pd["logx"] = P.BoolParam(False, doc="set True for log-space sweep")
+        pd["log"] = P.BoolParam(False, doc="set True for log-space sweep")
         return pd
 
     def start(self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue]) -> bool:
@@ -87,7 +87,7 @@ class Sweeper(Worker):
             params["delay"],
             params.get("nplc", 1.0),
             params.get("compliance", bounds["current"][1]),
-            params.get("logx", False),
+            params.get("log", False),
         ):
             return self.fail_with_release("Error configuring instruments.")
 

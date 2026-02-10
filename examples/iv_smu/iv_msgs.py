@@ -42,7 +42,7 @@ class IVData(BasicMeasData):
         return self.data.shape[1]
 
     def get_xdata(self):
-        if self.params["logx"]:
+        if self.params["log"]:
             return np.logspace(
                 np.log10(self.params["start"]), np.log10(self.params["stop"]), self.params["num"]
             )

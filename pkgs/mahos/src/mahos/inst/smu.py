@@ -125,7 +125,7 @@ class Keithley_2450(VisaInstrument):
         point: int = 2,
         nplc: float = 10.0,
         auto_range: bool | None = None,
-        logx: bool = False,
+        log: bool = False,
     ) -> bool:
         """Setup IV curve measurement."""
 
@@ -134,7 +134,7 @@ class Keithley_2450(VisaInstrument):
             and self.configure_source_volt(compliance)
             and self.configure_measure_current()
             and self.set_auto_range(auto_range if auto_range is not None else self.auto_range)
-            and self.set_sweep_volt(start, stop, point, delay, logx)
+            and self.set_sweep_volt(start, stop, point, delay, log)
             and self.set_current_nplc(nplc)
         )
         if success:
@@ -223,7 +223,7 @@ class Keithley_2450(VisaInstrument):
                 start=P.FloatParam(0.0, self.volt_min, self.volt_max, unit="V", SI_prefix=True),
                 stop=P.FloatParam(0.1, self.volt_min, self.volt_max, unit="V", SI_prefix=True),
                 auto_range=P.BoolParam(self.auto_range),
-                logx=P.BoolParam(False),
+                log=P.BoolParam(False),
                 point=P.IntParam(2),
                 nplc=P.FloatParam(10.0, 0.01, 10.0),
                 compliance=P.FloatParam(105e-3, -105e-3, 105e-3, unit="A", SI_prefix=True),
@@ -248,7 +248,7 @@ class Keithley_2450(VisaInstrument):
             return self.configure_IV_sweep(
                 start=params.get("start", 0.0),
                 stop=params.get("stop", 0.1),
-                logx=params.get("logx", False),
+                log=params.get("log", False),
                 point=params.get("point", 2),
                 nplc=params.get("nplc", 10.0),
                 auto_range=params.get("auto_range", self.auto_range),
@@ -421,7 +421,7 @@ class Keithley_6430(VisaInstrument):
         nplc: float = 10.0,
         auto_filter: bool | None = None,
         range: str = "",
-        logx: bool = False,
+        log: bool = False,
     ) -> bool:
         """Setup IV curve measurement."""
 
@@ -432,7 +432,7 @@ class Keithley_6430(VisaInstrument):
             and self.set_current_nplc(nplc)
             and self.set_auto_filter(auto_filter if auto_filter is not None else self.auto_filter)
             and self.set_range_source(range or self.range)
-            and self.set_scale_source(logx)
+            and self.set_scale_source(log)
         )
         if success:
             self._mode = Mode.IV_sweep
@@ -451,7 +451,7 @@ class Keithley_6430(VisaInstrument):
         nplc: float = 10.0,
         auto_filter: bool | None = None,
         range: str = "",
-        logx: bool = False,
+        log: bool = False,
     ) -> bool:
         """Setup VI curve measurement."""
 
@@ -462,7 +462,7 @@ class Keithley_6430(VisaInstrument):
             and self.set_volt_nplc(nplc)
             and self.set_auto_filter(auto_filter if auto_filter is not None else self.auto_filter)
             and self.set_range_source(range or self.range)
-            and self.set_scale_source(logx)
+            and self.set_scale_source(log)
         )
         if success:
             self._mode = Mode.VI_sweep
@@ -550,7 +550,7 @@ class Keithley_6430(VisaInstrument):
                 start=P.FloatParam(0.0, self.volt_min, self.volt_max, unit="V", SI_prefix=True),
                 stop=P.FloatParam(0.0, self.volt_min, self.volt_max, unit="V", SI_prefix=True),
                 range=P.StrChoiceParam(self.range, ["BEST", "AUTO", "FIX"]),
-                logx=P.BoolParam(False),
+                log=P.BoolParam(False),
                 point=P.IntParam(21),
                 nplc=P.FloatParam(10.0, 0.01, 10.0),
                 auto_filter=P.BoolParam(self.auto_filter),
@@ -562,7 +562,7 @@ class Keithley_6430(VisaInstrument):
                 start=P.FloatParam(0.0, self.curr_min, self.curr_max, unit="A", SI_prefix=True),
                 stop=P.FloatParam(0.0, self.curr_min, self.curr_max, unit="A", SI_prefix=True),
                 range=P.StrChoiceParam(self.range, ["BEST", "AUTO", "FIX"]),
-                logx=P.BoolParam(False),
+                log=P.BoolParam(False),
                 point=P.IntParam(21),
                 nplc=P.FloatParam(10.0, 0.01, 10.0),
                 auto_filter=P.BoolParam(self.auto_filter),
@@ -589,7 +589,7 @@ class Keithley_6430(VisaInstrument):
                 start=params.get("start", 0.0),
                 stop=params.get("stop", 0.0),
                 range=params.get("range", self.range),
-                logx=params.get("logx", False),
+                log=params.get("log", False),
                 point=params.get("point", 21),
                 nplc=params.get("nplc", 10.0),
                 auto_filter=params.get("auto_filter", self.auto_filter),
@@ -601,7 +601,7 @@ class Keithley_6430(VisaInstrument):
                 start=params.get("start", 0.0),
                 stop=params.get("stop", 0.0),
                 range=params.get("range", self.range),
-                logx=params.get("logx", False),
+                log=params.get("log", False),
                 point=params.get("point", 21),
                 nplc=params.get("nplc", 10.0),
                 auto_filter=params.get("auto_filter", self.auto_filter),

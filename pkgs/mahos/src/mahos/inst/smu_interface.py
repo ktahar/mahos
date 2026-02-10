@@ -53,7 +53,7 @@ class SMUInterface(InstrumentInterface):
         delay: float,
         nplc: float,
         compliance: float,
-        logx: bool = False,
+        log: bool = False,
     ) -> bool:
         """Configure IV sweep measurement.
 
@@ -62,7 +62,7 @@ class SMUInterface(InstrumentInterface):
         :param num: number of points.
         :param delay: (s) delay before measurement.
         :param nplc: measuerment time in nplc.
-        :param logx: set True for log-space sweep.
+        :param log: set True for log-space sweep.
 
         """
 
@@ -74,7 +74,7 @@ class SMUInterface(InstrumentInterface):
                 "delay": delay,
                 "nplc": nplc,
                 "compliance": compliance,
-                "logx": logx,
+                "log": log,
             },
             label="iv_sweep",
         )
@@ -87,7 +87,7 @@ class SMUInterface(InstrumentInterface):
         delay: float,
         nplc: float,
         compliance: float,
-        logx: bool = False,
+        log: bool = False,
     ) -> bool:
         """Configure VI sweep measurement.
 
@@ -96,7 +96,7 @@ class SMUInterface(InstrumentInterface):
         :param num: number of points.
         :param delay: (s) delay before measurement.
         :param nplc: measuerment time in nplc.
-        :param logx: set True for log-space sweep.
+        :param log: set True for log-space sweep.
 
         """
 
@@ -108,7 +108,7 @@ class SMUInterface(InstrumentInterface):
                 "delay": delay,
                 "nplc": nplc,
                 "compliance": compliance,
-                "logx": logx,
+                "log": log,
             },
             label="vi_sweep",
         )

@@ -132,7 +132,7 @@ class IVWidget(ClientTopWidget):
                     ("delay", self.delayBox, 1e3),  # sec to ms
                     ("nplc", self.nplcBox),
                     ("compliance", self.complianceBox),
-                    ("logx", self.logBox),
+                    ("log", self.logBox),
                 ],
             )
         else:
@@ -183,7 +183,7 @@ class IVWidget(ClientTopWidget):
             "delay": self.delayBox.value() * 1e-3,  # ms to sec
             "nplc": self.nplcBox.value(),
             "compliance": self.complianceBox.value(),
-            "logx": self.logBox.isChecked(),
+            "log": self.logBox.isChecked(),
         }
 
         self.cli.start(params)
