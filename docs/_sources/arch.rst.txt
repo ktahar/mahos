@@ -41,6 +41,6 @@ mahos_dq package has logics and gui for solid-state Defect (color center) Qubits
 The layout of submodule is similar to mahos.
 
 * :ref:`mahos_dq.msgs` - Message type definitions.
-* :ref:`mahos_dq.inst` - :class:`InstrumentOverlay <mahos.inst.overlay.InstrumentOverlay>` definitions.
+* :ref:`mahos_dq.inst` - :class:`InstrumentOverlay <mahos.inst.overlay.overlay.InstrumentOverlay>` definitions.
 * :ref:`mahos_dq.meas` - High-level measurement logics.
 * :ref:`mahos_dq.gui` - GUI frontends.

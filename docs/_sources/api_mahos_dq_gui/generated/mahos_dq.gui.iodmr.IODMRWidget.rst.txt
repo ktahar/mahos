@@ -21,7 +21,6 @@
       ~IODMRWidget.init_connection
       ~IODMRWidget.init_widget
       ~IODMRWidget.set_widget_values
-      ~IODMRWidget.update_roi_boxes
       ~IODMRWidget.update_state
       ~IODMRWidget.update_step
       ~IODMRWidget.validate_sweep

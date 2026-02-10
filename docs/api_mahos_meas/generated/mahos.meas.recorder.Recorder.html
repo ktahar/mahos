@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>mahos.meas.recorder.Recorder &#8212; MAHOS 0.3.0 documentation</title>
+    <title>mahos.meas.recorder.Recorder &#8212; MAHOS 0.4.0 documentation</title>
   
   
   
@@ -38,13 +38,13 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../_static/documentation_options.js?v=e259d695"></script>
+    <script src="../../_static/documentation_options.js?v=6c02275b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_meas/generated/mahos.meas.recorder.Recorder';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mahos.meas.camera.Camera" href="mahos.meas.camera.Camera.html" />
+    <link rel="next" title="mahos.meas.sweeper.Sweeper" href="mahos.meas.sweeper.Sweeper.html" />
     <link rel="prev" title="mahos.meas.pos_tweaker.PosTweaker" href="mahos.meas.pos_tweaker.PosTweaker.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -110,7 +110,7 @@
   
   
   
-    <p class="title logo__title">MAHOS 0.3.0 documentation</p>
+    <p class="title logo__title">MAHOS 0.4.0 documentation</p>
   
 </a></div>
     
@@ -370,6 +370,8 @@
 <li class="toctree-l2"><a class="reference internal" href="mahos.meas.tweaker.Tweaker.html">mahos.meas.tweaker.Tweaker</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos.meas.pos_tweaker.PosTweaker.html">mahos.meas.pos_tweaker.PosTweaker</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">mahos.meas.recorder.Recorder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos.meas.sweeper.Sweeper.html">mahos.meas.sweeper.Sweeper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos.meas.grid_sweeper.GridSweeper.html">mahos.meas.grid_sweeper.GridSweeper</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos.meas.camera.Camera.html">mahos.meas.camera.Camera</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../CameraIO.html">mahos.meas.camera.CameraIO</a></li>
 </ul>
@@ -450,21 +452,34 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.meas.recorder.</span></span><span class="sig-name descname"><span class="pre">Recorder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.meas.recorder.Recorder" title="Link to this definition">#</a></dt>
 <dd><p>Generic data-logging measurement for time-series data.</p>
 <p>The target instruments must implement following APIs: <code class="docutils literal notranslate"><span class="pre">get_param_dict_labels()</span></code>,
-<code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>, <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, <code class="docutils literal notranslate"><span class="pre">get(&quot;unit&quot;)</span></code>,
-and <code class="docutils literal notranslate"><span class="pre">get(&quot;data&quot;)</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>, <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, and <code class="docutils literal notranslate"><span class="pre">get()</span></code>.
+<code class="docutils literal notranslate"><span class="pre">get(&quot;unit&quot;)</span></code> is required only when channel unit is not specified in mode config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – The InstrumentServer targets (instrument name, server full name).</p></li>
 <li><p><strong>target.tweakers</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The Tweaker targets (list of tweaker full name).</p></li>
 <li><p><strong>target.log</strong> (<em>str</em>) – The LogBroker target (broker full name).</p></li>
-<li><p><strong>mode</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – The dictionary to define the measurement modes.
-First-level key is mode name and second-level key is measurement value name.
-The tuple[str, str] (instrument name, label name) defines
-how to get each measurement value.</p></li>
+<li><p><strong>mode</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>] </em><em>| </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Nested dictionary to define the measurement modes.
+First-level key is mode name and second-level key is measurement channel name,
+and value is the channel config.
+Channel config can be tuple[str, str] (instrument name, label name), or dict with
+keys: <code class="docutils literal notranslate"><span class="pre">inst</span></code> (required), <code class="docutils literal notranslate"><span class="pre">label</span></code> (optional, default <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>),
+<code class="docutils literal notranslate"><span class="pre">key</span></code> (optional, default <code class="docutils literal notranslate"><span class="pre">&quot;data&quot;</span></code>), and <code class="docutils literal notranslate"><span class="pre">unit</span></code> (optional).</p></li>
 </ul>
 </dd>
 </dl>
+<p>Runtime behavior for each channel in selected mode:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code> request: calls <code class="docutils literal notranslate"><span class="pre">get_param_dict(inst,</span> <span class="pre">label)</span></code>.</p></li>
+<li><p>Start sequence: <code class="docutils literal notranslate"><span class="pre">lock(inst)</span></code> (optional), <code class="docutils literal notranslate"><span class="pre">configure(inst,</span> <span class="pre">params[channel],</span> <span class="pre">label)</span></code>,
+then unit resolution by <code class="docutils literal notranslate"><span class="pre">unit</span></code> in config or <code class="docutils literal notranslate"><span class="pre">get(inst,</span> <span class="pre">&quot;unit&quot;,</span> <span class="pre">label=label)</span></code>.
+Finally, <code class="docutils literal notranslate"><span class="pre">start(inst,</span> <span class="pre">label=label)</span></code> is called.</p></li>
+<li><p>Polling sequence (ACTIVE): calls <code class="docutils literal notranslate"><span class="pre">get(inst,</span> <span class="pre">key,</span> <span class="pre">label=label)</span></code> repeatedly at
+collector interval and appends returned values to <code class="docutils literal notranslate"><span class="pre">RecorderData</span></code> under the channel name.</p></li>
+<li><p>Stop sequence: calls <code class="docutils literal notranslate"><span class="pre">stop(inst,</span> <span class="pre">label=label)</span></code> and releases lock.</p></li>
+<li><p>Reset sequence (IDLE only): calls <code class="docutils literal notranslate"><span class="pre">reset(inst,</span> <span class="pre">label=label)</span></code> without lock/release.</p></li>
+</ul>
 <dl class="py method">
 <dt class="sig sig-object py" id="mahos.meas.recorder.Recorder.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.meas.recorder.Recorder.__init__" title="Link to this definition">#</a></dt>
@@ -542,11 +557,11 @@ how to get each measurement value.</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="mahos.meas.camera.Camera.html"
+       href="mahos.meas.sweeper.Sweeper.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">mahos.meas.camera.Camera</p>
+        <p class="prev-next-title">mahos.meas.sweeper.Sweeper</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

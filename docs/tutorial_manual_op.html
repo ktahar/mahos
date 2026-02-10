@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Tutorial 3: Manual Operation &#8212; MAHOS 0.3.0 documentation</title>
+    <title>Tutorial 3: Manual Operation &#8212; MAHOS 0.4.0 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=e259d695"></script>
+    <script src="_static/documentation_options.js?v=6c02275b"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorial_manual_op';</script>
@@ -110,7 +110,7 @@
   
   
   
-    <p class="title logo__title">MAHOS 0.3.0 documentation</p>
+    <p class="title logo__title">MAHOS 0.4.0 documentation</p>
   
 </a></div>
     
@@ -471,7 +471,8 @@ You can operate PosTweaker GUI and check if it works in the log message (Dummy m
 <section id="recorder">
 <h2>Recorder<a class="headerlink" href="#recorder" title="Link to this heading">#</a></h2>
 <p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.recorder.Recorder.html#mahos.meas.recorder.Recorder" title="mahos.meas.recorder.Recorder"><code class="xref py py-class docutils literal notranslate"><span class="pre">Recorder</span></code></a> is a generic node for recording of time-series data from instruments.</p>
-<p>To use Recorder, instrument must implement following APIs: <code class="docutils literal notranslate"><span class="pre">get_param_dict_labels()</span></code>, <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>, <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, <code class="docutils literal notranslate"><span class="pre">get(&quot;unit&quot;)</span></code>, and <code class="docutils literal notranslate"><span class="pre">get(&quot;data&quot;)</span></code>.
+<p>To use Recorder, instrument must implement following APIs: <code class="docutils literal notranslate"><span class="pre">get_param_dict_labels()</span></code>, <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>, <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, and <code class="docutils literal notranslate"><span class="pre">get(&quot;data&quot;)</span></code>.
+If channel unit is not specified in mode config, <code class="docutils literal notranslate"><span class="pre">get(&quot;unit&quot;)</span></code> is additionally required.
 In this example, the <code class="docutils literal notranslate"><span class="pre">Multimeter_mock</span></code> class is implemented to demonstrate Recorder’s feature.
 The mock instrument provides two different configurations labeled <code class="docutils literal notranslate"><span class="pre">voltage</span></code> and <code class="docutils literal notranslate"><span class="pre">current</span></code>.
 The <code class="docutils literal notranslate"><span class="pre">mode</span></code> block of the Recorder configuration defines which label (mode of instrument) is used, as below.</p>
@@ -484,6 +485,11 @@ The <code class="docutils literal notranslate"><span class="pre">mode</span></co
 <p>The first two lines define a recorder mode “voltage” with single measurement value named “meter_voltage”,
 which corresponds to instrument “meter” and label “voltage”.
 The last two lines define the other mode using “current” label instead.</p>
+<p>Per-channel dict style is also available to set <code class="docutils literal notranslate"><span class="pre">key</span></code> and <code class="docutils literal notranslate"><span class="pre">unit</span></code> explicitly.</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[localhost.recorder.mode.custom]</span>
+<span class="n">meter_voltage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">inst</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;meter&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">label</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;voltage&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;data&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">unit</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;Volt&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
 <p>After sending <code class="docutils literal notranslate"><span class="pre">Start</span></code> request (pushing <code class="docutils literal notranslate"><span class="pre">Start</span></code> button), you can see the measurement values
 (random values) are collected.</p>
 </section>

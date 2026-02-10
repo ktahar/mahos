@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>mahos_dq.meas.odmr_worker.Sweeper &#8212; MAHOS 0.3.0 documentation</title>
+    <title>mahos_dq.meas.odmr_worker.Sweeper &#8212; MAHOS 0.4.0 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="../../_static/documentation_options.js?v=e259d695"></script>
+    <script src="../../_static/documentation_options.js?v=6c02275b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_dq_meas/generated/mahos_dq.meas.odmr_worker.Sweeper';</script>
@@ -110,7 +110,7 @@
   
   
   
-    <p class="title logo__title">MAHOS 0.3.0 documentation</p>
+    <p class="title logo__title">MAHOS 0.4.0 documentation</p>
   
 </a></div>
     
@@ -459,7 +459,12 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos_dq.meas.odmr_worker.Sweeper">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos_dq.meas.odmr_worker.</span></span><span class="sig-name descname"><span class="pre">Sweeper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.odmr_worker.Sweeper" title="Link to this definition">#</a></dt>
-<dd><p>Worker for fast ODMR sweep using mutual triggering between SG and PG.</p>
+<dd><p>Worker for fast ODMR sweep using hardware triggered SG and/or PG.</p>
+<p>For some SGs with “frequency settled” output signal, SG and PG can be mutually triggered;
+PG is triggered by “frequency settled” of SG,
+and SG’s freq sweep step is triggered at last of PG sequence.</p>
+<p>For SGs without such output, PG can be configured to run continuously (pg_immediate = True);
+SG’s freq sweep step is continuously triggered by PG.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -469,7 +474,10 @@
 <li><p><strong>sweeper.channel_remap</strong> (<em>dict</em><em>[</em><em>str</em><em> | </em><em>int</em><em>, </em><em>str</em><em> | </em><em>int</em><em>]</em>) – mapping to fix default channel names.</p></li>
 <li><p><strong>sweeper.start_delay</strong> (<em>float</em>) – (default: 0.0) delay time (sec.) before starting SG/PG output.</p></li>
 <li><p><strong>sweeper.sg_first</strong> (<em>bool</em>) – (has preset) if True, turn on SG first and PG second.
-This mode is for SGs which won’t start the point sweep by software command.</p></li>
+This mode is for a SG which cannot start the point_freq_sweep mode without affecting PG.</p></li>
+<li><p><strong>sweeper.pg_immediate</strong> (<em>bool</em>) – (has preset) if True, PG runs IMMEDIATE mode without trigger.
+This mode is for a SG which doesn’t have “frequency settled” output signal.
+pg_immediate takes precedence over sg_first; when this is True, sg_first has no effect.</p></li>
 <li><p><strong>sweeper.pg_freq_cw</strong> (<em>float</em>) – (has preset) PG frequency for CW mode.</p></li>
 <li><p><strong>sweeper.pg_freq_pulse</strong> (<em>float</em>) – (has preset) PG frequency for Pulse mode.</p></li>
 <li><p><strong>sweeper.minimum_block_length</strong> (<em>int</em>) – (has preset) minimum block length in generated blocks</p></li>

@@ -37,6 +37,8 @@
       ~DS_SG.set_sweep_dwell_time
       ~DS_SG.set_sweep_points
       ~DS_SG.set_trigger_mode
+      ~DS_SG.start
+      ~DS_SG.stop
    
    
 

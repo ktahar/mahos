@@ -18,6 +18,7 @@
    
       ~CameraInterface.configure_continuous
       ~CameraInterface.configure_hard_trigger
+      ~CameraInterface.configure_soft_trigger
       ~CameraInterface.get_frame
    
    

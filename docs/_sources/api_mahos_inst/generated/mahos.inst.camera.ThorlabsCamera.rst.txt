@@ -20,9 +20,13 @@
       ~ThorlabsCamera.close_resources
       ~ThorlabsCamera.configure
       ~ThorlabsCamera.configure_continuous
+      ~ThorlabsCamera.configure_soft_trigger
       ~ThorlabsCamera.get
       ~ThorlabsCamera.get_frame
+      ~ThorlabsCamera.get_frame_soft_trig_imm
       ~ThorlabsCamera.poll_continuous
+      ~ThorlabsCamera.set_binning
+      ~ThorlabsCamera.set_roi
       ~ThorlabsCamera.start
       ~ThorlabsCamera.stop
    

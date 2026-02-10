@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>meas layer &#8212; MAHOS 0.3.0 documentation</title>
+    <title>meas layer &#8212; MAHOS 0.4.0 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=e259d695"></script>
+    <script src="_static/documentation_options.js?v=6c02275b"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'arch_meas';</script>
@@ -110,7 +110,7 @@
   
   
   
-    <p class="title logo__title">MAHOS 0.3.0 documentation</p>
+    <p class="title logo__title">MAHOS 0.4.0 documentation</p>
   
 </a></div>
     
@@ -460,8 +460,61 @@ but PosTweaker has dedicated interface and GUI for positioners.</p>
 <section id="recorder">
 <h2>Recorder<a class="headerlink" href="#recorder" title="Link to this heading">#</a></h2>
 <p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.recorder.Recorder.html#mahos.meas.recorder.Recorder" title="mahos.meas.recorder.Recorder"><code class="xref py py-class docutils literal notranslate"><span class="pre">Recorder</span></code></a> is a generic node for recording of time-series data from instruments.
-To use Recorder, instrument must implement following APIs: <code class="docutils literal notranslate"><span class="pre">get_param_dict_labels()</span></code>, <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>, <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, <code class="docutils literal notranslate"><span class="pre">get(&quot;unit&quot;)</span></code>, and <code class="docutils literal notranslate"><span class="pre">get(&quot;data&quot;)</span></code>.</p>
+To use Recorder, instrument must implement following APIs: <code class="docutils literal notranslate"><span class="pre">get_param_dict_labels()</span></code>, <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>, <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, and <code class="docutils literal notranslate"><span class="pre">get()</span></code>.
+If channel unit is not given in the mode configuration, <code class="docutils literal notranslate"><span class="pre">get(&quot;unit&quot;)</span></code> is additionally required.</p>
+<p>Recorder uses selected mode (<code class="docutils literal notranslate"><span class="pre">[...recorder.mode.&lt;label&gt;]</span></code>) as a map from Recorder channel name
+to instrument channel configuration. For each channel config:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">inst</span></code>: instrument name on target server.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label</span></code>: passed to instrument calls as <code class="docutils literal notranslate"><span class="pre">label=...</span></code> (defaults to <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">key</span></code>: key for acquisition call <code class="docutils literal notranslate"><span class="pre">get(inst,</span> <span class="pre">key,</span> <span class="pre">label=label)</span></code> (defaults to <code class="docutils literal notranslate"><span class="pre">&quot;data&quot;</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">unit</span></code>: fixed unit string stored in data; if omitted, Recorder queries
+<code class="docutils literal notranslate"><span class="pre">get(inst,</span> <span class="pre">&quot;unit&quot;,</span> <span class="pre">label=label)</span></code>.</p></li>
+</ul>
+<p>Main API-call flow is:</p>
+<ol class="arabic simple">
+<li><p>On parameter query, Recorder calls <code class="docutils literal notranslate"><span class="pre">get_param_dict(inst,</span> <span class="pre">label)</span></code> per channel.</p></li>
+<li><p>On start, Recorder optionally locks instruments, calls <code class="docutils literal notranslate"><span class="pre">configure(inst,</span> <span class="pre">params[channel],</span> <span class="pre">label)</span></code>,
+resolves unit (config <code class="docutils literal notranslate"><span class="pre">unit</span></code> or <code class="docutils literal notranslate"><span class="pre">get(&quot;unit&quot;)</span></code>), then calls <code class="docutils literal notranslate"><span class="pre">start(inst,</span> <span class="pre">label)</span></code>.</p></li>
+<li><p>In ACTIVE state, Recorder polls each channel by <code class="docutils literal notranslate"><span class="pre">get(inst,</span> <span class="pre">key,</span> <span class="pre">label)</span></code> and appends
+values to time-series data under the Recorder channel name.</p></li>
+<li><p>On stop, Recorder calls <code class="docutils literal notranslate"><span class="pre">stop(inst,</span> <span class="pre">label)</span></code> and releases locks.</p></li>
+<li><p>On reset (IDLE only), Recorder calls <code class="docutils literal notranslate"><span class="pre">reset(inst,</span> <span class="pre">label)</span></code> without lock/release handling.</p></li>
+</ol>
 <p>See also <a class="reference internal" href="tutorial_manual_op.html"><span class="doc">Tutorial 3: Manual Operation</span></a> for an example with mock instrument.</p>
+</section>
+<section id="sweeper">
+<h2>Sweeper<a class="headerlink" href="#sweeper" title="Link to this heading">#</a></h2>
+<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.sweeper.Sweeper.html#mahos.meas.sweeper.Sweeper" title="mahos.meas.sweeper.Sweeper"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sweeper</span></code></a> is a generic 1D sweep measurement node.
+It controls one sweep parameter and samples one measurement value at each sweep point.
+The worker repeats the line sweep for requested number of times and stores the result in
+<code class="xref py py-class docutils literal notranslate"><span class="pre">SweeperData</span></code>.</p>
+<p>The sweep condition can be configured by <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">stop</span></code>, <code class="docutils literal notranslate"><span class="pre">num</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, and <code class="docutils literal notranslate"><span class="pre">delay</span></code>
+parameters. <code class="docutils literal notranslate"><span class="pre">sweeps</span></code> controls number of repeated sweeps (<code class="docutils literal notranslate"><span class="pre">0</span></code> means infinite).
+Configuration sections <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">measure</span></code> define instrument names and API keys used
+for set/get operations.
+The <code class="docutils literal notranslate"><span class="pre">x</span></code> instrument must support <code class="docutils literal notranslate"><span class="pre">set</span></code> and <code class="docutils literal notranslate"><span class="pre">measure</span></code> instrument must support <code class="docutils literal notranslate"><span class="pre">get</span></code>.
+The runtime loop is <code class="docutils literal notranslate"><span class="pre">set(x)</span> <span class="pre">-&gt;</span> <span class="pre">delay</span> <span class="pre">-&gt;</span> <span class="pre">get(measure)</span></code> at each point.</p>
+<p>Sweeper intentionally does not call instrument <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">start()</span></code>, or <code class="docutils literal notranslate"><span class="pre">stop()</span></code>. If your instrument needs these APIs, invoke them manually
+via Tweaker, scripts, or interactive sessions before running Sweeper.</p>
+</section>
+<section id="gridsweeper">
+<h2>GridSweeper<a class="headerlink" href="#gridsweeper" title="Link to this heading">#</a></h2>
+<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.grid_sweeper.GridSweeper.html#mahos.meas.grid_sweeper.GridSweeper" title="mahos.meas.grid_sweeper.GridSweeper"><code class="xref py py-class docutils literal notranslate"><span class="pre">GridSweeper</span></code></a> is a generic 2D planar sweep node.
+It controls two sweep parameters (x and y axes) and samples one measurement value on each
+grid point. One completed y-loop corresponds to one 2D image, and repeated images are stacked
+in <code class="xref py py-class docutils literal notranslate"><span class="pre">GridSweeperData</span></code>.</p>
+<p>Both axes support <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">stop</span></code>, <code class="docutils literal notranslate"><span class="pre">num</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, and <code class="docutils literal notranslate"><span class="pre">delay</span></code> parameters.
+<code class="docutils literal notranslate"><span class="pre">sweeps</span></code> controls number of repeated 2D images (<code class="docutils literal notranslate"><span class="pre">0</span></code> means infinite).
+Configuration sections <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>, and <code class="docutils literal notranslate"><span class="pre">measure</span></code> define instrument names and API keys used
+for set/get operations.
+The <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span></code> instruments must support <code class="docutils literal notranslate"><span class="pre">set</span></code> and <code class="docutils literal notranslate"><span class="pre">measure</span></code> instrument must support <code class="docutils literal notranslate"><span class="pre">get</span></code>.
+The runtime loop is nested <code class="docutils literal notranslate"><span class="pre">set(y)</span> <span class="pre">-&gt;</span> <span class="pre">delay_y</span> <span class="pre">-&gt;</span> <span class="pre">set(x)</span> <span class="pre">-&gt;</span> <span class="pre">delay_x</span> <span class="pre">-&gt;</span> <span class="pre">get(measure)</span></code>
+across the configured grid.</p>
+<p>GridSweeper intentionally does not call instrument <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">start()</span></code>, or <code class="docutils literal notranslate"><span class="pre">stop()</span></code>. If your instrument needs these APIs, invoke them manually
+via Tweaker, scripts, or interactive sessions before running GridSweeper.</p>
 </section>
 <section id="statemanager">
 <h2>StateManager<a class="headerlink" href="#statemanager" title="Link to this heading">#</a></h2>
@@ -550,6 +603,8 @@ After a <cite>command</cite>, we can use <cite>restore</cite> request to recover
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tweaker">Tweaker</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#postweaker">PosTweaker</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#recorder">Recorder</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sweeper">Sweeper</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gridsweeper">GridSweeper</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#statemanager">StateManager</a></li>
 </ul>
   </nav></div>

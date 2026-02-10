@@ -29,7 +29,6 @@
       ~CameraWidget.sizeHint
       ~CameraWidget.update_acquisitions_box
       ~CameraWidget.update_image
-      ~CameraWidget.update_roi_boxes
       ~CameraWidget.update_state
    
    
