@@ -67,8 +67,11 @@ class GridSweeperIO(object):
             return False
 
     def _select_image(self, data: GridSweeperData, params: dict) -> np.ndarray | None:
-        if params.get("mean", False):
-            return data.get_mean_image(last_n=params.get("last_n", 0))
+        if params.get("mean", True):
+            return data.get_mean_image(
+                last_n=params.get("last_n", 0),
+                include_incomplete=params.get("include_incomplete", True),
+            )
 
         if "sweep_index" in params:
             return data.get_image(params["sweep_index"])

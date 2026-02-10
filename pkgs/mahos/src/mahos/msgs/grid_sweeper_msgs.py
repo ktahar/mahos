@@ -15,26 +15,30 @@ import time
 import numpy as np
 from numpy.typing import NDArray
 
-from mahos.msgs.data_msgs import Data, FormatTimeMixin
+from mahos.msgs.common_meas_msgs import BasicMeasData
 
 
-class GridSweeperData(Data, FormatTimeMixin):
-    """Data class for 2D sweep (x, y) with repeated sweeps."""
+class GridSweeperData(BasicMeasData):
+    """Data class for 2D planar sweep (x, y) with repeated sweeps."""
 
     def __init__(self, params: dict | None = None):
         self.set_version(0)
         self.init_params(params)
         self.init_attrs()
 
+        self.data: NDArray[np.float64] | None = None
+        self.completed_sweeps: int = 0
+
     def init_attrs(self):
         self.running: bool = False
         self.start_time: float = time.time()
         self.finish_time: float | None = None
+        self.paused_periods: np.ndarray | None = None
         self._saved: bool = False
 
-        self.data: NDArray[np.float64] | None = None
-        self.completed_sweeps: int = 0
+        self.init_axes()
 
+    def init_axes(self):
         if self.params is not None:
             x_params = self.params.get("x", {})
             y_params = self.params.get("y", {})
@@ -53,25 +57,6 @@ class GridSweeperData(Data, FormatTimeMixin):
             self.zlabel = "Measurement"
             self.zunit = ""
 
-    def start(self):
-        self.running = True
-        self.start_time = time.time()
-        self.finish_time = None
-
-    def finalize(self) -> float:
-        self.running = False
-        self.finish_time = time.time()
-        return self.finish_time - self.start_time
-
-    def is_finalized(self) -> bool:
-        return (not self.running) and (self.finish_time is not None)
-
-    def set_saved(self):
-        self._saved = True
-
-    def is_saved(self) -> bool:
-        return self._saved
-
     def has_data(self) -> bool:
         return self.data is not None
 
@@ -79,6 +64,30 @@ class GridSweeperData(Data, FormatTimeMixin):
         """Get number of completed 2D sweeps."""
 
         return self.completed_sweeps
+
+    def image_num(self) -> int:
+        """Get number of available 2D sweep images.
+
+        Returned value should be either
+        - same as sweeps(): if the latest sweep image is completed (or both are 0).
+        - sweeps() + 1: if the latest sweep image is incomplete (includes NaN)
+
+        """
+
+        if not self.has_data():
+            return 0
+        return self.data.shape[2]
+
+    def has_incomplete(self) -> bool:
+        """Check if the latest image is incomplete (includes NaN).
+
+        Returns False there is no data.
+
+        """
+
+        if not self.has_data():
+            return False
+        return self.sweeps() < self.image_num()
 
     def get_xdata(self) -> NDArray[np.float64]:
         if self.params is None or "x" not in self.params:
@@ -113,7 +122,9 @@ class GridSweeperData(Data, FormatTimeMixin):
 
         return self.get_image(-1)
 
-    def get_mean_image(self, last_n: int = 0) -> NDArray[np.float64] | None:
+    def get_mean_image(
+        self, last_n: int = 0, include_incomplete: bool = True
+    ) -> NDArray[np.float64] | None:
         """Get averaged 2D image over all or last N sweeps, ignoring NaN."""
 
         if self.data is None:
@@ -121,7 +132,10 @@ class GridSweeperData(Data, FormatTimeMixin):
         if last_n < 0 and self.data.shape[2] <= -last_n:
             return None
 
-        img = self.data[:, :, -last_n:]
+        if not include_incomplete and self.has_incomplete():
+            img = self.data[:, :, -last_n:-1]
+        else:
+            img = self.data[:, :, -last_n:]
         if img.size == 0:
             return None
         # return without nanmean() call to suppress "Mean of empty slice" warning

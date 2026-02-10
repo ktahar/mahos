@@ -51,8 +51,13 @@ class PlotWidget(QtWidgets.QWidget):
     def init_ui(self):
         hl0 = QtWidgets.QHBoxLayout()
 
-        self.meanBox = QtWidgets.QCheckBox("Mean over sweeps")
+        self.meanBox = QtWidgets.QCheckBox("Mean")
+        self.meanBox.setToolTip("Mean image over sweeps")
         self.meanBox.setChecked(False)
+
+        self.meanincompBox = QtWidgets.QCheckBox("Use incomp")
+        self.meanincompBox.setChecked(True)
+        self.meanincompBox.setToolTip("Include incompleted latest image when taking mean")
 
         self.lastnBox = QtWidgets.QSpinBox(parent=self)
         self.lastnBox.setPrefix("last_n: ")
@@ -61,25 +66,26 @@ class PlotWidget(QtWidgets.QWidget):
         self.lastnBox.setValue(0)
         self.lastnBox.setToolTip("Average last N sweeps (0 for all)")
 
-        self.sweepIndexBox = QtWidgets.QSpinBox(parent=self)
-        self.sweepIndexBox.setPrefix("sweep idx: ")
-        self.sweepIndexBox.setMinimum(-1_000_000)
-        self.sweepIndexBox.setMaximum(1_000_000)
-        self.sweepIndexBox.setValue(-1)
-        self.sweepIndexBox.setToolTip("Displayed sweep index when mean mode is off")
+        self.sweepidxBox = QtWidgets.QSpinBox(parent=self)
+        self.sweepidxBox.setPrefix("index: ")
+        self.sweepidxBox.setMinimum(-1_000_000)
+        self.sweepidxBox.setMaximum(1_000_000)
+        self.sweepidxBox.setValue(-1)
+        self.sweepidxBox.setToolTip("Displayed sweep index when mean mode is off")
 
         self.autolevelBox = QtWidgets.QCheckBox("Auto level")
         self.autolevelBox.setChecked(True)
 
-        for w in (self.lastnBox, self.sweepIndexBox):
+        for w in (self.lastnBox, self.sweepidxBox):
             w.setSizePolicy(Policy.MinimumExpanding, Policy.Minimum)
             w.setMaximumWidth(180)
 
         spacer = QtWidgets.QSpacerItem(40, 20, Policy.Expanding, Policy.Minimum)
 
         hl0.addWidget(self.meanBox)
+        hl0.addWidget(self.meanincompBox)
         hl0.addWidget(self.lastnBox)
-        hl0.addWidget(self.sweepIndexBox)
+        hl0.addWidget(self.sweepidxBox)
         hl0.addWidget(self.autolevelBox)
         hl0.addItem(spacer)
 
@@ -111,30 +117,36 @@ class PlotWidget(QtWidgets.QWidget):
 
     def update_widget_state(self):
         mean = self.meanBox.isChecked()
+        self.meanincompBox.setEnabled(mean)
         self.lastnBox.setEnabled(mean)
-        self.sweepIndexBox.setEnabled(not mean)
+        self.sweepidxBox.setEnabled(not mean)
 
     def update_labels(self, data: GridSweeperData):
         self.img_plot.setLabel("bottom", data.xlabel, data.xunit)
         self.img_plot.setLabel("left", data.ylabel, data.yunit)
 
+    def update_sweep_index(self, data: GridSweeperData):
+        # avoid n being 0
+        n = max(data.image_num(), 1)
+        self.sweepidxBox.setMinimum(-n)
+        self.sweepidxBox.setMaximum(n - 1)
+
     def _select_image(self, data: GridSweeperData) -> np.ndarray | None:
         if self.meanBox.isChecked():
             return data.get_mean_image(last_n=self.lastnBox.value())
-        return data.get_image(self.sweepIndexBox.value())
+        return data.get_image(self.sweepidxBox.value())
 
     def update_image(self, data: GridSweeperData):
         if not data.has_data():
             return
 
         img = self._select_image(data)
-        if img is None or img.size == 0:
+        if img is None or img.size == 0 or np.isnan(img).all():
             return
 
         self.img.updateImage(img)
 
-        finite = np.isfinite(img)
-        if self.autolevelBox.isChecked() and finite.any():
+        if self.autolevelBox.isChecked() and np.isfinite(img).any():
             mn, mx = np.nanmin(img), np.nanmax(img)
             if mn == mx:
                 mn, mx = mn - 0.1, mx + 0.1
@@ -142,6 +154,7 @@ class PlotWidget(QtWidgets.QWidget):
 
         xdata = data.get_xdata()
         ydata = data.get_ydata()
+
         if xdata.size == 0 or ydata.size == 0:
             return
 
@@ -160,7 +173,16 @@ class PlotWidget(QtWidgets.QWidget):
 
     def refresh(self, data: GridSweeperData):
         self.update_labels(data)
+        self.update_sweep_index(data)
         self.update_image(data)
+
+    def export_params(self):
+        return {
+            "mean": self.meanBox.isChecked(),
+            "include_incomplete": self.meanincompBox.isChecked(),
+            "last_n": self.lastnBox.value(),
+            "sweep_index": self.sweepidxBox.value(),
+        }
 
 
 class GridSweeperWidget(ClientTopWidget):
@@ -184,11 +206,11 @@ class GridSweeperWidget(ClientTopWidget):
         self.cli.statusUpdated.connect(self.init_with_status)
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
 
-        self.add_clients(self.cli)
+        self.add_clients(self.cli, self.gparams_cli)
         self.setEnabled(False)
 
     def init_ui(self):
-        hl0 = QtWidgets.QHBoxLayout()
+        hl = QtWidgets.QHBoxLayout()
         self.startButton = QtWidgets.QPushButton("Start")
         self.stopButton = QtWidgets.QPushButton("Stop")
         self.saveButton = QtWidgets.QPushButton("Save")
@@ -202,27 +224,30 @@ class GridSweeperWidget(ClientTopWidget):
             self.exportButton,
             self.loadButton,
         ):
-            hl0.addWidget(w)
+            hl.addWidget(w)
 
         spacer0 = QtWidgets.QSpacerItem(40, 20, Policy.Expanding, Policy.Minimum)
-        hl0.addItem(spacer0)
+        hl.addItem(spacer0)
 
-        hl1 = QtWidgets.QHBoxLayout()
+        gl = QtWidgets.QGridLayout()
 
-        self.xstartBox = SpinBox(parent=self, prefix="x start: ")
-        self.xstopBox = SpinBox(parent=self, prefix="x stop: ")
+        xlabel = QtWidgets.QLabel("x (inner)")
+        self.xstartBox = SpinBox(parent=self, prefix="start: ")
+        self.xstopBox = SpinBox(parent=self, prefix="stop: ")
         self.xnumBox = QtWidgets.QSpinBox()
-        self.xnumBox.setPrefix("x num: ")
-        self.xlogBox = QtWidgets.QCheckBox("x log")
+        self.xnumBox.setPrefix("num: ")
+        self.xdelayBox = SpinBox(parent=self, prefix="delay: ")
+        self.xlogBox = QtWidgets.QCheckBox("log")
 
-        self.ystartBox = SpinBox(parent=self, prefix="y start: ")
-        self.ystopBox = SpinBox(parent=self, prefix="y stop: ")
+        ylabel = QtWidgets.QLabel("y (outer)")
+        self.ystartBox = SpinBox(parent=self, prefix="start: ")
+        self.ystopBox = SpinBox(parent=self, prefix="stop: ")
         self.ynumBox = QtWidgets.QSpinBox()
-        self.ynumBox.setPrefix("y num: ")
-        self.ylogBox = QtWidgets.QCheckBox("y log")
+        self.ynumBox.setPrefix("num: ")
+        self.ydelayBox = SpinBox(parent=self, prefix="delay: ")
+        self.ylogBox = QtWidgets.QCheckBox("log")
 
-        self.xdelayBox = SpinBox(parent=self, prefix="x delay: ")
-        self.ydelayBox = SpinBox(parent=self, prefix="y delay: ")
+        clabel = QtWidgets.QLabel("common")
         self.sweepsBox = QtWidgets.QSpinBox()
         self.sweepsBox.setPrefix("sweeps: ")
 
@@ -239,19 +264,37 @@ class GridSweeperWidget(ClientTopWidget):
         ):
             w.setSizePolicy(Policy.MinimumExpanding, Policy.Minimum)
             w.setMaximumWidth(160)
-            hl1.addWidget(w)
+        for i, w in enumerate(
+            (
+                xlabel,
+                self.xstartBox,
+                self.xstopBox,
+                self.xnumBox,
+                self.xdelayBox,
+                self.xlogBox,
+            )
+        ):
+            gl.addWidget(w, 0, i)
+        for i, w in enumerate(
+            (
+                ylabel,
+                self.ystartBox,
+                self.ystopBox,
+                self.ynumBox,
+                self.ydelayBox,
+                self.ylogBox,
+            )
+        ):
+            gl.addWidget(w, 1, i)
 
-        hl1.addWidget(self.xlogBox)
-        hl1.addWidget(self.ylogBox)
-
-        spacer1 = QtWidgets.QSpacerItem(40, 20, Policy.Expanding, Policy.Minimum)
-        hl1.addItem(spacer1)
+        gl.addWidget(clabel, 2, 0)
+        gl.addWidget(self.sweepsBox, 2, 1)
 
         self.plot = PlotWidget(parent=self)
 
         vl = QtWidgets.QVBoxLayout()
-        vl.addLayout(hl0)
-        vl.addLayout(hl1)
+        vl.addLayout(hl)
+        vl.addLayout(gl)
         vl.addWidget(self.plot)
         self.setLayout(vl)
 
@@ -272,23 +315,23 @@ class GridSweeperWidget(ClientTopWidget):
                 ("x.start", self.xstartBox),
                 ("x.stop", self.xstopBox),
                 ("x.num", self.xnumBox),
+                ("x.delay", self.xdelayBox),
                 ("x.log", self.xlogBox),
                 ("y.start", self.ystartBox),
                 ("y.stop", self.ystopBox),
                 ("y.num", self.ynumBox),
-                ("y.log", self.ylogBox),
-                ("x.delay", self.xdelayBox),
                 ("y.delay", self.ydelayBox),
+                ("y.log", self.ylogBox),
                 ("sweeps", self.sweepsBox),
             ],
         )
-        for w, key in (
-            (self.xstartBox, "x.start"),
-            (self.xstopBox, "x.stop"),
-            (self.ystartBox, "y.start"),
-            (self.ystopBox, "y.stop"),
-            (self.xdelayBox, "x.delay"),
-            (self.ydelayBox, "y.delay"),
+        for key, w in (
+            ("x.start", self.xstartBox),
+            ("x.stop", self.xstopBox),
+            ("x.delay", self.xdelayBox),
+            ("y.start", self.ystartBox),
+            ("y.stop", self.ystopBox),
+            ("y.delay", self.ydelayBox),
         ):
             p = flat[key]
             w.setOpts(
@@ -298,7 +341,6 @@ class GridSweeperWidget(ClientTopWidget):
                 step=p.step(),
             )
 
-        self.update_state(status.state, last_state=BinaryState.IDLE)
         self.cli.stateUpdated.connect(self.update_state)
         self.cli.dataUpdated.connect(self.update_data)
         self.init_connection()
@@ -311,7 +353,7 @@ class GridSweeperWidget(ClientTopWidget):
         self.exportButton.clicked.connect(self.export_data)
         self.loadButton.clicked.connect(self.load_data)
 
-    def update_state(self, state: BinaryState, last_state: BinaryState):
+    def update_state(self, state: BinaryState):
         idle = state == BinaryState.IDLE
 
         for w in (
@@ -321,13 +363,13 @@ class GridSweeperWidget(ClientTopWidget):
             self.xstartBox,
             self.xstopBox,
             self.xnumBox,
+            self.xdelayBox,
             self.xlogBox,
             self.ystartBox,
             self.ystopBox,
             self.ynumBox,
-            self.ylogBox,
-            self.xdelayBox,
             self.ydelayBox,
+            self.ylogBox,
             self.sweepsBox,
         ):
             w.setEnabled(idle)
@@ -343,15 +385,15 @@ class GridSweeperWidget(ClientTopWidget):
                 "start": self.xstartBox.value(),
                 "stop": self.xstopBox.value(),
                 "num": self.xnumBox.value(),
-                "log": self.xlogBox.isChecked(),
                 "delay": self.xdelayBox.value(),
+                "log": self.xlogBox.isChecked(),
             },
             "y": {
                 "start": self.ystartBox.value(),
                 "stop": self.ystopBox.value(),
                 "num": self.ynumBox.value(),
-                "log": self.ylogBox.isChecked(),
                 "delay": self.ydelayBox.value(),
+                "log": self.ylogBox.isChecked(),
             },
             "sweeps": self.sweepsBox.value(),
         }
@@ -371,7 +413,7 @@ class GridSweeperWidget(ClientTopWidget):
         self.cli.save_data(fn, note=note)
 
         png_fn = os.path.splitext(fn)[0] + ".png"
-        self.cli.export_data(png_fn)
+        self.cli.export_data(png_fn, params=self.plot.export_params())
         return fn
 
     def load_data(self):
@@ -393,7 +435,7 @@ class GridSweeperWidget(ClientTopWidget):
         if not fn:
             return
 
-        self.cli.export_data(fn)
+        self.cli.export_data(fn, params=self.plot.export_params())
 
 
 class GridSweeperGUI(GUINode):
