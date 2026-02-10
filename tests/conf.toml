@@ -367,6 +367,9 @@ dmm1_i2 = ["dmm1", "ch2_dci"]
 [localhost.recorder.mode.few]
 dmm0 = ["dmm0", "ch1_dcv"]
 dmm1 = ["dmm1", "ch1_dcv"]
+[localhost.recorder.mode.key_unit]
+dmm0_v1_Volt = { inst = "dmm0", label = "ch1_dcv", unit = "Volt" }
+dmm1_ready = { inst = "dmm1", label = "ch1_dcv", key = "opc", unit = "" }
 
 [localhost.sweeper]
 module = "mahos.meas.sweeper"

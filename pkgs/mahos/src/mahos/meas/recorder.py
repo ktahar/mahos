@@ -36,8 +36,8 @@ class Recorder(BasicMeasNode):
     """Generic data-logging measurement for time-series data.
 
     The target instruments must implement following APIs: ``get_param_dict_labels()``,
-    ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, ``get("unit")``,
-    and ``get("data")``.
+    ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, and ``get()``.
+    ``get("unit")`` is required only when channel unit is not specified in mode config.
 
     :param target.servers: The InstrumentServer targets (instrument name, server full name).
     :type target.servers: dict[str, str]
@@ -45,11 +45,24 @@ class Recorder(BasicMeasNode):
     :type target.tweakers: list[str]
     :param target.log: The LogBroker target (broker full name).
     :type target.log: str
-    :param mode: The dictionary to define the measurement modes.
-        First-level key is mode name and second-level key is measurement value name.
-        The tuple[str, str] (instrument name, label name) defines
-        how to get each measurement value.
-    :type mode: dict[str, dict[str, tuple[str, str]]]
+    :param mode: Nested dictionary to define the measurement modes.
+        First-level key is mode name and second-level key is measurement channel name,
+        and value is the channel config.
+        Channel config can be tuple[str, str] (instrument name, label name), or dict with
+        keys: ``inst`` (required), ``label`` (optional, default ``""``),
+        ``key`` (optional, default ``"data"``), and ``unit`` (optional).
+    :type mode: dict[str, dict[str, tuple[str, str] | dict[str, str]]]
+
+    Runtime behavior for each channel in selected mode:
+
+    - ``get_param_dict()`` request: calls ``get_param_dict(inst, label)``.
+    - Start sequence: ``lock(inst)`` (optional), ``configure(inst, params[channel], label)``,
+      then unit resolution by ``unit`` in config or ``get(inst, "unit", label=label)``.
+      Finally, ``start(inst, label=label)`` is called.
+    - Polling sequence (ACTIVE): calls ``get(inst, key, label=label)`` repeatedly at
+      collector interval and appends returned values to ``RecorderData`` under the channel name.
+    - Stop sequence: calls ``stop(inst, label=label)`` and releases lock.
+    - Reset sequence (IDLE only): calls ``reset(inst, label=label)`` without lock/release.
 
     """
 

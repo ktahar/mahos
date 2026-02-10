@@ -333,6 +333,19 @@ class GridSweeper(BasicMeasNode):
     result is stored as image stack data (:class:`~mahos.msgs.grid_sweeper_msgs.GridSweeperData`)
     with optional repeated 2D sweeps.
 
+    Runtime behavior:
+
+    - Uses ``set()`` and ``get()`` APIs for target instruments.
+    - For each grid point, calls ``set(y.key, value, label=y.label)`` and
+      ``set(x.key, value, label=x.label)`` (with configured delays), then calls
+      ``get(measure.key, label=measure.label)``.
+    - Does not call ``get_param_dict()``, ``configure()``, ``start()``, or ``stop()``
+      for target instruments by design.
+
+    If a target instrument requires pre-configuration or start/stop signaling, users
+    should invoke those APIs manually via Tweaker, scripts, or interactive sessions
+    before running GridSweeper.
+
     """
 
     CLIENT = GridSweeperClient

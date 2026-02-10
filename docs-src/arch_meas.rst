@@ -48,7 +48,27 @@ Recorder
 --------
 
 :class:`Recorder <mahos.meas.recorder.Recorder>` is a generic node for recording of time-series data from instruments.
-To use Recorder, instrument must implement following APIs: ``get_param_dict_labels()``, ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, ``get("unit")``, and ``get("data")``.
+To use Recorder, instrument must implement following APIs: ``get_param_dict_labels()``, ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, and ``get()``.
+If channel unit is not given in the mode configuration, ``get("unit")`` is additionally required.
+
+Recorder uses selected mode (``[...recorder.mode.<label>]``) as a map from Recorder channel name
+to instrument channel configuration. For each channel config:
+
+- ``inst``: instrument name on target server.
+- ``label``: passed to instrument calls as ``label=...`` (defaults to ``""``).
+- ``key``: key for acquisition call ``get(inst, key, label=label)`` (defaults to ``"data"``).
+- ``unit``: fixed unit string stored in data; if omitted, Recorder queries
+  ``get(inst, "unit", label=label)``.
+
+Main API-call flow is:
+
+1. On parameter query, Recorder calls ``get_param_dict(inst, label)`` per channel.
+2. On start, Recorder optionally locks instruments, calls ``configure(inst, params[channel], label)``,
+   resolves unit (config ``unit`` or ``get("unit")``), then calls ``start(inst, label)``.
+3. In ACTIVE state, Recorder polls each channel by ``get(inst, key, label)`` and appends
+   values to time-series data under the Recorder channel name.
+4. On stop, Recorder calls ``stop(inst, label)`` and releases locks.
+5. On reset (IDLE only), Recorder calls ``reset(inst, label)`` without lock/release handling.
 
 See also :doc:`tutorial_manual_op` for an example with mock instrument.
 
@@ -65,6 +85,11 @@ parameters. ``sweeps`` controls number of repeated sweeps (``0`` means infinite)
 Configuration sections ``x`` and ``measure`` define instrument names and API keys used
 for set/get operations.
 The ``x`` instrument must support ``set`` and ``measure`` instrument must support ``get``.
+The runtime loop is ``set(x) -> delay -> get(measure)`` at each point.
+
+Sweeper intentionally does not call instrument ``get_param_dict()``, ``configure()``,
+``start()``, or ``stop()``. If your instrument needs these APIs, invoke them manually
+via Tweaker, scripts, or interactive sessions before running Sweeper.
 
 GridSweeper
 -----------
@@ -79,6 +104,12 @@ Both axes support ``start``, ``stop``, ``num``, ``log``, and ``delay`` parameter
 Configuration sections ``x``, ``y``, and ``measure`` define instrument names and API keys used
 for set/get operations.
 The ``x`` and ``y`` instruments must support ``set`` and ``measure`` instrument must support ``get``.
+The runtime loop is nested ``set(y) -> delay_y -> set(x) -> delay_x -> get(measure)``
+across the configured grid.
+
+GridSweeper intentionally does not call instrument ``get_param_dict()``, ``configure()``,
+``start()``, or ``stop()``. If your instrument needs these APIs, invoke them manually
+via Tweaker, scripts, or interactive sessions before running GridSweeper.
 
 StateManager
 ------------

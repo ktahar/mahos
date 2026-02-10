@@ -59,7 +59,8 @@ Recorder
 
 :class:`Recorder <mahos.meas.recorder.Recorder>` is a generic node for recording of time-series data from instruments.
 
-To use Recorder, instrument must implement following APIs: ``get_param_dict_labels()``, ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, ``get("unit")``, and ``get("data")``.
+To use Recorder, instrument must implement following APIs: ``get_param_dict_labels()``, ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, and ``get("data")``.
+If channel unit is not specified in mode config, ``get("unit")`` is additionally required.
 In this example, the ``Multimeter_mock`` class is implemented to demonstrate Recorder's feature.
 The mock instrument provides two different configurations labeled ``voltage`` and ``current``.
 The ``mode`` block of the Recorder configuration defines which label (mode of instrument) is used, as below.
@@ -74,6 +75,13 @@ The ``mode`` block of the Recorder configuration defines which label (mode of in
 The first two lines define a recorder mode "voltage" with single measurement value named "meter_voltage",
 which corresponds to instrument "meter" and label "voltage".
 The last two lines define the other mode using "current" label instead.
+
+Per-channel dict style is also available to set ``key`` and ``unit`` explicitly.
+
+.. code-block:: toml
+
+   [localhost.recorder.mode.custom]
+   meter_voltage = {inst = "meter", label = "voltage", key = "data", unit = "Volt"}
 
 After sending ``Start`` request (pushing ``Start`` button), you can see the measurement values
 (random values) are collected.

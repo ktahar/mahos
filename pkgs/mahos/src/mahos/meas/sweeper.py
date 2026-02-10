@@ -245,6 +245,19 @@ class Sweeper(BasicMeasNode):
     measurement quantity (``measure`` section) at each point. Each run produces line data
     (:class:`~mahos.msgs.sweeper_msgs.SweeperData`) with optional repeated sweeps.
 
+    Runtime behavior:
+
+    - Uses ``set()`` and ``get()`` APIs for target instruments.
+    - At each sweep point, calls ``set(x.key, value, label=x.label)`` on ``x.inst``,
+      waits for ``delay``, and calls ``get(measure.key, label=measure.label)`` on
+      ``measure.inst``.
+    - Does not call ``get_param_dict()``, ``configure()``, ``start()``, or ``stop()``
+      for target instruments by design.
+
+    If a target instrument requires pre-configuration or start/stop signaling, users
+    should invoke those APIs manually via Tweaker, scripts, or interactive sessions
+    before running Sweeper.
+
     Supported basic requests are inherited from
     :class:`~mahos.meas.common_meas.BasicMeasNode`:
     start / stop, parameter dict query, save / load / export, and fit / clear_fit.
