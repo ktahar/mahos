@@ -5,10 +5,38 @@ Changelog
 [Unreleased]
 ------------
 
+Added
+^^^^^
+
+- meas: new generic measurements Sweeper (1D) and GridSweeper (2D).
+- Confocal: add TraceNode and related trace configuration options.
+- IODMR: add ``publish_each`` conf.
+- inst: add new instrument modules / classes for laser, lock-in (SR860), signal generators
+  (SRS_SG390 and Windfreak_SynthHD), and PI positioner.
+- msgs.param_msgs: add ``read_only`` option for parameters.
+- ODMR: add ``point`` conf for per-point data update.
+
 Changed
 ^^^^^^^
 
-- Application packages mahos_dq, and mahos_dq_ext are introduced.
+- Introduced application packages: ``mahos_dq`` and ``mahos_dq_ext``.
+  The specific applications (confocal, odmr, etc.) has been moved from ``mahos`` to ``mahos_dq``.
+- Recorder: mode channel configuration now supports dict form
+  (``inst``, ``label``, ``key``, ``unit``), allowing configurable acquisition key and
+  optional unit override.
+- Thorlabs_Camera: extend features with software trigger, binning / ROI controls,
+  and ``infinite_wait`` configuration.
+- IV (SMU-based implementation): moved to examples for manual / scripted usage.
+- inst.smu: rename parameter ``logx`` to ``log``.
+- Dependencies and development environment updates (including Python/scipy stack related
+  updates and pyzmq/msgpack version refresh). Now using numpy 2.
+
+Fixed
+^^^^^
+
+- InstrumentServer: improve error message for module import failures.
+- GUI stability and usability improvements across camera / IODMR / ODMR / SPODMR /
+  spectroscopy / pos_tweaker (ROI limits, empty/NaN handling, control states).
 
 [0.3.0] - 2025-01-29
 --------------------
