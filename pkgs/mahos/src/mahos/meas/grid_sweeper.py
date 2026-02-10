@@ -188,6 +188,8 @@ class GridSweepWorker(Worker):
     def _generate_axis_values(self, params: dict, axis: str) -> NDArray[np.float64]:
         p = params[axis]
         if p.get("log", False):
+            if p["start"] <= 0.0 or p["stop"] <= 0.0:
+                raise ValueError(f"{axis}.start and {axis}.stop must be positive for log sweep.")
             return np.logspace(np.log10(p["start"]), np.log10(p["stop"]), p["num"])
         else:
             return np.linspace(p["start"], p["stop"], p["num"])

@@ -129,6 +129,8 @@ class SweepWorker(Worker):
         """Generate sweep values array."""
 
         if params.get("log", False):
+            if params["start"] <= 0.0 or params["stop"] <= 0.0:
+                raise ValueError("start and stop must be positive for log sweep.")
             return np.logspace(
                 np.log10(params["start"]),
                 np.log10(params["stop"]),
@@ -156,7 +158,11 @@ class SweepWorker(Worker):
         params["meas_key"] = self.meas_key
         params["meas_unit"] = self.meas_unit
 
-        self._x_values = self._generate_x_values(params)
+        try:
+            self._x_values = self._generate_x_values(params)
+        except Exception:
+            return self.fail_with_release("Failed to generate sweep values.")
+
         self.data = SweeperData(params)
         self.data.start()
         self.logger.info("Started sweeper.")

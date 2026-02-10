@@ -66,6 +66,10 @@ class VoltageSource_mock(Instrument):
             self.logger.error(f"invalid label {label}")
             return None
 
+    def configure_voltage(self, volt: float, ch: str) -> bool:
+        self.logger.info(f"Configured {ch} for voltage output. Value: {volt:.3f}")
+        return True
+
     def configure(self, params: dict, label: str = "") -> bool:
         if label in ("ch1", "ch2"):
             return self.configure_voltage(params.get("voltage", 0.0), label)

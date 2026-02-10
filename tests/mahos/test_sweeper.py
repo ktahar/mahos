@@ -39,6 +39,17 @@ def test_sweeper(server, sweeper, server_conf, sweeper_conf):
     assert server.configure("dmm0", dmm_params, label)
 
     params = sweeper.get_param_dict()
+    invalid_log_params = {
+        "start": 0.0,
+        "stop": 1.0,
+        "num": 11,
+        "delay": 0.0,
+        "sweeps": 1,
+        "log": True,
+    }
+    assert not sweeper.change_state(BinaryState.ACTIVE, invalid_log_params)
+    assert get_some(sweeper.get_status, poll_timeout_ms).state == BinaryState.IDLE
+
     params["sweeps"].set(3)
     params["delay"].set(1e-5)
     assert sweeper.change_state(BinaryState.ACTIVE, params)

@@ -254,6 +254,7 @@ class SweeperWidget(ClientTopWidget):
 
         self.sweepsBox = QtWidgets.QSpinBox()
         self.sweepsBox.setPrefix("sweeps: ")
+        self.sweepsBox.setSuffix(" (0 for inf)")
 
         self.logBox = QtWidgets.QCheckBox("log")
 

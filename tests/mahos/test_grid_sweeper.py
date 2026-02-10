@@ -68,6 +68,26 @@ def test_grid_sweeper(server, grid_sweeper, server_conf, grid_sweeper_conf):
     assert server.configure("dmm0", dmm_params, label)
 
     params = grid_sweeper.get_param_dict()
+    invalid_log_params = {
+        "x": {
+            "start": 0.0,
+            "stop": 1.0,
+            "num": 5,
+            "log": True,
+            "delay": 0.0,
+        },
+        "y": {
+            "start": 0.0,
+            "stop": 1.0,
+            "num": 3,
+            "log": False,
+            "delay": 0.0,
+        },
+        "sweeps": 1,
+    }
+    assert not grid_sweeper.change_state(BinaryState.ACTIVE, invalid_log_params)
+    assert get_some(grid_sweeper.get_status, poll_timeout_ms).state == BinaryState.IDLE
+
     x_num = 31
     y_num = 7
     sweep_num = 2

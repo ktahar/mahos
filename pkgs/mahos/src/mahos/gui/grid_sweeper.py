@@ -252,6 +252,7 @@ class GridSweeperWidget(ClientTopWidget):
         clabel = QtWidgets.QLabel("common")
         self.sweepsBox = QtWidgets.QSpinBox()
         self.sweepsBox.setPrefix("sweeps: ")
+        self.sweepsBox.setSuffix(" (0 for inf)")
 
         for w in (
             self.xstartBox,
