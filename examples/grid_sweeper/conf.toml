@@ -1,0 +1,94 @@
+# GridSweeper example configuration
+#
+# This example demonstrates a 2D parameter sweep:
+# - x: inner loop
+# - y: outer loop
+# and repeated 2D sweeps.
+
+[global]
+req_timeout_ms = 10_000
+poll_timeout_ms = 100
+
+[localhost.log]
+module = "mahos.node.log_broker"
+class = "LogBroker"
+target = { log = "localhost::log" }
+xpub_endpoint = "tcp://127.0.0.1:5655"
+xsub_endpoint = "tcp://127.0.0.1:5656"
+
+[localhost.gparams]
+module = "mahos.node.global_params"
+class = "GlobalParams"
+target = { log = "localhost::log" }
+rep_endpoint = "tcp://127.0.0.1:5657"
+pub_endpoint = "tcp://127.0.0.1:5658"
+
+[localhost.server]
+module = "mahos.inst.server"
+class = "InstrumentServer"
+target = { log = "localhost::log" }
+log_level = "DEBUG"
+rep_endpoint = "tcp://127.0.0.1:5659"
+pub_endpoint = "tcp://127.0.0.1:5660"
+
+# Example mock instruments - replace with your actual instruments
+[localhost.server.instrument.pos_x]
+module = "mock"
+class = "Positioner_mock"
+[localhost.server.instrument.pos_x.conf]
+range = [0.0, 10.0]
+
+[localhost.server.instrument.pos_y]
+module = "mock"
+class = "Positioner_mock"
+[localhost.server.instrument.pos_y.conf]
+range = [0.0, 5.0]
+
+# GridSweeper node
+[localhost.grid_sweeper]
+module = "mahos.meas.grid_sweeper"
+class = "GridSweeper"
+rep_endpoint = "tcp://127.0.0.1:5661"
+pub_endpoint = "tcp://127.0.0.1:5662"
+
+[localhost.grid_sweeper.target]
+log = "localhost::log"
+[localhost.grid_sweeper.target.servers]
+pos_x = "localhost::server"
+pos_y = "localhost::server"
+
+# x sweep configuration (inner loop)
+[localhost.grid_sweeper.x]
+inst = "pos_x"           # key in target.servers
+key = "target"           # key for inst.set(key, value)
+label = ""               # optional label for set()
+unit = ""                # display unit
+bounds = [0.0, 10.0]     # parameter bounds (optional)
+SI_prefix = true         # GUI option
+digit = 6                # GUI option
+
+# y sweep configuration (outer loop)
+[localhost.grid_sweeper.y]
+inst = "pos_y"
+key = "target"
+label = ""
+unit = ""
+bounds = [0.0, 5.0]
+SI_prefix = true
+digit = 6
+
+# measure configuration
+# Here we read current x position from the same x instrument for a fully self-contained example.
+# Replace this with your actual detector instrument/key in real use.
+[localhost.grid_sweeper.measure]
+inst = "pos_x"
+key = "pos"
+label = ""
+unit = ""
+
+[localhost.grid_sweeper_gui]
+module = "mahos.gui.grid_sweeper"
+class = "GridSweeperGUI"
+[localhost.grid_sweeper_gui.target]
+grid_sweeper = "localhost::grid_sweeper"
+gparams = "localhost::gparams"

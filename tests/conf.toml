@@ -391,6 +391,38 @@ key = "data"
 label = "ch1_dcv"
 unit = "V"
 
+[localhost.grid_sweeper]
+module = "mahos.meas.grid_sweeper"
+class = "GridSweeper"
+rep_endpoint = "tcp://127.0.0.1:5602"
+pub_endpoint = "tcp://127.0.0.1:5603"
+[localhost.grid_sweeper.target]
+log = "localhost::log"
+tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+[localhost.grid_sweeper.target.servers]
+pos_x = "localhost::server"
+pos_y = "localhost::server"
+dmm0 = "localhost::server"
+[localhost.grid_sweeper.x]
+inst = "pos_x"
+key = "target"
+label = ""
+unit = ""
+bounds = [0.0, 10.0]
+SI_prefix = true
+[localhost.grid_sweeper.y]
+inst = "pos_y"
+key = "target"
+label = ""
+unit = ""
+bounds = [0.0, 10.0]
+SI_prefix = true
+[localhost.grid_sweeper.measure]
+inst = "dmm0"
+key = "data"
+label = "ch1_dcv"
+unit = "V"
+
 [localhost.confocal_gui]
 module = "mahos_dq.gui.confocal"
 class = "ConfocalGUI"
@@ -484,6 +516,13 @@ module = "mahos.gui.sweeper"
 class = "SweeperGUI"
 [localhost.sweeper_gui.target]
 sweeper = "localhost::sweeper"
+gparams = "localhost::gparams"
+
+[localhost.grid_sweeper_gui]
+module = "mahos.gui.grid_sweeper"
+class = "GridSweeperGUI"
+[localhost.grid_sweeper_gui.target]
+grid_sweeper = "localhost::grid_sweeper"
 gparams = "localhost::gparams"
 
 [localhost.pulse_monitor]
