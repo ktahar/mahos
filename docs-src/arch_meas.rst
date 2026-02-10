@@ -52,6 +52,34 @@ To use Recorder, instrument must implement following APIs: ``get_param_dict_labe
 
 See also :doc:`tutorial_manual_op` for an example with mock instrument.
 
+Sweeper
+-------
+
+:class:`Sweeper <mahos.meas.sweeper.Sweeper>` is a generic 1D sweep measurement node.
+It controls one sweep parameter and samples one measurement value at each sweep point.
+The worker repeats the line sweep for requested number of times and stores the result in
+:class:`SweeperData <mahos.msgs.sweeper_msgs.SweeperData>`.
+
+The sweep condition can be configured by ``start``, ``stop``, ``num``, ``log``, and ``delay``
+parameters. ``sweeps`` controls number of repeated sweeps (``0`` means infinite).
+Configuration sections ``x`` and ``measure`` define instrument names and API keys used
+for set/get operations.
+The ``x`` instrument must support ``set`` and ``measure`` instrument must support ``get``.
+
+GridSweeper
+-----------
+
+:class:`GridSweeper <mahos.meas.grid_sweeper.GridSweeper>` is a generic 2D planar sweep node.
+It controls two sweep parameters (x and y axes) and samples one measurement value on each
+grid point. One completed y-loop corresponds to one 2D image, and repeated images are stacked
+in :class:`GridSweeperData <mahos.msgs.grid_sweeper_msgs.GridSweeperData>`.
+
+Both axes support ``start``, ``stop``, ``num``, ``log``, and ``delay`` parameters.
+``sweeps`` controls number of repeated 2D images (``0`` means infinite).
+Configuration sections ``x``, ``y``, and ``measure`` define instrument names and API keys used
+for set/get operations.
+The ``x`` and ``y`` instruments must support ``set`` and ``measure`` instrument must support ``get``.
+
 StateManager
 ------------
 

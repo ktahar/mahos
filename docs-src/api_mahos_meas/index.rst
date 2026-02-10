@@ -16,6 +16,8 @@ The mahos.meas package provides common high-level measurement logics.
    tweaker.Tweaker
    pos_tweaker.PosTweaker
    recorder.Recorder
+   sweeper.Sweeper
+   grid_sweeper.GridSweeper
    camera.Camera
 
 .. rubric:: IO classes

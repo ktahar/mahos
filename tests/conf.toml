@@ -379,7 +379,7 @@ tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker
 [localhost.sweeper.target.servers]
 sg = "localhost::server"
 dmm0 = "localhost::server"
-[localhost.sweeper.sweep]
+[localhost.sweeper.x]
 inst = "sg"
 key = "freq"
 label = ""

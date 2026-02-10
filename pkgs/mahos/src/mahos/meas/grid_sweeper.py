@@ -324,7 +324,14 @@ class GridSweepWorker(Worker):
 
 
 class GridSweeper(BasicMeasNode):
-    """GridSweeper measurement node."""
+    """Two-dimensional grid sweep measurement node.
+
+    GridSweeper controls two independent sweep parameters (``x`` and ``y`` config sections)
+    and reads one measurement quantity (``measure`` section) on each grid point. The acquired
+    result is stored as image stack data (:class:`~mahos.msgs.grid_sweeper_msgs.GridSweeperData`)
+    with optional repeated 2D sweeps.
+
+    """
 
     CLIENT = GridSweeperClient
     DATA = GridSweeperData

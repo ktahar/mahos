@@ -30,12 +30,12 @@ class SweeperData(BasicMeasData):
         """Initialize axis labels and units from params."""
 
         if self.params is not None:
-            self.xlabel: str = self.params.get("sweep_key", "Sweep")
-            self.xunit: str = self.params.get("sweep_unit", "")
+            self.xlabel: str = self.params.get("x_key", "X")
+            self.xunit: str = self.params.get("x_unit", "")
             self.ylabel: str = self.params.get("meas_key", "Measurement")
             self.yunit: str = self.params.get("meas_unit", "")
         else:
-            self.xlabel = "Sweep"
+            self.xlabel = "X"
             self.xunit = ""
             self.ylabel = "Measurement"
             self.yunit = ""
@@ -55,7 +55,7 @@ class SweeperData(BasicMeasData):
     def get_xdata(self) -> NDArray[np.float64]:
         if self.params is None:
             return np.array([])
-        if self.params.get("logx", False):
+        if self.params.get("log", False):
             return np.logspace(
                 np.log10(self.params["start"]),
                 np.log10(self.params["stop"]),

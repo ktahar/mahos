@@ -44,22 +44,22 @@ class SweepWorker(Worker):
 
     def __init__(self, cli: MultiInstrumentClient, logger, conf: dict):
         Worker.__init__(self, cli, logger, conf)
-        self.check_required_conf(["sweep", "measure"])
+        self.check_required_conf(["x", "measure"])
 
-        sweep_conf = conf["sweep"]
+        x_conf = conf["x"]
         meas_conf = conf["measure"]
 
-        self.sweep_inst = InstrumentInterface(cli, sweep_conf["inst"])
+        self.x_inst = InstrumentInterface(cli, x_conf["inst"])
         self.meas_inst = InstrumentInterface(cli, meas_conf["inst"])
-        self.add_instruments(self.sweep_inst, self.meas_inst)
+        self.add_instruments(self.x_inst, self.meas_inst)
 
-        # Store sweep config
-        self.sweep_key = sweep_conf["key"]
-        self.sweep_label = sweep_conf.get("label", "")
-        self.sweep_unit = sweep_conf.get("unit", "")
-        self.sweep_SI_prefix = sweep_conf.get("SI_prefix", True)
-        self.sweep_digit = sweep_conf.get("digit", 6)
-        self.sweep_bounds = sweep_conf.get("bounds")
+        # Store x-axis sweep config
+        self.x_key = x_conf["key"]
+        self.x_label = x_conf.get("label", "")
+        self.x_unit = x_conf.get("unit", "")
+        self.x_SI_prefix = x_conf.get("SI_prefix", True)
+        self.x_digit = x_conf.get("digit", 6)
+        self.x_bounds = x_conf.get("bounds")
 
         # Store measure config
         self.meas_key = meas_conf["key"]
@@ -67,7 +67,7 @@ class SweepWorker(Worker):
         self.meas_unit = meas_conf.get("unit", "")
 
         self.data = SweeperData()
-        self._sweep_values: NDArray | None = None
+        self._x_values: NDArray | None = None
 
     def get_param_dict_labels(self) -> list[str]:
         return [""]
@@ -80,18 +80,18 @@ class SweepWorker(Worker):
             bounds[0],
             bounds[0],
             bounds[1],
-            unit=self.sweep_unit,
-            SI_prefix=self.sweep_SI_prefix,
-            digit=self.sweep_digit,
+            unit=self.x_unit,
+            SI_prefix=self.x_SI_prefix,
+            digit=self.x_digit,
             doc="start value",
         )
         pd["stop"] = P.FloatParam(
             bounds[1],
             bounds[0],
             bounds[1],
-            unit=self.sweep_unit,
-            SI_prefix=self.sweep_SI_prefix,
-            digit=self.sweep_digit,
+            unit=self.x_unit,
+            SI_prefix=self.x_SI_prefix,
+            digit=self.x_digit,
             doc="stop value",
         )
         pd["num"] = P.IntParam(51, 2, 10001, doc="number of points")
@@ -99,7 +99,7 @@ class SweepWorker(Worker):
             0.01, 0.0, 100.0, unit="s", SI_prefix=True, doc="delay after set"
         )
         pd["sweeps"] = P.IntParam(1, 0, 10000, doc="number of sweeps (0 for infinite)")
-        pd["logx"] = P.BoolParam(False, doc="use log-space sweep")
+        pd["log"] = P.BoolParam(False, doc="use log-space sweep")
 
         return pd
 
@@ -107,15 +107,15 @@ class SweepWorker(Worker):
         """Get sweep parameter bounds."""
 
         # Priority 1: conf
-        if self.sweep_bounds is not None:
-            return tuple(self.sweep_bounds)
+        if self.x_bounds is not None:
+            return tuple(self.x_bounds)
 
         # Priority 2: instrument
         try:
-            inst_bounds = self.sweep_inst.get("bounds", label=self.sweep_label)
+            inst_bounds = self.x_inst.get("bounds", label=self.x_label)
             if inst_bounds is not None:
                 if isinstance(inst_bounds, dict):
-                    return inst_bounds[self.sweep_key]
+                    return inst_bounds[self.x_key]
                 else:
                     return tuple(inst_bounds)
         except Exception:
@@ -125,10 +125,10 @@ class SweepWorker(Worker):
         self.logger.warning("Using default bounds (-1e6, 1e6). Consider setting bounds in config.")
         return (-1e6, 1e6)
 
-    def _generate_sweep_values(self, params: dict) -> NDArray[np.float64]:
+    def _generate_x_values(self, params: dict) -> NDArray[np.float64]:
         """Generate sweep values array."""
 
-        if params.get("logx", False):
+        if params.get("log", False):
             return np.logspace(
                 np.log10(params["start"]),
                 np.log10(params["stop"]),
@@ -151,12 +151,12 @@ class SweepWorker(Worker):
             return self.fail_with_release("Failed to acquire instrument locks.")
 
         # Add axis labels to params for data class
-        params["sweep_key"] = self.sweep_key
-        params["sweep_unit"] = self.sweep_unit
+        params["x_key"] = self.x_key
+        params["x_unit"] = self.x_unit
         params["meas_key"] = self.meas_key
         params["meas_unit"] = self.meas_unit
 
-        self._sweep_values = self._generate_sweep_values(params)
+        self._x_values = self._generate_x_values(params)
         self.data = SweeperData(params)
         self.data.start()
         self.logger.info("Started sweeper.")
@@ -176,16 +176,16 @@ class SweepWorker(Worker):
         return success
 
     def sweep_once(self) -> NDArray[np.float64] | None:
-        if self._sweep_values is None:
+        if self._x_values is None:
             return None
 
         delay = self.data.params.get("delay", 0.0)
         data = []
 
-        for val in self._sweep_values:
+        for val in self._x_values:
             # Set sweep parameter
-            if not self.sweep_inst.set(self.sweep_key, val, label=self.sweep_label):
-                self.logger.error(f"Failed to set {self.sweep_key} to {val}")
+            if not self.x_inst.set(self.x_key, val, label=self.x_label):
+                self.logger.error(f"Failed to set {self.x_key} to {val}")
                 return None
 
             # Wait for settling
@@ -233,7 +233,17 @@ class SweepWorker(Worker):
 
 
 class Sweeper(BasicMeasNode):
-    """Sweeper measurement node."""
+    """One-dimensional parameter sweep measurement node.
+
+    Sweeper controls one instrument parameter (``x`` config section) and reads one
+    measurement quantity (``measure`` section) at each point. Each run produces line data
+    (:class:`~mahos.msgs.sweeper_msgs.SweeperData`) with optional repeated sweeps.
+
+    Supported basic requests are inherited from
+    :class:`~mahos.meas.common_meas.BasicMeasNode`:
+    start / stop, parameter dict query, save / load / export, and fit / clear_fit.
+
+    """
 
     CLIENT = SweeperClient
     DATA = SweeperData
@@ -300,10 +310,10 @@ class Sweeper(BasicMeasNode):
 
     def wait(self):
         self.logger.info("Waiting for instrument servers...")
-        sweep_inst = self.conf["sweep"]["inst"]
+        x_inst = self.conf["x"]["inst"]
         meas_inst = self.conf["measure"]["inst"]
-        self.cli.wait(sweep_inst)
-        if meas_inst != sweep_inst:
+        self.cli.wait(x_inst)
+        if meas_inst != x_inst:
             self.cli.wait(meas_inst)
         self.logger.info("Instrument servers are up!")
 

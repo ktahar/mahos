@@ -109,7 +109,7 @@ class SweeperIO(object):
         ax.set_xlabel(f"{xlabel}{xunit}")
         ax.set_ylabel(f"{ylabel}{yunit}")
 
-        if data.params.get("logx", False):
+        if data.params.get("log", False):
             ax.set_xscale("log")
 
         plt.tight_layout()

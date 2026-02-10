@@ -56,8 +56,8 @@ tweaker = "localhost::tweaker"
 source = "localhost::server"
 meter = "localhost::server"
 
-# Sweep configuration - which instrument/key to sweep
-[localhost.sweeper.sweep]
+# X-axis configuration - which instrument/key to sweep
+[localhost.sweeper.x]
 inst = "source"           # key in target.servers
 key = "voltage"           # key for inst.set(key, value)
 label = "ch1"             # optional label for set()

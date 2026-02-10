@@ -133,7 +133,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.plot_item.setData(xdata, ydata)
 
         # Update log scale
-        if data.params.get("logx", False):
+        if data.params.get("log", False):
             self.plot.setLogMode(x=True, y=False)
         else:
             self.plot.setLogMode(x=False, y=False)
@@ -203,12 +203,12 @@ class SweeperWidget(ClientTopWidget):
     def _xy_labels_from_conf(self):
         """Read axis labels from configuration."""
 
-        sweep_conf = self.conf.get("sweep", {})
+        x_conf = self.conf.get("x", {})
         meas_conf = self.conf.get("measure", {})
 
         return (
-            sweep_conf.get("key", "Sweep"),
-            sweep_conf.get("unit", ""),
+            x_conf.get("key", "X"),
+            x_conf.get("unit", ""),
             meas_conf.get("key", "Measurement"),
             meas_conf.get("unit", ""),
         )
@@ -255,7 +255,7 @@ class SweeperWidget(ClientTopWidget):
         self.sweepsBox = QtWidgets.QSpinBox()
         self.sweepsBox.setPrefix("sweeps: ")
 
-        self.logxBox = QtWidgets.QCheckBox("logx")
+        self.logBox = QtWidgets.QCheckBox("log")
 
         for w in (
             self.startBox,
@@ -268,7 +268,7 @@ class SweeperWidget(ClientTopWidget):
             w.setMaximumWidth(200)
             hl1.addWidget(w)
 
-        hl1.addWidget(self.logxBox)
+        hl1.addWidget(self.logBox)
 
         spacer1 = QtWidgets.QSpacerItem(
             40,
@@ -302,7 +302,7 @@ class SweeperWidget(ClientTopWidget):
                     ("num", self.numBox),
                     ("delay", self.delayBox),
                     ("sweeps", self.sweepsBox),
-                    ("logx", self.logxBox),
+                    ("log", self.logBox),
                 ],
             )
             for l, w in (
@@ -345,7 +345,7 @@ class SweeperWidget(ClientTopWidget):
             self.numBox,
             self.delayBox,
             self.sweepsBox,
-            self.logxBox,
+            self.logBox,
         ):
             w.setEnabled(idle)
 
@@ -361,7 +361,7 @@ class SweeperWidget(ClientTopWidget):
             "num": self.numBox.value(),
             "delay": self.delayBox.value(),
             "sweeps": self.sweepsBox.value(),
-            "logx": self.logxBox.isChecked(),
+            "log": self.logBox.isChecked(),
         }
         self.cli.start(params)
 
