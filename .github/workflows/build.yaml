@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-22.04]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
@@ -17,7 +17,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          sudo apt-get install -y libgraphviz-dev
+          sudo apt-get update
+          sudo apt-get install -y libgraphviz-dev libegl1
           python -m pip install --upgrade pip
           pip install ./pkgs/mahos
           pip install ./pkgs/mahos-dq
@@ -30,10 +31,14 @@ jobs:
           black . --check
       - name: Test with pytest (excluding GUI E2E)
         run: |
-          pytest --timeout=30 -m "not gui_e2e"
+          pytest --timeout=30 -m "not gui_e2e" \
+            --ignore=tests/mahos/test_gui_e2e.py \
+            --ignore=tests/mahos-dq/test_gui_e2e_dq.py
       - name: Test GUI E2E with pytest
         if: ${{ matrix.python-version == '3.12' }}
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          pytest --timeout=80 -m "gui_e2e"
+          pytest --timeout=80 -m "gui_e2e" \
+            tests/mahos/test_gui_e2e.py \
+            tests/mahos-dq/test_gui_e2e_dq.py
