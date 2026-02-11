@@ -33,10 +33,6 @@ class = "Params_mock"
 module = "mock"
 class = "Params_mock"
 
-[localhost.server.instrument.paramZ]
-module = "mock"
-class = "Params_mock"
-
 [localhost.server.instrument.sg]
 module = "mock"
 class = "SG_mock"
@@ -160,7 +156,7 @@ interval_sec = 0.01
 interval_sec = 0.2
 [localhost.confocal.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.confocal.target.servers]
 clock = "localhost::server"
 scanner = "localhost::server"
@@ -188,7 +184,7 @@ pub_endpoint = "tcp://127.0.0.1:5575"
 pd_clock = "/Dummy"
 [localhost.odmr.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.odmr.target.servers]
 sg = "localhost::server"
 pg = "localhost::server"
@@ -202,7 +198,7 @@ rep_endpoint = "tcp://127.0.0.1:5576"
 pub_endpoint = "tcp://127.0.0.1:5577"
 [localhost.hbt.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.hbt.target.servers]
 tdc = "localhost::server"
 
@@ -214,7 +210,7 @@ rep_endpoint = "tcp://127.0.0.1:5578"
 pub_endpoint = "tcp://127.0.0.1:5579"
 [localhost.podmr.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.podmr.pulser]
 mw_modes = [0, 0]
 [localhost.podmr.target.servers]
@@ -235,7 +231,7 @@ mw_modes = [0, 0]
 pd_trigger = "/Dummy"
 [localhost.spodmr.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.spodmr.target.servers]
 sg = "localhost::server"
 sg1 = "localhost::server"
@@ -262,7 +258,7 @@ rep_endpoint = "tcp://127.0.0.1:5584"
 pub_endpoint = "tcp://127.0.0.1:5585"
 [localhost.spectroscopy.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.spectroscopy.target.servers]
 spectrometer = "localhost::server"
 
@@ -273,7 +269,7 @@ rep_endpoint = "tcp://127.0.0.1:5586"
 pub_endpoint = "tcp://127.0.0.1:5587"
 [localhost.camera.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.camera.target.servers]
 camera = "localhost::server"
 
@@ -285,7 +281,7 @@ rep_endpoint = "tcp://127.0.0.1:5588"
 pub_endpoint = "tcp://127.0.0.1:5589"
 [localhost.qdyne.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.qdyne.target.servers]
 tdc = "localhost::server"
 sg = "localhost::server"
@@ -321,16 +317,6 @@ dmm0 = "localhost::server"
 paramX = "localhost::server"
 paramY = "localhost::server"
 
-[localhost.tweaker2]
-module = "mahos.meas.tweaker"
-class = "Tweaker"
-target = { log = "localhost::log" }
-rep_endpoint = "tcp://127.0.0.1:5594"
-pub_endpoint = "tcp://127.0.0.1:5595"
-param_dicts = ["paramZ::labelA"]
-[localhost.tweaker2.target.servers]
-paramZ = "localhost::server"
-
 [localhost.pos_tweaker]
 module = "mahos.meas.pos_tweaker"
 class = "PosTweaker"
@@ -348,7 +334,7 @@ rep_endpoint = "tcp://127.0.0.1:5598"
 pub_endpoint = "tcp://127.0.0.1:5599"
 [localhost.recorder.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.recorder.target.servers]
 dmm0 = "localhost::server"
 dmm1 = "localhost::server"
@@ -378,7 +364,7 @@ rep_endpoint = "tcp://127.0.0.1:5600"
 pub_endpoint = "tcp://127.0.0.1:5601"
 [localhost.sweeper.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.sweeper.target.servers]
 sg = "localhost::server"
 dmm0 = "localhost::server"
@@ -401,7 +387,7 @@ rep_endpoint = "tcp://127.0.0.1:5602"
 pub_endpoint = "tcp://127.0.0.1:5603"
 [localhost.grid_sweeper.target]
 log = "localhost::log"
-tweakers = ["localhost::tweaker", "localhost::tweaker2", "localhost::pos_tweaker"]
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.grid_sweeper.target.servers]
 pos_x = "localhost::server"
 pos_y = "localhost::server"
@@ -491,13 +477,6 @@ module = "mahos.gui.tweaker"
 class = "TweakerGUI"
 [localhost.tweaker_gui.target]
 tweaker = "localhost::tweaker"
-gparams = "localhost::gparams"
-
-[localhost.tweaker2_gui]
-module = "mahos.gui.tweaker"
-class = "TweakerGUI"
-[localhost.tweaker2_gui.target]
-tweaker = "localhost::tweaker2"
 gparams = "localhost::gparams"
 
 [localhost.pos_tweaker_gui]
