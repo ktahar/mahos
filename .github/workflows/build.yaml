@@ -28,6 +28,12 @@ jobs:
       - name: Formatting check with black
         run: |
           black . --check
-      - name: Test with pytest
+      - name: Test with pytest (excluding GUI E2E)
         run: |
-          pytest --timeout=30
+          pytest --timeout=30 -m "not gui_e2e"
+      - name: Test GUI E2E with pytest
+        if: ${{ matrix.python-version == '3.12' }}
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          pytest --timeout=80 -m "gui_e2e"
