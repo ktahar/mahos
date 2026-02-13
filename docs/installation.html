@@ -509,12 +509,21 @@ There are several methods to install this, and the easiest are following.</p>
 <h3>mahos<a class="headerlink" href="#mahos" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">./pkgs/mahos</span></code></p>
 <p>Here, -e (editable) is optional but recommended.
-Basic requirements in <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> are installed by this command.</p>
+Runtime requirements in <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> are installed by this command.</p>
+<section id="dev-requirements">
+<h4>Dev requirements<a class="headerlink" href="#dev-requirements" title="Link to this heading">#</a></h4>
+<p>Development tools (pytest, black, flake8, sphinx, etc.) are in
+<code class="docutils literal notranslate"><span class="pre">dev-requirements.txt</span></code>.</p>
+<ul class="simple">
+<li><p>You can install all of them by <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">'./pkgs/mahos[dev]'</span></code> or
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">./pkgs/mahos/dev-requirements.txt</span></code></p></li>
+</ul>
+</section>
 <section id="inst-requirements">
 <h4>Inst requirements<a class="headerlink" href="#inst-requirements" title="Link to this heading">#</a></h4>
 <p>There are additional requirements for instrument drivers in <code class="docutils literal notranslate"><span class="pre">inst-requirements.txt</span></code>.</p>
 <ul class="simple">
-<li><p>You can install all of them by <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">./pkgs/mahos[inst]</span></code> or <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">./pkgs/mahos/inst-requirements.txt</span></code></p></li>
+<li><p>You can install all of them by <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">'./pkgs/mahos[inst]'</span></code> or <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">./pkgs/mahos/inst-requirements.txt</span></code></p></li>
 <li><p>If you don’t want to install unnecessary packages, manually pick and install what you need.</p></li>
 </ul>
 </section>
@@ -637,6 +646,7 @@ pip<span class="w"> </span>install<span class="w"> </span>PyQt6
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-mahos-packages">The mahos packages</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos">mahos</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#dev-requirements">Dev requirements</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#inst-requirements">Inst requirements</a></li>
 </ul>
 </li>

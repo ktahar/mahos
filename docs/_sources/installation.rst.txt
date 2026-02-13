@@ -110,14 +110,23 @@ mahos
 ``pip install -e ./pkgs/mahos``
 
 Here, -e (editable) is optional but recommended.
-Basic requirements in ``requirements.txt`` are installed by this command.
+Runtime requirements in ``requirements.txt`` are installed by this command.
+
+Dev requirements
+................
+
+Development tools (pytest, black, flake8, sphinx, etc.) are in
+``dev-requirements.txt``.
+
+- You can install all of them by ``pip install -e './pkgs/mahos[dev]'`` or
+  ``pip install -r ./pkgs/mahos/dev-requirements.txt``
 
 Inst requirements
 .................
 
 There are additional requirements for instrument drivers in ``inst-requirements.txt``.
 
-- You can install all of them by ``pip install -e ./pkgs/mahos[inst]`` or ``pip install -r ./pkgs/mahos/inst-requirements.txt``
+- You can install all of them by ``pip install -e './pkgs/mahos[inst]'`` or ``pip install -r ./pkgs/mahos/inst-requirements.txt``
 - If you don't want to install unnecessary packages, manually pick and install what you need.
 
 mahos-dq
