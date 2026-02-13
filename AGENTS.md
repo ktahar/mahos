@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-The repository is a Python monorepo with multiple packages. Core package live in
+The repository is a Python monorepo with multiple packages. Core package lives in
 `pkgs/mahos/`, with additional packages in `pkgs/mahos-dq/` and `pkgs/mahos-dq-ext/`.
 Each package uses the src-layout.
 Tests are under `tests/` (e.g., `tests/mahos/test_*.py`), and example configs and usage
@@ -13,11 +13,14 @@ Ignore following directories when inspecting or editing:
 
 ## Build, Test, and Development Commands
 
-- `pip install -e ./pkgs/mahos`, `pip install -e ./pkgs/mahos-dq`,
-  and `pip install -e ./pkgs/mahos-dq-ext`: build and install all the packages.
+- `pip install -e './pkgs/mahos[dev]' -e ./pkgs/mahos-dq` (or `make install-dev`):
+  install core packages for development and testing.
+- `pip install -e ./pkgs/mahos-dq-ext`: install optional C extension package
+  when extension features are needed.
   (`-e` option may be removed if necessary.)
 - `make test` (or `pytest --timeout=10`): run the test suite with timeouts.
-- `make lint`: run flake8 across the repo.
+- `make lint`: run flake8 with configured excludes
+  (`build`, `tests`, and generated UI code).
 - `make format`: format Python code with Black.
 - `make docs`: build Sphinx HTML docs from `docs-src/` into `docs/`.
 - `make browse`: open the built docs in a browser.
@@ -70,6 +73,7 @@ changes. Keep the summary concise and lower case where natural. For pull
 requests, include a clear summary, the testing you ran (commands and results),
 and links to any related issues. Add screenshots or GIFs when UI changes are
 involved, and note documentation updates when behavior or configuration changes.
+Do not use backticks in commit subjects or commit bodies.
 
 ## Configuration & Examples
 

@@ -20,7 +20,7 @@ lint:
 	flake8 . --show-source --statistics
 
 install-dev:
-	python -m pip install -e ./pkgs/mahos -e ./pkgs/mahos-dq
+	python -m pip install -e './pkgs/mahos[dev]' -e ./pkgs/mahos-dq
 
 test:
 	@python -c "import mahos, mahos_dq" >/dev/null 2>&1 || make install-dev

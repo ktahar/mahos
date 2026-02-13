@@ -34,8 +34,10 @@ Read the `Installation guide <https://ktahar.github.io/mahos/installation.html>`
 In short, we recommend editable installation with cloned repository:
 
 #. Clone this repo somewhere.
-#. Install the ``mahos`` package: ``pip install -e ./pkgs/mahos`` or ``pip install -e ./pkgs/mahos[inst]``
+#. Install the ``mahos`` package: ``pip install -e ./pkgs/mahos`` or ``pip install -e './pkgs/mahos[inst]'``
    (the latter installs optional packages for instrument drivers).
+#. (optional, for development) Install development tools:
+   ``pip install -e './pkgs/mahos[dev]'``
 #. (optional) Install the ``mahos-dq`` and ``mahos-dq-ext`` packages: ``pip install -e ./pkgs/mahos-dq`` and ``pip install -e ./pkgs/mahos-dq-ext``.
 #. Test the installation with ``pytest``.
 

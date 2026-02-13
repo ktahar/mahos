@@ -20,7 +20,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgraphviz-dev libegl1
           python -m pip install --upgrade pip
-          pip install ./pkgs/mahos
+          pip install './pkgs/mahos[dev]'
           pip install ./pkgs/mahos-dq
           pip install ./pkgs/mahos-dq-ext
       - name: Lint with flake8

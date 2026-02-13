@@ -41,3 +41,6 @@ file = ["requirements.txt"]
 
 [tool.setuptools.dynamic.optional-dependencies.inst]
 file = ["inst-requirements.txt"]
+
+[tool.setuptools.dynamic.optional-dependencies.dev]
+file = ["dev-requirements.txt"]
