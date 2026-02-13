@@ -59,3 +59,13 @@ def test_recorder_channel_key_and_unit_conf(server, recorder, server_conf, recor
     ready = data.get_ydata("dmm1_ready")
     assert ready.dtype.kind == "b"
     assert ready.all()
+
+    channels = data.params["channels"]
+    assert channels["dmm0_v1_Volt"]["inst"] == "dmm0"
+    assert channels["dmm0_v1_Volt"]["label"] == "ch1_dcv"
+    assert channels["dmm0_v1_Volt"]["key"] == "data"
+    assert channels["dmm0_v1_Volt"]["unit"] == "Volt"
+    assert channels["dmm1_ready"]["inst"] == "dmm1"
+    assert channels["dmm1_ready"]["label"] == "ch1_dcv"
+    assert channels["dmm1_ready"]["key"] == "opc"
+    assert channels["dmm1_ready"]["unit"] == ""

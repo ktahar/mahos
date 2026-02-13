@@ -162,6 +162,16 @@ class Collector(Worker):
 
         self.timer = IntervalTimer(params.get("interval", self.interval_sec))
 
+        unit_map = dict(units)
+        params["channels"] = {}
+        for channel, conf in self.mode_dicts[label].items():
+            params["channels"][channel] = {
+                "inst": conf.inst,
+                "label": conf.label,
+                "key": conf.key,
+                "unit": unit_map[channel],
+            }
+
         self.data = RecorderData(params, label)
         self.data.set_units(units)
         self.data.start()
