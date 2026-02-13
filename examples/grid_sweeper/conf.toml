@@ -66,6 +66,8 @@ unit = ""                # display unit
 bounds = [0.0, 10.0]     # parameter bounds (optional)
 SI_prefix = true         # GUI option
 digit = 6                # GUI option
+step = 0.1               # GUI option for start/stop input
+adaptive_step = false    # GUI option for start/stop input
 
 # y sweep configuration (outer loop)
 [localhost.grid_sweeper.y]
@@ -76,6 +78,8 @@ unit = ""
 bounds = [0.0, 5.0]
 SI_prefix = true
 digit = 6
+step = 0.1
+adaptive_step = false
 
 # measure configuration
 # Here we read current x position from the same x instrument for a fully self-contained example.

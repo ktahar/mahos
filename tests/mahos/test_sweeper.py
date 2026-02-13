@@ -39,6 +39,10 @@ def test_sweeper(server, sweeper, server_conf, sweeper_conf):
     assert server.configure("dmm0", dmm_params, label)
 
     params = sweeper.get_param_dict()
+    assert params["start"].step() == sweeper_conf["x"]["step"]
+    assert params["stop"].step() == sweeper_conf["x"]["step"]
+    assert params["start"].adaptive_step() == sweeper_conf["x"]["adaptive_step"]
+    assert params["stop"].adaptive_step() == sweeper_conf["x"]["adaptive_step"]
     invalid_log_params = {
         "start": 0.0,
         "stop": 1.0,

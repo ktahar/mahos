@@ -61,6 +61,8 @@ class GridSweepWorker(Worker):
         self.x_unit = x_conf.get("unit", "")
         self.x_SI_prefix = x_conf.get("SI_prefix", True)
         self.x_digit = x_conf.get("digit", 6)
+        self.x_step = x_conf.get("step", 1.0)
+        self.x_adaptive_step = x_conf.get("adaptive_step", False)
         self.x_bounds = x_conf.get("bounds")
 
         # Store y-axis sweep config
@@ -69,6 +71,8 @@ class GridSweepWorker(Worker):
         self.y_unit = y_conf.get("unit", "")
         self.y_SI_prefix = y_conf.get("SI_prefix", True)
         self.y_digit = y_conf.get("digit", 6)
+        self.y_step = y_conf.get("step", 1.0)
+        self.y_adaptive_step = y_conf.get("adaptive_step", False)
         self.y_bounds = y_conf.get("bounds")
 
         # Store measure config
@@ -97,6 +101,8 @@ class GridSweepWorker(Worker):
                 unit=self.x_unit,
                 SI_prefix=self.x_SI_prefix,
                 digit=self.x_digit,
+                step=self.x_step,
+                adaptive_step=self.x_adaptive_step,
                 doc="start value",
             ),
             stop=P.FloatParam(
@@ -106,12 +112,21 @@ class GridSweepWorker(Worker):
                 unit=self.x_unit,
                 SI_prefix=self.x_SI_prefix,
                 digit=self.x_digit,
+                step=self.x_step,
+                adaptive_step=self.x_adaptive_step,
                 doc="stop value",
             ),
             num=P.IntParam(51, 2, 10001, doc="number of points"),
             log=P.BoolParam(False, doc="use log-space sweep"),
             delay=P.FloatParam(
-                0.01, 0.0, 100.0, unit="s", SI_prefix=True, doc="delay after setting x"
+                0.01,
+                0.0,
+                100.0,
+                unit="s",
+                SI_prefix=True,
+                step=0.1,
+                adaptive_step=True,
+                doc="delay after setting x",
             ),
         )
         pd["y"] = P.ParamDict(
@@ -122,6 +137,8 @@ class GridSweepWorker(Worker):
                 unit=self.y_unit,
                 SI_prefix=self.y_SI_prefix,
                 digit=self.y_digit,
+                step=self.y_step,
+                adaptive_step=self.y_adaptive_step,
                 doc="start value",
             ),
             stop=P.FloatParam(
@@ -131,12 +148,21 @@ class GridSweepWorker(Worker):
                 unit=self.y_unit,
                 SI_prefix=self.y_SI_prefix,
                 digit=self.y_digit,
+                step=self.y_step,
+                adaptive_step=self.y_adaptive_step,
                 doc="stop value",
             ),
             num=P.IntParam(51, 2, 10001, doc="number of points"),
             log=P.BoolParam(False, doc="use log-space sweep"),
             delay=P.FloatParam(
-                0.0, 0.0, 100.0, unit="s", SI_prefix=True, doc="delay after setting y"
+                0.0,
+                0.0,
+                100.0,
+                unit="s",
+                SI_prefix=True,
+                step=0.1,
+                adaptive_step=True,
+                doc="delay after setting y",
             ),
         )
         pd["sweeps"] = P.IntParam(1, 0, 10000, doc="number of 2D sweeps (0 for infinite)")

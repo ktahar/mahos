@@ -374,6 +374,9 @@ key = "freq"
 label = ""
 unit = "Hz"
 SI_prefix = true
+step = 1.0e-3
+adaptive_step = true
+digit = 9
 [localhost.sweeper.measure]
 inst = "dmm0"
 key = "data"
@@ -399,6 +402,8 @@ label = ""
 unit = ""
 bounds = [0.0, 10.0]
 SI_prefix = true
+step = 0.1
+adaptive_step = true
 [localhost.grid_sweeper.y]
 inst = "pos_y"
 key = "target"
@@ -406,6 +411,8 @@ label = ""
 unit = ""
 bounds = [0.0, 10.0]
 SI_prefix = true
+step = 0.1
+adaptive_step = false
 [localhost.grid_sweeper.measure]
 inst = "dmm0"
 key = "data"

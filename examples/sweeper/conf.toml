@@ -65,6 +65,8 @@ unit = "V"                # display unit
 bounds = [-10.0, 10.0]    # parameter bounds (optional, can get from instrument)
 SI_prefix = true          # (GUI option) enable SI prefix for display unit
 digit = 6                 # (GUI option) digit for input
+step = 0.1                # (GUI option) step size for start/stop input
+adaptive_step = false     # (GUI option) enable magnitude-dependent step for start/stop
 
 # Measure configuration - which instrument/key to measure
 [localhost.sweeper.measure]

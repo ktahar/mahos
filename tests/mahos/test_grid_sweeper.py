@@ -68,6 +68,14 @@ def test_grid_sweeper(server, grid_sweeper, server_conf, grid_sweeper_conf):
     assert server.configure("dmm0", dmm_params, label)
 
     params = grid_sweeper.get_param_dict()
+    assert params["x"]["start"].step() == grid_sweeper_conf["x"]["step"]
+    assert params["x"]["stop"].step() == grid_sweeper_conf["x"]["step"]
+    assert params["x"]["start"].adaptive_step() == grid_sweeper_conf["x"]["adaptive_step"]
+    assert params["x"]["stop"].adaptive_step() == grid_sweeper_conf["x"]["adaptive_step"]
+    assert params["y"]["start"].step() == grid_sweeper_conf["y"]["step"]
+    assert params["y"]["stop"].step() == grid_sweeper_conf["y"]["step"]
+    assert params["y"]["start"].adaptive_step() == grid_sweeper_conf["y"]["adaptive_step"]
+    assert params["y"]["stop"].adaptive_step() == grid_sweeper_conf["y"]["adaptive_step"]
     invalid_log_params = {
         "x": {
             "start": 0.0,

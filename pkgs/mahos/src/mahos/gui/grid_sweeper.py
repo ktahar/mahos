@@ -328,22 +328,6 @@ class GridSweeperWidget(ClientTopWidget):
                 ("sweeps", self.sweepsBox),
             ],
         )
-        for key, w in (
-            ("x.start", self.xstartBox),
-            ("x.stop", self.xstopBox),
-            ("x.delay", self.xdelayBox),
-            ("y.start", self.ystartBox),
-            ("y.stop", self.ystopBox),
-            ("y.delay", self.ydelayBox),
-        ):
-            p = flat[key]
-            w.setOpts(
-                suffix=p.unit(),
-                siPrefix=p.SI_prefix(),
-                decimals=p.digit(),
-                step=p.step(),
-            )
-
         self.cli.stateUpdated.connect(self.update_state)
         self.cli.dataUpdated.connect(self.update_data)
         self.init_connection()

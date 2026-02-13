@@ -86,6 +86,10 @@ def test_param():
     assert IntParam(1).value() == 1
     assert IntParam(1, optional=True, enable=False).value() is None
     assert IntParam(1, doc="this is int").doc() == "this is int"
+    assert not IntParam(1).adaptive_step()
+    assert IntParam(1).adaptive_min_step() is None
+    assert FloatParam(1.0, adaptive_step=True).adaptive_step()
+    assert FloatParam(1.0, adaptive_step=True, adaptive_min_step=1e-6).adaptive_min_step() == 1e-6
 
 
 def test_param_dict_validation():

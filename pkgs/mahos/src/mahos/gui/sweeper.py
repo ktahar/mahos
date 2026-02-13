@@ -306,18 +306,6 @@ class SweeperWidget(ClientTopWidget):
                     ("log", self.logBox),
                 ],
             )
-            for l, w in (
-                ("start", self.startBox),
-                ("stop", self.stopBox),
-                ("delay", self.delayBox),
-            ):
-                p = params[l]
-                w.setOpts(
-                    suffix=p.unit(),
-                    siPrefix=p.SI_prefix(),
-                    decimals=p.digit(),
-                    step=p.step(),
-                )
         else:
             print("[ERROR] Failed to get param dict")
 

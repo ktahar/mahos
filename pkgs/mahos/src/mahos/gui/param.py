@@ -10,9 +10,69 @@ Common widgets/utilities for GUI to deal with Generic Parameters (mahos.msgs.par
 
 from __future__ import annotations
 
+import math
+
 from mahos.msgs import param_msgs as P
 from mahos.gui.Qt import QtWidgets, QtCore
 from mahos.gui.common_widget import SpinBox
+
+
+def _is_positive_finite(value) -> bool:
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(v) and v > 0.0
+
+
+def _find_finite_span_or_bound(param: P.NumberParam) -> float | int | None:
+    mn, mx = param.bounds()
+    if mn is not None and mx is not None:
+        span = abs(mx - mn)
+        if _is_positive_finite(span):
+            return span
+    if mn is not None:
+        mn_abs = abs(mn)
+        if _is_positive_finite(mn_abs):
+            return mn_abs
+    if mx is not None:
+        mx_abs = abs(mx)
+        if _is_positive_finite(mx_abs):
+            return mx_abs
+    return None
+
+
+def _infer_adaptive_min_step(param: P.NumberParam) -> float | int | None:
+    """Infer minStep for adaptive stepping when the user did not specify one."""
+
+    if not param.adaptive_step():
+        return None
+    if param.adaptive_min_step() is not None:
+        return param.adaptive_min_step()
+
+    # Find parameter scale.
+    # 1. from current value scale.
+    ref = abs(param.some_value())
+
+    # 2. from available bounds.
+    if not _is_positive_finite(ref):
+        ref = _find_finite_span_or_bound(param)
+
+    # 3. from explicit step scale (fall back, usually not very good).
+    if not _is_positive_finite(ref):
+        step = abs(param.step())
+        if _is_positive_finite(step):
+            ref = step
+
+    if not _is_positive_finite(ref):
+        return None
+
+    exp = math.floor(math.log10(ref)) - param.digit() + 1
+    min_step = 10.0**exp
+
+    if isinstance(param, P.IntParam):
+        return max(1, int(round(min_step)))
+    return min_step
 
 
 def _apply(p: P.Param, widget: QtWidgets.QWidget, coeff: float):
@@ -27,6 +87,18 @@ def _apply(p: P.Param, widget: QtWidgets.QWidget, coeff: float):
         widget.setMinimum(mn)
         widget.setMaximum(mx)
         widget.setValue(v)
+        if isinstance(widget, SpinBox):
+            opts = dict(
+                suffix=p.unit(),
+                siPrefix=p.SI_prefix(),
+                decimals=p.digit(),
+                step=p.step(),
+                dec=p.adaptive_step(),
+            )
+            min_step = _infer_adaptive_min_step(p)
+            if min_step is not None:
+                opts["minStep"] = min_step
+            widget.setOpts(**opts)
     if isinstance(p, P.BoolParam):
         widget.setChecked(p.value())
 
@@ -70,7 +142,7 @@ class ParamTable(QtWidgets.QTableWidget):
 
     def _add_widget_number(self, param: P.Numberparam):
         if isinstance(param, P.FloatParam):
-            widget = SpinBox(
+            opts = dict(
                 parent=self,
                 value=param.some_value(),
                 bounds=param.bounds(),
@@ -78,9 +150,14 @@ class ParamTable(QtWidgets.QTableWidget):
                 siPrefix=param.SI_prefix(),
                 decimals=param.digit(),
                 step=param.step(),
+                dec=param.adaptive_step(),
             )
+            min_step = _infer_adaptive_min_step(param)
+            if min_step is not None:
+                opts["minStep"] = min_step
+            widget = SpinBox(**opts)
         elif isinstance(param, P.IntParam):
-            widget = SpinBox(
+            opts = dict(
                 parent=self,
                 int=True,
                 value=param.some_value(),
@@ -89,7 +166,12 @@ class ParamTable(QtWidgets.QTableWidget):
                 siPrefix=param.SI_prefix(),
                 decimals=param.digit(),
                 step=param.step(),
+                dec=param.adaptive_step(),
             )
+            min_step = _infer_adaptive_min_step(param)
+            if min_step is not None:
+                opts["minStep"] = min_step
+            widget = SpinBox(**opts)
         widget.valueChanged.connect(param.set)
 
         def restore():

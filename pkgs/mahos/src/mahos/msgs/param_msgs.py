@@ -151,7 +151,24 @@ class Param(object):
 
 
 class NumberParam(Param):
-    """Base class for Param types represents a number."""
+    """Base class for Param types representing numbers.
+
+    :param typ: Expected type used for type coercion.
+    :param default: Default value.
+    :param minimum: Inclusive lower bound. Set None to disable lower bound.
+    :param maximum: Inclusive upper bound. Set None to disable upper bound.
+    :param unit: Unit string used for formatting / display.
+    :param SI_prefix: Enable SI-prefix display in GUI widgets (GUI-oriented).
+    :param digit: Number of decimals shown in GUI widgets (GUI-oriented).
+    :param step: Base increment/decrement step for GUI widgets (GUI-oriented).
+    :param adaptive_step: Enable magnitude-dependent stepping in GUI widgets (GUI-oriented).
+    :param adaptive_min_step: Minimum step for adaptive stepping in GUI widgets (GUI-oriented).
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(
         self,
@@ -163,6 +180,8 @@ class NumberParam(Param):
         SI_prefix,
         digit,
         step,
+        adaptive_step,
+        adaptive_min_step,
         optional,
         enable,
         read_only,
@@ -174,6 +193,8 @@ class NumberParam(Param):
         self._SI_prefix = SI_prefix
         self._digit = digit
         self._step = step
+        self._adaptive_step = bool(adaptive_step)
+        self._adaptive_min_step = adaptive_min_step
 
         Param.__init__(self, typ, default, optional, enable, read_only, doc)
 
@@ -240,6 +261,12 @@ class NumberParam(Param):
     def step(self) -> float | int:
         return self._step
 
+    def adaptive_step(self) -> bool:
+        return self._adaptive_step
+
+    def adaptive_min_step(self) -> float | int | None:
+        return self._adaptive_min_step
+
     def minimum(self):
         """Get minimum value (lower bound) of this NumberParam."""
 
@@ -257,7 +284,17 @@ class NumberParam(Param):
 
 
 class ChoiceParam(Param):
-    """Base class for Param types expressing a choice from finite set `options`."""
+    """Base class for Param types expressing a choice from finite set `options`.
+
+    :param typ: Expected type used for type coercion.
+    :param default: Default value.
+    :param options: Available options.
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(self, typ, default, options, optional, enable, read_only, doc):
         self._options = tuple(options)
@@ -278,7 +315,15 @@ class ChoiceParam(Param):
 
 
 class StrParam(Param):
-    """Param type of builtin str."""
+    """Param type for builtin str.
+
+    :param default: Default string value.
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(
         self,
@@ -292,7 +337,14 @@ class StrParam(Param):
 
 
 class UUIDParam(Param):
-    """Param type of uuid.UUID."""
+    """Param type for uuid.UUID.
+
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(
         self,
@@ -305,7 +357,23 @@ class UUIDParam(Param):
 
 
 class IntParam(NumberParam):
-    """Param type of builtin int."""
+    """Param type for builtin int.
+
+    :param default: Default integer value.
+    :param minimum: Inclusive lower bound. Set None to disable lower bound.
+    :param maximum: Inclusive upper bound. Set None to disable upper bound.
+    :param unit: Unit string used for formatting / display.
+    :param SI_prefix: Enable SI-prefix display in GUI widgets (GUI-oriented).
+    :param digit: Number of decimals shown in GUI widgets (GUI-oriented).
+    :param step: Base increment/decrement step for GUI widgets (GUI-oriented).
+    :param adaptive_step: Enable magnitude-dependent stepping in GUI widgets (GUI-oriented).
+    :param adaptive_min_step: Minimum step for adaptive stepping in GUI widgets (GUI-oriented).
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(
         self,
@@ -316,6 +384,8 @@ class IntParam(NumberParam):
         SI_prefix: bool = False,
         digit: int = 6,
         step: int = 1,
+        adaptive_step: bool = False,
+        adaptive_min_step: int | None = None,
         optional: bool = False,
         enable: bool = True,
         read_only: bool = False,
@@ -331,6 +401,8 @@ class IntParam(NumberParam):
             SI_prefix,
             digit,
             step,
+            adaptive_step,
+            adaptive_min_step,
             optional,
             enable,
             read_only,
@@ -339,7 +411,23 @@ class IntParam(NumberParam):
 
 
 class FloatParam(NumberParam):
-    """Param type of builtin float."""
+    """Param type for builtin float.
+
+    :param default: Default floating-point value.
+    :param minimum: Inclusive lower bound. Set None to disable lower bound.
+    :param maximum: Inclusive upper bound. Set None to disable upper bound.
+    :param unit: Unit string used for formatting / display.
+    :param SI_prefix: Enable SI-prefix display in GUI widgets (GUI-oriented).
+    :param digit: Number of decimals shown in GUI widgets (GUI-oriented).
+    :param step: Base increment/decrement step for GUI widgets (GUI-oriented).
+    :param adaptive_step: Enable magnitude-dependent stepping in GUI widgets (GUI-oriented).
+    :param adaptive_min_step: Minimum step for adaptive stepping in GUI widgets (GUI-oriented).
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(
         self,
@@ -350,6 +438,8 @@ class FloatParam(NumberParam):
         SI_prefix: bool = False,
         digit: int = 6,
         step: float = 1.0,
+        adaptive_step: bool = False,
+        adaptive_min_step: float | None = None,
         optional: bool = False,
         enable: bool = True,
         read_only: bool = False,
@@ -365,6 +455,8 @@ class FloatParam(NumberParam):
             SI_prefix,
             digit,
             step,
+            adaptive_step,
+            adaptive_min_step,
             optional,
             enable,
             read_only,
@@ -373,7 +465,15 @@ class FloatParam(NumberParam):
 
 
 class BoolParam(ChoiceParam):
-    """Param type of builtin bool."""
+    """Param type for builtin bool.
+
+    :param default: Default boolean value.
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(
         self,
@@ -387,7 +487,17 @@ class BoolParam(ChoiceParam):
 
 
 class EnumParam(ChoiceParam):
-    """Param type of Enum."""
+    """Param type for Enum values.
+
+    :param typ: Enum class used for type coercion.
+    :param default: Default Enum value.
+    :param options: Available options. If None, all members in ``typ`` are used.
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(
         self,
@@ -405,7 +515,16 @@ class EnumParam(ChoiceParam):
 
 
 class StrChoiceParam(ChoiceParam):
-    """Param type of selection type of builtin strs."""
+    """Param type for a finite selection of builtin strs.
+
+    :param default: Default string value.
+    :param options: Available string options.
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(
         self,
@@ -420,7 +539,16 @@ class StrChoiceParam(ChoiceParam):
 
 
 class IntChoiceParam(ChoiceParam):
-    """Param type of selection type of builtin ints."""
+    """Param type for a finite selection of builtin ints.
+
+    :param default: Default integer value.
+    :param options: Available integer options.
+    :param optional: If True, this parameter can be enabled/disabled.
+    :param enable: Initial enabled state.
+    :param read_only: If True, updates through :meth:`set` are rejected.
+    :param doc: Human-readable description for this parameter.
+
+    """
 
     def __init__(
         self,

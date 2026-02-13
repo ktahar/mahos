@@ -59,6 +59,8 @@ class SweepWorker(Worker):
         self.x_unit = x_conf.get("unit", "")
         self.x_SI_prefix = x_conf.get("SI_prefix", True)
         self.x_digit = x_conf.get("digit", 6)
+        self.x_step = x_conf.get("step", 1.0)
+        self.x_adaptive_step = x_conf.get("adaptive_step", False)
         self.x_bounds = x_conf.get("bounds")
 
         # Store measure config
@@ -83,6 +85,8 @@ class SweepWorker(Worker):
             unit=self.x_unit,
             SI_prefix=self.x_SI_prefix,
             digit=self.x_digit,
+            step=self.x_step,
+            adaptive_step=self.x_adaptive_step,
             doc="start value",
         )
         pd["stop"] = P.FloatParam(
@@ -92,11 +96,20 @@ class SweepWorker(Worker):
             unit=self.x_unit,
             SI_prefix=self.x_SI_prefix,
             digit=self.x_digit,
+            step=self.x_step,
+            adaptive_step=self.x_adaptive_step,
             doc="stop value",
         )
         pd["num"] = P.IntParam(51, 2, 10001, doc="number of points")
         pd["delay"] = P.FloatParam(
-            0.01, 0.0, 100.0, unit="s", SI_prefix=True, doc="delay after set"
+            0.01,
+            0.0,
+            100.0,
+            unit="s",
+            SI_prefix=True,
+            step=0.1,
+            adaptive_step=True,
+            doc="delay after set",
         )
         pd["sweeps"] = P.IntParam(1, 0, 10000, doc="number of sweeps (0 for infinite)")
         pd["log"] = P.BoolParam(False, doc="use log-space sweep")
