@@ -35,7 +35,14 @@ class ODMRClient(BasicMeasClient):
 
 
 class ODMR(BasicMeasNode):
-    """ODMR (frequency sweep) measurement.
+    """ODMR (Optically Detected Magnetic Resonance) measurement.
+
+    This Node is for frequency-sweep, CW and Pulse ODMR measurements for defect qubits
+    using non-imaging, single-pixel photodetectors.
+    See :class:`PODMR <mahos_dq.meas.podmr.PODMR>` or :class:`SPODMR <mahos_dq.meas.spodmr.SPODMR>`
+    for pulse ODMR measurements (Rabi, FID, SpinEcho, etc.) with fixed frequency.
+    See :class:`IODMR <mahos_dq.meas.iodmr.IODMR>` for frequency-sweep, imaging CW ODMR
+    with camera.
 
     There are two options for the worker (sweeper, measurement logic).
     See docs of sweeper below for sweeper parameters.

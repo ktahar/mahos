@@ -30,6 +30,26 @@ variables, `PascalCase` for classes, and `UPPER_CASE` for constants. Generated U
 code in `pkgs/mahos/src/mahos/gui/ui` and `pkgs/mahos-dq/src/mahos_dq/gui/ui` is excluded
 from formatting and linting.
 
+## Docstring Guidelines
+
+- Write all docstrings in reStructuredText (reST).
+- Provide comprehensive top-level class docstrings for all `Instrument` and `Node` classes.
+- For measurement Nodes with exactly one Worker, the Worker docstring may be omitted if the
+  Worker behavior is documented in the Node docstring.
+- For measurement Nodes with multiple Workers, each Worker should have its own docstring, and
+  the Node docstring should link to those Worker docstrings. Use
+  `pkgs/mahos-dq/src/mahos_dq/meas/odmr.py` (ODMR Node) as a reference pattern.
+- Structure top-level class docstrings in this order:
+  - A one-line summary, followed by a blank line.
+  - A few paragraphs with detailed behavior and important requirements (for example,
+    required dependent libraries), when applicable.
+  - A list of static configuration keys in `self.conf` (loaded from `conf.toml`),
+    using `:param:` and `:type:` directives.
+  - For nested configuration dictionaries, express nested keys with dot notation
+    (for example, `first_level_key.second_level_key`).
+  - Optional minor notes may follow, but use them sparingly.
+- All `Instrument` and `Node` methods should have at least a one-line docstring.
+
 ## Testing Guidelines
 
 Tests use pytest and live in `tests/`. Name tests `test_*.py` and focus new unit
@@ -39,12 +59,17 @@ or the full suite with `make test`. An example configuration for tests is in
 
 ## Commit & Pull Request Guidelines
 
-Recent history uses short, imperative subjects, sometimes with a scope prefix,
-for example `docs: update docs with subpackages` or `workflow/build: fix
-installation`. Keep subjects concise and lower case. For pull requests, include
-a clear summary, the testing you ran (commands and results), and links to any
-related issues. Add screenshots or GIFs when UI changes are involved, and note
-documentation updates when behavior or configuration changes.
+Use a short, imperative first line for commit subjects. Scope prefixes are
+recommended when applicable:
+- `docs:` for documentation-only patches.
+- `ClassName:` when the patch primarily affects a specific class.
+- `module_name:` when the patch is module-wide.
+
+For large patches, add a commit body with a bullet list describing the key
+changes. Keep the summary concise and lower case where natural. For pull
+requests, include a clear summary, the testing you ran (commands and results),
+and links to any related issues. Add screenshots or GIFs when UI changes are
+involved, and note documentation updates when behavior or configuration changes.
 
 ## Configuration & Examples
 
