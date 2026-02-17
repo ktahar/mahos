@@ -395,7 +395,14 @@ class SweeperWidget(ClientTopWidget):
 
 
 class SweeperGUI(GUINode):
-    """GUINode for SweeperWidget."""
+    """GUINode for SweeperWidget.
+
+    :param target.sweeper: Target Sweeper node full name.
+    :type target.sweeper: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         target = local_conf(gconf, name)["target"]

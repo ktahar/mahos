@@ -237,7 +237,19 @@ def log_broker_is_up(gconf: dict, name: NodeName) -> bool:
 
 
 class LogBroker(Node):
-    """Broker Node for logs."""
+    """Broker Node for logs.
+
+    :param xpub_endpoint: XPUB endpoint address for log subscribers.
+    :type xpub_endpoint: str
+    :param xsub_endpoint: XSUB endpoint address for log publishers.
+    :type xsub_endpoint: str
+    :param file: Enable file logging when True.
+    :type file: bool
+    :param file_name: Optional explicit path to the log file.
+        If omitted, an auto-generated file name is used.
+    :type file_name: str
+
+    """
 
     CLIENT = LogClient
 

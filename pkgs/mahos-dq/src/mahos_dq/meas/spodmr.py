@@ -53,13 +53,25 @@ class SPODMR(BasicMeasNode):
     Default Worker (Pulser) implements Pulse ODMR using
     a PG as timing source, and SGs as MW sources.
 
-    :param target.servers: The InstrumentServer targets (instrument name, server full name).
-        Targets 'sg', 'pg', and <pulser.pd_names> are required. 'fg' is optional.
+    :param target.servers: InstrumentServer targets (instrument name, server full name).
+        Required keys: ``sg``, ``pg``, names in ``pulser.pd_names``, and the key named by
+        ``pulser.clock_name``.
+        Optional keys: ``fg``, additional SG keys in ``pulser.mw_channels`` (for example,
+        ``sg1``), and switch keys listed in ``switch_names``.
     :type target.servers: dict[str, str]
     :param target.tweakers: The Tweaker targets (list of tweaker full name).
     :type target.tweakers: list[str]
     :param target.log: The LogBroker target (broker full name).
     :type target.log: str
+
+    :param switch_names: Optional switch instrument names to route signal/optical paths.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label passed to Switch worker.
+    :type switch_command: str
+    :param pub_interval_sec: Maximum interval between periodic status/data publications.
+    :type pub_interval_sec: float
+    :param debug: If True, use DebugPulser instead of Pulser.
+    :type debug: bool
 
     :param pulser.pd_names: (default: ["pd0"]) PD names in target.servers.
     :type pulser.pd_names: list[str]
@@ -96,6 +108,28 @@ class SPODMR(BasicMeasNode):
     :type pulser.nest_blockseq: bool
     :param pulser.channel_remap: mapping to fix default channel names.
     :type pulser.channel_remap: dict[str | int, str | int]
+    :param pulser.clock_name: (default: ``"clock"``) Clock source instrument name.
+    :type pulser.clock_name: str
+    :param pulser.mw_channels: Optional SG channel identifiers for MW outputs.
+    :type pulser.mw_channels: list[str]
+    :param pulser.pd_rate: (default: 500e3) PD sampling rate in Hz.
+    :type pulser.pd_rate: float
+    :param pulser.pd_data_transfer: Optional DAQ transfer mode label.
+    :type pulser.pd_data_transfer: str
+    :param pulser.eos_margin: (default: 0.0) End-of-sequence timing margin in seconds.
+    :type pulser.eos_margin: float
+    :param pulser.buffer_size_coeff: Buffer size coefficient multiplied by ``num``.
+    :type pulser.buffer_size_coeff: int
+    :param pulser.accum_window: (default: 1e-3) Accumulation window in seconds.
+    :type pulser.accum_window: float
+    :param pulser.accum_rep: (default: 10) Number of accumulation repetitions.
+    :type pulser.accum_rep: int
+    :param pulser.drop_rep: (default: 1) Number of initial repetitions to drop.
+    :type pulser.drop_rep: int
+    :param pulser.lockin_rep: (default: 1) Lock-in repetition count.
+    :type pulser.lockin_rep: int
+    :param pulser.every: If True, publish/refresh data for every update chunk.
+    :type pulser.every: bool
 
     :param fitter.rabi.c: default value of param "c" (base line) in RabiFitter.
         You can set the bounds using "c_min" and "c_max" too.

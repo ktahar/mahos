@@ -31,7 +31,26 @@ class SpectroscopyClient(BasicMeasClient):
 
 
 class Spectroscopy(BasicMeasNode):
-    """Spectroscopy measurement."""
+    """Spectroscopy measurement.
+
+    :param target.servers: InstrumentServer targets.
+        Required keys: ``spectrometer``.
+        Optional keys: ``switch`` and ``pg`` (and any keys listed in ``switch_names``).
+    :type target.servers: dict[str, str]
+    :param target.tweakers: Optional Tweaker node names saved alongside spectroscopy data.
+    :type target.tweakers: list[str]
+    :param target.log: LogBroker target full name.
+    :type target.log: str
+    :param switch_names: Optional switch instrument names to route signal/optical paths.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label passed to Switch worker.
+    :type switch_command: str
+    :param repeater: Repeater worker configuration dictionary.
+    :type repeater: dict
+    :param pub_interval_sec: Maximum interval between periodic status/data publications.
+    :type pub_interval_sec: float
+
+    """
 
     CLIENT = SpectroscopyClient
     DATA = SpectroscopyData

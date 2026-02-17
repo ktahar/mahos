@@ -63,13 +63,22 @@ class PODMR(BasicMeasNode):
     Default Worker (Pulser) implements Pulse ODMR using
     a PG as timing source, and SGs as MW sources.
 
-    :param target.servers: The InstrumentServer targets (instrument name, server full name).
-        Targets 'sg', 'pg', and 'tdc' are required. 'fg' is optional.
+    :param target.servers: InstrumentServer targets (instrument name, server full name).
+        Required keys: ``sg``, ``pg``, and ``tdc``.
+        Optional keys: ``fg``, additional SG keys in ``pulser.mw_channels`` (for example,
+        ``sg1``), and switch keys listed in ``switch_names``.
     :type target.servers: dict[str, str]
     :param target.tweakers: The Tweaker targets (list of tweaker full name).
     :type target.tweakers: list[str]
     :param target.log: The LogBroker target (broker full name).
     :type target.log: str
+
+    :param switch_names: Optional switch instrument names to route signal/optical paths.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label passed to Switch worker.
+    :type switch_command: str
+    :param pub_interval_sec: Maximum interval between periodic status/data publications.
+    :type pub_interval_sec: float
 
     :param pulser.quick_resume: default value of quick_resume.
         If True, it skips instrument configurations on resume.
@@ -102,6 +111,10 @@ class PODMR(BasicMeasNode):
     :type pulser.sg_freq: float
     :param pulser.channel_remap: mapping to fix default channel names.
     :type pulser.channel_remap: dict[str | int, str | int]
+    :param pulser.mw_channels: Optional SG channel identifiers for MW outputs.
+    :type pulser.mw_channels: list[str]
+    :param pulser.eos_margin: (default: 1e-6) End-of-sequence timing margin in seconds.
+    :type pulser.eos_margin: float
 
     :param fitter.rabi.c: default value of param "c" (base line) in RabiFitter.
         You can set the bounds using "c_min" and "c_max" too.

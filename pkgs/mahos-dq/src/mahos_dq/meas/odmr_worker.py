@@ -189,6 +189,35 @@ class SweeperOverlay(SweeperBase):
 
     Refer to :mod:`mahos_dq.inst.overlay.odmr_sweeper` for docs of target overlay.
 
+    :param sweeper.sweeper_name: (default: "sweeper") target overlay name in target.servers.
+    :type sweeper.sweeper_name: str
+    :param sweeper.point: (default: False) set True to publish data per point acquisition.
+    :type sweeper.point: bool
+
+    :param sweeper.start: (default param) start frequency in Hz.
+    :type sweeper.start: float
+    :param sweeper.stop: (default param) stop frequency in Hz.
+    :type sweeper.stop: float
+    :param sweeper.num: (default param) number of frequency points.
+    :type sweeper.num: int
+    :param sweeper.power: (default param) SG output power in dBm.
+    :type sweeper.power: float
+    :param sweeper.time_window: (default param) time window for cw mode.
+    :type sweeper.time_window: float
+    :param sweeper.gate_delay: (default param) gate delay before counting.
+    :type sweeper.gate_delay: float
+
+    :param sweeper.am_depth: (default param) depth of AM modulation.
+    :type sweeper.am_depth: float
+    :param sweeper.am_log: (default param) True indicates log-scale AM depth.
+    :type sweeper.am_log: bool
+    :param sweeper.am_rate: (default param) rate (baseband frequency) of AM in Hz.
+    :type sweeper.am_rate: float
+    :param sweeper.fm_deviation: (default param) FM deviation in Hz.
+    :type sweeper.fm_deviation: float
+    :param sweeper.fm_rate: (default param) rate (baseband frequency) of FM in Hz.
+    :type sweeper.fm_rate: float
+
     """
 
     def __init__(self, cli, logger, conf: dict):
@@ -399,15 +428,6 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     For SGs without such output, PG can be configured to run continuously (pg_immediate = True);
     SG's freq sweep step is continuously triggered by PG.
 
-    :param sweeper.pd_clock: DAQ terminal name for PD's clock (gate)
-    :type sweeper.pd_clock: str
-    :param sweeper.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
-    :type sweeper.pd_names: list[str]
-    :param sweeper.pd_analog: (default: False) set True if PD is AnalogIn-based.
-    :type sweeper.pd_analog: bool
-    :param sweeper.channel_remap: mapping to fix default channel names.
-    :type sweeper.channel_remap: dict[str | int, str | int]
-
     :param sweeper.start_delay: (default: 0.0) delay time (sec.) before starting SG/PG output.
     :type sweeper.start_delay: float
     :param sweeper.sg_first: (has preset) if True, turn on SG first and PG second.
@@ -418,6 +438,25 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         pg_immediate takes precedence over sg_first; when this is True, sg_first has no effect.
     :type sweeper.pg_immediate: bool
 
+    :param sweeper.pd_clock: DAQ terminal name for PD's clock (gate)
+    :type sweeper.pd_clock: str
+    :param sweeper.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
+    :type sweeper.pd_names: list[str]
+    :param sweeper.pd_analog: (default: False) set True if PD is AnalogIn-based.
+    :type sweeper.pd_analog: bool
+    :param sweeper.pd_rate: (default param) analog PD sampling rate.
+    :type sweeper.pd_rate: float
+    :param sweeper.pd_bounds: (default: [-10.0, 10.0]) analog PD voltage bounds.
+    :type sweeper.pd_bounds: tuple[float, float]
+    :param sweeper.pd_data_transfer: DAQ data transfer mode for analog PD.
+    :type sweeper.pd_data_transfer: str
+    :param sweeper.buffer_size_coeff: (default: 20) multiplier for PD buffer size.
+    :type sweeper.buffer_size_coeff: int
+    :param sweeper.clock_name: (default: "clock") DAQ clock source name in target.servers.
+    :type sweeper.clock_name: str
+
+    :param sweeper.channel_remap: mapping to fix default channel names.
+    :type sweeper.channel_remap: dict[str | int, str | int]
     :param sweeper.pg_freq_cw: (has preset) PG frequency for CW mode.
     :type sweeper.pg_freq_cw: float
     :param sweeper.pg_freq_pulse: (has preset) PG frequency for Pulse mode.
@@ -437,8 +476,19 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :type sweeper.power: float
     :param sweeper.time_window: (default param) time window for cw mode.
     :type sweeper.time_window: float
-    :param sweeper.pd_rate: (default param) analog PD sampling rate.
-    :type sweeper.pd_rate: float
+    :param sweeper.gate_delay: (default param) gate delay before counting.
+    :type sweeper.gate_delay: float
+
+    :param sweeper.am_depth: (default param) depth of AM modulation.
+    :type sweeper.am_depth: float
+    :param sweeper.am_log: (default param) True indicates log-scale AM depth.
+    :type sweeper.am_log: bool
+    :param sweeper.am_rate: (default param) rate (baseband frequency) of AM in Hz.
+    :type sweeper.am_rate: float
+    :param sweeper.fm_deviation: (default param) FM deviation in Hz.
+    :type sweeper.fm_deviation: float
+    :param sweeper.fm_rate: (default param) rate (baseband frequency) of FM in Hz.
+    :type sweeper.fm_rate: float
 
     """
 

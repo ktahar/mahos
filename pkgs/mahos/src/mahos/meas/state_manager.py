@@ -32,7 +32,16 @@ class StateManagerClient(StatusClient):
 
 
 class StateManager(Node):
-    """StateManager for meas nodes."""
+    """StateManager for meas nodes.
+
+    :param node: Mapping from managed node name to state enum specification
+        ``(module_path, class_name)``.
+    :type node: dict[str, tuple[str, str]]
+    :param command: Optional mapping from command name to desired node states.
+        Each value is ``{node_name: state_member_name}``.
+    :type command: dict[str, dict[str, str]]
+
+    """
 
     CLIENT = StateManagerClient
 

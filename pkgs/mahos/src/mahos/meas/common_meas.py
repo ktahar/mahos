@@ -173,6 +173,15 @@ class BasicMeasNode(Node):
 
     implements initialization (client and communication), change_state() and get_param_dict().
 
+    :param target.servers: InstrumentServer targets (instrument name -> server full name).
+    :type target.servers: dict[str, str]
+    :param target.tweakers: Optional Tweaker node names saved alongside measurement data.
+    :type target.tweakers: list[str]
+    :param target.log: LogBroker target full name.
+    :type target.log: str
+    :param inst_remap: Optional logical-to-physical instrument name remapping.
+    :type inst_remap: dict[str, str]
+
     """
 
     #: Data type for this measurement.

@@ -26,7 +26,23 @@ class CameraClient(BasicMeasClient):
 
 
 class Camera(BasicMeasNode):
-    """Measurement for continuous camera frame capturing."""
+    """Measurement for continuous camera frame capturing.
+
+    :param target.servers: InstrumentServer targets. ``camera`` is required;
+        ``switch`` and ``pg`` are optional.
+    :type target.servers: dict[str, str]
+    :param switch_names: Optional switch instrument names to route signal/optical paths.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label passed to Switch worker.
+    :type switch_command: str
+    :param transform.swap: If True, transpose incoming camera frames.
+    :type transform.swap: bool
+    :param transform.flipH: If True, flip frames along the height axis.
+    :type transform.flipH: bool
+    :param transform.flipW: If True, flip frames along the width axis.
+    :type transform.flipW: bool
+
+    """
 
     CLIENT = CameraClient
 

@@ -238,8 +238,9 @@ class Confocal(Node):
     The node switches between IDLE/PIEZO/INTERACT/SCAN states, starts the required
     workers per state, and publishes status, image, and trace messages.
 
-    :param target.servers: Instrument server mapping for scanner/piezo/tracer and
-        optional switch/pg.
+    :param target.servers: Instrument server mapping for confocal workers.
+        Required keys: ``scanner``, ``piezo``, ``clock``, and names in ``tracer.pd_names``.
+        Optional keys: ``switch`` and ``pg`` (and any keys listed in ``switch_names``).
     :type target.servers: dict[str, tuple[str, str] | str]
     :param target.tweakers: Optional Tweaker node names whose settings are saved
         alongside saved confocal data.
@@ -734,7 +735,9 @@ class TraceNode(Node):
     This node reuses tracer(switch/pg) workers from the confocal stack, but exposes
     only binary ACTIVE/IDLE operation and trace-oriented request handling.
 
-    :param target.servers: Instrument server mapping for tracer and optional switch/pg.
+    :param target.servers: Instrument server mapping for trace worker operation.
+        Required keys: ``clock`` and names in ``tracer.pd_names``.
+        Optional keys: ``switch`` and ``pg`` (and any keys listed in ``switch_names``).
     :type target.servers: dict[str, tuple[str, str] | str]
     :param target.tweakers: Optional Tweaker node names saved with trace files.
     :type target.tweakers: list[str]

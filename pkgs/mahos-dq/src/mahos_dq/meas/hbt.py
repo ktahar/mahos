@@ -37,6 +37,13 @@ class HBTClient(BasicMeasClient):
 class HBT(BasicMeasNode):
     """HBT measurement.
 
+    :param target.servers: InstrumentServer targets. ``tdc`` is required;
+        ``switch`` and ``pg`` are optional.
+    :type target.servers: dict[str, str]
+    :param target.tweakers: Optional Tweaker node names saved alongside HBT data.
+    :type target.tweakers: list[str]
+    :param target.log: LogBroker target full name.
+    :type target.log: str
     :param listener.interval_sec: polling interval.
     :type listener.interval_sec: float
     :param listener.tdc_correlation: (has preset) enable correlation measurement mode at TDC.
@@ -49,6 +56,12 @@ class HBT(BasicMeasNode):
     :type listener.t0_ns: float
     :param listener.range_ns: default value of measurement range (time window).
     :type listener.range_ns: float
+    :param switch_names: Optional switch instrument names to route signal/optical paths.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label passed to Switch worker.
+    :type switch_command: str
+    :param pub_interval_sec: Maximum interval between periodic status/data publications.
+    :type pub_interval_sec: float
 
     """
 

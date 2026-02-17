@@ -70,7 +70,8 @@ class PosTweaker(Node):
     The target instrument must provide
     :class:`SinglePositionerInterface <mahos.inst.positioner_interface.SinglePositionerInterface>`.
 
-    :param target.servers: The InstrumentServer targets (instrument name, server full name).
+    :param target.servers: InstrumentServer targets (instrument name, server full name).
+        Required keys: at least one axis key; each listed key is controlled as a positioner.
     :type target.servers: dict[str, str]
     :param target.log: The LogBroker target (broker full name).
     :type target.log: str

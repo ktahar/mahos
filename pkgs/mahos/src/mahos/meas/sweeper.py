@@ -275,6 +275,17 @@ class Sweeper(BasicMeasNode):
     :class:`~mahos.meas.common_meas.BasicMeasNode`:
     start / stop, parameter dict query, save / load / export, and fit / clear_fit.
 
+    :param x: Sweep-axis instrument configuration dictionary.
+    :type x: dict
+    :param x.inst: Instrument name to control for the sweep axis.
+    :type x.inst: str
+    :param measure: Measurement instrument configuration dictionary.
+    :type measure: dict
+    :param measure.inst: Instrument name to read at each sweep point.
+    :type measure.inst: str
+    :param pub_interval_sec: Maximum interval between periodic status/data publications.
+    :type pub_interval_sec: float
+
     """
 
     CLIENT = SweeperClient

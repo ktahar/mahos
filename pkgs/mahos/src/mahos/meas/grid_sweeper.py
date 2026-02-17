@@ -372,6 +372,21 @@ class GridSweeper(BasicMeasNode):
     should invoke those APIs manually via Tweaker, scripts, or interactive sessions
     before running GridSweeper.
 
+    :param x: X-axis instrument configuration dictionary.
+    :type x: dict
+    :param x.inst: Instrument name to control for the x-axis.
+    :type x.inst: str
+    :param y: Y-axis instrument configuration dictionary.
+    :type y: dict
+    :param y.inst: Instrument name to control for the y-axis.
+    :type y.inst: str
+    :param measure: Measurement instrument configuration dictionary.
+    :type measure: dict
+    :param measure.inst: Instrument name to read at each grid point.
+    :type measure.inst: str
+    :param pub_interval_sec: Maximum interval between periodic status/data publications.
+    :type pub_interval_sec: float
+
     """
 
     CLIENT = GridSweeperClient

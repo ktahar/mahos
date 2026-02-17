@@ -30,6 +30,26 @@ class IODMR(BasicMeasNode):
 
     NOTE that this measurement logic is under development and rather immature.
 
+    There are two options for the worker (sweeper, measurement logic).
+    See docs of sweeper below for sweeper parameters.
+
+    - :class:`ISweeperDirect <mahos_dq.meas.iodmr_worker.ISweeperDirect>` :
+        fast logic with hardware trigger.
+    - :class:`ISweeperOverlay <mahos_dq.meas.iodmr_worker.ISweeperOverlay>` : interface to overlay.
+
+    :param target.servers: InstrumentServer targets.
+        Required keys (overlay mode): ``isweeper``.
+        Required keys (direct mode): ``sg``, ``pg``, and ``camera``.
+        Optional keys: switch keys listed in ``switch_names``.
+    :type target.servers: dict[str, str]
+
+    :param switch_names: Optional switch instrument names to route signal/optical paths.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label passed to Switch worker.
+    :type switch_command: str
+    :param publish_each: If True, publish data after each completed sweep.
+    :type publish_each: bool
+
     """
 
     CLIENT = IODMRClient

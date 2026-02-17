@@ -601,6 +601,11 @@ class InstrumentServer(Node):
       The overlay receives resolved value, i.e., an Instrument / InstrumentOverlay instance
       instead of a string.
 
+    :param instrument: Instrument class configuration mapping.
+    :type instrument: dict[str, dict[str, str | dict]]
+    :param instrument_overlay: Optional overlay class configuration mapping.
+    :type instrument_overlay: dict[str, dict[str, str | dict]]
+
     """
 
     _noarg_calls = (

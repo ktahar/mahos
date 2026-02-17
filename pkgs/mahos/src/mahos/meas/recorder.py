@@ -39,7 +39,8 @@ class Recorder(BasicMeasNode):
     ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, and ``get()``.
     ``get("unit")`` is required only when channel unit is not specified in mode config.
 
-    :param target.servers: The InstrumentServer targets (instrument name, server full name).
+    :param target.servers: InstrumentServer targets (instrument name, server full name).
+        Required keys: each instrument name referenced by ``mode`` channel ``inst`` values.
     :type target.servers: dict[str, str]
     :param target.tweakers: The Tweaker targets (list of tweaker full name).
     :type target.tweakers: list[str]
@@ -52,6 +53,10 @@ class Recorder(BasicMeasNode):
         keys: ``inst`` (required), ``label`` (optional, default ``""``),
         ``key`` (optional, default ``"data"``), and ``unit`` (optional).
     :type mode: dict[str, dict[str, tuple[str, str] | dict[str, str]]]
+    :param collector.interval_sec: Default polling interval used by Collector.
+    :type collector.interval_sec: float
+    :param pub_interval_sec: Maximum interval between periodic status/data publications.
+    :type pub_interval_sec: float
 
     Runtime behavior for each channel in selected mode:
 

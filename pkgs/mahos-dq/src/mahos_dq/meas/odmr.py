@@ -50,14 +50,25 @@ class ODMR(BasicMeasNode):
     - :class:`Sweeper <mahos_dq.meas.odmr_worker.Sweeper>` : fast logic with hardware trigger.
     - :class:`SweeperOverlay <mahos_dq.meas.odmr_worker.SweeperOverlay>` : interface to overlay.
 
-    :param target.servers: The InstrumentServer targets (instrument name, server full name).
-        If target 'sweeper' is given, use of SweeperOverlay is implied.
-        Otherwise (when Sweeper is used), targets 'sg', 'pg', and <sweeper.pd_names> are required.
+    :param target.servers: InstrumentServer targets (instrument name, server full name).
+        Required keys (overlay mode): ``sweeper``.
+        Required keys (direct mode): ``sg``, ``pg``, and names in ``sweeper.pd_names``.
+        In direct mode, if ``sweeper.pd_analog`` is True, the key named by
+        ``sweeper.clock_name`` is also required.
+        Optional keys: ``pg`` in overlay mode (for non-PG overlays) and switch keys listed in
+        ``switch_names``.
     :type target.servers: dict[str, str]
     :param target.tweakers: The Tweaker targets (list of tweaker full name).
     :type target.tweakers: list[str]
     :param target.log: The LogBroker target (broker full name).
     :type target.log: str
+
+    :param switch_names: Optional switch instrument names to route signal/optical paths.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label passed to Switch worker.
+    :type switch_command: str
+    :param pub_interval_sec: Maximum interval between periodic status/data publications.
+    :type pub_interval_sec: float
 
     :param fitter.dip: (default: True) True if ODMR shape is dip instead of peak.
     :type fitter.dip: bool
