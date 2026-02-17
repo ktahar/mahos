@@ -62,6 +62,7 @@ class SMUInterface(InstrumentInterface):
         :param num: number of points.
         :param delay: (s) delay before measurement.
         :param nplc: measuerment time in nplc.
+        :param compliance: (I) current compliance.
         :param log: set True for log-space sweep.
 
         """
@@ -96,6 +97,7 @@ class SMUInterface(InstrumentInterface):
         :param num: number of points.
         :param delay: (s) delay before measurement.
         :param nplc: measuerment time in nplc.
+        :param compliance: (V) voltage compliance.
         :param log: set True for log-space sweep.
 
         """

@@ -1,0 +1,60 @@
+[global]
+req_timeout_ms = 5_000
+poll_timeout_ms = 100
+
+[localhost.log]
+module = "mahos.node.log_broker"
+class = "LogBroker"
+target = { log = "localhost::log" }
+xpub_endpoint = "tcp://127.0.0.1:5755"
+xsub_endpoint = "tcp://127.0.0.1:5756"
+file = false
+
+[localhost.gparams]
+module = "mahos.node.global_params"
+class = "GlobalParams"
+target = { log = "localhost::log" }
+rep_endpoint = "tcp://127.0.0.1:5757"
+pub_endpoint = "tcp://127.0.0.1:5758"
+
+[localhost.server]
+module = "mahos.inst.server"
+class = "InstrumentServer"
+poll_timeout_ms = 1
+target = { log = "localhost::log" }
+log_level = "DEBUG"
+rep_endpoint = "tcp://127.0.0.1:5759"
+pub_endpoint = "tcp://127.0.0.1:5760"
+
+[localhost.server.instrument.smu]
+module = "smu"
+class = "Keithley_2450"
+[localhost.server.instrument.smu.conf]
+resource = "DUMMY::REPLACE_WITH_REAL_VALUE"
+volt_bounds = [-10, 10]
+
+[localhost.iv]
+module = "iv"
+class = "IV"
+target = { log = "localhost::log" }
+rep_endpoint = "tcp://127.0.0.1:5780"
+pub_endpoint = "tcp://127.0.0.1:5781"
+[localhost.iv.target.servers]
+smu = "localhost::server"
+
+[localhost.iv_gui]
+module = "iv_gui"
+class = "IVGUI"
+[localhost.iv_gui.target]
+iv = "localhost::iv"
+gparams = "localhost::gparams"
+
+[localhost.main_monitor]
+module = "mahos.gui.main_monitor"
+class = "MainMonitor"
+work_dir = "~"
+[localhost.main_monitor.target]
+log = "localhost::log"
+gparams = "localhost::gparams"
+servers = ["localhost::server"]
+# manager = "localhost::manager"
