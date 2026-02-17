@@ -53,6 +53,8 @@ from formatting and linting.
       (for example, `first_level_key.second_level_key`).
   - For the `Message` classes, the list of attributes using `:ivar:` directive.
   - Optional minor notes may follow, but use them sparingly.
+- For one-line docstrings, use single-line triple double quotes (for example, ``"""Summary."""``) without internal newlines or blank lines.
+- Insert exactly one blank line immediately after a class docstring before the following code.
 
 ## Testing Guidelines
 
