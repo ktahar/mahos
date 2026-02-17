@@ -1,4 +1,4 @@
-.PHONY: all format lint install-dev test docs browse clean
+.PHONY: all format lint install-dev test dq-ext docs browse clean
 
 ifeq ($(OS),Windows_NT)
     OPEN := "start"
@@ -26,14 +26,14 @@ test:
 	@python -c "import mahos, mahos_dq" >/dev/null 2>&1 || make install-dev
 	python -m pytest --timeout=10
 
+dq-ext:
+	cd pkgs/mahos-dq-ext/src/mahos_dq_ext && make
+
 docs:
 	sphinx-build -b html docs-src docs
 
 browse:
 	$(OPEN) docs/index.html
-
-dq-ext:
-	cd pkgs/mahos-dq-ext/src/mahos_dq_ext && make
 
 clean:
 	$(RM) -r docs
