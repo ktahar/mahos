@@ -927,7 +927,7 @@ class BaslerPylonCamera(Instrument):
 
     def set(self, key: str, value=None, label: str = "") -> bool:
         if key == "exposure_time":
-            self.set_exposure_time(value)
+            return self.set_exposure_time(value)
         else:
             return self.fail_with(f"Unknown set() key: {key}")
 

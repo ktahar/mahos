@@ -63,8 +63,7 @@ class AnalogPDMM(InstrumentOverlay):
             self.unit = str(value)
             return True
         else:
-            self.logger.error(f"unknown get() key: {key}")
-            return None
+            return self.fail_with(f"unknown set() key: {key}")
 
     def get(self, key: str, args=None, label: str = ""):
         if key == "data":
@@ -137,8 +136,7 @@ class LockinAnalogPDMM(InstrumentOverlay):
             self.unit = str(value)
             return True
         else:
-            self.logger.error(f"unknown get() key: {key}")
-            return None
+            return self.fail_with(f"unknown set() key: {key}")
 
     def get(self, key: str, args=None, label: str = ""):
         if key == "data":
