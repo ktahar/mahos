@@ -5,7 +5,7 @@ Command Line Interface
 
 .. currentmodule:: mahos
 
-After installing mahos package, a command ``mahos`` is installed.
+After installing the mahos package, a command named ``mahos`` is installed.
 This command serves as a command line interface (CLI) to use mahos.
 The ``mahos`` CLI provides several sub-commands described below.
 
@@ -15,20 +15,20 @@ Node operations
 Common arguments
 ^^^^^^^^^^^^^^^^
 
-There are common arguments for node operation commands:
+There are common arguments for node operation commands.
 
 -c [config file]
 ................
 
 To operate on MAHOS nodes, you have to prepare toml-based :doc:`configuration file <conf>`.
-The ``-c`` option specifies the path to config file.
+The ``-c`` option specifies the path to the config file.
 Defaults to ``conf.toml``.
 
 -H [hostname]
 .............
 
-CLI command usually targets a node.
-The full-name of the node consists of hostname and nodename.
+A CLI command usually targets a node.
+The full name of the node consists of a hostname and nodename.
 The ``-H`` option specifies the hostname part.
 Defaults to real hostname (``platform.uname().node``) if it is in the config file, or ``localhost``.
 
@@ -50,15 +50,15 @@ mahos launch
 
 ``mahos launch -e [nodenames-to-exclude]`` starts all the nodes excluding specified names.
 
-If a node named ``log`` (recommended name of :class:`LogBroker <node.log_broker.LogBroker>` node) is defined to run on the host
-and already up, it's automatically excluded.
+If a node named ``log`` (the recommended name for a :class:`LogBroker <node.log_broker.LogBroker>` node) is defined to run on the host
+and is already up, it is automatically excluded.
 
 mahos log
 ^^^^^^^^^
 
-``mahos log [nodename=log]`` subscribes to a :class:`LogBroker <node.log_broker.LogBroker>` to print logs on console.
+``mahos log [nodename=log]`` subscribes to a :class:`LogBroker <node.log_broker.LogBroker>` to print logs on the console.
 
-If specified :class:`LogBroker <node.log_broker.LogBroker>` node is configured to run on the same host and not up,
+If the specified :class:`LogBroker <node.log_broker.LogBroker>` node is configured to run on the same host and is not up,
 this command automatically starts the node.
 
 mahos ls
@@ -66,21 +66,21 @@ mahos ls
 
 ``mahos ls`` prints the list of defined nodes in the config file.
 
-``mahos ls -i`` enables listing of :class:`Instruments <inst.instrument.Instrument>` and :class:`InstrumentOverlays <inst.overlay.overlay.InstrumentOverlay>` in :class:`InstrumentServers <inst.server.InstrumentServer>`
+``mahos ls -i`` enables listing of :class:`Instruments <inst.instrument.Instrument>` and :class:`InstrumentOverlays <inst.overlay.overlay.InstrumentOverlay>` in :class:`InstrumentServers <inst.server.InstrumentServer>`.
 
 .. _mahos graph:
 
 mahos graph
 ^^^^^^^^^^^
 
-``mahos graph`` visualizes the config file as graph.
+``mahos graph`` visualizes the config file as a graph.
 
 Add option ``-o [filename]`` to save to a file.
 
 mahos echo
 ^^^^^^^^^^
 
-``mahos echo -t [topicname] [nodename]`` subscribes to a topic and print published messages.
+``mahos echo -t [topicname] [nodename]`` subscribes to a topic and prints published messages.
 
 mahos shell
 ^^^^^^^^^^^

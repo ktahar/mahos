@@ -17,16 +17,16 @@ You need Python (>= 3.10, < 3.13) on Windows or Linux.
 Create virtual environment
 --------------------------
 
-The `venv <https://docs.python.org/3/library/venv.html>`_ is the recommended tool for virtual environment management.
+`venv <https://docs.python.org/3/library/venv.html>`_ is the recommended tool for virtual environment management.
 Skip this section if you prefer one of the following alternatives.
 
 - You could install the requirements and the mahos package with your system Python.
 - You could use ``virtualenv``, ``conda`` or other virtual environment management tools too.
 
-``venv`` comes with Python; you don't have to install additional stuffs.
+``venv`` comes with Python; you do not have to install additional tools.
 
-For some packages which are not quite straightforward to install via pip (OpenCV etc.),
-we recommend to enable system-site-packages (remove ``--system-site-packages`` if you don't want it).
+For some packages that are not straightforward to install via pip (OpenCV, etc.),
+we recommend enabling system site packages (remove ``--system-site-packages`` if you do not want this).
 
 .. code-block:: bash
 
@@ -37,13 +37,13 @@ Small notes on venv usage:
 - activate: ``source <mahos env directory>/bin/activate`` or ``source <mahos env directory>/Scripts/activate``
 - deactivate: ``deactivate``
 
-Following contents assume that the virtual environment has already been activated.
+The following content assumes that the virtual environment has already been activated.
 
 Clone the repository
 --------------------
 
 Use git to clone the mahos repository.
-Following commands clone it to local directory `<preferred directory>/mahos`.
+The following commands clone it to a local directory, ``<preferred directory>/mahos``.
 We call this directory the `repository directory`.
 
 - ``cd <preferred directory>`` [#f1]_
@@ -52,8 +52,8 @@ We call this directory the `repository directory`.
 Optional requirements
 ---------------------
 
-There are some optional requirements installation of which is not quite straightforward.
-If you want to install them, follow instructions in the subsections below.
+There are some optional requirements whose installation is not straightforward.
+If you want to install them, follow the instructions in the subsections below.
 
 C++ compiler
 ^^^^^^^^^^^^
@@ -80,7 +80,7 @@ Windows
 .......
 
 You have to install the `C++ compiler`_ and the `graphviz binary <https://graphviz.org/download/#windows>`_ (version 2).
-And then, use following command to install pygraphviz.
+Then use the following command to install pygraphviz.
 
 .. code-block:: bash
 
@@ -89,14 +89,14 @@ And then, use following command to install pygraphviz.
 Linux
 .....
 
-You can install the graphviz with package manager (e.g. ``sudo apt install graphviz libgraphviz-dev`` for Ubuntu/Debian),
+You can install Graphviz with a package manager (e.g. ``sudo apt install graphviz libgraphviz-dev`` for Ubuntu/Debian),
 and then ``pip install pygraphviz``.
 
 OpenCV
 ^^^^^^
 
-To use full-features of image analysis modules, install OpenCV (>= 3.0.0) with Python binding.
-There are several methods to install this, and the easiest are following.
+To use the full features of image analysis modules, install OpenCV (>= 3.0.0) with Python bindings.
+There are several methods to install this, and the easiest are the following.
 
 - Windows: ``pip install opencv-python`` to install CPU-only binary
 - Linux: the pre-compiled package (e.g. ``sudo apt install python3-opencv`` for Ubuntu/Debian)
@@ -109,7 +109,7 @@ mahos
 
 ``pip install -e ./pkgs/mahos``
 
-Here, -e (editable) is optional but recommended.
+Here, ``-e`` (editable) is optional but recommended.
 Runtime requirements in ``requirements.txt`` are installed by this command.
 
 Dev requirements
@@ -134,7 +134,7 @@ mahos-dq
 
 ``pip install -e ./pkgs/mahos-dq``
 
-Here, -e (editable) is optional but recommended.
+Here, ``-e`` (editable) is optional but recommended.
 
 mahos-dq-ext
 ^^^^^^^^^^^^
@@ -143,12 +143,12 @@ The `C++ compiler`_ is required to install this.
 
 ``pip install -e ./pkgs/mahos-dq-ext``
 
-Here, -e (editable) is optional but recommended.
+Here, ``-e`` (editable) is optional but recommended.
 
 Test
 ----
 
-To check if installation is successful, run test with ``pytest``.
+To check whether installation is successful, run tests with ``pytest``.
 
 Notes
 -----
@@ -156,8 +156,8 @@ Notes
 PyQt6
 ^^^^^
 
-The PyQt6 fails if you have `PyQt6` package inside the virtual environment, but dependencies (`PyQt6-sip` and `PyQt6-Qt6`) outside.
-Check the locations of these three packages if PyQt6 is going wrong.
+PyQt6 can fail if you have the `PyQt6` package inside the virtual environment, but dependencies (`PyQt6-sip` and `PyQt6-Qt6`) outside.
+Check the locations of these three packages if PyQt6 is not working correctly.
 To resolve the situation, try one of the following.
 
 To install things `outside` the virtual environment:

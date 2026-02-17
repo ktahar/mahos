@@ -1,7 +1,7 @@
 Tutorial 2: Basic Measurement
 =============================
 
-In this tutorial chapter, we will learn how basic measurement system is constructed on mahos
+In this tutorial chapter, we will learn how a basic measurement system is constructed in mahos
 (with mock instruments).
 
 Preparation
@@ -13,13 +13,13 @@ It is recommended to finish :doc:`tutorial_comm` before this.
 
 Find the ``examples/ivcurve`` directory in the mahos repository.
 We will use the files in it for this tutorial.
-You can copy this directory to somewhere in your computer if you want.
+You can copy this directory somewhere on your computer if you want.
 
 Running the mock
 ----------------
 
-Run all the nodes defined in our ``conf.toml`` by command ``mahos launch``.
-You will see a GUI window popping out.
+Run all the nodes defined in our ``conf.toml`` with the command ``mahos launch``.
+You will see a GUI window pop up.
 If you click the Start button, some noisy line (IV curve) is plotted and updated.
 This is our mock for IV curve measurement.
 
@@ -37,7 +37,7 @@ measure IV characteristics of DUT (Device Under Test).
 Visualizing config
 ------------------
 
-Let's analyze below what's happening behind the scenes.
+Let's analyze what is happening behind the scenes.
 First, try visualizing our nodes by ``mahos graph``, and you will see a graph below.
 
 .. figure:: ./img/ivcurve-nodes.svg
@@ -50,25 +50,25 @@ As visualized, the config file defines four nodes.
 We will go through these from bottom to top (from top to bottom in ``conf.toml``).
 
 The topmost group in ``conf.toml`` is named `global`.
-This is special group to define the default value for all the nodes.
+This is a special group to define default values for all nodes.
 If the same key is defined for a node, the global value is just ignored.
 Otherwise, the global value is used.
-(The behaviour is similar to local and global variable in some programming languages.)
+(The behavior is similar to local and global variables in some programming languages.)
 
 log
 ---
 
 The second group is named `localhost.log`.
-It is important to observe the log messages for the debugging or monitoring.
-Since mahos adopted a distributed system,
-the sources of logs (i.e., :term:`nodes <node>`) are running on multiple processes.
-In order to sort out the distributed logs, it seems good to gather the logs to single node,
-and then redistribute.
+It is important to observe log messages for debugging or monitoring.
+Since mahos uses a distributed system,
+the log sources (i.e., :term:`nodes <node>`) run on multiple processes.
+To sort distributed logs, it is useful to gather logs to a single node,
+and then redistribute them.
 The :class:`LogBroker <mahos.node.log_broker.LogBroker>` is implemented for this purpose.
 
 It is highly recommended to define a `log` in ``conf.toml``, as in the file for this tutorial.
 You can see arrows labeled `log` are coming from `server` and `ivcurve` to the `log` node in the graph.
-These arrows are corresponding to Line 15 and Line 37-38 in ``conf.toml``.
+These arrows correspond to lines 15 and 37-38 in ``conf.toml``.
 
 (In :doc:`tutorial_comm`, we have omitted this and used dummy loggers.)
 
@@ -103,7 +103,7 @@ The `server` (:class:`InstrumentServer <mahos.inst.server.InstrumentServer>`) is
    resource = "VISA::DUMMY1"
 
 :class:`InstrumentServer <mahos.inst.server.InstrumentServer>` is the node for :doc:`arch_inst` to provide :term:`RPC` for instrument drivers.
-Thus, you don't need to write a :term:`node` for this purpose; you write instrument driver classes (:class:`Instrument <mahos.inst.instrument.Instrument>`) instead.
+Thus, you do not need to write a :term:`node` for this purpose; you write instrument driver classes (:class:`Instrument <mahos.inst.instrument.Instrument>`) instead.
 The second group above ``[localhost.server.instrument.source]`` defines
 an instrument `source` inside the `server`.
 The `VoltageSource_mock` is an example of :class:`Instrument <mahos.inst.instrument.Instrument>` class here.
@@ -145,22 +145,22 @@ The `VoltageSource_mock` is an example of :class:`Instrument <mahos.inst.instrum
                return False
 
 As the name suggests, this class is just a mock and doesn't consume any external resources.
-However, a real instrument usually requires a resource identifier for communication (VISA resource, IP Address, DLL path, etc.), and we have included how to pass such a configuration to an Instrument.
-We define a configuration dictionary (:term:`conf`) as Line 23-24 in ``conf.toml``.
-This is passed to Instrument and referred by ``self.conf`` (Line 14).
-Line 13 uses a utility method to check existence of required key.
+However, a real instrument usually requires a resource identifier for communication (VISA resource, IP address, DLL path, etc.), and we have included how to pass such configuration to an Instrument.
+We define a configuration dictionary (:term:`conf`) as line 23-24 in ``conf.toml``.
+This is passed to Instrument and referenced by ``self.conf`` (line 14).
+Line 13 uses a utility method to check the existence of the required key.
 
 Only two functions of voltage source are implemented: ``set_output()`` and ``set_voltage()``.
 Meanings of these may be obvious.
 We assume an output relay for voltage source, that is turned on/off by ``set_output()``.
 The output voltage can be set by ``set_voltage()``.
 
-Line 27 and below makes these adapted to the :ref:`instrument-api`.
+Line 27 and below adapt these methods to the :ref:`instrument-api`.
 The ``set_output()`` is wrapped by :meth:`start <mahos.inst.instrument.Instrument.start>` and :meth:`stop <mahos.inst.instrument.Instrument.stop>`.
 And ``set_voltage()`` is by :meth:`set <mahos.inst.instrument.Instrument.set>`.
-Note that most of the :ref:`instrument-api` (excepting :meth:`get <mahos.inst.instrument.Instrument.get>`) must return bool (True on success).
+Note that most of the :ref:`instrument-api` (except :meth:`get <mahos.inst.instrument.Instrument.get>`) must return bool (`True` on success).
 
-In :ref:`instrument-api`, :meth:`set <mahos.inst.instrument.Instrument.set>`, :meth:`get <mahos.inst.instrument.Instrument.get>`, and :meth:`configure <mahos.inst.instrument.Instrument.configure>` accept some arguments and the type information of the arguments are lost (function signature of e.g. ``set_voltage()`` cannot be seen from the client).
+In :ref:`instrument-api`, :meth:`set <mahos.inst.instrument.Instrument.set>`, :meth:`get <mahos.inst.instrument.Instrument.get>`, and :meth:`configure <mahos.inst.instrument.Instrument.configure>` accept generic arguments, so type information is lost (the function signature of ``set_voltage()`` cannot be seen from the client).
 We can define :class:`InstrumentInterface <mahos.inst.interface.InstrumentInterface>` to recover this, as below.
 This procedure looks like a duplication of effort, but the positive side is that
 we can define an explicit interface (which method is exported and which is not, as in static programming languages).
@@ -191,7 +191,7 @@ There are two ways to call the functions:
 
    # Method2: call through interface
    from instruments import VoltageSourceInterface
-   source = VoltageSouraceInterface(cli, "source")
+   source = VoltageSourceInterface(cli, "source")
    source.start()
    source.set_voltage(12.3)
 
@@ -227,7 +227,7 @@ Before looking into the code, let's run and interact with the ivcurve.
 Launch nodes with ``mahos launch log server ivcurve``.
 In the second terminal, ``mahos log`` to print the logs.
 And ``mahos shell ivcurve`` to start IPython shell for ivcurve.
-The ivcurve measurement can be performed by following snippet.
+The ivcurve measurement can be performed with the following snippet.
 
 .. code-block:: python
 
@@ -237,7 +237,7 @@ The ivcurve measurement can be performed by following snippet.
    cli.stop()
 
 Here, ``get_data()`` returns ``IVCurveData`` defined in ``ivcurve_msgs.py``,
-and ``data.data`` is the measurement result: a 2D numpy array of shape `(number of voltage points (params["num"]), number of sweeps)`.
+and ``data.data`` is the measurement result: a 2D NumPy array of shape ``(number of voltage points (params["num"]), number of sweeps)``.
 
 For a bit more meaningful application, try executing file ``measure_and_plot.py`` and understanding it.
 ``cli.get_param_dict()`` returns a :ref:`param-dict`, str-keyed dict of :class:`Param <mahos.msgs.param_msgs.Param>`.
@@ -249,9 +249,9 @@ Reading IVCurve node
 
 What happens at ivcurve node side?
 Look at implementation of ``IVCurve`` node in ``ivcurve.py``.
-``IVCurve`` is subclass of :class:`BasicMeasNode <mahos.meas.common_meas.BasicMeasNode>`,
+``IVCurve`` is a subclass of :class:`BasicMeasNode <mahos.meas.common_meas.BasicMeasNode>`,
 which is a convenient Node implementation for simple measurement nodes.
-We explain how this node works by following ``main()`` method line by line.
+We explain how this node works by following the ``main()`` method line by line.
 
 .. code-block:: python
    :linenos:
@@ -264,53 +264,53 @@ We explain how this node works by following ``main()`` method line by line.
        self._check_finished()
        self._publish(publish_data)
 
-First line of ``main()`` (Line 173) calls ``poll()``.
+First line of ``main()`` (line 173) calls ``poll()``.
 Here, this node checks incoming requests, and if there is a request, the handler is called.
-The handler is implemented in :class:`BasicMeasNode <mahos.meas.common_meas.BasicMeasNode>` (read the implementation if you are interested in) and it calls ``change_state()`` or ``get_param_dict()`` [#f1]_ according to the request.
+The handler is implemented in :class:`BasicMeasNode <mahos.meas.common_meas.BasicMeasNode>` (read the implementation if you are interested) and calls ``change_state()`` or ``get_param_dict()`` [#f1]_ according to the request.
 
 When ``cli.get_param_dict()`` is called, request is sent to ivcurve and the result of ``IVCurve.get_param_dict()`` is returned.
 The result of this method is hard-coded here; however, the parameter bounds may be determined by instruments for real application.
 
 By observing ``change_state()``, you will see that this node has explicit state: ``BinaryState.IDLE`` or ``BinaryState.ACTIVE``.
-All measurement nodes are advised to have explicit state like this, and BinaryState is the most simplest case.
+All measurement nodes are advised to have explicit state like this, and BinaryState is the simplest case.
 ``cli.start()`` is a shorthand of `change_state(ACTIVE)`, and ``cli.stop()`` is `change_state(IDLE)`.
 When state is changing from IDLE to ACTIVE, ``self.sweeper.start()`` is called.
-``self.sweeper`` is an instance of ``Sweeper`` class, that communicates with the server and do real jobs.
+``self.sweeper`` is an instance of the ``Sweeper`` class that communicates with the server and performs the actual work.
 
-At the second line of ``main()`` (Line 174), through ``_work()``, ``self.sweeper.work()`` is called.
+At the second line of ``main()`` (line 174), through ``_work()``, ``self.sweeper.work()`` is called.
 A sweep measurement for IV curve is done there; `source` is used to apply voltage and the current is read by `meter`.
 
-The third line of ``main()`` (Line 175) checks if we can finish the measurement.
+The third line of ``main()`` (line 175) checks if we can finish the measurement.
 Measurement is finished when ``params["sweeps"]`` is positive and the sweeps have already been repeated ``params["sweeps"]`` times (see ``Sweeper.is_finished()``).
 
-By final line of ``main()`` (Line 176), the node status and data are published.
+By the final line of ``main()`` (line 176), the node status and data are published.
 
 ivcurve_gui
 -----------
 
-The ivcurve_gui, a GUI frontend of ivcurve, is defined at the last group in ``conf.toml``.
+The ivcurve_gui, a GUI frontend of ivcurve, is defined in the last group in ``conf.toml``.
 The class ``IVCurveGUI`` is in ``ivcurve_gui.py``.
 This is what we were operating in `Running the mock`_.
 
 Let's launch all the nodes by ``mahos launch`` and confirm GUI is working.
 Then, start the IPython shell with ``mahos shell ivcurve`` and send start or stop requests.
 Furthermore, try running ``measure_and_plot.py`` script (stop the measurement before running).
-It is quite important that we can operate the measurement from both the GUI and programs (shell, or a custom script).
-This extensibility is one of the advantages of the distributed systems.
+It is important that we can operate the measurement from both the GUI and programs (shell or a custom script).
+This extensibility is one of the advantages of distributed systems.
 
 If you have experience in Qt (PyQt) programming, let's take a look at ``ivcurve_gui.py``.
 The GUI component (IVCurveWidget) is composed quite simply by virtue of ``QBasicMeasClient``.
-This class is `Qt-version` of `BasicMeasClient` and emits Qt signal on reception of subscribed messages.
+This class is a `Qt-version` of `BasicMeasClient` and emits Qt signals when subscribed messages are received.
 In other words, it translates MAHOS communication into Qt communication (signal-slot).
-All we have to do for widget implementation is connecting the signals to slots updating the GUI state (Line 102-103) and sending requests (Line 124-136).
+All we have to do for widget implementation is connect signals to slots that update the GUI state (lines 102-103) and send requests (lines 124-136).
 
-There is a bit special custom on initialization (``init_with_status()``).
+There is a slightly special initialization pattern (``init_with_status()``).
 We cannot initialize the GUI completely without the target node (``ivcurve``) because we have to know the target's status (by ``get_param_dict()`` for example).
 But we are not sure if the target node is up when GUI starts.
-To assure this point, we first disable the widget (Line 29) and connect `statusUpdate` event to ``init_with_status()`` (Line 26).
-When the first status message arrives, this method is fired and remaining initializations are done.
-The widget is enabled finally at Line 105.
-This method is called only once because the signal is disconnect at Line 79.
+To assure this point, we first disable the widget (line 29) and connect `statusUpdate` event to ``init_with_status()`` (line 26).
+When the first status message arrives, this method is called and the remaining initialization steps are completed.
+The widget is enabled finally at line 105.
+This method is called only once because the signal is disconnected at line 79.
 
 Modified configurations
 -----------------------
@@ -325,12 +325,12 @@ See :ref:`conf threading` section in the configuration file document for details
 Overlay
 ^^^^^^^
 
-If you need to reduce overhead of TCP communication between measurement node (IVCurve) and the InstrumentServer, :class:`InstrumentOverlay <mahos.inst.overlay.overlay.InstrumentOverlay>` would also help.
-The IVCurve node was sending the commands to ``source`` and ``meter`` for each data points in a voltage sweep.
+If you need to reduce TCP communication overhead between the measurement node (IVCurve) and the InstrumentServer, :class:`InstrumentOverlay <mahos.inst.overlay.overlay.InstrumentOverlay>` can also help.
+The IVCurve node sends commands to ``source`` and ``meter`` for each data point in a voltage sweep.
 By using the overlay, the sweep operation can be executed at InstrumentServer side.
 The modified example using overlay is defined in ``conf_overlay.toml``,
 and the classes are implemented in ``overlay.py`` and ``ivcurve_overlay.py``.
-You could grab the concept by observing the difference between this and default examples.
+You can understand the concept by observing the differences between this and the default examples.
 
 .. rubric:: Footnotes
 

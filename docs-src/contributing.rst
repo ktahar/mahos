@@ -2,7 +2,7 @@ Contributing to MAHOS
 =====================
 
 Thank you so much for investing your time in contributing to our project.
-Any contributions including bug reports and patches are always welcomed.
+Any contributions, including bug reports and patches, are always welcome.
 
 Bug reports
 -----------
@@ -17,10 +17,10 @@ Please `submit a pull request <https://github.com/ToyotaCRDL/mahos/pulls>`_ for 
 Testing
 ^^^^^^^
 
-Please use following commands in the project's root directory in order to check your patch can be merged.
+Please use the following commands in the project's root directory to check whether your patch can be merged.
 You can also hit ``make`` to do all.
 
-- ``black .`` to format the codes.
+- ``black .`` to format the code.
 - ``flake8 .`` for code linting.
 - ``pytest`` to check whether all the unit tests are passing.
 

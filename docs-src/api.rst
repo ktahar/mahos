@@ -1,7 +1,7 @@
 API Reference
 =============
 
-Here is API references for mahos packages.
+Here are API references for the mahos packages.
 
 .. toctree::
    :maxdepth: 2

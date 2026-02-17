@@ -2,7 +2,7 @@ meas layer
 ==========
 
 Common components of meas (measurement) layer are implemented in :ref:`mahos.meas` package.
-The nodes in the meas layer provides the core functionalities of the measurement automation.
+The nodes in the meas layer provide the core functionality of measurement automation.
 To keep flexibility, there is almost no restriction on node implementation.
 
 However, meas nodes are advised to have explicit :term:`state`, i.e., to publish topic :term:`status` (:class:`Status <mahos.msgs.common_msgs.Status>` type) having :term:`state` attribute (:class:`State <mahos.msgs.common_msgs.State>` type).
@@ -11,7 +11,7 @@ If the node has :term:`state`, we can use `StateManager`_ for the state manageme
 BasicMeasNode
 -------------
 
-:class:`BasicMeasNode <mahos.meas.common_meas.BasicMeasNode>` can be utilized as a base class to implement basic measurment nodes.
+:class:`BasicMeasNode <mahos.meas.common_meas.BasicMeasNode>` can be used as a base class to implement basic measurement nodes.
 This class assumes :term:`state` of type :class:`BinaryState <mahos.msgs.common_msgs.BinaryState>` and :term:`status` of type :class:`BinaryStatus <mahos.msgs.common_msgs.BinaryStatus>`.
 It also provides additional data management features like fitting and data buffering.
 
@@ -20,13 +20,13 @@ It also provides additional data management features like fitting and data buffe
 Tweaker
 -------
 
-:class:`Tweaker <mahos.meas.tweaker.Tweaker>` is a generic node for manual-tuning of instrument parameters.
-This is useful for rather "floating" instruments which is not directly tied to specific measurement protocol,
+:class:`Tweaker <mahos.meas.tweaker.Tweaker>` is a generic node for manual tuning of instrument parameters.
+This is useful for relatively "floating" instruments that are not directly tied to a specific measurement protocol,
 but its state affects the sample / DUT and measurement result.
 Examples: programmable (variable gain) amplifiers for the sensors, thermostats, or power supply for electromagnet.
 The instrument should have :ref:`inst-params-interface` to be managed by the Tweaker.
 Thus, it should implement ``get_param_dict_labels()``, ``get_param_dict()``, and ``configure()``.
-The ``start()``, ``stop()``, and ``reset()`` methods can be also invoked from Tweaker.
+The ``start()``, ``stop()``, and ``reset()`` methods can also be invoked from Tweaker.
 
 Some measurement nodes can take ``tweakers: list[str]`` in the configuration ``target``.
 By doing so, the status of Tweaker(s) can be embedded in the measurement data.
@@ -36,20 +36,20 @@ See also :doc:`tutorial_manual_op` for an example with mock instrument.
 PosTweaker
 ----------
 
-:class:`PosTweaker <mahos.meas.pos_tweaker.PosTweaker>` is a generic node for manual-tuning of positioner instruments.
+:class:`PosTweaker <mahos.meas.pos_tweaker.PosTweaker>` is a generic node for manual tuning of positioner instruments.
 Its role is similar to :class:`Tweaker <mahos.meas.tweaker.Tweaker>`,
 but PosTweaker has dedicated interface and GUI for positioners.
 
-The PosTweaker can also listed in ``tweakers: list[str]`` in the configuration ``target`` of measurement nodes.
+PosTweaker can also be listed in ``tweakers: list[str]`` in the ``target`` configuration of measurement nodes.
 
 See also :doc:`tutorial_manual_op` for an example with mock instrument.
 
 Recorder
 --------
 
-:class:`Recorder <mahos.meas.recorder.Recorder>` is a generic node for recording of time-series data from instruments.
-To use Recorder, instrument must implement following APIs: ``get_param_dict_labels()``, ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, and ``get()``.
-If channel unit is not given in the mode configuration, ``get("unit")`` is additionally required.
+:class:`Recorder <mahos.meas.recorder.Recorder>` is a generic node for recording time-series data from instruments.
+To use Recorder, an instrument must implement the following APIs: ``get_param_dict_labels()``, ``get_param_dict()``, ``configure()``, ``start()``, ``stop()``, and ``get()``.
+If a channel unit is not given in the mode configuration, ``get("unit")`` is additionally required.
 
 Recorder uses selected mode (``[...recorder.mode.<label>]``) as a map from Recorder channel name
 to instrument channel configuration. For each channel config:
@@ -77,11 +77,11 @@ Sweeper
 
 :class:`Sweeper <mahos.meas.sweeper.Sweeper>` is a generic 1D sweep measurement node.
 It controls one sweep parameter and samples one measurement value at each sweep point.
-The worker repeats the line sweep for requested number of times and stores the result in
+The worker repeats the line sweep for the requested number of times and stores the result in
 :class:`SweeperData <mahos.msgs.sweeper_msgs.SweeperData>`.
 
 The sweep condition can be configured by ``start``, ``stop``, ``num``, ``log``, and ``delay``
-parameters. ``sweeps`` controls number of repeated sweeps (``0`` means infinite).
+parameters. ``sweeps`` controls the number of repeated sweeps (``0`` means infinite).
 Configuration sections ``x`` and ``measure`` define instrument names and API keys used
 for set/get operations.
 The ``x`` instrument must support ``set`` and ``measure`` instrument must support ``get``.
@@ -100,7 +100,7 @@ grid point. One completed y-loop corresponds to one 2D image, and repeated image
 in :class:`GridSweeperData <mahos.msgs.grid_sweeper_msgs.GridSweeperData>`.
 
 Both axes support ``start``, ``stop``, ``num``, ``log``, and ``delay`` parameters.
-``sweeps`` controls number of repeated 2D images (``0`` means infinite).
+``sweeps`` controls the number of repeated 2D images (``0`` means infinite).
 Configuration sections ``x``, ``y``, and ``measure`` define instrument names and API keys used
 for set/get operations.
 The ``x`` and ``y`` instruments must support ``set`` and ``measure`` instrument must support ``get``.
@@ -128,12 +128,12 @@ Example configuration looks like below.
    [localhost.manager1.command]
    all_idle = { "localhost::node1" = "IDLE" , "localhost::node2" = "IDLE" }
 
-This manager manages `node1` and `node2`, both of which has :class:`BinaryState <mahos.msgs.common_msgs.BinaryState>`.
+This manager manages `node1` and `node2`, both of which have :class:`BinaryState <mahos.msgs.common_msgs.BinaryState>`.
 A command named `all_idle` is a request to set both nodes to the IDLE state.
-Before a `command` is executed, the nodes state (`last_state`) is stored.
+Before a `command` is executed, the nodes' states (`last_state`) are stored.
 After a `command`, we can use `restore` request to recover the `last_state`.
 
-The figure below explans the `command` and `restore` operations.
+The figure below explains the `command` and `restore` operations.
 
 .. figure:: ./img/mahos-state-manager.svg
    :alt: Command and Restore operations of StateManager
@@ -143,7 +143,7 @@ The figure below explans the `command` and `restore` operations.
 
 The manager1 is configured as the config snippets above.
 
-* (a): In initial state, node1 is ACTIVE and node2 is IDLE.
+* (a): In the initial state, node1 is ACTIVE and node2 is IDLE.
 * (b): node3 requests the manager1 to `restore` from `all_idle` command (Restore(all_idle)), which fails as the `last_state` is empty (`all_idle` has never been executed).
-* (c): node3 requests `all_idle` command execution (Command(all_idle), which turns both node1 and node2 to IDLE states. Here, the `last_state` is stored.
-* (d): node3 requests (Restore(all_idle) again. It succeeds this time and `last_state` is restored (node1 becomes ACTIVE).
+* (c): node3 requests `all_idle` command execution (Command(all_idle)), which turns both node1 and node2 to IDLE states. Here, `last_state` is stored.
+* (d): node3 requests `restore` again (Restore(all_idle)). It succeeds this time and `last_state` is restored (node1 becomes ACTIVE).
