@@ -172,7 +172,7 @@ class TweakerWidget(ClientTopWidget, Ui_TweakerWidget):
 
 
 class TweakerGUI(GUINode):
-    """GUINode for BasicMeasNode using BasicMeasWidget."""
+    """GUINode for TweakerWidget."""
 
     def init_widget(self, gconf: dict, name, context):
         lconf = local_conf(gconf, name)

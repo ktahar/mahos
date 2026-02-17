@@ -1,0 +1,30 @@
+﻿mahos.msgs.common\_meas\_msgs.ImageMeasData
+===========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.msgs.common_meas_msgs
+
+.. autoclass:: ImageMeasData
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ImageMeasData.get_fit_xdata
+      ~ImageMeasData.get_fit_ydata
+      ~ImageMeasData.get_image
+      ~ImageMeasData.init_axes
+      ~ImageMeasData.remove_fit_data
+      ~ImageMeasData.set_fit_data
+   
+   
+
+   
+   
+   

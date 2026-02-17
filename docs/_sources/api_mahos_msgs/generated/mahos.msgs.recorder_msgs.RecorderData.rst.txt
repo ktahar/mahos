@@ -1,0 +1,37 @@
+﻿mahos.msgs.recorder\_msgs.RecorderData
+======================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.msgs.recorder_msgs
+
+.. autoclass:: RecorderData
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RecorderData.__init__
+      ~RecorderData.append
+      ~RecorderData.get_channels
+      ~RecorderData.get_unit
+      ~RecorderData.get_unit_to_channels
+      ~RecorderData.get_units
+      ~RecorderData.get_xdata
+      ~RecorderData.get_ydata
+      ~RecorderData.has_data
+      ~RecorderData.index
+      ~RecorderData.init_axes
+      ~RecorderData.roll
+      ~RecorderData.set_units
+   
+   
+
+   
+   
+   

@@ -1,0 +1,39 @@
+﻿mahos.msgs.common\_meas\_msgs.BasicMeasData
+===========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.msgs.common_meas_msgs
+
+.. autoclass:: BasicMeasData
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BasicMeasData.finalize
+      ~BasicMeasData.get_fit_xdata
+      ~BasicMeasData.get_fit_ydata
+      ~BasicMeasData.get_xdata
+      ~BasicMeasData.get_ydata
+      ~BasicMeasData.has_data
+      ~BasicMeasData.init_attrs
+      ~BasicMeasData.init_axes
+      ~BasicMeasData.is_finalized
+      ~BasicMeasData.is_saved
+      ~BasicMeasData.remove_fit_data
+      ~BasicMeasData.resume
+      ~BasicMeasData.set_fit_data
+      ~BasicMeasData.set_saved
+      ~BasicMeasData.start
+   
+   
+
+   
+   
+   

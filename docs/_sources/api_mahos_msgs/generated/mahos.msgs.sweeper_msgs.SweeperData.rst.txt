@@ -1,0 +1,31 @@
+﻿mahos.msgs.sweeper\_msgs.SweeperData
+====================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.msgs.sweeper_msgs
+
+.. autoclass:: SweeperData
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SweeperData.__init__
+      ~SweeperData.get_image
+      ~SweeperData.get_xdata
+      ~SweeperData.get_ydata
+      ~SweeperData.has_data
+      ~SweeperData.init_axes
+      ~SweeperData.sweeps
+   
+   
+
+   
+   
+   

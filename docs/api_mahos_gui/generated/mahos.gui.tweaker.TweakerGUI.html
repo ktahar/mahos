@@ -44,7 +44,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_gui/generated/mahos.gui.tweaker.TweakerGUI';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mahos.gui.recorder.RecorderWidget" href="mahos.gui.recorder.RecorderWidget.html" />
+    <link rel="next" title="mahos.gui.pos_tweaker.PosTweakerWidget" href="mahos.gui.pos_tweaker.PosTweakerWidget.html" />
     <link rel="prev" title="mahos.gui.tweaker.TweakerWidget" href="mahos.gui.tweaker.TweakerWidget.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -369,8 +369,14 @@
 <li class="toctree-l2"><a class="reference internal" href="mahos.gui.client.QBasicMeasClient.html">mahos.gui.client.QBasicMeasClient</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos.gui.tweaker.TweakerWidget.html">mahos.gui.tweaker.TweakerWidget</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">mahos.gui.tweaker.TweakerGUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos.gui.pos_tweaker.PosTweakerWidget.html">mahos.gui.pos_tweaker.PosTweakerWidget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos.gui.pos_tweaker.PosTweakerGUI.html">mahos.gui.pos_tweaker.PosTweakerGUI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos.gui.recorder.RecorderWidget.html">mahos.gui.recorder.RecorderWidget</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos.gui.recorder.RecorderGUI.html">mahos.gui.recorder.RecorderGUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos.gui.sweeper.SweeperWidget.html">mahos.gui.sweeper.SweeperWidget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos.gui.sweeper.SweeperGUI.html">mahos.gui.sweeper.SweeperGUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos.gui.grid_sweeper.GridSweeperWidget.html">mahos.gui.grid_sweeper.GridSweeperWidget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos.gui.grid_sweeper.GridSweeperGUI.html">mahos.gui.grid_sweeper.GridSweeperGUI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos.gui.camera.CameraWidget.html">mahos.gui.camera.CameraWidget</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos.gui.camera.CameraGUI.html">mahos.gui.camera.CameraGUI</a></li>
 </ul>
@@ -448,7 +454,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos.gui.tweaker.TweakerGUI">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.gui.tweaker.</span></span><span class="sig-name descname"><span class="pre">TweakerGUI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NodeName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../api_mahos_node/generated/mahos.node.comm.Context.html#mahos.node.comm.Context" title="mahos.node.comm.Context"><span class="pre">Context</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.gui.tweaker.TweakerGUI" title="Link to this definition">#</a></dt>
-<dd><p>GUINode for BasicMeasNode using BasicMeasWidget.</p>
+<dd><p>GUINode for TweakerWidget.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="mahos.gui.tweaker.TweakerGUI.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NodeName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../api_mahos_node/generated/mahos.node.comm.Context.html#mahos.node.comm.Context" title="mahos.node.comm.Context"><span class="pre">Context</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.gui.tweaker.TweakerGUI.__init__" title="Link to this definition">#</a></dt>
@@ -487,11 +493,11 @@
       </div>
     </a>
     <a class="right-next"
-       href="mahos.gui.recorder.RecorderWidget.html"
+       href="mahos.gui.pos_tweaker.PosTweakerWidget.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">mahos.gui.recorder.RecorderWidget</p>
+        <p class="prev-next-title">mahos.gui.pos_tweaker.PosTweakerWidget</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

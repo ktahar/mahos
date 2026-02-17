@@ -1,0 +1,41 @@
+﻿mahos.gui.pos\_tweaker.PosTweakerWidget
+=======================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.gui.pos_tweaker
+
+.. autoclass:: PosTweakerWidget
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PosTweakerWidget.__init__
+      ~PosTweakerWidget.init_with_status
+      ~PosTweakerWidget.refresh_all_targets
+      ~PosTweakerWidget.request_home
+      ~PosTweakerWidget.request_home_all
+      ~PosTweakerWidget.request_load
+      ~PosTweakerWidget.request_save
+      ~PosTweakerWidget.request_set_target
+      ~PosTweakerWidget.request_stop
+      ~PosTweakerWidget.request_stop_all
+      ~PosTweakerWidget.toggle_lock
+      ~PosTweakerWidget.update
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+   
+   

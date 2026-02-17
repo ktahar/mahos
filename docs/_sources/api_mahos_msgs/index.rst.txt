@@ -17,4 +17,9 @@ The mahos.msgs are common message type definitions for node communications.
    :toctree: generated
 
    data_msgs.Data
+   common_meas_msgs.BasicMeasData
+   common_meas_msgs.ImageMeasData
+   recorder_msgs.RecorderData
+   sweeper_msgs.SweeperData
+   grid_sweeper_msgs.GridSweeperData
    camera_msgs.Image

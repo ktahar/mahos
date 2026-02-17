@@ -90,7 +90,7 @@ class AxisWidgets(object):
 
 
 class PosTweakerWidget(ClientTopWidget):
-    """Top widget for DigitalOutGUI"""
+    """Top widget for PosTweakerGUI"""
 
     def __init__(self, gconf: dict, name, gparams_name, verbose, fontsize, decimals, context):
         ClientTopWidget.__init__(self)
@@ -293,6 +293,8 @@ class PosTweakerWidget(ClientTopWidget):
 
 
 class PosTweakerGUI(GUINode):
+    """GUINode for PosTweakerWidget."""
+
     def init_widget(self, gconf: dict, name, context):
         lconf = local_conf(gconf, name)
         target = lconf["target"]
