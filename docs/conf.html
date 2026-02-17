@@ -416,7 +416,7 @@
                   
   <section id="configuration-file">
 <h1>Configuration file<a class="headerlink" href="#configuration-file" title="Link to this heading">#</a></h1>
-<p>To use mahos system, you have to prepare a toml configuration file.
+<p>To use the mahos system, you have to prepare a TOML configuration file.
 One good way to get used to this concept may be going through the <a class="reference internal" href="tutorial.html"><span class="doc">Tutorial</span></a>.</p>
 <p>Here, we put the configuration file for <a class="reference internal" href="tutorial_ivcurve.html"><span class="doc">Tutorial 2: Basic Measurement</span></a> as a reference.</p>
 <div class="literal-block-wrapper docutils container" id="id1">
@@ -471,7 +471,7 @@ One good way to get used to this concept may be going through the <a class="refe
 </pre></div>
 </div>
 </div>
-<p>This configuration file is visualized as graph below.</p>
+<p>This configuration file is visualized as a graph below.</p>
 <figure class="align-default" id="id2">
 <a class="reference internal image-reference" href="_images/ivcurve-nodes.svg"><img alt="Node graph for IVCurve" src="_images/ivcurve-nodes.svg" style="width: 30%;" />
 </a>
@@ -481,9 +481,9 @@ One good way to get used to this concept may be going through the <a class="refe
 </figure>
 <section id="node-name">
 <h2>Node name<a class="headerlink" href="#node-name" title="Link to this heading">#</a></h2>
-<p>The configuration of whole system (global conf) is structured as a dictionary with nested string keys.
+<p>The configuration of the whole system (global conf) is structured as a dictionary with nested string keys.
 TOML can effectively express such data structure.
-The top-level key specifies the hostname, except following two special names:</p>
+The top-level key specifies the hostname, except for the following two special names:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">global</span></code> block is used to define global configurations (default configurations for all the nodes).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">thread</span></code> block is used to define threaded nodes.</p></li>
@@ -491,19 +491,19 @@ The top-level key specifies the hostname, except following two special names:</p
 <p>These two names should be considered reserved, and not be used as hostnames.</p>
 <p>The second-level key is the nodename.
 The fully qualified name of a node consists of the hostname and nodename,
-and expressed as <code class="docutils literal notranslate"><span class="pre">&lt;hostname&gt;::&lt;nodename&gt;</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">localhost::server</span></code>).
+and is expressed as <code class="docutils literal notranslate"><span class="pre">&lt;hostname&gt;::&lt;nodename&gt;</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">localhost::server</span></code>).
 The configuration of each node (local config) is written as a dictionary under the nodename
 (under the block <code class="docutils literal notranslate"><span class="pre">[&lt;hostname&gt;::&lt;nodename&gt;]</span></code>),
-and this dictionary is binded as <code class="docutils literal notranslate"><span class="pre">conf</span></code> attribute of the <a class="reference internal" href="api_mahos_node/Node.html#mahos.node.node.Node" title="mahos.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span> <span class="pre">class</span></code></a>.</p>
+and this dictionary is bound as the <code class="docutils literal notranslate"><span class="pre">conf</span></code> attribute of the <a class="reference internal" href="api_mahos_node/Node.html#mahos.node.node.Node" title="mahos.node.node.Node"><code class="xref py py-class docutils literal notranslate"><span class="pre">Node</span></code></a>.</p>
 </section>
 <section id="fundamental-keys">
 <h2>Fundamental keys<a class="headerlink" href="#fundamental-keys" title="Link to this heading">#</a></h2>
-<p>Several keys define fundamental properties of node’s function and they are used for virtually all the nodes:</p>
+<p>Several keys define fundamental properties of a node’s function, and they are used for virtually all nodes:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">module</span></code>: The module name holding the Node class. It must be an importable Python module.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">class</span></code>: The Node class name. The class must be an attribute of the <code class="docutils literal notranslate"><span class="pre">module</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">poll_timeout_ms</span></code>: timeout for polling of inbound request (<a class="reference internal" href="api_mahos_node/Node.html#mahos.node.node.Node.poll" title="mahos.node.node.Node.poll"><code class="xref py py-meth docutils literal notranslate"><span class="pre">poll</span></code></a>). It roughly defines rate of main loop (without any requests).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">req_timeout_ms</span></code>: timeout for REQ-REP communication. It is referenced if the Node sends requests through <a class="reference internal" href="api_mahos_node/NodeClient.html#mahos.node.client.NodeClient" title="mahos.node.client.NodeClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">NodeClients</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">poll_timeout_ms</span></code>: timeout for polling inbound requests (<a class="reference internal" href="api_mahos_node/Node.html#mahos.node.node.Node.poll" title="mahos.node.node.Node.poll"><code class="xref py py-meth docutils literal notranslate"><span class="pre">poll</span></code></a>). It roughly defines the rate of the main loop (without any requests).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">req_timeout_ms</span></code>: timeout for REQ-REP communication. It is referenced if the Node sends requests through <a class="reference internal" href="api_mahos_node/NodeClient.html#mahos.node.client.NodeClient" title="mahos.node.client.NodeClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">NodeClient</span></code></a>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">rep_endpoint</span></code>: endpoint for REQ-REP communication. It is necessary if the Node accepts requests.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">pub_endpoint</span></code>: endpoint for PUB-SUB communication. It is necessary if the Node publishes data.</p></li>
 </ul>
@@ -511,23 +511,23 @@ and this dictionary is binded as <code class="docutils literal notranslate"><spa
 <section id="target">
 <h2>Target<a class="headerlink" href="#target" title="Link to this heading">#</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">target</span></code> is an important configuration defining (client-server) relations to other nodes.
-This is also a dictionary with string keys, and values can take following three types.</p>
+This is also a dictionary with string keys, and values can take the following three types.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">str</span></code> (full name of the node) if the target is only one node (as <code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">=</span> <span class="pre">&quot;localhost::log&quot;</span></code> in example above).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">list[str]</span></code> (list of full names) if the target can be multiple nodes.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">str]</span></code> (instrument name to full name of <a class="reference internal" href="api_mahos_inst/generated/mahos.inst.server.InstrumentServer.html#mahos.inst.server.InstrumentServer" title="mahos.inst.server.InstrumentServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentServer</span></code></a>) this is special case for measurement nodes using InstrumentServers and simultaneously defines the instruments to be used (see line 39-41 in example above).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">str]</span></code> (instrument name to full name of <a class="reference internal" href="api_mahos_inst/generated/mahos.inst.server.InstrumentServer.html#mahos.inst.server.InstrumentServer" title="mahos.inst.server.InstrumentServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentServer</span></code></a>): this is a special case for measurement nodes using InstrumentServers and simultaneously defines the instruments to be used (see lines 39-41 in the example above).</p></li>
 </ul>
 </section>
 <section id="instrumentserver">
 <h2>InstrumentServer<a class="headerlink" href="#instrumentserver" title="Link to this heading">#</a></h2>
 <p>The <a class="reference internal" href="api_mahos_inst/generated/mahos.inst.server.InstrumentServer.html#mahos.inst.server.InstrumentServer" title="mahos.inst.server.InstrumentServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentServer</span></code></a> holds <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instruments</span></code></a> and <a class="reference internal" href="api_mahos_inst/InstrumentOverlay.html#mahos.inst.overlay.overlay.InstrumentOverlay" title="mahos.inst.overlay.overlay.InstrumentOverlay"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentOverlays</span></code></a>.</p>
-<p>An Instrument config is defined under <code class="docutils literal notranslate"><span class="pre">[&lt;hostname&gt;.&lt;nodename&gt;.instrument.&lt;instname&gt;]</span></code> (as in <code class="docutils literal notranslate"><span class="pre">[localhost.server.instrument.source]</span></code> in line 20), where following three keys are given.</p>
+<p>An Instrument config is defined under <code class="docutils literal notranslate"><span class="pre">[&lt;hostname&gt;.&lt;nodename&gt;.instrument.&lt;instname&gt;]</span></code> (as in <code class="docutils literal notranslate"><span class="pre">[localhost.server.instrument.source]</span></code> at line 20), where the following three keys are given.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">module</span></code>: The module name holding the Instrument class. It must be an importable Python module, but leading <code class="docutils literal notranslate"><span class="pre">mahos.inst.</span></code> can be omitted if a submodule in <code class="docutils literal notranslate"><span class="pre">mahos.inst</span></code> package is used.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">class</span></code>: The Instrument class name. The class must be an attribute of the <code class="docutils literal notranslate"><span class="pre">module</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">conf</span></code>: The configuration dictionary for the Instrument (this is optional, but usually necessary).</p></li>
 </ul>
-<p>An InstrumentOverlay config is defined under <code class="docutils literal notranslate"><span class="pre">[&lt;hostname&gt;.&lt;nodename&gt;.instrument_overlay.&lt;instname&gt;]</span></code>, where following three keys are given.</p>
+<p>An InstrumentOverlay config is defined under <code class="docutils literal notranslate"><span class="pre">[&lt;hostname&gt;.&lt;nodename&gt;.instrument_overlay.&lt;instname&gt;]</span></code>, where the following three keys are given.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">module</span></code>: The module name holding the InstrumentOverlay class. It must be an importable Python module, but leading <code class="docutils literal notranslate"><span class="pre">mahos.inst.overlay.</span></code> can be omitted if a submodule in <code class="docutils literal notranslate"><span class="pre">mahos.inst.overlay</span></code> package is used.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">class</span></code>: The InstrumentOverlay class name. The class must be an attribute of the <code class="docutils literal notranslate"><span class="pre">module</span></code>.</p></li>
@@ -536,9 +536,9 @@ This is also a dictionary with string keys, and values can take following three 
 </section>
 <section id="threading">
 <span id="conf-threading"></span><h2>Threading<a class="headerlink" href="#threading" title="Link to this heading">#</a></h2>
-<p>By default, each node run as a process, and TCP is used for inter-process communication.
-When you need to reduce overhead of TCP communication,
-the nodes can be run as individual threads inside single process.
+<p>By default, each node runs as a process, and TCP is used for inter-process communication.
+When you need to reduce TCP communication overhead,
+nodes can be run as individual threads inside a single process.
 To enable this feature, you need to make slight modifications in the configuration file.
 Here, we put an example of modified configuration file for <a class="reference internal" href="tutorial_ivcurve.html"><span class="doc">Tutorial 2: Basic Measurement</span></a>.</p>
 <div class="literal-block-wrapper docutils container" id="id3">
@@ -596,10 +596,10 @@ Here, we put an example of modified configuration file for <a class="reference i
 </pre></div>
 </div>
 </div>
-<p>This configuration aims to run the <code class="docutils literal notranslate"><span class="pre">server</span></code> and <code class="docutils literal notranslate"><span class="pre">ivcurve</span></code> nodes as the threads in a process.
+<p>This configuration aims to run the <code class="docutils literal notranslate"><span class="pre">server</span></code> and <code class="docutils literal notranslate"><span class="pre">ivcurve</span></code> nodes as threads in a process.
 The threaded nodes are defined as <code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">list[str]</span></code> under the <code class="docutils literal notranslate"><span class="pre">[thread.&lt;hostname&gt;]</span></code> block.
 In the example, <code class="docutils literal notranslate"><span class="pre">[thread.localhost]</span></code> block is added at line 5.
-Line 6 defines a set of threaded nodes named <code class="docutils literal notranslate"><span class="pre">server_ivcurve</span></code> which consists of <code class="docutils literal notranslate"><span class="pre">server</span></code> and <code class="docutils literal notranslate"><span class="pre">ivcurve</span></code> nodes.
+Line 6 defines a set of threaded nodes named <code class="docutils literal notranslate"><span class="pre">server_ivcurve</span></code> that consists of the <code class="docutils literal notranslate"><span class="pre">server</span></code> and <code class="docutils literal notranslate"><span class="pre">ivcurve</span></code> nodes.
 The <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">graph</span></code> command can visualize the threaded nodes like below.</p>
 <figure class="align-default" id="id4">
 <a class="reference internal image-reference" href="_images/ivcurve-nodes-threaded.svg"><img alt="Node graph for IVCurve with threaded nodes" src="_images/ivcurve-nodes-threaded.svg" style="width: 40%;" />
@@ -609,12 +609,12 @@ The <code class="docutils literal notranslate"><span class="pre">mahos</span> <s
 </figcaption>
 </figure>
 <p>The endpoint must be changed to take advantage of threaded nodes.
-The line 20-21 defines endpoints with inprocess protocols (<code class="docutils literal notranslate"><span class="pre">inproc://</span></code>).
+Lines 20-21 define endpoints with in-process protocols (<code class="docutils literal notranslate"><span class="pre">inproc://</span></code>).
 This protocol is implemented (by ZeroMQ) with shared memory,
-and thus it can boost the transfer rate of the large data.</p>
+and thus it can boost the transfer rate of large data.</p>
 <p>To run a set of threaded nodes, execute command like <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">run</span> <span class="pre">-t</span> <span class="pre">server_ivcurve</span></code>
 (<code class="docutils literal notranslate"><span class="pre">-t</span></code> is necessary to tell that you want to run threaded nodes instead of normal node).
-The <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">launch</span></code> command automatically detects threaded nodes and start all of them
+The <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">launch</span></code> command automatically detects threaded nodes and starts all of them
 with matching hostname.</p>
 </section>
 </section>

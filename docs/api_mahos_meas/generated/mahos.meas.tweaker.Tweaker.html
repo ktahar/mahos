@@ -461,7 +461,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – The InstrumentServer targets (instrument name, server full name).</p></li>
+<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – InstrumentServer targets (instrument name, server full name).
+Required keys: instrument names referenced by <code class="docutils literal notranslate"><span class="pre">param_dicts</span></code> entries.</p></li>
 <li><p><strong>target.log</strong> (<em>str</em>) – The LogBroker target (broker full name).</p></li>
 <li><p><strong>param_dicts</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The list of &lt;instrument name&gt;::&lt;ParamDict label name&gt;.</p></li>
 </ul>

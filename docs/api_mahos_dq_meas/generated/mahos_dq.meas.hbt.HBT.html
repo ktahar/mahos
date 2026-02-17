@@ -45,7 +45,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="mahos_dq.meas.spectroscopy.Spectroscopy" href="mahos_dq.meas.spectroscopy.Spectroscopy.html" />
-    <link rel="prev" title="mahos_dq.meas.iodmr.IODMR" href="mahos_dq.meas.iodmr.IODMR.html" />
+    <link rel="prev" title="mahos_dq.meas.iodmr_worker.ISweeperOverlay" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -378,6 +378,8 @@
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spodmr.SPODMR.html">mahos_dq.meas.spodmr.SPODMR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.qdyne.Qdyne.html">mahos_dq.meas.qdyne.Qdyne</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr.IODMR.html">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">mahos_dq.meas.hbt.HBT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
@@ -463,12 +465,19 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – InstrumentServer targets. <code class="docutils literal notranslate"><span class="pre">tdc</span></code> is required;
+<code class="docutils literal notranslate"><span class="pre">switch</span></code> and <code class="docutils literal notranslate"><span class="pre">pg</span></code> are optional.</p></li>
+<li><p><strong>target.tweakers</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional Tweaker node names saved alongside HBT data.</p></li>
+<li><p><strong>target.log</strong> (<em>str</em>) – LogBroker target full name.</p></li>
 <li><p><strong>listener.interval_sec</strong> (<em>float</em>) – polling interval.</p></li>
 <li><p><strong>listener.tdc_correlation</strong> (<em>bool</em>) – (has preset) enable correlation measurement mode at TDC.</p></li>
 <li><p><strong>listener.tdc_normalize</strong> (<em>bool</em>) – (has preset) enable normalization at TDC.</p></li>
 <li><p><strong>listener.tdc_channel</strong> (<em>int</em>) – (default: 1) channel index for getting data from TDC.</p></li>
 <li><p><strong>listener.t0_ns</strong> (<em>float</em>) – default value of t0 (time delay).</p></li>
 <li><p><strong>listener.range_ns</strong> (<em>float</em>) – default value of measurement range (time window).</p></li>
+<li><p><strong>switch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional switch instrument names to route signal/optical paths.</p></li>
+<li><p><strong>switch_command</strong> (<em>str</em>) – Switch command label passed to Switch worker.</p></li>
+<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
 </ul>
 </dd>
 </dl>
@@ -540,12 +549,12 @@
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="mahos_dq.meas.iodmr.IODMR.html"
+       href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">mahos_dq.meas.iodmr.IODMR</p>
+        <p class="prev-next-title">mahos_dq.meas.iodmr_worker.ISweeperOverlay</p>
       </div>
     </a>
     <a class="right-next"

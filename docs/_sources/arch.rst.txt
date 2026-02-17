@@ -1,7 +1,7 @@
 Architecture
 ============
 
-As introduced in :doc:`overview`, mahos system consists of nodes which are categorized into three layers as visualized below.
+As introduced in :doc:`overview`, the mahos system consists of nodes that are categorized into three layers, as visualized below.
 
 .. toctree::
    :maxdepth: 1
@@ -25,7 +25,7 @@ Currently, mahos contains two main subpackages.
 mahos
 ^^^^^
 
-mahos package has core functionalities of mahos's system and common components.
+The mahos package has core functionality of the mahos system and common components.
 
 * :ref:`mahos.node` - Base node implementations.
 * :ref:`mahos.msgs` - Message type definitions.
@@ -37,8 +37,8 @@ mahos package has core functionalities of mahos's system and common components.
 mahos_dq
 ^^^^^^^^
 
-mahos_dq package has logics and gui for solid-state Defect (color center) Qubits research.
-The layout of submodule is similar to mahos.
+The mahos_dq package has logic and GUI for solid-state Defect (color center) Qubit research.
+The submodule layout is similar to that of mahos.
 
 * :ref:`mahos_dq.msgs` - Message type definitions.
 * :ref:`mahos_dq.inst` - :class:`InstrumentOverlay <mahos.inst.overlay.overlay.InstrumentOverlay>` definitions.

@@ -359,19 +359,6 @@ class GridSweeper(BasicMeasNode):
     result is stored as image stack data (:class:`~mahos.msgs.grid_sweeper_msgs.GridSweeperData`)
     with optional repeated 2D sweeps.
 
-    Runtime behavior:
-
-    - Uses ``set()`` and ``get()`` APIs for target instruments.
-    - For each grid point, calls ``set(y.key, value, label=y.label)`` and
-      ``set(x.key, value, label=x.label)`` (with configured delays), then calls
-      ``get(measure.key, label=measure.label)``.
-    - Does not call ``get_param_dict()``, ``configure()``, ``start()``, or ``stop()``
-      for target instruments by design.
-
-    If a target instrument requires pre-configuration or start/stop signaling, users
-    should invoke those APIs manually via Tweaker, scripts, or interactive sessions
-    before running GridSweeper.
-
     :param x: X-axis instrument configuration dictionary.
     :type x: dict
     :param x.inst: Instrument name to control for the x-axis.
@@ -386,6 +373,19 @@ class GridSweeper(BasicMeasNode):
     :type measure.inst: str
     :param pub_interval_sec: Maximum interval between periodic status/data publications.
     :type pub_interval_sec: float
+
+    Runtime behavior:
+
+    - Uses ``set()`` and ``get()`` APIs for target instruments.
+    - For each grid point, calls ``set(y.key, value, label=y.label)`` and
+      ``set(x.key, value, label=x.label)`` (with configured delays), then calls
+      ``get(measure.key, label=measure.label)``.
+    - Does not call ``get_param_dict()``, ``configure()``, ``start()``, or ``stop()``
+      for target instruments by design.
+
+    If a target instrument requires pre-configuration or start/stop signaling, users
+    should invoke those APIs manually via Tweaker, scripts, or interactive sessions
+    before running GridSweeper.
 
     """
 

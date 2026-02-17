@@ -449,7 +449,22 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos_dq.msgs.qdyne_msgs.QdyneData">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos_dq.msgs.qdyne_msgs.</span></span><span class="sig-name descname"><span class="pre">QdyneData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.msgs.qdyne_msgs.QdyneData" title="Link to this definition">#</a></dt>
-<dd><dl class="py method">
+<dd><p>Qdyne measurement data with time-domain and FFT representations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tdc_status</strong> – Latest time-to-digital-converter status summary.</p></li>
+<li><p><strong>xdata</strong> – Time-domain x-axis values.</p></li>
+<li><p><strong>data</strong> – Time-domain measured signal.</p></li>
+<li><p><strong>fft_xdata</strong> – Cached FFT frequency axis.</p></li>
+<li><p><strong>fft_data</strong> – Cached FFT amplitude data.</p></li>
+<li><p><strong>raw_data</strong> – Raw detector events.</p></li>
+<li><p><strong>marker_indices</strong> – Cached marker ranges for signal/reference windows.</p></li>
+<li><p><strong>laser_timing</strong> – Laser timing array in seconds.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="mahos_dq.msgs.qdyne_msgs.QdyneData.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.msgs.qdyne_msgs.QdyneData.__init__" title="Link to this definition">#</a></dt>
 <dd></dd></dl>

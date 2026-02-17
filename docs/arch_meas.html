@@ -426,42 +426,42 @@
   <section id="meas-layer">
 <h1>meas layer<a class="headerlink" href="#meas-layer" title="Link to this heading">#</a></h1>
 <p>Common components of meas (measurement) layer are implemented in <a class="reference internal" href="api_mahos_meas/index.html#mahos-meas"><span class="std std-ref">mahos.meas</span></a> package.
-The nodes in the meas layer provides the core functionalities of the measurement automation.
+The nodes in the meas layer provide the core functionality of measurement automation.
 To keep flexibility, there is almost no restriction on node implementation.</p>
 <p>However, meas nodes are advised to have explicit <a class="reference internal" href="glossary.html#term-state"><span class="xref std std-term">state</span></a>, i.e., to publish topic <a class="reference internal" href="glossary.html#term-status"><span class="xref std std-term">status</span></a> (<a class="reference internal" href="api_mahos_msgs/common_msgs.html#mahos.msgs.common_msgs.Status" title="mahos.msgs.common_msgs.Status"><code class="xref py py-class docutils literal notranslate"><span class="pre">Status</span></code></a> type) having <a class="reference internal" href="glossary.html#term-state"><span class="xref std std-term">state</span></a> attribute (<a class="reference internal" href="api_mahos_msgs/common_msgs.html#mahos.msgs.common_msgs.State" title="mahos.msgs.common_msgs.State"><code class="xref py py-class docutils literal notranslate"><span class="pre">State</span></code></a> type).
 If the node has <a class="reference internal" href="glossary.html#term-state"><span class="xref std std-term">state</span></a>, we can use <a class="reference internal" href="#statemanager">StateManager</a> for the state management.</p>
 <section id="basicmeasnode">
 <h2>BasicMeasNode<a class="headerlink" href="#basicmeasnode" title="Link to this heading">#</a></h2>
-<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a> can be utilized as a base class to implement basic measurment nodes.
+<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a> can be used as a base class to implement basic measurement nodes.
 This class assumes <a class="reference internal" href="glossary.html#term-state"><span class="xref std std-term">state</span></a> of type <a class="reference internal" href="api_mahos_msgs/common_msgs.html#mahos.msgs.common_msgs.BinaryState" title="mahos.msgs.common_msgs.BinaryState"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryState</span></code></a> and <a class="reference internal" href="glossary.html#term-status"><span class="xref std std-term">status</span></a> of type <a class="reference internal" href="api_mahos_msgs/common_msgs.html#mahos.msgs.common_msgs.BinaryStatus" title="mahos.msgs.common_msgs.BinaryStatus"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryStatus</span></code></a>.
 It also provides additional data management features like fitting and data buffering.</p>
 </section>
 <section id="tweaker">
 <span id="meas-tweaker"></span><h2>Tweaker<a class="headerlink" href="#tweaker" title="Link to this heading">#</a></h2>
-<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.tweaker.Tweaker.html#mahos.meas.tweaker.Tweaker" title="mahos.meas.tweaker.Tweaker"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tweaker</span></code></a> is a generic node for manual-tuning of instrument parameters.
-This is useful for rather “floating” instruments which is not directly tied to specific measurement protocol,
+<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.tweaker.Tweaker.html#mahos.meas.tweaker.Tweaker" title="mahos.meas.tweaker.Tweaker"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tweaker</span></code></a> is a generic node for manual tuning of instrument parameters.
+This is useful for relatively “floating” instruments that are not directly tied to a specific measurement protocol,
 but its state affects the sample / DUT and measurement result.
 Examples: programmable (variable gain) amplifiers for the sensors, thermostats, or power supply for electromagnet.
 The instrument should have <a class="reference internal" href="arch_inst.html#inst-params-interface"><span class="std std-ref">Dynamic interface using ParamDict</span></a> to be managed by the Tweaker.
 Thus, it should implement <code class="docutils literal notranslate"><span class="pre">get_param_dict_labels()</span></code>, <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, and <code class="docutils literal notranslate"><span class="pre">configure()</span></code>.
-The <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, and <code class="docutils literal notranslate"><span class="pre">reset()</span></code> methods can be also invoked from Tweaker.</p>
+The <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, and <code class="docutils literal notranslate"><span class="pre">reset()</span></code> methods can also be invoked from Tweaker.</p>
 <p>Some measurement nodes can take <code class="docutils literal notranslate"><span class="pre">tweakers:</span> <span class="pre">list[str]</span></code> in the configuration <code class="docutils literal notranslate"><span class="pre">target</span></code>.
 By doing so, the status of Tweaker(s) can be embedded in the measurement data.</p>
 <p>See also <a class="reference internal" href="tutorial_manual_op.html"><span class="doc">Tutorial 3: Manual Operation</span></a> for an example with mock instrument.</p>
 </section>
 <section id="postweaker">
 <h2>PosTweaker<a class="headerlink" href="#postweaker" title="Link to this heading">#</a></h2>
-<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.pos_tweaker.PosTweaker.html#mahos.meas.pos_tweaker.PosTweaker" title="mahos.meas.pos_tweaker.PosTweaker"><code class="xref py py-class docutils literal notranslate"><span class="pre">PosTweaker</span></code></a> is a generic node for manual-tuning of positioner instruments.
+<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.pos_tweaker.PosTweaker.html#mahos.meas.pos_tweaker.PosTweaker" title="mahos.meas.pos_tweaker.PosTweaker"><code class="xref py py-class docutils literal notranslate"><span class="pre">PosTweaker</span></code></a> is a generic node for manual tuning of positioner instruments.
 Its role is similar to <a class="reference internal" href="api_mahos_meas/generated/mahos.meas.tweaker.Tweaker.html#mahos.meas.tweaker.Tweaker" title="mahos.meas.tweaker.Tweaker"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tweaker</span></code></a>,
 but PosTweaker has dedicated interface and GUI for positioners.</p>
-<p>The PosTweaker can also listed in <code class="docutils literal notranslate"><span class="pre">tweakers:</span> <span class="pre">list[str]</span></code> in the configuration <code class="docutils literal notranslate"><span class="pre">target</span></code> of measurement nodes.</p>
+<p>PosTweaker can also be listed in <code class="docutils literal notranslate"><span class="pre">tweakers:</span> <span class="pre">list[str]</span></code> in the <code class="docutils literal notranslate"><span class="pre">target</span></code> configuration of measurement nodes.</p>
 <p>See also <a class="reference internal" href="tutorial_manual_op.html"><span class="doc">Tutorial 3: Manual Operation</span></a> for an example with mock instrument.</p>
 </section>
 <section id="recorder">
 <h2>Recorder<a class="headerlink" href="#recorder" title="Link to this heading">#</a></h2>
-<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.recorder.Recorder.html#mahos.meas.recorder.Recorder" title="mahos.meas.recorder.Recorder"><code class="xref py py-class docutils literal notranslate"><span class="pre">Recorder</span></code></a> is a generic node for recording of time-series data from instruments.
-To use Recorder, instrument must implement following APIs: <code class="docutils literal notranslate"><span class="pre">get_param_dict_labels()</span></code>, <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>, <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, and <code class="docutils literal notranslate"><span class="pre">get()</span></code>.
-If channel unit is not given in the mode configuration, <code class="docutils literal notranslate"><span class="pre">get(&quot;unit&quot;)</span></code> is additionally required.</p>
+<p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.recorder.Recorder.html#mahos.meas.recorder.Recorder" title="mahos.meas.recorder.Recorder"><code class="xref py py-class docutils literal notranslate"><span class="pre">Recorder</span></code></a> is a generic node for recording time-series data from instruments.
+To use Recorder, an instrument must implement the following APIs: <code class="docutils literal notranslate"><span class="pre">get_param_dict_labels()</span></code>, <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code>, <code class="docutils literal notranslate"><span class="pre">configure()</span></code>, <code class="docutils literal notranslate"><span class="pre">start()</span></code>, <code class="docutils literal notranslate"><span class="pre">stop()</span></code>, and <code class="docutils literal notranslate"><span class="pre">get()</span></code>.
+If a channel unit is not given in the mode configuration, <code class="docutils literal notranslate"><span class="pre">get(&quot;unit&quot;)</span></code> is additionally required.</p>
 <p>Recorder uses selected mode (<code class="docutils literal notranslate"><span class="pre">[...recorder.mode.&lt;label&gt;]</span></code>) as a map from Recorder channel name
 to instrument channel configuration. For each channel config:</p>
 <ul class="simple">
@@ -487,10 +487,10 @@ values to time-series data under the Recorder channel name.</p></li>
 <h2>Sweeper<a class="headerlink" href="#sweeper" title="Link to this heading">#</a></h2>
 <p><a class="reference internal" href="api_mahos_meas/generated/mahos.meas.sweeper.Sweeper.html#mahos.meas.sweeper.Sweeper" title="mahos.meas.sweeper.Sweeper"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sweeper</span></code></a> is a generic 1D sweep measurement node.
 It controls one sweep parameter and samples one measurement value at each sweep point.
-The worker repeats the line sweep for requested number of times and stores the result in
+The worker repeats the line sweep for the requested number of times and stores the result in
 <a class="reference internal" href="api_mahos_msgs/generated/mahos.msgs.sweeper_msgs.SweeperData.html#mahos.msgs.sweeper_msgs.SweeperData" title="mahos.msgs.sweeper_msgs.SweeperData"><code class="xref py py-class docutils literal notranslate"><span class="pre">SweeperData</span></code></a>.</p>
 <p>The sweep condition can be configured by <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">stop</span></code>, <code class="docutils literal notranslate"><span class="pre">num</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, and <code class="docutils literal notranslate"><span class="pre">delay</span></code>
-parameters. <code class="docutils literal notranslate"><span class="pre">sweeps</span></code> controls number of repeated sweeps (<code class="docutils literal notranslate"><span class="pre">0</span></code> means infinite).
+parameters. <code class="docutils literal notranslate"><span class="pre">sweeps</span></code> controls the number of repeated sweeps (<code class="docutils literal notranslate"><span class="pre">0</span></code> means infinite).
 Configuration sections <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">measure</span></code> define instrument names and API keys used
 for set/get operations.
 The <code class="docutils literal notranslate"><span class="pre">x</span></code> instrument must support <code class="docutils literal notranslate"><span class="pre">set</span></code> and <code class="docutils literal notranslate"><span class="pre">measure</span></code> instrument must support <code class="docutils literal notranslate"><span class="pre">get</span></code>.
@@ -506,7 +506,7 @@ It controls two sweep parameters (x and y axes) and samples one measurement valu
 grid point. One completed y-loop corresponds to one 2D image, and repeated images are stacked
 in <a class="reference internal" href="api_mahos_msgs/generated/mahos.msgs.grid_sweeper_msgs.GridSweeperData.html#mahos.msgs.grid_sweeper_msgs.GridSweeperData" title="mahos.msgs.grid_sweeper_msgs.GridSweeperData"><code class="xref py py-class docutils literal notranslate"><span class="pre">GridSweeperData</span></code></a>.</p>
 <p>Both axes support <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">stop</span></code>, <code class="docutils literal notranslate"><span class="pre">num</span></code>, <code class="docutils literal notranslate"><span class="pre">log</span></code>, and <code class="docutils literal notranslate"><span class="pre">delay</span></code> parameters.
-<code class="docutils literal notranslate"><span class="pre">sweeps</span></code> controls number of repeated 2D images (<code class="docutils literal notranslate"><span class="pre">0</span></code> means infinite).
+<code class="docutils literal notranslate"><span class="pre">sweeps</span></code> controls the number of repeated 2D images (<code class="docutils literal notranslate"><span class="pre">0</span></code> means infinite).
 Configuration sections <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>, and <code class="docutils literal notranslate"><span class="pre">measure</span></code> define instrument names and API keys used
 for set/get operations.
 The <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span></code> instruments must support <code class="docutils literal notranslate"><span class="pre">set</span></code> and <code class="docutils literal notranslate"><span class="pre">measure</span></code> instrument must support <code class="docutils literal notranslate"><span class="pre">get</span></code>.
@@ -530,11 +530,11 @@ Example configuration looks like below.</p>
 <span class="n">all_idle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s2">&quot;localhost::node1&quot;</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;IDLE&quot;</span><span class="w"> </span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;localhost::node2&quot;</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">&quot;IDLE&quot;</span><span class="w"> </span><span class="p">}</span>
 </pre></div>
 </div>
-<p>This manager manages <cite>node1</cite> and <cite>node2</cite>, both of which has <a class="reference internal" href="api_mahos_msgs/common_msgs.html#mahos.msgs.common_msgs.BinaryState" title="mahos.msgs.common_msgs.BinaryState"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryState</span></code></a>.
+<p>This manager manages <cite>node1</cite> and <cite>node2</cite>, both of which have <a class="reference internal" href="api_mahos_msgs/common_msgs.html#mahos.msgs.common_msgs.BinaryState" title="mahos.msgs.common_msgs.BinaryState"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinaryState</span></code></a>.
 A command named <cite>all_idle</cite> is a request to set both nodes to the IDLE state.
-Before a <cite>command</cite> is executed, the nodes state (<cite>last_state</cite>) is stored.
+Before a <cite>command</cite> is executed, the nodes’ states (<cite>last_state</cite>) are stored.
 After a <cite>command</cite>, we can use <cite>restore</cite> request to recover the <cite>last_state</cite>.</p>
-<p>The figure below explans the <cite>command</cite> and <cite>restore</cite> operations.</p>
+<p>The figure below explains the <cite>command</cite> and <cite>restore</cite> operations.</p>
 <figure class="align-default" id="id1">
 <a class="reference internal image-reference" href="_images/mahos-state-manager.svg"><img alt="Command and Restore operations of StateManager" src="_images/mahos-state-manager.svg" style="width: 90%;" />
 </a>
@@ -544,10 +544,10 @@ After a <cite>command</cite>, we can use <cite>restore</cite> request to recover
 </figure>
 <p>The manager1 is configured as the config snippets above.</p>
 <ul class="simple">
-<li><p>(a): In initial state, node1 is ACTIVE and node2 is IDLE.</p></li>
+<li><p>(a): In the initial state, node1 is ACTIVE and node2 is IDLE.</p></li>
 <li><p>(b): node3 requests the manager1 to <cite>restore</cite> from <cite>all_idle</cite> command (Restore(all_idle)), which fails as the <cite>last_state</cite> is empty (<cite>all_idle</cite> has never been executed).</p></li>
-<li><p>(c): node3 requests <cite>all_idle</cite> command execution (Command(all_idle), which turns both node1 and node2 to IDLE states. Here, the <cite>last_state</cite> is stored.</p></li>
-<li><p>(d): node3 requests (Restore(all_idle) again. It succeeds this time and <cite>last_state</cite> is restored (node1 becomes ACTIVE).</p></li>
+<li><p>(c): node3 requests <cite>all_idle</cite> command execution (Command(all_idle)), which turns both node1 and node2 to IDLE states. Here, <cite>last_state</cite> is stored.</p></li>
+<li><p>(d): node3 requests <cite>restore</cite> again (Restore(all_idle)). It succeeds this time and <cite>last_state</cite> is restored (node1 becomes ACTIVE).</p></li>
 </ul>
 </section>
 </section>

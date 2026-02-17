@@ -1,0 +1,35 @@
+﻿mahos\_dq.meas.iodmr\_worker.ISweeperDirect
+===========================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos_dq.meas.iodmr_worker
+
+.. autoclass:: ISweeperDirect
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ISweeperDirect.__init__
+      ~ISweeperDirect.configure_inst
+      ~ISweeperDirect.data_msg
+      ~ISweeperDirect.get_param_dict
+      ~ISweeperDirect.is_finished
+      ~ISweeperDirect.load_pg_conf_preset
+      ~ISweeperDirect.start
+      ~ISweeperDirect.stop
+      ~ISweeperDirect.update_frame
+      ~ISweeperDirect.update_frames
+      ~ISweeperDirect.work
+   
+   
+
+   
+   
+   

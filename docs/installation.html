@@ -430,15 +430,15 @@
 </section>
 <section id="create-virtual-environment">
 <h2>Create virtual environment<a class="headerlink" href="#create-virtual-environment" title="Link to this heading">#</a></h2>
-<p>The <a class="reference external" href="https://docs.python.org/3/library/venv.html">venv</a> is the recommended tool for virtual environment management.
+<p><a class="reference external" href="https://docs.python.org/3/library/venv.html">venv</a> is the recommended tool for virtual environment management.
 Skip this section if you prefer one of the following alternatives.</p>
 <ul class="simple">
 <li><p>You could install the requirements and the mahos package with your system Python.</p></li>
 <li><p>You could use <code class="docutils literal notranslate"><span class="pre">virtualenv</span></code>, <code class="docutils literal notranslate"><span class="pre">conda</span></code> or other virtual environment management tools too.</p></li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">venv</span></code> comes with Python; you don’t have to install additional stuffs.</p>
-<p>For some packages which are not quite straightforward to install via pip (OpenCV etc.),
-we recommend to enable system-site-packages (remove <code class="docutils literal notranslate"><span class="pre">--system-site-packages</span></code> if you don’t want it).</p>
+<p><code class="docutils literal notranslate"><span class="pre">venv</span></code> comes with Python; you do not have to install additional tools.</p>
+<p>For some packages that are not straightforward to install via pip (OpenCV, etc.),
+we recommend enabling system site packages (remove <code class="docutils literal notranslate"><span class="pre">--system-site-packages</span></code> if you do not want this).</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>mahos<span class="w"> </span>--system-site-packages
 </pre></div>
 </div>
@@ -447,12 +447,12 @@ we recommend to enable system-site-packages (remove <code class="docutils litera
 <li><p>activate: <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">&lt;mahos</span> <span class="pre">env</span> <span class="pre">directory&gt;/bin/activate</span></code> or <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">&lt;mahos</span> <span class="pre">env</span> <span class="pre">directory&gt;/Scripts/activate</span></code></p></li>
 <li><p>deactivate: <code class="docutils literal notranslate"><span class="pre">deactivate</span></code></p></li>
 </ul>
-<p>Following contents assume that the virtual environment has already been activated.</p>
+<p>The following content assumes that the virtual environment has already been activated.</p>
 </section>
 <section id="clone-the-repository">
 <h2>Clone the repository<a class="headerlink" href="#clone-the-repository" title="Link to this heading">#</a></h2>
 <p>Use git to clone the mahos repository.
-Following commands clone it to local directory <cite>&lt;preferred directory&gt;/mahos</cite>.
+The following commands clone it to a local directory, <code class="docutils literal notranslate"><span class="pre">&lt;preferred</span> <span class="pre">directory&gt;/mahos</span></code>.
 We call this directory the <cite>repository directory</cite>.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">&lt;preferred</span> <span class="pre">directory&gt;</span></code> <a class="footnote-reference brackets" href="#f1" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></li>
@@ -461,8 +461,8 @@ We call this directory the <cite>repository directory</cite>.</p>
 </section>
 <section id="optional-requirements">
 <h2>Optional requirements<a class="headerlink" href="#optional-requirements" title="Link to this heading">#</a></h2>
-<p>There are some optional requirements installation of which is not quite straightforward.
-If you want to install them, follow instructions in the subsections below.</p>
+<p>There are some optional requirements whose installation is not straightforward.
+If you want to install them, follow the instructions in the subsections below.</p>
 <section id="c-compiler">
 <h3>C++ compiler<a class="headerlink" href="#c-compiler" title="Link to this heading">#</a></h3>
 <p>If you wish to install the C extensions (<a class="reference internal" href="#mahos-dq-ext">mahos-dq-ext</a> package),
@@ -482,21 +482,21 @@ See <a class="reference external" href="https://pygraphviz.github.io/documentati
 <section id="windows">
 <h4>Windows<a class="headerlink" href="#windows" title="Link to this heading">#</a></h4>
 <p>You have to install the <a class="reference internal" href="#c-compiler">C++ compiler</a> and the <a class="reference external" href="https://graphviz.org/download/#windows">graphviz binary</a> (version 2).
-And then, use following command to install pygraphviz.</p>
+Then use the following command to install pygraphviz.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--use-pep517<span class="w"> </span>--config-settings<span class="o">=</span><span class="s2">&quot;--global-option=build_ext&quot;</span><span class="w"> </span>--config-settings<span class="o">=</span><span class="s2">&quot;--global-option=-IC:\Program Files\Graphviz\include&quot;</span><span class="w"> </span>--config-settings<span class="o">=</span><span class="s2">&quot;--global-option=-LC:\Program Files\Graphviz\lib&quot;</span><span class="w"> </span>pygraphviz
 </pre></div>
 </div>
 </section>
 <section id="linux">
 <h4>Linux<a class="headerlink" href="#linux" title="Link to this heading">#</a></h4>
-<p>You can install the graphviz with package manager (e.g. <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">graphviz</span> <span class="pre">libgraphviz-dev</span></code> for Ubuntu/Debian),
+<p>You can install Graphviz with a package manager (e.g. <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">graphviz</span> <span class="pre">libgraphviz-dev</span></code> for Ubuntu/Debian),
 and then <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pygraphviz</span></code>.</p>
 </section>
 </section>
 <section id="opencv">
 <h3>OpenCV<a class="headerlink" href="#opencv" title="Link to this heading">#</a></h3>
-<p>To use full-features of image analysis modules, install OpenCV (&gt;= 3.0.0) with Python binding.
-There are several methods to install this, and the easiest are following.</p>
+<p>To use the full features of image analysis modules, install OpenCV (&gt;= 3.0.0) with Python bindings.
+There are several methods to install this, and the easiest are the following.</p>
 <ul class="simple">
 <li><p>Windows: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">opencv-python</span></code> to install CPU-only binary</p></li>
 <li><p>Linux: the pre-compiled package (e.g. <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">python3-opencv</span></code> for Ubuntu/Debian)</p></li>
@@ -508,7 +508,7 @@ There are several methods to install this, and the easiest are following.</p>
 <section id="mahos">
 <h3>mahos<a class="headerlink" href="#mahos" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">./pkgs/mahos</span></code></p>
-<p>Here, -e (editable) is optional but recommended.
+<p>Here, <code class="docutils literal notranslate"><span class="pre">-e</span></code> (editable) is optional but recommended.
 Runtime requirements in <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> are installed by this command.</p>
 <section id="dev-requirements">
 <h4>Dev requirements<a class="headerlink" href="#dev-requirements" title="Link to this heading">#</a></h4>
@@ -531,25 +531,25 @@ Runtime requirements in <code class="docutils literal notranslate"><span class="
 <section id="mahos-dq">
 <h3>mahos-dq<a class="headerlink" href="#mahos-dq" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">./pkgs/mahos-dq</span></code></p>
-<p>Here, -e (editable) is optional but recommended.</p>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">-e</span></code> (editable) is optional but recommended.</p>
 </section>
 <section id="mahos-dq-ext">
 <h3>mahos-dq-ext<a class="headerlink" href="#mahos-dq-ext" title="Link to this heading">#</a></h3>
 <p>The <a class="reference internal" href="#c-compiler">C++ compiler</a> is required to install this.</p>
 <p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">./pkgs/mahos-dq-ext</span></code></p>
-<p>Here, -e (editable) is optional but recommended.</p>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">-e</span></code> (editable) is optional but recommended.</p>
 </section>
 </section>
 <section id="test">
 <h2>Test<a class="headerlink" href="#test" title="Link to this heading">#</a></h2>
-<p>To check if installation is successful, run test with <code class="docutils literal notranslate"><span class="pre">pytest</span></code>.</p>
+<p>To check whether installation is successful, run tests with <code class="docutils literal notranslate"><span class="pre">pytest</span></code>.</p>
 </section>
 <section id="notes">
 <h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">#</a></h2>
 <section id="pyqt6">
 <h3>PyQt6<a class="headerlink" href="#pyqt6" title="Link to this heading">#</a></h3>
-<p>The PyQt6 fails if you have <cite>PyQt6</cite> package inside the virtual environment, but dependencies (<cite>PyQt6-sip</cite> and <cite>PyQt6-Qt6</cite>) outside.
-Check the locations of these three packages if PyQt6 is going wrong.
+<p>PyQt6 can fail if you have the <cite>PyQt6</cite> package inside the virtual environment, but dependencies (<cite>PyQt6-sip</cite> and <cite>PyQt6-Qt6</cite>) outside.
+Check the locations of these three packages if PyQt6 is not working correctly.
 To resolve the situation, try one of the following.</p>
 <p>To install things <cite>outside</cite> the virtual environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># assuming you are inside the virtual environment here</span>

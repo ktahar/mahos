@@ -378,6 +378,8 @@
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spodmr.SPODMR.html">mahos_dq.meas.spodmr.SPODMR</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">mahos_dq.meas.qdyne.Qdyne</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr.IODMR.html">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.hbt.HBT.html">mahos_dq.meas.hbt.HBT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
@@ -465,8 +467,10 @@ a PG as timing source, and SGs as MW sources.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – The InstrumentServer targets (instrument name, server full name).
-Targets ‘sg’, ‘pg’, ‘tdc’ are required. ‘fg’ is optional.</p></li>
+<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – InstrumentServer targets (instrument name, server full name).
+Required keys: <code class="docutils literal notranslate"><span class="pre">sg</span></code>, <code class="docutils literal notranslate"><span class="pre">pg</span></code>, and <code class="docutils literal notranslate"><span class="pre">tdc</span></code>.
+Optional keys: <code class="docutils literal notranslate"><span class="pre">fg</span></code>, additional SG keys in <code class="docutils literal notranslate"><span class="pre">pulser.mw_channels</span></code> (for example,
+<code class="docutils literal notranslate"><span class="pre">sg1</span></code>), and switch keys listed in <code class="docutils literal notranslate"><span class="pre">switch_names</span></code>.</p></li>
 <li><p><strong>target.tweakers</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The Tweaker targets (list of tweaker full name).</p></li>
 <li><p><strong>target.log</strong> (<em>str</em>) – The LogBroker target (broker full name).</p></li>
 <li><p><strong>pulser.start_delay</strong> (<em>float</em>) – (sec.) delay time before starting PG output. (default: 0.0)</p></li>
@@ -489,6 +493,9 @@ reduce is done first by this value, and then repeated by 10.</p></li>
 <li><p><strong>pulser.block_base</strong> (<em>int</em>) – (has preset) block base granularity of pulse generator.</p></li>
 <li><p><strong>pulser.divide_block</strong> (<em>bool</em>) – (has preset) Default value of divide_block.</p></li>
 <li><p><strong>pulser.channel_remap</strong> (<em>dict</em><em>[</em><em>str</em><em> | </em><em>int</em><em>, </em><em>str</em><em> | </em><em>int</em><em>]</em>) – mapping to fix default channel names.</p></li>
+<li><p><strong>switch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional switch instrument names to route signal/optical paths.</p></li>
+<li><p><strong>switch_command</strong> (<em>str</em>) – Switch command label passed to Switch worker.</p></li>
+<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
 </ul>
 </dd>
 </dl>

@@ -425,22 +425,22 @@
                   
   <section id="tutorial-1-communication">
 <h1>Tutorial 1: Communication<a class="headerlink" href="#tutorial-1-communication" title="Link to this heading">#</a></h1>
-<p>In this tutorial chapter, we will learn basic concepts about inter-process communication on mahos.</p>
+<p>In this tutorial chapter, we will learn basic concepts of inter-process communication in mahos.</p>
 <section id="preparation">
 <h2>Preparation<a class="headerlink" href="#preparation" title="Link to this heading">#</a></h2>
 <p>Before starting this, <a class="reference internal" href="installation.html"><span class="doc">install</span></a> the library and dependencies.</p>
 <p>Then, find the <code class="docutils literal notranslate"><span class="pre">examples/comm</span></code> directory in the mahos repository.
-We will use four files (<code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>, <code class="docutils literal notranslate"><span class="pre">nodes.py</span></code>, <code class="docutils literal notranslate"><span class="pre">print_clock.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">multipy_numbers.py</span></code>)  in it for this tutorial.
-You can copy this directory to somewhere in your computer if you want.</p>
+We will use four files (<code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>, <code class="docutils literal notranslate"><span class="pre">nodes.py</span></code>, <code class="docutils literal notranslate"><span class="pre">print_clock.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">multiply_numbers.py</span></code>) in it for this tutorial.
+You can copy this directory somewhere on your computer if you want.</p>
 </section>
 <section id="pub-sub">
 <h2>Pub-Sub<a class="headerlink" href="#pub-sub" title="Link to this heading">#</a></h2>
-<p>We will learn two types of comminucation methods.
-First one here is Pub-Sub (Publish-Subscribe).
+<p>We will learn two types of communication methods.
+The first is Pub-Sub (Publish-Subscribe).
 This is asynchronous, one-to-many data distribution.</p>
 <p>Let’s run a data-publishing node named clock by a command <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">run</span> <span class="pre">clock</span></code>.
 And in another terminal, subscribe to and print the published message by a command <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">echo</span> <span class="pre">-t</span> <span class="pre">time</span> <span class="pre">clock</span></code>.
-It is successful if you see something like below in the second terminal.</p>
+It is successful if you see output like the following in the second terminal.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Subscribing</span> <span class="n">to</span> <span class="n">time</span> <span class="n">of</span> <span class="n">localhost</span><span class="p">::</span><span class="n">clock</span> <span class="p">(</span><span class="n">config</span> <span class="n">file</span><span class="p">:</span> <span class="n">conf</span><span class="o">.</span><span class="n">toml</span><span class="p">)</span><span class="o">.</span>
 <span class="mi">2023</span><span class="o">-</span><span class="mi">02</span><span class="o">-</span><span class="mi">16</span> <span class="mi">16</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">49</span>
 <span class="mi">2023</span><span class="o">-</span><span class="mi">02</span><span class="o">-</span><span class="mi">16</span> <span class="mi">16</span><span class="p">:</span><span class="mi">30</span><span class="p">:</span><span class="mi">50</span>
@@ -454,7 +454,7 @@ Hit Ctrl-C in the terminals to stop them.</p>
 The first command <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">run</span> <span class="pre">clock</span></code> was abbreviated form of <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">run</span> <span class="pre">-c</span> <span class="pre">conf.toml</span> <span class="pre">-H</span> <span class="pre">localhost</span> <span class="pre">clock</span></code> or <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">run</span> <span class="pre">-c</span> <span class="pre">conf.toml</span> <span class="pre">localhost::clock</span></code>.
 <code class="docutils literal notranslate"><span class="pre">localhost</span></code> is a hostname (computer name).
 This will be important for multi-computer configuration,
-but let’s think it is always localhost because we are on single-computer during this tutorial.
+but for this tutorial, assume it is always localhost because we are on a single computer.
 <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code> is the name of configuration file (<code class="docutils literal notranslate"><span class="pre">conf.toml</span></code> is the default name and can be omitted in the command),
 which defines what the node <code class="docutils literal notranslate"><span class="pre">clock</span></code> is, like below.</p>
 <div class="literal-block-wrapper docutils container" id="id1">
@@ -466,8 +466,8 @@ which defines what the node <code class="docutils literal notranslate"><span cla
 </pre></div>
 </div>
 </div>
-<p>Line 1 defines the group in form <code class="docutils literal notranslate"><span class="pre">[&lt;hostname&gt;.&lt;nodename&gt;]</span></code>; we are defining node named <cite>clock</cite> on host <cite>localhost</cite>.
-The <cite>module</cite> and <cite>class</cite> (Line 2 and 3) assigns Python module (any importable module) and class names that defines the node.
+<p>Line 1 defines the group in the form <code class="docutils literal notranslate"><span class="pre">[&lt;hostname&gt;.&lt;nodename&gt;]</span></code>; we are defining a node named <cite>clock</cite> on host <cite>localhost</cite>.
+The <cite>module</cite> and <cite>class</cite> values (lines 2 and 3) assign the Python module (any importable module) and class name that define the node.
 The <cite>pub_endpoint</cite> is the endpoint for Pub-Sub communication.</p>
 <p>Let’s find the node implementation: <code class="docutils literal notranslate"><span class="pre">Clock</span></code> class defined in module nodes (file <code class="docutils literal notranslate"><span class="pre">nodes.py</span></code>).</p>
 <div class="literal-block-wrapper docutils container" id="id2">
@@ -496,16 +496,16 @@ The <cite>pub_endpoint</cite> is the endpoint for Pub-Sub communication.</p>
 </div>
 </div>
 <p>As we can see, Clock is a subclass of Node and a few things are implemented.
-Work is done by a <a class="reference internal" href="api_mahos_node/generated/mahos.node.comm.Publisher.html#mahos.node.comm.Publisher" title="mahos.node.comm.Publisher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Publisher</span></code></a> initialized in Line 26, which is used to publish the formatted time in the main loop (Line 32).
+Work is done by a <a class="reference internal" href="api_mahos_node/generated/mahos.node.comm.Publisher.html#mahos.node.comm.Publisher" title="mahos.node.comm.Publisher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Publisher</span></code></a> initialized on line 26, which is used to publish formatted time in the main loop (line 32).
 The publisher is initialized with a topic (label for the messages) <cite>time</cite>.
 Note that the type of the topic must be ASCII str (or bytes).</p>
-<p>“You said main loop but I don’t see any <cite>for</cite> or <cite>while</cite>” ?
+<p>“You said main loop, but I don’t see any <cite>for</cite> or <cite>while</cite>.”
 The loop is implemented elsewhere and automatically incorporated when using <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">run</span></code> command.
 We always define <cite>the contents of main loop</cite> as the <code class="docutils literal notranslate"><span class="pre">main()</span></code> function.
-IntervalSleeper regulates the loop interval to 1.0 secs (rate of 1 Hz).</p>
+IntervalSleeper regulates the loop interval to 1.0 sec (a rate of 1 Hz).</p>
 <p>Although <a class="reference internal" href="api_mahos_node/generated/mahos.node.comm.Publisher.html#mahos.node.comm.Publisher" title="mahos.node.comm.Publisher"><code class="xref py py-class docutils literal notranslate"><span class="pre">Publisher</span></code></a> can send any picklable Python object (we are sending str now),
 the dedicated types can be used for serious applications (see <a class="reference internal" href="api_mahos_msgs/common_msgs.html#module-mahos.msgs.common_msgs" title="mahos.msgs.common_msgs"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mahos.msgs.common_msgs</span></code></a>).</p>
-<p>Corresponding NodeClient <code class="docutils literal notranslate"><span class="pre">ClockClient</span></code> is  defined above,
+<p>The corresponding NodeClient <code class="docutils literal notranslate"><span class="pre">ClockClient</span></code> is defined above,
 and this is referenced as a class variable <code class="docutils literal notranslate"><span class="pre">CLIENT</span></code> in Clock.
 This is used to look up the client class from config file.
 Implementation of ClockClient is even simpler; it just registers a subscriber for <cite>time</cite>.</p>
@@ -515,16 +515,16 @@ Implementation of ClockClient is even simpler; it just registers a subscriber fo
 <h2>Req-Rep<a class="headerlink" href="#req-rep" title="Link to this heading">#</a></h2>
 <p>Req-Rep (Request-Reply) is the second way of the node communication.
 This is synchronous <a class="reference internal" href="glossary.html#term-RPC"><span class="xref std std-term">RPC</span></a>.</p>
-<p>Let’s run a node <cite>multiplier</cite>, and start a IPython shell by a command <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">shell</span> <span class="pre">multiplier</span></code>.
+<p>Let’s run a node <cite>multiplier</cite>, and start an IPython shell with the command <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">shell</span> <span class="pre">multiplier</span></code>.
 In the IPython shell, use <code class="docutils literal notranslate"><span class="pre">cli.multiply(2,</span> <span class="pre">3)</span></code> to multiply the numbers.
-It is successful if you get correct answer 6, and see a log message in the terminal running the node.</p>
+It is successful if you get the correct answer, 6, and see a log message in the terminal running the node.</p>
 <p><code class="docutils literal notranslate"><span class="pre">cli</span></code> is a MultiplierClient (defined as below) in the IPython shell.
-Obviously, <code class="docutils literal notranslate"><span class="pre">MultiplierClient</span></code> registers a <a class="reference internal" href="api_mahos_node/generated/mahos.node.comm.Requester.html#mahos.node.comm.Requester" title="mahos.node.comm.Requester"><code class="xref py py-class docutils literal notranslate"><span class="pre">Requester</span></code></a> (Line 39) and
-using in the <code class="docutils literal notranslate"><span class="pre">multiply()</span></code> method (Line 42).
+Obviously, <code class="docutils literal notranslate"><span class="pre">MultiplierClient</span></code> registers a <a class="reference internal" href="api_mahos_node/generated/mahos.node.comm.Requester.html#mahos.node.comm.Requester" title="mahos.node.comm.Requester"><code class="xref py py-class docutils literal notranslate"><span class="pre">Requester</span></code></a> (line 39)
+and uses it in the <code class="docutils literal notranslate"><span class="pre">multiply()</span></code> method (line 42).
 By calling <code class="xref py py-meth docutils literal notranslate"><span class="pre">Requester.request</span></code>, a request is sent from the client to serving node, and the response is returned.
 The <code class="docutils literal notranslate"><span class="pre">Multiplier</span></code> node defines how the request is handled.
-A handler method <code class="docutils literal notranslate"><span class="pre">handle_multiply</span></code> is registered in Line 51.
-This method does the calculation, send a log message, and return the answer (Line 55-57).</p>
+A handler method <code class="docutils literal notranslate"><span class="pre">handle_multiply</span></code> is registered in line 51.
+This method does the calculation, sends a log message, and returns the answer (lines 55-57).</p>
 <div class="literal-block-wrapper docutils container" id="id3">
 <div class="code-block-caption"><span class="caption-text">nodes.py</span><a class="headerlink" href="#id3" title="Link to this code">#</a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">35</span><span class="k">class</span><span class="w"> </span><span class="nc">MultiplierClient</span><span class="p">(</span><span class="n">NodeClient</span><span class="p">):</span>

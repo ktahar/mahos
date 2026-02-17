@@ -378,6 +378,8 @@
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">mahos_dq.meas.spodmr.SPODMR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.qdyne.Qdyne.html">mahos_dq.meas.qdyne.Qdyne</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr.IODMR.html">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.hbt.HBT.html">mahos_dq.meas.hbt.HBT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
@@ -465,10 +467,17 @@ a PG as timing source, and SGs as MW sources.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – The InstrumentServer targets (instrument name, server full name).
-Targets ‘sg’, ‘pg’, and &lt;pulser.pd_names&gt; are required. ‘fg’ is optional.</p></li>
+<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – InstrumentServer targets (instrument name, server full name).
+Required keys: <code class="docutils literal notranslate"><span class="pre">sg</span></code>, <code class="docutils literal notranslate"><span class="pre">pg</span></code>, names in <code class="docutils literal notranslate"><span class="pre">pulser.pd_names</span></code>, and the key named by
+<code class="docutils literal notranslate"><span class="pre">pulser.clock_name</span></code>.
+Optional keys: <code class="docutils literal notranslate"><span class="pre">fg</span></code>, additional SG keys in <code class="docutils literal notranslate"><span class="pre">pulser.mw_channels</span></code> (for example,
+<code class="docutils literal notranslate"><span class="pre">sg1</span></code>), and switch keys listed in <code class="docutils literal notranslate"><span class="pre">switch_names</span></code>.</p></li>
 <li><p><strong>target.tweakers</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The Tweaker targets (list of tweaker full name).</p></li>
 <li><p><strong>target.log</strong> (<em>str</em>) – The LogBroker target (broker full name).</p></li>
+<li><p><strong>switch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional switch instrument names to route signal/optical paths.</p></li>
+<li><p><strong>switch_command</strong> (<em>str</em>) – Switch command label passed to Switch worker.</p></li>
+<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
+<li><p><strong>debug</strong> (<em>bool</em>) – If True, use DebugPulser instead of Pulser.</p></li>
 <li><p><strong>pulser.pd_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – (default: [“pd0”]) PD names in target.servers.</p></li>
 <li><p><strong>pulser.quick_resume</strong> (<em>bool</em>) – default value of quick_resume.
 If True, it skips instrument configurations on resume.</p></li>
@@ -491,6 +500,17 @@ reduce is done first by this value, and then repeated by 10.</p></li>
 <li><p><strong>pulser.block_base</strong> (<em>int</em>) – (has preset) block base granularity of pulse generator.</p></li>
 <li><p><strong>pulser.nest_blockseq</strong> (<em>bool</em>) – (has preset, default: False) allow nested BlockSeq.</p></li>
 <li><p><strong>pulser.channel_remap</strong> (<em>dict</em><em>[</em><em>str</em><em> | </em><em>int</em><em>, </em><em>str</em><em> | </em><em>int</em><em>]</em>) – mapping to fix default channel names.</p></li>
+<li><p><strong>pulser.clock_name</strong> (<em>str</em>) – (default: <code class="docutils literal notranslate"><span class="pre">&quot;clock&quot;</span></code>) Clock source instrument name.</p></li>
+<li><p><strong>pulser.mw_channels</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional SG channel identifiers for MW outputs.</p></li>
+<li><p><strong>pulser.pd_rate</strong> (<em>float</em>) – (default: 500e3) PD sampling rate in Hz.</p></li>
+<li><p><strong>pulser.pd_data_transfer</strong> (<em>str</em>) – Optional DAQ transfer mode label.</p></li>
+<li><p><strong>pulser.eos_margin</strong> (<em>float</em>) – (default: 0.0) End-of-sequence timing margin in seconds.</p></li>
+<li><p><strong>pulser.buffer_size_coeff</strong> (<em>int</em>) – Buffer size coefficient multiplied by <code class="docutils literal notranslate"><span class="pre">num</span></code>.</p></li>
+<li><p><strong>pulser.accum_window</strong> (<em>float</em>) – (default: 1e-3) Accumulation window in seconds.</p></li>
+<li><p><strong>pulser.accum_rep</strong> (<em>int</em>) – (default: 10) Number of accumulation repetitions.</p></li>
+<li><p><strong>pulser.drop_rep</strong> (<em>int</em>) – (default: 1) Number of initial repetitions to drop.</p></li>
+<li><p><strong>pulser.lockin_rep</strong> (<em>int</em>) – (default: 1) Lock-in repetition count.</p></li>
+<li><p><strong>pulser.every</strong> (<em>bool</em>) – If True, publish/refresh data for every update chunk.</p></li>
 <li><p><strong>fitter.rabi.c</strong> (<em>float</em>) – default value of param “c” (base line) in RabiFitter.
 You can set the bounds using “c_min” and “c_max” too.</p></li>
 <li><p><strong>fitter.rabi.A</strong> (<em>float</em>) – default value of param “A” (amplitude) in RabiFitter.

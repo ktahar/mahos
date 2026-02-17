@@ -378,6 +378,8 @@
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.meas.spodmr.SPODMR.html">mahos_dq.meas.spodmr.SPODMR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.meas.qdyne.Qdyne.html">mahos_dq.meas.qdyne.Qdyne</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.meas.iodmr.IODMR.html">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.meas.iodmr_worker.ISweeperOverlay.html">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.meas.hbt.HBT.html">mahos_dq.meas.hbt.HBT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
@@ -457,10 +459,10 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.meas.confocal.Confocal.html#mahos_dq.meas.confocal.Confocal" title="mahos_dq.meas.confocal.Confocal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">confocal.Confocal</span></code></a>(gconf, name[, context])</p></td>
-<td><p></p></td>
+<td><p>Node that coordinates confocal scan, piezo control, and PD tracing.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.meas.confocal_tracker.ConfocalTracker.html#mahos_dq.meas.confocal_tracker.ConfocalTracker" title="mahos_dq.meas.confocal_tracker.ConfocalTracker"><code class="xref py py-obj docutils literal notranslate"><span class="pre">confocal_tracker.ConfocalTracker</span></code></a>(gconf, name)</p></td>
-<td><p></p></td>
+<td><p>Node that performs periodic position re-centering of confocal.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.meas.odmr.ODMR.html#mahos_dq.meas.odmr.ODMR" title="mahos_dq.meas.odmr.ODMR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">odmr.ODMR</span></code></a>(gconf, name[, context])</p></td>
 <td><p>ODMR (Optically Detected Magnetic Resonance) measurement.</p></td>
@@ -482,6 +484,12 @@
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.meas.iodmr.IODMR.html#mahos_dq.meas.iodmr.IODMR" title="mahos_dq.meas.iodmr.IODMR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iodmr.IODMR</span></code></a>(gconf, name[, context])</p></td>
 <td><p>Imaging ODMR measurement.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.meas.iodmr_worker.ISweeperDirect.html#mahos_dq.meas.iodmr_worker.ISweeperDirect" title="mahos_dq.meas.iodmr_worker.ISweeperDirect"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iodmr_worker.ISweeperDirect</span></code></a>(cli, logger)</p></td>
+<td><p>ISweeper using direct hardware calls.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.meas.iodmr_worker.ISweeperOverlay.html#mahos_dq.meas.iodmr_worker.ISweeperOverlay" title="mahos_dq.meas.iodmr_worker.ISweeperOverlay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iodmr_worker.ISweeperOverlay</span></code></a>(cli, logger)</p></td>
+<td><p>ISweeper using Overlay.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.meas.hbt.HBT.html#mahos_dq.meas.hbt.HBT" title="mahos_dq.meas.hbt.HBT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hbt.HBT</span></code></a>(gconf, name[, context])</p></td>
 <td><p>HBT measurement.</p></td>

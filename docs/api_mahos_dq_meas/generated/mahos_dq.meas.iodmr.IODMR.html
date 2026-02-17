@@ -44,7 +44,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_dq_meas/generated/mahos_dq.meas.iodmr.IODMR';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mahos_dq.meas.hbt.HBT" href="mahos_dq.meas.hbt.HBT.html" />
+    <link rel="next" title="mahos_dq.meas.iodmr_worker.ISweeperDirect" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html" />
     <link rel="prev" title="mahos_dq.meas.qdyne.Qdyne" href="mahos_dq.meas.qdyne.Qdyne.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -378,6 +378,8 @@
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spodmr.SPODMR.html">mahos_dq.meas.spodmr.SPODMR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.qdyne.Qdyne.html">mahos_dq.meas.qdyne.Qdyne</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.hbt.HBT.html">mahos_dq.meas.hbt.HBT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
@@ -461,6 +463,29 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos_dq.meas.iodmr.</span></span><span class="sig-name descname"><span class="pre">IODMR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.iodmr.IODMR" title="Link to this definition">#</a></dt>
 <dd><p>Imaging ODMR measurement.</p>
 <p>NOTE that this measurement logic is under development and rather immature.</p>
+<p>There are two options for the worker (sweeper, measurement logic).
+See docs of sweeper below for sweeper parameters.</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html#mahos_dq.meas.iodmr_worker.ISweeperDirect" title="mahos_dq.meas.iodmr_worker.ISweeperDirect"><code class="xref py py-class docutils literal notranslate"><span class="pre">ISweeperDirect</span></code></a> :</dt><dd><p>fast logic with hardware trigger.</p>
+</dd>
+</dl>
+</li>
+<li><p><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html#mahos_dq.meas.iodmr_worker.ISweeperOverlay" title="mahos_dq.meas.iodmr_worker.ISweeperOverlay"><code class="xref py py-class docutils literal notranslate"><span class="pre">ISweeperOverlay</span></code></a> : interface to overlay.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – InstrumentServer targets.
+Required keys (overlay mode): <code class="docutils literal notranslate"><span class="pre">isweeper</span></code>.
+Required keys (direct mode): <code class="docutils literal notranslate"><span class="pre">sg</span></code>, <code class="docutils literal notranslate"><span class="pre">pg</span></code>, and <code class="docutils literal notranslate"><span class="pre">camera</span></code>.
+Optional keys: switch keys listed in <code class="docutils literal notranslate"><span class="pre">switch_names</span></code>.</p></li>
+<li><p><strong>switch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional switch instrument names to route signal/optical paths.</p></li>
+<li><p><strong>switch_command</strong> (<em>str</em>) – Switch command label passed to Switch worker.</p></li>
+<li><p><strong>publish_each</strong> (<em>bool</em>) – If True, publish data after each completed sweep.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mahos_dq.meas.iodmr.IODMR.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.iodmr.IODMR.__init__" title="Link to this definition">#</a></dt>
@@ -529,11 +554,11 @@
       </div>
     </a>
     <a class="right-next"
-       href="mahos_dq.meas.hbt.HBT.html"
+       href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">mahos_dq.meas.hbt.HBT</p>
+        <p class="prev-next-title">mahos_dq.meas.iodmr_worker.ISweeperDirect</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

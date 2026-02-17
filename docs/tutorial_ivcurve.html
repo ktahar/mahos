@@ -425,7 +425,7 @@
                   
   <section id="tutorial-2-basic-measurement">
 <h1>Tutorial 2: Basic Measurement<a class="headerlink" href="#tutorial-2-basic-measurement" title="Link to this heading">#</a></h1>
-<p>In this tutorial chapter, we will learn how basic measurement system is constructed on mahos
+<p>In this tutorial chapter, we will learn how a basic measurement system is constructed in mahos
 (with mock instruments).</p>
 <section id="preparation">
 <h2>Preparation<a class="headerlink" href="#preparation" title="Link to this heading">#</a></h2>
@@ -433,12 +433,12 @@
 <p>It is recommended to finish <a class="reference internal" href="tutorial_comm.html"><span class="doc">Tutorial 1: Communication</span></a> before this.</p>
 <p>Find the <code class="docutils literal notranslate"><span class="pre">examples/ivcurve</span></code> directory in the mahos repository.
 We will use the files in it for this tutorial.
-You can copy this directory to somewhere in your computer if you want.</p>
+You can copy this directory somewhere on your computer if you want.</p>
 </section>
 <section id="running-the-mock">
 <h2>Running the mock<a class="headerlink" href="#running-the-mock" title="Link to this heading">#</a></h2>
-<p>Run all the nodes defined in our <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code> by command <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">launch</span></code>.
-You will see a GUI window popping out.
+<p>Run all the nodes defined in our <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code> with the command <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">launch</span></code>.
+You will see a GUI window pop up.
 If you click the Start button, some noisy line (IV curve) is plotted and updated.
 This is our mock for IV curve measurement.</p>
 <p>The IV curve measurement is illustrated by the figure below.
@@ -454,7 +454,7 @@ measure IV characteristics of DUT (Device Under Test).</p>
 </section>
 <section id="visualizing-config">
 <h2>Visualizing config<a class="headerlink" href="#visualizing-config" title="Link to this heading">#</a></h2>
-<p>Let’s analyze below what’s happening behind the scenes.
+<p>Let’s analyze what is happening behind the scenes.
 First, try visualizing our nodes by <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">graph</span></code>, and you will see a graph below.</p>
 <figure class="align-default" id="id3">
 <a class="reference internal image-reference" href="_images/ivcurve-nodes.svg"><img alt="Node graph for IV curve" src="_images/ivcurve-nodes.svg" style="width: 30%;" />
@@ -466,23 +466,23 @@ First, try visualizing our nodes by <code class="docutils literal notranslate"><
 <p>As visualized, the config file defines four nodes.
 We will go through these from bottom to top (from top to bottom in <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>).</p>
 <p>The topmost group in <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code> is named <cite>global</cite>.
-This is special group to define the default value for all the nodes.
+This is a special group to define default values for all nodes.
 If the same key is defined for a node, the global value is just ignored.
 Otherwise, the global value is used.
-(The behaviour is similar to local and global variable in some programming languages.)</p>
+(The behavior is similar to local and global variables in some programming languages.)</p>
 </section>
 <section id="log">
 <h2>log<a class="headerlink" href="#log" title="Link to this heading">#</a></h2>
 <p>The second group is named <cite>localhost.log</cite>.
-It is important to observe the log messages for the debugging or monitoring.
-Since mahos adopted a distributed system,
-the sources of logs (i.e., <a class="reference internal" href="glossary.html#term-node"><span class="xref std std-term">nodes</span></a>) are running on multiple processes.
-In order to sort out the distributed logs, it seems good to gather the logs to single node,
-and then redistribute.
+It is important to observe log messages for debugging or monitoring.
+Since mahos uses a distributed system,
+the log sources (i.e., <a class="reference internal" href="glossary.html#term-node"><span class="xref std std-term">nodes</span></a>) run on multiple processes.
+To sort distributed logs, it is useful to gather logs to a single node,
+and then redistribute them.
 The <a class="reference internal" href="api_mahos_node/generated/mahos.node.log_broker.LogBroker.html#mahos.node.log_broker.LogBroker" title="mahos.node.log_broker.LogBroker"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogBroker</span></code></a> is implemented for this purpose.</p>
 <p>It is highly recommended to define a <cite>log</cite> in <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>, as in the file for this tutorial.
 You can see arrows labeled <cite>log</cite> are coming from <cite>server</cite> and <cite>ivcurve</cite> to the <cite>log</cite> node in the graph.
-These arrows are corresponding to Line 15 and Line 37-38 in <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>.</p>
+These arrows correspond to lines 15 and 37-38 in <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>.</p>
 <p>(In <a class="reference internal" href="tutorial_comm.html"><span class="doc">Tutorial 1: Communication</span></a>, we have omitted this and used dummy loggers.)</p>
 </section>
 <section id="server">
@@ -513,7 +513,7 @@ These arrows are corresponding to Line 15 and Line 37-38 in <code class="docutil
 </div>
 </div>
 <p><a class="reference internal" href="api_mahos_inst/generated/mahos.inst.server.InstrumentServer.html#mahos.inst.server.InstrumentServer" title="mahos.inst.server.InstrumentServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentServer</span></code></a> is the node for <a class="reference internal" href="arch_inst.html"><span class="doc">inst layer</span></a> to provide <a class="reference internal" href="glossary.html#term-RPC"><span class="xref std std-term">RPC</span></a> for instrument drivers.
-Thus, you don’t need to write a <a class="reference internal" href="glossary.html#term-node"><span class="xref std std-term">node</span></a> for this purpose; you write instrument driver classes (<a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a>) instead.
+Thus, you do not need to write a <a class="reference internal" href="glossary.html#term-node"><span class="xref std std-term">node</span></a> for this purpose; you write instrument driver classes (<a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a>) instead.
 The second group above <code class="docutils literal notranslate"><span class="pre">[localhost.server.instrument.source]</span></code> defines
 an instrument <cite>source</cite> inside the <cite>server</cite>.
 The <cite>VoltageSource_mock</cite> is an example of <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> class here.</p>
@@ -553,19 +553,19 @@ The <cite>VoltageSource_mock</cite> is an example of <a class="reference interna
 </div>
 </div>
 <p>As the name suggests, this class is just a mock and doesn’t consume any external resources.
-However, a real instrument usually requires a resource identifier for communication (VISA resource, IP Address, DLL path, etc.), and we have included how to pass such a configuration to an Instrument.
-We define a configuration dictionary (<a class="reference internal" href="glossary.html#term-conf"><span class="xref std std-term">conf</span></a>) as Line 23-24 in <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>.
-This is passed to Instrument and referred by <code class="docutils literal notranslate"><span class="pre">self.conf</span></code> (Line 14).
-Line 13 uses a utility method to check existence of required key.</p>
+However, a real instrument usually requires a resource identifier for communication (VISA resource, IP address, DLL path, etc.), and we have included how to pass such configuration to an Instrument.
+We define a configuration dictionary (<a class="reference internal" href="glossary.html#term-conf"><span class="xref std std-term">conf</span></a>) as line 23-24 in <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>.
+This is passed to Instrument and referenced by <code class="docutils literal notranslate"><span class="pre">self.conf</span></code> (line 14).
+Line 13 uses a utility method to check the existence of the required key.</p>
 <p>Only two functions of voltage source are implemented: <code class="docutils literal notranslate"><span class="pre">set_output()</span></code> and <code class="docutils literal notranslate"><span class="pre">set_voltage()</span></code>.
 Meanings of these may be obvious.
 We assume an output relay for voltage source, that is turned on/off by <code class="docutils literal notranslate"><span class="pre">set_output()</span></code>.
 The output voltage can be set by <code class="docutils literal notranslate"><span class="pre">set_voltage()</span></code>.</p>
-<p>Line 27 and below makes these adapted to the <a class="reference internal" href="api_mahos_inst/Instrument.html#instrument-api"><span class="std std-ref">Standard Instrument APIs</span></a>.
+<p>Line 27 and below adapt these methods to the <a class="reference internal" href="api_mahos_inst/Instrument.html#instrument-api"><span class="std std-ref">Standard Instrument APIs</span></a>.
 The <code class="docutils literal notranslate"><span class="pre">set_output()</span></code> is wrapped by <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.start" title="mahos.inst.instrument.Instrument.start"><code class="xref py py-meth docutils literal notranslate"><span class="pre">start</span></code></a> and <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.stop" title="mahos.inst.instrument.Instrument.stop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">stop</span></code></a>.
 And <code class="docutils literal notranslate"><span class="pre">set_voltage()</span></code> is by <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.set" title="mahos.inst.instrument.Instrument.set"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set</span></code></a>.
-Note that most of the <a class="reference internal" href="api_mahos_inst/Instrument.html#instrument-api"><span class="std std-ref">Standard Instrument APIs</span></a> (excepting <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.get" title="mahos.inst.instrument.Instrument.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get</span></code></a>) must return bool (True on success).</p>
-<p>In <a class="reference internal" href="api_mahos_inst/Instrument.html#instrument-api"><span class="std std-ref">Standard Instrument APIs</span></a>, <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.set" title="mahos.inst.instrument.Instrument.set"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set</span></code></a>, <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.get" title="mahos.inst.instrument.Instrument.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get</span></code></a>, and <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.configure" title="mahos.inst.instrument.Instrument.configure"><code class="xref py py-meth docutils literal notranslate"><span class="pre">configure</span></code></a> accept some arguments and the type information of the arguments are lost (function signature of e.g. <code class="docutils literal notranslate"><span class="pre">set_voltage()</span></code> cannot be seen from the client).
+Note that most of the <a class="reference internal" href="api_mahos_inst/Instrument.html#instrument-api"><span class="std std-ref">Standard Instrument APIs</span></a> (except <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.get" title="mahos.inst.instrument.Instrument.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get</span></code></a>) must return bool (<cite>True</cite> on success).</p>
+<p>In <a class="reference internal" href="api_mahos_inst/Instrument.html#instrument-api"><span class="std std-ref">Standard Instrument APIs</span></a>, <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.set" title="mahos.inst.instrument.Instrument.set"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set</span></code></a>, <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.get" title="mahos.inst.instrument.Instrument.get"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get</span></code></a>, and <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument.configure" title="mahos.inst.instrument.Instrument.configure"><code class="xref py py-meth docutils literal notranslate"><span class="pre">configure</span></code></a> accept generic arguments, so type information is lost (the function signature of <code class="docutils literal notranslate"><span class="pre">set_voltage()</span></code> cannot be seen from the client).
 We can define <a class="reference internal" href="api_mahos_inst/InstrumentInterface.html#mahos.inst.interface.InstrumentInterface" title="mahos.inst.interface.InstrumentInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentInterface</span></code></a> to recover this, as below.
 This procedure looks like a duplication of effort, but the positive side is that
 we can define an explicit interface (which method is exported and which is not, as in static programming languages).</p>
@@ -590,7 +590,7 @@ And <code class="docutils literal notranslate"><span class="pre">mahos</span> <s
 
 <span class="c1"># Method2: call through interface</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">instruments</span><span class="w"> </span><span class="kn">import</span> <span class="n">VoltageSourceInterface</span>
-<span class="n">source</span> <span class="o">=</span> <span class="n">VoltageSouraceInterface</span><span class="p">(</span><span class="n">cli</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">)</span>
+<span class="n">source</span> <span class="o">=</span> <span class="n">VoltageSourceInterface</span><span class="p">(</span><span class="n">cli</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">)</span>
 <span class="n">source</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 <span class="n">source</span><span class="o">.</span><span class="n">set_voltage</span><span class="p">(</span><span class="mf">12.3</span><span class="p">)</span>
 </pre></div>
@@ -623,7 +623,7 @@ We have defined <code class="docutils literal notranslate"><span class="pre">ivc
 Launch nodes with <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">launch</span> <span class="pre">log</span> <span class="pre">server</span> <span class="pre">ivcurve</span></code>.
 In the second terminal, <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">log</span></code> to print the logs.
 And <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">shell</span> <span class="pre">ivcurve</span></code> to start IPython shell for ivcurve.
-The ivcurve measurement can be performed by following snippet.</p>
+The ivcurve measurement can be performed with the following snippet.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">params</span> <span class="o">=</span> <span class="n">cli</span><span class="o">.</span><span class="n">get_param_dict</span><span class="p">()</span>
 <span class="n">cli</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">cli</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
@@ -631,7 +631,7 @@ The ivcurve measurement can be performed by following snippet.</p>
 </pre></div>
 </div>
 <p>Here, <code class="docutils literal notranslate"><span class="pre">get_data()</span></code> returns <code class="docutils literal notranslate"><span class="pre">IVCurveData</span></code> defined in <code class="docutils literal notranslate"><span class="pre">ivcurve_msgs.py</span></code>,
-and <code class="docutils literal notranslate"><span class="pre">data.data</span></code> is the measurement result: a 2D numpy array of shape <cite>(number of voltage points (params[“num”]), number of sweeps)</cite>.</p>
+and <code class="docutils literal notranslate"><span class="pre">data.data</span></code> is the measurement result: a 2D NumPy array of shape <code class="docutils literal notranslate"><span class="pre">(number</span> <span class="pre">of</span> <span class="pre">voltage</span> <span class="pre">points</span> <span class="pre">(params[&quot;num&quot;]),</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">sweeps)</span></code>.</p>
 <p>For a bit more meaningful application, try executing file <code class="docutils literal notranslate"><span class="pre">measure_and_plot.py</span></code> and understanding it.
 <code class="docutils literal notranslate"><span class="pre">cli.get_param_dict()</span></code> returns a <a class="reference internal" href="api_mahos_msgs/param_msgs.html#param-dict"><span class="std std-ref">ParamDict</span></a>, str-keyed dict of <a class="reference internal" href="api_mahos_msgs/param_msgs.html#mahos.msgs.param_msgs.Param" title="mahos.msgs.param_msgs.Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">Param</span></code></a>.
 <a class="reference internal" href="api_mahos_msgs/param_msgs.html#mahos.msgs.param_msgs.Param" title="mahos.msgs.param_msgs.Param"><code class="xref py py-class docutils literal notranslate"><span class="pre">Param</span></code></a> is wrapper of basic (mostly builtin) types with default value, bounds (for int or float), etc.
@@ -641,9 +641,9 @@ You can set values of parameters by <a class="reference internal" href="api_maho
 <h3>Reading IVCurve node<a class="headerlink" href="#reading-ivcurve-node" title="Link to this heading">#</a></h3>
 <p>What happens at ivcurve node side?
 Look at implementation of <code class="docutils literal notranslate"><span class="pre">IVCurve</span></code> node in <code class="docutils literal notranslate"><span class="pre">ivcurve.py</span></code>.
-<code class="docutils literal notranslate"><span class="pre">IVCurve</span></code> is subclass of <a class="reference internal" href="api_mahos_meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a>,
+<code class="docutils literal notranslate"><span class="pre">IVCurve</span></code> is a subclass of <a class="reference internal" href="api_mahos_meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a>,
 which is a convenient Node implementation for simple measurement nodes.
-We explain how this node works by following <code class="docutils literal notranslate"><span class="pre">main()</span></code> method line by line.</p>
+We explain how this node works by following the <code class="docutils literal notranslate"><span class="pre">main()</span></code> method line by line.</p>
 <div class="literal-block-wrapper docutils container" id="id8">
 <div class="code-block-caption"><span class="caption-text">ivcurve.py</span><a class="headerlink" href="#id8" title="Link to this code">#</a></div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">172</span><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -654,45 +654,45 @@ We explain how this node works by following <code class="docutils literal notran
 </pre></div>
 </div>
 </div>
-<p>First line of <code class="docutils literal notranslate"><span class="pre">main()</span></code> (Line 173) calls <code class="docutils literal notranslate"><span class="pre">poll()</span></code>.
+<p>First line of <code class="docutils literal notranslate"><span class="pre">main()</span></code> (line 173) calls <code class="docutils literal notranslate"><span class="pre">poll()</span></code>.
 Here, this node checks incoming requests, and if there is a request, the handler is called.
-The handler is implemented in <a class="reference internal" href="api_mahos_meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a> (read the implementation if you are interested in) and it calls <code class="docutils literal notranslate"><span class="pre">change_state()</span></code> or <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code> <a class="footnote-reference brackets" href="#f1" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> according to the request.</p>
+The handler is implemented in <a class="reference internal" href="api_mahos_meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a> (read the implementation if you are interested) and calls <code class="docutils literal notranslate"><span class="pre">change_state()</span></code> or <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code> <a class="footnote-reference brackets" href="#f1" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> according to the request.</p>
 <p>When <code class="docutils literal notranslate"><span class="pre">cli.get_param_dict()</span></code> is called, request is sent to ivcurve and the result of <code class="docutils literal notranslate"><span class="pre">IVCurve.get_param_dict()</span></code> is returned.
 The result of this method is hard-coded here; however, the parameter bounds may be determined by instruments for real application.</p>
 <p>By observing <code class="docutils literal notranslate"><span class="pre">change_state()</span></code>, you will see that this node has explicit state: <code class="docutils literal notranslate"><span class="pre">BinaryState.IDLE</span></code> or <code class="docutils literal notranslate"><span class="pre">BinaryState.ACTIVE</span></code>.
-All measurement nodes are advised to have explicit state like this, and BinaryState is the most simplest case.
+All measurement nodes are advised to have explicit state like this, and BinaryState is the simplest case.
 <code class="docutils literal notranslate"><span class="pre">cli.start()</span></code> is a shorthand of <cite>change_state(ACTIVE)</cite>, and <code class="docutils literal notranslate"><span class="pre">cli.stop()</span></code> is <cite>change_state(IDLE)</cite>.
 When state is changing from IDLE to ACTIVE, <code class="docutils literal notranslate"><span class="pre">self.sweeper.start()</span></code> is called.
-<code class="docutils literal notranslate"><span class="pre">self.sweeper</span></code> is an instance of <code class="docutils literal notranslate"><span class="pre">Sweeper</span></code> class, that communicates with the server and do real jobs.</p>
-<p>At the second line of <code class="docutils literal notranslate"><span class="pre">main()</span></code> (Line 174), through <code class="docutils literal notranslate"><span class="pre">_work()</span></code>, <code class="docutils literal notranslate"><span class="pre">self.sweeper.work()</span></code> is called.
+<code class="docutils literal notranslate"><span class="pre">self.sweeper</span></code> is an instance of the <code class="docutils literal notranslate"><span class="pre">Sweeper</span></code> class that communicates with the server and performs the actual work.</p>
+<p>At the second line of <code class="docutils literal notranslate"><span class="pre">main()</span></code> (line 174), through <code class="docutils literal notranslate"><span class="pre">_work()</span></code>, <code class="docutils literal notranslate"><span class="pre">self.sweeper.work()</span></code> is called.
 A sweep measurement for IV curve is done there; <cite>source</cite> is used to apply voltage and the current is read by <cite>meter</cite>.</p>
-<p>The third line of <code class="docutils literal notranslate"><span class="pre">main()</span></code> (Line 175) checks if we can finish the measurement.
+<p>The third line of <code class="docutils literal notranslate"><span class="pre">main()</span></code> (line 175) checks if we can finish the measurement.
 Measurement is finished when <code class="docutils literal notranslate"><span class="pre">params[&quot;sweeps&quot;]</span></code> is positive and the sweeps have already been repeated <code class="docutils literal notranslate"><span class="pre">params[&quot;sweeps&quot;]</span></code> times (see <code class="docutils literal notranslate"><span class="pre">Sweeper.is_finished()</span></code>).</p>
-<p>By final line of <code class="docutils literal notranslate"><span class="pre">main()</span></code> (Line 176), the node status and data are published.</p>
+<p>By the final line of <code class="docutils literal notranslate"><span class="pre">main()</span></code> (line 176), the node status and data are published.</p>
 </section>
 </section>
 <section id="ivcurve-gui">
 <h2>ivcurve_gui<a class="headerlink" href="#ivcurve-gui" title="Link to this heading">#</a></h2>
-<p>The ivcurve_gui, a GUI frontend of ivcurve, is defined at the last group in <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>.
+<p>The ivcurve_gui, a GUI frontend of ivcurve, is defined in the last group in <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>.
 The class <code class="docutils literal notranslate"><span class="pre">IVCurveGUI</span></code> is in <code class="docutils literal notranslate"><span class="pre">ivcurve_gui.py</span></code>.
 This is what we were operating in <a class="reference internal" href="#running-the-mock">Running the mock</a>.</p>
 <p>Let’s launch all the nodes by <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">launch</span></code> and confirm GUI is working.
 Then, start the IPython shell with <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">shell</span> <span class="pre">ivcurve</span></code> and send start or stop requests.
 Furthermore, try running <code class="docutils literal notranslate"><span class="pre">measure_and_plot.py</span></code> script (stop the measurement before running).
-It is quite important that we can operate the measurement from both the GUI and programs (shell, or a custom script).
-This extensibility is one of the advantages of the distributed systems.</p>
+It is important that we can operate the measurement from both the GUI and programs (shell or a custom script).
+This extensibility is one of the advantages of distributed systems.</p>
 <p>If you have experience in Qt (PyQt) programming, let’s take a look at <code class="docutils literal notranslate"><span class="pre">ivcurve_gui.py</span></code>.
 The GUI component (IVCurveWidget) is composed quite simply by virtue of <code class="docutils literal notranslate"><span class="pre">QBasicMeasClient</span></code>.
-This class is <cite>Qt-version</cite> of <cite>BasicMeasClient</cite> and emits Qt signal on reception of subscribed messages.
+This class is a <cite>Qt-version</cite> of <cite>BasicMeasClient</cite> and emits Qt signals when subscribed messages are received.
 In other words, it translates MAHOS communication into Qt communication (signal-slot).
-All we have to do for widget implementation is connecting the signals to slots updating the GUI state (Line 102-103) and sending requests (Line 124-136).</p>
-<p>There is a bit special custom on initialization (<code class="docutils literal notranslate"><span class="pre">init_with_status()</span></code>).
+All we have to do for widget implementation is connect signals to slots that update the GUI state (lines 102-103) and send requests (lines 124-136).</p>
+<p>There is a slightly special initialization pattern (<code class="docutils literal notranslate"><span class="pre">init_with_status()</span></code>).
 We cannot initialize the GUI completely without the target node (<code class="docutils literal notranslate"><span class="pre">ivcurve</span></code>) because we have to know the target’s status (by <code class="docutils literal notranslate"><span class="pre">get_param_dict()</span></code> for example).
 But we are not sure if the target node is up when GUI starts.
-To assure this point, we first disable the widget (Line 29) and connect <cite>statusUpdate</cite> event to <code class="docutils literal notranslate"><span class="pre">init_with_status()</span></code> (Line 26).
-When the first status message arrives, this method is fired and remaining initializations are done.
-The widget is enabled finally at Line 105.
-This method is called only once because the signal is disconnect at Line 79.</p>
+To assure this point, we first disable the widget (line 29) and connect <cite>statusUpdate</cite> event to <code class="docutils literal notranslate"><span class="pre">init_with_status()</span></code> (line 26).
+When the first status message arrives, this method is called and the remaining initialization steps are completed.
+The widget is enabled finally at line 105.
+This method is called only once because the signal is disconnected at line 79.</p>
 </section>
 <section id="modified-configurations">
 <h2>Modified configurations<a class="headerlink" href="#modified-configurations" title="Link to this heading">#</a></h2>
@@ -704,12 +704,12 @@ See <a class="reference internal" href="conf.html#conf-threading"><span class="s
 </section>
 <section id="overlay">
 <h3>Overlay<a class="headerlink" href="#overlay" title="Link to this heading">#</a></h3>
-<p>If you need to reduce overhead of TCP communication between measurement node (IVCurve) and the InstrumentServer, <a class="reference internal" href="api_mahos_inst/InstrumentOverlay.html#mahos.inst.overlay.overlay.InstrumentOverlay" title="mahos.inst.overlay.overlay.InstrumentOverlay"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentOverlay</span></code></a> would also help.
-The IVCurve node was sending the commands to <code class="docutils literal notranslate"><span class="pre">source</span></code> and <code class="docutils literal notranslate"><span class="pre">meter</span></code> for each data points in a voltage sweep.
+<p>If you need to reduce TCP communication overhead between the measurement node (IVCurve) and the InstrumentServer, <a class="reference internal" href="api_mahos_inst/InstrumentOverlay.html#mahos.inst.overlay.overlay.InstrumentOverlay" title="mahos.inst.overlay.overlay.InstrumentOverlay"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentOverlay</span></code></a> can also help.
+The IVCurve node sends commands to <code class="docutils literal notranslate"><span class="pre">source</span></code> and <code class="docutils literal notranslate"><span class="pre">meter</span></code> for each data point in a voltage sweep.
 By using the overlay, the sweep operation can be executed at InstrumentServer side.
 The modified example using overlay is defined in <code class="docutils literal notranslate"><span class="pre">conf_overlay.toml</span></code>,
 and the classes are implemented in <code class="docutils literal notranslate"><span class="pre">overlay.py</span></code> and <code class="docutils literal notranslate"><span class="pre">ivcurve_overlay.py</span></code>.
-You could grab the concept by observing the difference between this and default examples.</p>
+You can understand the concept by observing the differences between this and the default examples.</p>
 <p class="rubric">Footnotes</p>
 <aside class="footnote-list brackets">
 <aside class="footnote brackets" id="f1" role="doc-footnote">

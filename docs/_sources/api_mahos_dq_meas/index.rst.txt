@@ -19,6 +19,8 @@ The mahos_dq.meas package provides high-level measurement logics for mahos_dq.
    spodmr.SPODMR
    qdyne.Qdyne
    iodmr.IODMR
+   iodmr_worker.ISweeperDirect
+   iodmr_worker.ISweeperOverlay
    hbt.HBT
    spectroscopy.Spectroscopy
 

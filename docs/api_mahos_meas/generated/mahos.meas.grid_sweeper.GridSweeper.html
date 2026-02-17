@@ -460,6 +460,19 @@
 and reads one measurement quantity (<code class="docutils literal notranslate"><span class="pre">measure</span></code> section) on each grid point. The acquired
 result is stored as image stack data (<a class="reference internal" href="../../api_mahos_msgs/generated/mahos.msgs.grid_sweeper_msgs.GridSweeperData.html#mahos.msgs.grid_sweeper_msgs.GridSweeperData" title="mahos.msgs.grid_sweeper_msgs.GridSweeperData"><code class="xref py py-class docutils literal notranslate"><span class="pre">GridSweeperData</span></code></a>)
 with optional repeated 2D sweeps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>dict</em>) – X-axis instrument configuration dictionary.</p></li>
+<li><p><strong>x.inst</strong> (<em>str</em>) – Instrument name to control for the x-axis.</p></li>
+<li><p><strong>y</strong> (<em>dict</em>) – Y-axis instrument configuration dictionary.</p></li>
+<li><p><strong>y.inst</strong> (<em>str</em>) – Instrument name to control for the y-axis.</p></li>
+<li><p><strong>measure</strong> (<em>dict</em>) – Measurement instrument configuration dictionary.</p></li>
+<li><p><strong>measure.inst</strong> (<em>str</em>) – Instrument name to read at each grid point.</p></li>
+<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
+</ul>
+</dd>
+</dl>
 <p>Runtime behavior:</p>
 <ul class="simple">
 <li><p>Uses <code class="docutils literal notranslate"><span class="pre">set()</span></code> and <code class="docutils literal notranslate"><span class="pre">get()</span></code> APIs for target instruments.</p></li>

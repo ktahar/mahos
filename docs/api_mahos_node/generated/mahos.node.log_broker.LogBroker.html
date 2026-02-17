@@ -448,6 +448,17 @@
 <dt class="sig sig-object py" id="mahos.node.log_broker.LogBroker">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.node.log_broker.</span></span><span class="sig-name descname"><span class="pre">LogBroker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.node.log_broker.LogBroker" title="Link to this definition">#</a></dt>
 <dd><p>Broker Node for logs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xpub_endpoint</strong> (<em>str</em>) – XPUB endpoint address for log subscribers.</p></li>
+<li><p><strong>xsub_endpoint</strong> (<em>str</em>) – XSUB endpoint address for log publishers.</p></li>
+<li><p><strong>file</strong> (<em>bool</em>) – Enable file logging when True.</p></li>
+<li><p><strong>file_name</strong> (<em>str</em>) – Optional explicit path to the log file.
+If omitted, an auto-generated file name is used.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mahos.node.log_broker.LogBroker.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.node.log_broker.LogBroker.__init__" title="Link to this definition">#</a></dt>

@@ -378,6 +378,8 @@
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spodmr.SPODMR.html">mahos_dq.meas.spodmr.SPODMR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.qdyne.Qdyne.html">mahos_dq.meas.qdyne.Qdyne</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr.IODMR.html">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.hbt.HBT.html">mahos_dq.meas.hbt.HBT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
@@ -459,23 +461,24 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos_dq.meas.confocal.Confocal">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos_dq.meas.confocal.</span></span><span class="sig-name descname"><span class="pre">Confocal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.confocal.Confocal" title="Link to this definition">#</a></dt>
-<dd><dl class="py method">
-<dt class="sig sig-object py" id="mahos_dq.meas.confocal.Confocal.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.confocal.Confocal.__init__" title="Link to this definition">#</a></dt>
-<dd><p>Confocal scanner and interactive positioning.</p>
+<dd><p>Node that coordinates confocal scan, piezo control, and PD tracing.</p>
+<p>The node switches between IDLE/PIEZO/INTERACT/SCAN states, starts the required
+workers per state, and publishes status, image, and trace messages.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>piezo.interval_sec</strong> (<em>float</em>) – (default: 0.5) Interval to poll piezo pos.</p></li>
+<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>] </em><em>| </em><em>str</em><em>]</em>) – Instrument server mapping for confocal workers.
+Required keys: <code class="docutils literal notranslate"><span class="pre">scanner</span></code>, <code class="docutils literal notranslate"><span class="pre">piezo</span></code>, <code class="docutils literal notranslate"><span class="pre">clock</span></code>, and names in <code class="docutils literal notranslate"><span class="pre">tracer.pd_names</span></code>.
+Optional keys: <code class="docutils literal notranslate"><span class="pre">switch</span></code> and <code class="docutils literal notranslate"><span class="pre">pg</span></code> (and any keys listed in <code class="docutils literal notranslate"><span class="pre">switch_names</span></code>).</p></li>
+<li><p><strong>target.tweakers</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional Tweaker node names whose settings are saved
+alongside saved confocal data.</p></li>
+<li><p><strong>inst_remap</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Optional mapping to override instrument name.</p></li>
+<li><p><strong>switch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Names of switch instruments activated in INTERACT/SCAN.</p></li>
+<li><p><strong>switch_command</strong> (<em>str</em>) – Switch command label used when enabling confocal routing.</p></li>
 <li><p><strong>pg_channels</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – (default: [“laser”], only target.servers.pg is given)
 List of PG channels to set high continuously on INTERACT or SCAN states.</p></li>
-<li><p><strong>tracer.pd_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – (default: [“pd0”, “pd1”]) PD names in target.servers.</p></li>
-<li><p><strong>tracer.interval_sec</strong> (<em>float</em>) – (default: 0.5) Interval to poll trace data.</p></li>
-<li><p><strong>tracer.size</strong> (<em>int</em>) – (default: 500) Size of trace data.</p></li>
-<li><p><strong>tracer.samples</strong> (<em>int</em>) – (default: 5) Number of samples per chunk.</p></li>
-<li><p><strong>tracer.oversample</strong> (<em>int</em>) – (default: 1) Oversample factor.</p></li>
-<li><p><strong>tracer.time_window_sec</strong> (<em>float</em>) – (default: 0.01) Time window for single data point.</p></li>
-<li><p><strong>tracer.pd_bounds</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – (default: (-10.0, 10.0)) PD’s voltage bounds.</p></li>
+<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Period for forced periodic publication while running.</p></li>
+<li><p><strong>scanner</strong> (<em>dict</em>) – Scanner worker configuration dictionary.</p></li>
 <li><p><strong>scanner.xnum</strong> (<em>int</em>) – (default: 51) Default value of param xnum.</p></li>
 <li><p><strong>scanner.ynum</strong> (<em>int</em>) – (default: 51) Default value of param ynum.</p></li>
 <li><p><strong>scanner.delay</strong> (<em>float</em>) – (default: 0.0) Default value of param delay.</p></li>
@@ -485,16 +488,29 @@ List of PG channels to set high continuously on INTERACT or SCAN states.</p></li
 <li><p><strong>scanner.oversample</strong> (<em>int</em>) – (default: 1) Default value of param oversample.</p></li>
 <li><p><strong>scanner.dummy_samples</strong> (<em>int</em>) – (default: 10) Default value of param dummy_samples.</p></li>
 <li><p><strong>scanner.poll_samples</strong> (<em>int</em>) – (default: 1) Default value of param poll_samples.</p></li>
+<li><p><strong>piezo</strong> (<em>dict</em>) – Piezo worker configuration dictionary.</p></li>
+<li><p><strong>piezo.interval_sec</strong> (<em>float</em>) – (default: 0.5) Interval to poll piezo pos.</p></li>
+<li><p><strong>tracer</strong> (<em>dict</em>) – Trace worker configuration dictionary.</p></li>
+<li><p><strong>tracer.pd_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – (default: [“pd0”, “pd1”]) PD names in target.servers.</p></li>
+<li><p><strong>tracer.interval_sec</strong> (<em>float</em>) – (default: 0.5) Interval to poll trace data.</p></li>
+<li><p><strong>tracer.size</strong> (<em>int</em>) – (default: 500) Size of trace data.</p></li>
+<li><p><strong>tracer.samples</strong> (<em>int</em>) – (default: 5) Number of samples per chunk.</p></li>
+<li><p><strong>tracer.oversample</strong> (<em>int</em>) – (default: 1) Oversample factor.</p></li>
+<li><p><strong>tracer.time_window_sec</strong> (<em>float</em>) – (default: 0.01) Time window for single data point.</p></li>
+<li><p><strong>tracer.pd_bounds</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – (default: (-10.0, 10.0)) PD’s voltage bounds.</p></li>
 </ul>
 </dd>
 </dl>
-</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="mahos_dq.meas.confocal.Confocal.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.confocal.Confocal.__init__" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#mahos_dq.meas.confocal.Confocal.__init__" title="mahos_dq.meas.confocal.Confocal.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(gconf, name[, context])</p></td>
-<td><p>Confocal scanner and interactive positioning.</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">change_state</span></code>(msg)</p></td>
 <td><p></p></td>

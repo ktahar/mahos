@@ -378,6 +378,8 @@
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spodmr.SPODMR.html">mahos_dq.meas.spodmr.SPODMR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.qdyne.Qdyne.html">mahos_dq.meas.qdyne.Qdyne</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr.IODMR.html">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.hbt.HBT.html">mahos_dq.meas.hbt.HBT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
@@ -475,11 +477,18 @@ See docs of sweeper below for sweeper parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – The InstrumentServer targets (instrument name, server full name).
-If target ‘sweeper’ is given, use of SweeperOverlay is implied.
-Otherwise (when Sweeper is used), targets ‘sg’, ‘pg’, and &lt;sweeper.pd_names&gt; are required.</p></li>
+<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – InstrumentServer targets (instrument name, server full name).
+Required keys (overlay mode): <code class="docutils literal notranslate"><span class="pre">sweeper</span></code>.
+Required keys (direct mode): <code class="docutils literal notranslate"><span class="pre">sg</span></code>, <code class="docutils literal notranslate"><span class="pre">pg</span></code>, and names in <code class="docutils literal notranslate"><span class="pre">sweeper.pd_names</span></code>.
+In direct mode, if <code class="docutils literal notranslate"><span class="pre">sweeper.pd_analog</span></code> is True, the key named by
+<code class="docutils literal notranslate"><span class="pre">sweeper.clock_name</span></code> is also required.
+Optional keys: <code class="docutils literal notranslate"><span class="pre">pg</span></code> in overlay mode (for non-PG overlays) and switch keys listed in
+<code class="docutils literal notranslate"><span class="pre">switch_names</span></code>.</p></li>
 <li><p><strong>target.tweakers</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The Tweaker targets (list of tweaker full name).</p></li>
 <li><p><strong>target.log</strong> (<em>str</em>) – The LogBroker target (broker full name).</p></li>
+<li><p><strong>switch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional switch instrument names to route signal/optical paths.</p></li>
+<li><p><strong>switch_command</strong> (<em>str</em>) – Switch command label passed to Switch worker.</p></li>
+<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
 <li><p><strong>fitter.dip</strong> (<em>bool</em>) – (default: True) True if ODMR shape is dip instead of peak.</p></li>
 <li><p><strong>fitter.n_guess</strong> (<em>int</em>) – (default: 20) Number of data points in peak center guess.</p></li>
 <li><p><strong>fitter.n_guess_bg</strong> (<em>int</em>) – (default: 40) Number of histogram bins in background guess.</p></li>

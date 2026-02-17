@@ -449,17 +449,27 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos.msgs.recorder_msgs.RecorderData">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.msgs.recorder_msgs.</span></span><span class="sig-name descname"><span class="pre">RecorderData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.msgs.recorder_msgs.RecorderData" title="Link to this definition">#</a></dt>
-<dd><dl class="py method">
+<dd><p>Recorded multi-channel timeseries with channel/unit metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>units</strong> – Ordered <code class="docutils literal notranslate"><span class="pre">(channel,</span> <span class="pre">unit)</span></code> tuples defining recorded channels.</p></li>
+<li><p><strong>data</strong> – Per-channel sample buffers aligned to <code class="docutils literal notranslate"><span class="pre">xdata</span></code>.</p></li>
+<li><p><strong>xdata</strong> – Time-axis samples in seconds.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Call <code class="xref py py-meth docutils literal notranslate"><span class="pre">set_units()</span></code> before appending measurement samples.</p>
+<dl class="py method">
 <dt class="sig sig-object py" id="mahos.msgs.recorder_msgs.RecorderData.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.msgs.recorder_msgs.RecorderData.__init__" title="Link to this definition">#</a></dt>
-<dd><p>Note that set_units() must be called before collecting actual data.</p>
-</dd></dl>
+<dd></dd></dl>
 
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#mahos.msgs.recorder_msgs.RecorderData.__init__" title="mahos.msgs.recorder_msgs.RecorderData.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([params, label])</p></td>
-<td><p>Note that set_units() must be called before collecting actual data.</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">append</span></code>(x, y)</p></td>
 <td><p></p></td>

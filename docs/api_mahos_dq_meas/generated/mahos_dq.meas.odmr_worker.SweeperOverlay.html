@@ -378,6 +378,8 @@
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spodmr.SPODMR.html">mahos_dq.meas.spodmr.SPODMR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.qdyne.Qdyne.html">mahos_dq.meas.qdyne.Qdyne</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr.IODMR.html">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.hbt.HBT.html">mahos_dq.meas.hbt.HBT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
@@ -461,6 +463,25 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos_dq.meas.odmr_worker.</span></span><span class="sig-name descname"><span class="pre">SweeperOverlay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.odmr_worker.SweeperOverlay" title="Link to this definition">#</a></dt>
 <dd><p>Sweeper using Overlay.</p>
 <p>Refer to <a class="reference internal" href="../../api_mahos_dq_inst/odmr_sweeper.html#module-mahos_dq.inst.overlay.odmr_sweeper" title="mahos_dq.inst.overlay.odmr_sweeper"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mahos_dq.inst.overlay.odmr_sweeper</span></code></a> for docs of target overlay.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sweeper.sweeper_name</strong> (<em>str</em>) – (default: “sweeper”) target overlay name in target.servers.</p></li>
+<li><p><strong>sweeper.point</strong> (<em>bool</em>) – (default: False) set True to publish data per point acquisition.</p></li>
+<li><p><strong>sweeper.start</strong> (<em>float</em>) – (default param) start frequency in Hz.</p></li>
+<li><p><strong>sweeper.stop</strong> (<em>float</em>) – (default param) stop frequency in Hz.</p></li>
+<li><p><strong>sweeper.num</strong> (<em>int</em>) – (default param) number of frequency points.</p></li>
+<li><p><strong>sweeper.power</strong> (<em>float</em>) – (default param) SG output power in dBm.</p></li>
+<li><p><strong>sweeper.time_window</strong> (<em>float</em>) – (default param) time window for cw mode.</p></li>
+<li><p><strong>sweeper.gate_delay</strong> (<em>float</em>) – (default param) gate delay before counting.</p></li>
+<li><p><strong>sweeper.am_depth</strong> (<em>float</em>) – (default param) depth of AM modulation.</p></li>
+<li><p><strong>sweeper.am_log</strong> (<em>bool</em>) – (default param) True indicates log-scale AM depth.</p></li>
+<li><p><strong>sweeper.am_rate</strong> (<em>float</em>) – (default param) rate (baseband frequency) of AM in Hz.</p></li>
+<li><p><strong>sweeper.fm_deviation</strong> (<em>float</em>) – (default param) FM deviation in Hz.</p></li>
+<li><p><strong>sweeper.fm_rate</strong> (<em>float</em>) – (default param) rate (baseband frequency) of FM in Hz.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mahos_dq.meas.odmr_worker.SweeperOverlay.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.odmr_worker.SweeperOverlay.__init__" title="Link to this definition">#</a></dt>

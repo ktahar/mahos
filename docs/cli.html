@@ -416,24 +416,24 @@
                   
   <section id="command-line-interface">
 <span id="mahos-cli"></span><h1>Command Line Interface<a class="headerlink" href="#command-line-interface" title="Link to this heading">#</a></h1>
-<p>After installing mahos package, a command <code class="docutils literal notranslate"><span class="pre">mahos</span></code> is installed.
+<p>After installing the mahos package, a command named <code class="docutils literal notranslate"><span class="pre">mahos</span></code> is installed.
 This command serves as a command line interface (CLI) to use mahos.
 The <code class="docutils literal notranslate"><span class="pre">mahos</span></code> CLI provides several sub-commands described below.</p>
 <section id="node-operations">
 <h2>Node operations<a class="headerlink" href="#node-operations" title="Link to this heading">#</a></h2>
 <section id="common-arguments">
 <h3>Common arguments<a class="headerlink" href="#common-arguments" title="Link to this heading">#</a></h3>
-<p>There are common arguments for node operation commands:</p>
+<p>There are common arguments for node operation commands.</p>
 <section id="c-config-file">
 <h4>-c [config file]<a class="headerlink" href="#c-config-file" title="Link to this heading">#</a></h4>
 <p>To operate on MAHOS nodes, you have to prepare toml-based <a class="reference internal" href="conf.html"><span class="doc">configuration file</span></a>.
-The <code class="docutils literal notranslate"><span class="pre">-c</span></code> option specifies the path to config file.
+The <code class="docutils literal notranslate"><span class="pre">-c</span></code> option specifies the path to the config file.
 Defaults to <code class="docutils literal notranslate"><span class="pre">conf.toml</span></code>.</p>
 </section>
 <section id="h-hostname">
 <h4>-H [hostname]<a class="headerlink" href="#h-hostname" title="Link to this heading">#</a></h4>
-<p>CLI command usually targets a node.
-The full-name of the node consists of hostname and nodename.
+<p>A CLI command usually targets a node.
+The full name of the node consists of a hostname and nodename.
 The <code class="docutils literal notranslate"><span class="pre">-H</span></code> option specifies the hostname part.
 Defaults to real hostname (<code class="docutils literal notranslate"><span class="pre">platform.uname().node</span></code>) if it is in the config file, or <code class="docutils literal notranslate"><span class="pre">localhost</span></code>.</p>
 </section>
@@ -447,28 +447,28 @@ Defaults to real hostname (<code class="docutils literal notranslate"><span clas
 <span id="id2"></span><h3>mahos launch<a class="headerlink" href="#mahos-launch" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">launch</span> <span class="pre">[nodenames]</span></code> starts all the nodes (or specified nodes) pertaining to single host.</p>
 <p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">launch</span> <span class="pre">-e</span> <span class="pre">[nodenames-to-exclude]</span></code> starts all the nodes excluding specified names.</p>
-<p>If a node named <code class="docutils literal notranslate"><span class="pre">log</span></code> (recommended name of <a class="reference internal" href="api_mahos_node/generated/mahos.node.log_broker.LogBroker.html#mahos.node.log_broker.LogBroker" title="mahos.node.log_broker.LogBroker"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogBroker</span></code></a> node) is defined to run on the host
-and already up, it’s automatically excluded.</p>
+<p>If a node named <code class="docutils literal notranslate"><span class="pre">log</span></code> (the recommended name for a <a class="reference internal" href="api_mahos_node/generated/mahos.node.log_broker.LogBroker.html#mahos.node.log_broker.LogBroker" title="mahos.node.log_broker.LogBroker"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogBroker</span></code></a> node) is defined to run on the host
+and is already up, it is automatically excluded.</p>
 </section>
 <section id="mahos-log">
 <h3>mahos log<a class="headerlink" href="#mahos-log" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">log</span> <span class="pre">[nodename=log]</span></code> subscribes to a <a class="reference internal" href="api_mahos_node/generated/mahos.node.log_broker.LogBroker.html#mahos.node.log_broker.LogBroker" title="mahos.node.log_broker.LogBroker"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogBroker</span></code></a> to print logs on console.</p>
-<p>If specified <a class="reference internal" href="api_mahos_node/generated/mahos.node.log_broker.LogBroker.html#mahos.node.log_broker.LogBroker" title="mahos.node.log_broker.LogBroker"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogBroker</span></code></a> node is configured to run on the same host and not up,
+<p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">log</span> <span class="pre">[nodename=log]</span></code> subscribes to a <a class="reference internal" href="api_mahos_node/generated/mahos.node.log_broker.LogBroker.html#mahos.node.log_broker.LogBroker" title="mahos.node.log_broker.LogBroker"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogBroker</span></code></a> to print logs on the console.</p>
+<p>If the specified <a class="reference internal" href="api_mahos_node/generated/mahos.node.log_broker.LogBroker.html#mahos.node.log_broker.LogBroker" title="mahos.node.log_broker.LogBroker"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogBroker</span></code></a> node is configured to run on the same host and is not up,
 this command automatically starts the node.</p>
 </section>
 <section id="mahos-ls">
 <h3>mahos ls<a class="headerlink" href="#mahos-ls" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">ls</span></code> prints the list of defined nodes in the config file.</p>
-<p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">ls</span> <span class="pre">-i</span></code> enables listing of <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instruments</span></code></a> and <a class="reference internal" href="api_mahos_inst/InstrumentOverlay.html#mahos.inst.overlay.overlay.InstrumentOverlay" title="mahos.inst.overlay.overlay.InstrumentOverlay"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentOverlays</span></code></a> in <a class="reference internal" href="api_mahos_inst/generated/mahos.inst.server.InstrumentServer.html#mahos.inst.server.InstrumentServer" title="mahos.inst.server.InstrumentServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentServers</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">ls</span> <span class="pre">-i</span></code> enables listing of <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instruments</span></code></a> and <a class="reference internal" href="api_mahos_inst/InstrumentOverlay.html#mahos.inst.overlay.overlay.InstrumentOverlay" title="mahos.inst.overlay.overlay.InstrumentOverlay"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentOverlays</span></code></a> in <a class="reference internal" href="api_mahos_inst/generated/mahos.inst.server.InstrumentServer.html#mahos.inst.server.InstrumentServer" title="mahos.inst.server.InstrumentServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentServers</span></code></a>.</p>
 </section>
 <section id="mahos-graph">
 <span id="id3"></span><h3>mahos graph<a class="headerlink" href="#mahos-graph" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">graph</span></code> visualizes the config file as graph.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">graph</span></code> visualizes the config file as a graph.</p>
 <p>Add option <code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">[filename]</span></code> to save to a file.</p>
 </section>
 <section id="mahos-echo">
 <h3>mahos echo<a class="headerlink" href="#mahos-echo" title="Link to this heading">#</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">echo</span> <span class="pre">-t</span> <span class="pre">[topicname]</span> <span class="pre">[nodename]</span></code> subscribes to a topic and print published messages.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">echo</span> <span class="pre">-t</span> <span class="pre">[topicname]</span> <span class="pre">[nodename]</span></code> subscribes to a topic and prints published messages.</p>
 </section>
 <section id="mahos-shell">
 <h3>mahos shell<a class="headerlink" href="#mahos-shell" title="Link to this heading">#</a></h3>

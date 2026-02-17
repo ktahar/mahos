@@ -426,15 +426,15 @@
   <section id="tutorial-next-steps">
 <h1>Tutorial: Next Steps<a class="headerlink" href="#tutorial-next-steps" title="Link to this heading">#</a></h1>
 <p>There are several ways to go forward after finishing the tutorial.</p>
-<p>The most <cite>practical</cite> way may be try <a class="reference internal" href="#next-step-build"><span class="std std-ref">to build your own system</span></a>.
+<p>The most <cite>practical</cite> way may be to try <a class="reference internal" href="#next-step-build"><span class="std std-ref">to build your own system</span></a>.
 If you have enough time or interest, try <a class="reference internal" href="#next-step-understand"><span class="std std-ref">to understand mahos further</span></a>.</p>
 <section id="building-your-own-system">
 <span id="next-step-build"></span><h2>Building your own system<a class="headerlink" href="#building-your-own-system" title="Link to this heading">#</a></h2>
 <section id="writing-instrument">
 <h3>Writing Instrument<a class="headerlink" href="#writing-instrument" title="Link to this heading">#</a></h3>
-<p>If you want to build your own system, first step might be preparing the <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> class for your instrument.
+<p>If you want to build your own system, the first step might be preparing the <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> class for your instrument.
 You are very lucky if you can find corresponding class in <a class="reference internal" href="api_mahos_inst/index.html#mahos-inst"><span class="std std-ref">mahos.inst</span></a> package.
-Even this is not the case, writing your own <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> is not a very hard way; you can use existing classes in <a class="reference internal" href="api_mahos_inst/index.html#mahos-inst"><span class="std std-ref">mahos.inst</span></a> as the examples.
+Even when this is not the case, writing your own <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> is not very difficult; you can use existing classes in <a class="reference internal" href="api_mahos_inst/index.html#mahos-inst"><span class="std std-ref">mahos.inst</span></a> as examples.
 Following subsections explain several methods to write <a class="reference internal" href="api_mahos_inst/Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a>.
 It depends on the real instrument’s interface / driver provided by the manufacturer, but most of the instruments will fit into (at least) one of these.</p>
 <section id="visa">
@@ -446,7 +446,7 @@ We can use <a class="reference external" href="https://pyvisa.readthedocs.io/">P
 </section>
 <section id="wrapping-python-library">
 <h4>Wrapping Python library<a class="headerlink" href="#wrapping-python-library" title="Link to this heading">#</a></h4>
-<p>Some (rather modern) instruments provide the libraries for Python.
+<p>Some (rather modern) instruments provide libraries for Python.
 You are lucky! This is usually the easiest case.</p>
 </section>
 <section id="wrapping-c-library">
@@ -467,33 +467,33 @@ There are several classes in <code class="docutils literal notranslate"><span cl
 <section id="writing-meas-node">
 <h3>Writing meas Node<a class="headerlink" href="#writing-meas-node" title="Link to this heading">#</a></h3>
 <p>If your measurement is not very complex,
-the easiest way to write meas node is sub-classing <a class="reference internal" href="api_mahos_meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a>.
+the easiest way to write a meas node is to subclass <a class="reference internal" href="api_mahos_meas/generated/mahos.meas.common_meas.BasicMeasNode.html#mahos.meas.common_meas.BasicMeasNode" title="mahos.meas.common_meas.BasicMeasNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicMeasNode</span></code></a>.
 We have already seen an example in <a class="reference internal" href="tutorial_ivcurve.html"><span class="doc">Tutorial 2: Basic Measurement</span></a>.</p>
 </section>
 <section id="writing-gui-node">
 <h3>Writing gui Node<a class="headerlink" href="#writing-gui-node" title="Link to this heading">#</a></h3>
-<p>If GUI is necessary, you can try to write a <a class="reference internal" href="api_mahos_gui/generated/mahos.gui.gui_node.GUINode.html#mahos.gui.gui_node.GUINode" title="mahos.gui.gui_node.GUINode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GUINode</span></code></a>.
+<p>If a GUI is necessary, you can try writing a <a class="reference internal" href="api_mahos_gui/generated/mahos.gui.gui_node.GUINode.html#mahos.gui.gui_node.GUINode" title="mahos.gui.gui_node.GUINode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GUINode</span></code></a>.
 Since the existing implementations are based on <a class="reference external" href="https://riverbankcomputing.com/software/pyqt/">PyQt</a>,
-you will need some experiences or practices to use it.</p>
+you will need some experience or practice to use it.</p>
 <p>If you are familiar with other UI (either native / web-based) technologies,
-it will be also possible to implement the gui node with that.
+it is also possible to implement a GUI node with those technologies.
 In that case, your node will not be based on <a class="reference internal" href="api_mahos_gui/generated/mahos.gui.gui_node.GUINode.html#mahos.gui.gui_node.GUINode" title="mahos.gui.gui_node.GUINode"><code class="xref py py-class docutils literal notranslate"><span class="pre">GUINode</span></code></a> (because this is for PyQt).</p>
 </section>
 </section>
 <section id="understanding-mahos-further">
 <span id="next-step-understand"></span><h2>Understanding mahos further<a class="headerlink" href="#understanding-mahos-further" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="arch.html"><span class="doc">Architecture</span></a> explains the architecture of mahos system.</p></li>
-<li><p><a class="reference internal" href="conf.html"><span class="doc">Configuration file</span></a> provides a bit detailed specification of configuration files.</p></li>
-<li><p><a class="reference internal" href="cli.html"><span class="doc">Command Line Interface</span></a> is a list of cli commands; but <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">[subcommand]</span> <span class="pre">-h</span></code> may provide more information. You can also try to read the code in <code class="docutils literal notranslate"><span class="pre">mahos.cli</span></code> package, that is not quite big.</p></li>
+<li><p><a class="reference internal" href="arch.html"><span class="doc">Architecture</span></a> explains the architecture of the mahos system.</p></li>
+<li><p><a class="reference internal" href="conf.html"><span class="doc">Configuration file</span></a> provides a more detailed specification of configuration files.</p></li>
+<li><p><a class="reference internal" href="cli.html"><span class="doc">Command Line Interface</span></a> is a list of CLI commands, but <code class="docutils literal notranslate"><span class="pre">mahos</span> <span class="pre">[subcommand]</span> <span class="pre">-h</span></code> may provide more information. You can also read the code in the <code class="docutils literal notranslate"><span class="pre">mahos.cli</span></code> package, which is not very large.</p></li>
 </ul>
 <section id="reading-the-codes">
 <h3>Reading the codes<a class="headerlink" href="#reading-the-codes" title="Link to this heading">#</a></h3>
-<p><a class="reference internal" href="api.html"><span class="doc">API Reference</span></a> is not perfect for the time being: listed are not all the stuffs / there are some undocumented classes.
+<p><a class="reference internal" href="api.html"><span class="doc">API Reference</span></a> is not perfect for the time being: not everything is listed, and some classes are undocumented.
 But we are working toward better documentation.
 It could be used at least to discover which module or class is important.</p>
-<p>You will eventually be required to read the codes to fully understand the mahos internals.
-We are very happy if you could <a class="reference internal" href="contributing.html"><span class="doc">report / fix bugs, add missing code / documentation, or give us any feedbacks</span></a>.</p>
+<p>You will eventually need to read the code to fully understand mahos internals.
+We would be very happy if you could <a class="reference internal" href="contributing.html"><span class="doc">report/fix bugs, add missing code/documentation, or give us feedback</span></a>.</p>
 </section>
 </section>
 </section>

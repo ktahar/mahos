@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase &#8212; MAHOS 0.4.0 documentation</title>
+    <title>mahos_dq.meas.iodmr_worker.ISweeperOverlay &#8212; MAHOS 0.4.0 documentation</title>
   
   
   
@@ -41,11 +41,11 @@
     <script src="../../_static/documentation_options.js?v=6c02275b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_dq_inst/generated/mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_dq_meas/generated/mahos_dq.meas.iodmr_worker.ISweeperOverlay';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandAnalogPD" href="mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandAnalogPD.html" />
-    <link rel="prev" title="mahos_dq.inst.overlay.odmr_sweeper_interface.ODMRSweeperInterface" href="mahos_dq.inst.overlay.odmr_sweeper_interface.ODMRSweeperInterface.html" />
+    <link rel="next" title="mahos_dq.meas.hbt.HBT" href="mahos_dq.meas.hbt.HBT.html" />
+    <link rel="prev" title="mahos_dq.meas.iodmr_worker.ISweeperDirect" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -367,18 +367,31 @@
 <li class="toctree-l1"><a class="reference internal" href="../../api_mahos_gui/index.html">mahos.gui</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api_mahos_dq.html">mahos_dq</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api_mahos_dq_msgs/index.html">mahos_dq.msgs</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">mahos_dq.inst</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../confocal_scanner.html">mahos_dq.inst.overlay.confocal_scanner</a></li>
-<li class="toctree-l2 current active has-children"><a class="reference internal" href="../odmr_sweeper.html">mahos_dq.inst.overlay.odmr_sweeper</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="mahos_dq.inst.overlay.odmr_sweeper_interface.ODMRSweeperInterface.html">mahos_dq.inst.overlay.odmr_sweeper_interface.ODMRSweeperInterface</a></li>
-<li class="toctree-l3 current active"><a class="current reference internal" href="#">mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandAnalogPD.html">mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandAnalogPD</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandAnalogPDMM.html">mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandAnalogPDMM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_mahos_dq_inst/index.html">mahos_dq.inst</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">mahos_dq.meas</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.confocal.Confocal.html">mahos_dq.meas.confocal.Confocal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.confocal_tracker.ConfocalTracker.html">mahos_dq.meas.confocal_tracker.ConfocalTracker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.odmr.ODMR.html">mahos_dq.meas.odmr.ODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.odmr_worker.Sweeper.html">mahos_dq.meas.odmr_worker.Sweeper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.odmr_worker.SweeperOverlay.html">mahos_dq.meas.odmr_worker.SweeperOverlay</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.podmr.PODMR.html">mahos_dq.meas.podmr.PODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spodmr.SPODMR.html">mahos_dq.meas.spodmr.SPODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.qdyne.Qdyne.html">mahos_dq.meas.qdyne.Qdyne</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr.IODMR.html">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.hbt.HBT.html">mahos_dq.meas.hbt.HBT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ODMRIO.html">mahos_dq.meas.odmr.ODMRIO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../PODMRIO.html">mahos_dq.meas.podmr.PODMRIO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../SPODMRIO.html">mahos_dq.meas.podmr.SPODMRIO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../QdyneIO.html">mahos_dq.meas.podmr.QdyneIO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../IODMRIO.html">mahos_dq.meas.podmr.IODMRIO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../HBTIO.html">mahos_dq.meas.hbt.HBTIO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../SpectroscopyIO.html">mahos_dq.meas.spectroscopy.SpectroscopyIO</a></li>
 </ul>
 </details></li>
-</ul>
-</details></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api_mahos_dq_meas/index.html">mahos_dq.meas</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api_mahos_dq_gui/index.html">mahos_dq.gui</a></li>
 </ul>
 </div>
@@ -424,12 +437,9 @@
     <li class="breadcrumb-item"><a href="../../api.html" class="nav-link">API Reference</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">mahos_dq.inst</a></li>
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">mahos_dq.meas</a></li>
     
-    
-    <li class="breadcrumb-item"><a href="../odmr_sweeper.html" class="nav-link">mahos_dq.inst.overlay.odmr_sweeper</a></li>
-    
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mahos_dq.meas.iodmr_worker.ISweeperOverlay</span></li>
   </ul>
 </nav>
 </div>
@@ -446,65 +456,45 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="mahos-dq-inst-overlay-odmr-sweeper-odmrsweepercommandbase">
-<h1>mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase<a class="headerlink" href="#mahos-dq-inst-overlay-odmr-sweeper-odmrsweepercommandbase" title="Link to this heading">#</a></h1>
+  <section id="mahos-dq-meas-iodmr-worker-isweeperoverlay">
+<h1>mahos_dq.meas.iodmr_worker.ISweeperOverlay<a class="headerlink" href="#mahos-dq-meas-iodmr-worker-isweeperoverlay" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos_dq.inst.overlay.odmr_sweeper.</span></span><span class="sig-name descname"><span class="pre">ODMRSweeperCommandBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase" title="Link to this definition">#</a></dt>
-<dd><p>ODMRSweeperCommandBase provides primitive operations for ODMR sweep.</p>
-<p>This class performs the sweep by issuing SG / PD commands every step.
-Thus, sweep speed will not be very good.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sg</strong> – The reference to SG Instrument.</p></li>
-<li><p><strong>pd</strong> – The reference to PD Instrument.</p></li>
-<li><p><strong>queue_size</strong> (<em>int</em>) – (default: 8) Size of queue of scanned line data.</p></li>
-</ul>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="mahos_dq.meas.iodmr_worker.ISweeperOverlay">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos_dq.meas.iodmr_worker.</span></span><span class="sig-name descname"><span class="pre">ISweeperOverlay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.iodmr_worker.ISweeperOverlay" title="Link to this definition">#</a></dt>
+<dd><p>ISweeper using Overlay.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase.__init__" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dt class="sig sig-object py" id="mahos_dq.meas.iodmr_worker.ISweeperOverlay.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cli</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos_dq.meas.iodmr_worker.ISweeperOverlay.__init__" title="Link to this definition">#</a></dt>
+<dd><p>Init client (cli), logger, conf, and internal instrument list (_instruments).</p>
+<p>InstrumentInterfaces should be added on initialization by add_instruments()
+in inherited class.</p>
+</dd></dl>
 
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase.__init__" title="mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(name, conf[, prefix])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mahos_dq.meas.iodmr_worker.ISweeperOverlay.__init__" title="mahos_dq.meas.iodmr_worker.ISweeperOverlay.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(cli, logger)</p></td>
+<td><p>Init client (cli), logger, conf, and internal instrument list (_instruments).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">data_msg</span></code>()</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure</span></code>(params[, label])</p></td>
-<td><p>Configure the instrument settings.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_pd</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_param_dict</span></code>(label)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code>(key[, args, label])</p></td>
-<td><p>Get an instrument setting or measurement data.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_line</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_finished</span></code>()</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_param_dict</span></code>([label])</p></td>
-<td><p>Get ParamDict for <cite>label</cite>.</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">start</span></code>(params)</p></td>
+<td><p>Start the worker.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_param_dict_labels</span></code>()</p></td>
-<td><p>Get list of available ParamDict labels.</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">stop</span></code>()</p></td>
+<td><p>Stop the worker.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pd_data</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_data</span></code>(frames)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pd_param_dict</span></code>()</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">start</span></code>([label])</p></td>
-<td><p>Start the instrument operation.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">stop</span></code>([label])</p></td>
-<td><p>Stop the instrument operation.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sweep_loop</span></code>(ev)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">work</span></code>()</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -525,20 +515,20 @@ Thus, sweep speed will not be very good.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="mahos_dq.inst.overlay.odmr_sweeper_interface.ODMRSweeperInterface.html"
+       href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">mahos_dq.inst.overlay.odmr_sweeper_interface.ODMRSweeperInterface</p>
+        <p class="prev-next-title">mahos_dq.meas.iodmr_worker.ISweeperDirect</p>
       </div>
     </a>
     <a class="right-next"
-       href="mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandAnalogPD.html"
+       href="mahos_dq.meas.hbt.HBT.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandAnalogPD</p>
+        <p class="prev-next-title">mahos_dq.meas.hbt.HBT</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -561,8 +551,8 @@ Thus, sweep speed will not be very good.</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase"><code class="docutils literal notranslate"><span class="pre">ODMRSweeperCommandBase</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase.__init__"><code class="docutils literal notranslate"><span class="pre">ODMRSweeperCommandBase.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos_dq.meas.iodmr_worker.ISweeperOverlay"><code class="docutils literal notranslate"><span class="pre">ISweeperOverlay</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos_dq.meas.iodmr_worker.ISweeperOverlay.__init__"><code class="docutils literal notranslate"><span class="pre">ISweeperOverlay.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -572,7 +562,7 @@ Thus, sweep speed will not be very good.</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/api_mahos_dq_inst/generated/mahos_dq.inst.overlay.odmr_sweeper.ODMRSweeperCommandBase.rst.txt"
+      <li><a href="../../_sources/api_mahos_dq_meas/generated/mahos_dq.meas.iodmr_worker.ISweeperOverlay.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>

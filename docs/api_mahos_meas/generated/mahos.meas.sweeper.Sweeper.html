@@ -459,6 +459,17 @@
 <p>Sweeper controls one instrument parameter (<code class="docutils literal notranslate"><span class="pre">x</span></code> config section) and reads one
 measurement quantity (<code class="docutils literal notranslate"><span class="pre">measure</span></code> section) at each point. Each run produces line data
 (<a class="reference internal" href="../../api_mahos_msgs/generated/mahos.msgs.sweeper_msgs.SweeperData.html#mahos.msgs.sweeper_msgs.SweeperData" title="mahos.msgs.sweeper_msgs.SweeperData"><code class="xref py py-class docutils literal notranslate"><span class="pre">SweeperData</span></code></a>) with optional repeated sweeps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>dict</em>) – Sweep-axis instrument configuration dictionary.</p></li>
+<li><p><strong>x.inst</strong> (<em>str</em>) – Instrument name to control for the sweep axis.</p></li>
+<li><p><strong>measure</strong> (<em>dict</em>) – Measurement instrument configuration dictionary.</p></li>
+<li><p><strong>measure.inst</strong> (<em>str</em>) – Instrument name to read at each sweep point.</p></li>
+<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
+</ul>
+</dd>
+</dl>
 <p>Runtime behavior:</p>
 <ul class="simple">
 <li><p>Uses <code class="docutils literal notranslate"><span class="pre">set()</span></code> and <code class="docutils literal notranslate"><span class="pre">get()</span></code> APIs for target instruments.</p></li>

@@ -13,12 +13,12 @@ Data transport and serialization
 The node :class:`communication <mahos.node.comm.Context>` is currently based on the `ZeroMQ <https://zeromq.org/>`_ library.
 The transport layer is abstracted by ZeroMQ, and we can choose different transports by changing a configuration (the endpoint) only.
 We recommend using TCP as the default.
-By choosing TCP, multi-host (multi-computer) configuration is quite straightforward.
-However, the transportation overhead can become an issue when one deals with very large data
+By choosing TCP, multi-host (multi-computer) configuration is straightforward.
+However, transport overhead can become an issue when dealing with very large data
 such as high-resolution images produced at a high rate.
 In such a case, the overhead can be reduced significantly by running the relevant nodes as threads
-in a single process and using intra-process transportation.
-See :ref:`conf threading` for how to configure such transportation.
+in a single process and using intra-process transport.
+See :ref:`conf threading` for how to configure such transport.
 
 ZeroMQ doesn't specify the data serialization format; it provides methods to send/receive byte arrays of arbitrary length.
 By default, we define the message types (classes) in the :ref:`mahos.msgs` package and serialize the instances
@@ -26,11 +26,11 @@ using Python standard pickle.
 This approach is adopted due to pickle's high compatibility with Python objects and moderate performance.
 
 However, the pickle-based serialization practically limits the messaging within Python only.
-The other serialization can also be utilized to support different programming languages.
+Other serialization methods can also be used to support different programming languages.
 For that, serializer methods must be overridden in your :class:`Message <mahos.msgs.common_msgs.Message>` classes
 and they must be passed when :meth:`add_sub <mahos.node.client.NodeClient.add_sub>`,
 :meth:`add_req<mahos.node.client.NodeClient.add_req>`, or :meth:`add_rep <mahos.node.node.Node.add_rep>`.
-See ``examples/custom_serializer`` for the examples of this approach.
+See ``examples/custom_serializer`` for examples of this approach.
 
 Communication patterns
 ----------------------
@@ -67,7 +67,7 @@ and :meth:`add_sub <mahos.node.client.NodeClient.add_sub>`.
 
 Nodes can internally use the clients to access the others.
 The custom programs can utilize them as well.
-This relationships are visualized in the figure below.
+These relationships are visualized in the figure below.
 
 .. figure:: ./img/mahos-node-server-client.svg
    :alt: Connection between Nodes and Clients

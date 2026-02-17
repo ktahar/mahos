@@ -462,7 +462,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – The InstrumentServer targets (instrument name, server full name).</p></li>
+<li><p><strong>target.servers</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – InstrumentServer targets (instrument name, server full name).
+Required keys: each instrument name referenced by <code class="docutils literal notranslate"><span class="pre">mode</span></code> channel <code class="docutils literal notranslate"><span class="pre">inst</span></code> values.</p></li>
 <li><p><strong>target.tweakers</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The Tweaker targets (list of tweaker full name).</p></li>
 <li><p><strong>target.log</strong> (<em>str</em>) – The LogBroker target (broker full name).</p></li>
 <li><p><strong>mode</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>] </em><em>| </em><em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – Nested dictionary to define the measurement modes.
@@ -471,6 +472,8 @@ and value is the channel config.
 Channel config can be tuple[str, str] (instrument name, label name), or dict with
 keys: <code class="docutils literal notranslate"><span class="pre">inst</span></code> (required), <code class="docutils literal notranslate"><span class="pre">label</span></code> (optional, default <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>),
 <code class="docutils literal notranslate"><span class="pre">key</span></code> (optional, default <code class="docutils literal notranslate"><span class="pre">&quot;data&quot;</span></code>), and <code class="docutils literal notranslate"><span class="pre">unit</span></code> (optional).</p></li>
+<li><p><strong>collector.interval_sec</strong> (<em>float</em>) – Default polling interval used by Collector.</p></li>
+<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
 </ul>
 </dd>
 </dl>

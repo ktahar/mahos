@@ -378,6 +378,8 @@
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spodmr.SPODMR.html">mahos_dq.meas.spodmr.SPODMR</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.qdyne.Qdyne.html">mahos_dq.meas.qdyne.Qdyne</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr.IODMR.html">mahos_dq.meas.iodmr.IODMR</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperDirect.html">mahos_dq.meas.iodmr_worker.ISweeperDirect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.iodmr_worker.ISweeperOverlay.html">mahos_dq.meas.iodmr_worker.ISweeperOverlay</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.hbt.HBT.html">mahos_dq.meas.hbt.HBT</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mahos_dq.meas.spectroscopy.Spectroscopy.html">mahos_dq.meas.spectroscopy.Spectroscopy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../ConfocalIO.html">mahos_dq.meas.confocal.ConfocalIO</a></li>
@@ -468,16 +470,21 @@ SG’s freq sweep step is continuously triggered by PG.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>sweeper.pd_clock</strong> (<em>str</em>) – DAQ terminal name for PD’s clock (gate)</p></li>
-<li><p><strong>sweeper.pd_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – (default: [“pd0”, “pd1”]) PD names in target.servers.</p></li>
-<li><p><strong>sweeper.pd_analog</strong> (<em>bool</em>) – (default: False) set True if PD is AnalogIn-based.</p></li>
-<li><p><strong>sweeper.channel_remap</strong> (<em>dict</em><em>[</em><em>str</em><em> | </em><em>int</em><em>, </em><em>str</em><em> | </em><em>int</em><em>]</em>) – mapping to fix default channel names.</p></li>
 <li><p><strong>sweeper.start_delay</strong> (<em>float</em>) – (default: 0.0) delay time (sec.) before starting SG/PG output.</p></li>
 <li><p><strong>sweeper.sg_first</strong> (<em>bool</em>) – (has preset) if True, turn on SG first and PG second.
 This mode is for a SG which cannot start the point_freq_sweep mode without affecting PG.</p></li>
 <li><p><strong>sweeper.pg_immediate</strong> (<em>bool</em>) – (has preset) if True, PG runs IMMEDIATE mode without trigger.
 This mode is for a SG which doesn’t have “frequency settled” output signal.
 pg_immediate takes precedence over sg_first; when this is True, sg_first has no effect.</p></li>
+<li><p><strong>sweeper.pd_clock</strong> (<em>str</em>) – DAQ terminal name for PD’s clock (gate)</p></li>
+<li><p><strong>sweeper.pd_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – (default: [“pd0”, “pd1”]) PD names in target.servers.</p></li>
+<li><p><strong>sweeper.pd_analog</strong> (<em>bool</em>) – (default: False) set True if PD is AnalogIn-based.</p></li>
+<li><p><strong>sweeper.pd_rate</strong> (<em>float</em>) – (default param) analog PD sampling rate.</p></li>
+<li><p><strong>sweeper.pd_bounds</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – (default: [-10.0, 10.0]) analog PD voltage bounds.</p></li>
+<li><p><strong>sweeper.pd_data_transfer</strong> (<em>str</em>) – DAQ data transfer mode for analog PD.</p></li>
+<li><p><strong>sweeper.buffer_size_coeff</strong> (<em>int</em>) – (default: 20) multiplier for PD buffer size.</p></li>
+<li><p><strong>sweeper.clock_name</strong> (<em>str</em>) – (default: “clock”) DAQ clock source name in target.servers.</p></li>
+<li><p><strong>sweeper.channel_remap</strong> (<em>dict</em><em>[</em><em>str</em><em> | </em><em>int</em><em>, </em><em>str</em><em> | </em><em>int</em><em>]</em>) – mapping to fix default channel names.</p></li>
 <li><p><strong>sweeper.pg_freq_cw</strong> (<em>float</em>) – (has preset) PG frequency for CW mode.</p></li>
 <li><p><strong>sweeper.pg_freq_pulse</strong> (<em>float</em>) – (has preset) PG frequency for Pulse mode.</p></li>
 <li><p><strong>sweeper.minimum_block_length</strong> (<em>int</em>) – (has preset) minimum block length in generated blocks</p></li>
@@ -487,7 +494,12 @@ pg_immediate takes precedence over sg_first; when this is True, sg_first has no 
 <li><p><strong>sweeper.num</strong> (<em>int</em>) – (default param) number of frequency points.</p></li>
 <li><p><strong>sweeper.power</strong> (<em>float</em>) – (default param) SG output power in dBm.</p></li>
 <li><p><strong>sweeper.time_window</strong> (<em>float</em>) – (default param) time window for cw mode.</p></li>
-<li><p><strong>sweeper.pd_rate</strong> (<em>float</em>) – (default param) analog PD sampling rate.</p></li>
+<li><p><strong>sweeper.gate_delay</strong> (<em>float</em>) – (default param) gate delay before counting.</p></li>
+<li><p><strong>sweeper.am_depth</strong> (<em>float</em>) – (default param) depth of AM modulation.</p></li>
+<li><p><strong>sweeper.am_log</strong> (<em>bool</em>) – (default param) True indicates log-scale AM depth.</p></li>
+<li><p><strong>sweeper.am_rate</strong> (<em>float</em>) – (default param) rate (baseband frequency) of AM in Hz.</p></li>
+<li><p><strong>sweeper.fm_deviation</strong> (<em>float</em>) – (default param) FM deviation in Hz.</p></li>
+<li><p><strong>sweeper.fm_rate</strong> (<em>float</em>) – (default param) rate (baseband frequency) of FM in Hz.</p></li>
 </ul>
 </dd>
 </dl>
