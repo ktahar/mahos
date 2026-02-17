@@ -216,5 +216,23 @@ class MainMonitorWidget(ClientTopWidget, Ui_MainMonitor):
 
 
 class MainMonitor(GUINode):
+    """GUINode that aggregates system state, locks, logs, and global params.
+
+    The node creates :class:`MainMonitorWidget` and subscribes to configured services
+    to display log streams, instrument locks, and node states in one window.
+
+    :param target.gparams: GlobalParams node name for note and work-dir synchronization.
+    :type target.gparams: tuple[str, str] | str
+    :param target.log: LogBroker node name used for log subscription.
+    :type target.log: tuple[str, str] | str
+    :param target.servers: Instrument server node names used to display lock owners.
+    :type target.servers: list[tuple[str, str] | str]
+    :param target.manager: StateManager node name used for system state table updates.
+    :type target.manager: tuple[str, str] | str
+    :param work_dir: Optional initial working directory pushed to global parameters.
+    :type work_dir: str
+
+    """
+
     def init_widget(self, gconf: dict, name, context):
         return MainMonitorWidget(gconf, name, context)

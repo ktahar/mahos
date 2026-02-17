@@ -18,14 +18,28 @@ from mahos.msgs.common_meas_msgs import BasicMeasData
 
 
 class ResetReq(Request):
+    """Request to reset recorder state for a specific data label.
+
+    :ivar label: Recorder channel or method label to reset.
+
+    """
+
     def __init__(self, label: str):
         self.label = label
 
 
 class RecorderData(BasicMeasData):
-    def __init__(self, params: dict | None = None, label: str = ""):
-        """Note that set_units() must be called before collecting actual data."""
+    """Recorded multi-channel timeseries with channel/unit metadata.
 
+    :ivar units: Ordered ``(channel, unit)`` tuples defining recorded channels.
+    :ivar data: Per-channel sample buffers aligned to ``xdata``.
+    :ivar xdata: Time-axis samples in seconds.
+
+    Call :meth:`set_units` before appending measurement samples.
+
+    """
+
+    def __init__(self, params: dict | None = None, label: str = ""):
         self.set_version(1)
         self.init_params(params, label)
         self.init_attrs()

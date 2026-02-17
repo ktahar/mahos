@@ -15,6 +15,15 @@ from mahos.msgs.inst.camera_msgs import FrameResult
 
 
 class Image(Data):
+    """Camera frame container published by camera measurement nodes.
+
+    :ivar image: Latest frame array, or ``None`` when no frame is available.
+    :ivar running: True while acquisition is actively streaming frames.
+    :ivar time: Timestamp of the latest frame.
+    :ivar count: Sequential frame counter from the camera backend.
+
+    """
+
     def __init__(self, params: dict | None = None):
         self.set_version(0)
         self.init_params(params)

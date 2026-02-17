@@ -17,6 +17,19 @@ from mahos.msgs.data_msgs import Data
 
 
 class IODMRData(Data):
+    """Imaging ODMR data carrying cumulative and per-sweep image buffers.
+
+    :ivar data_sum: Cumulative image sum across completed sweeps.
+    :ivar data_latest: Most recently acquired image frame.
+    :ivar data_history: Optional history stack of intermediate frames.
+    :ivar sweeps: Number of completed sweeps.
+    :ivar running: True while acquisition is active.
+    :ivar start_time: Acquisition start timestamp.
+    :ivar finish_time: Acquisition finish timestamp, or ``None`` while running.
+    :ivar paused_periods: Array of paused time intervals for resumed runs.
+
+    """
+
     def __init__(self, params: dict | None = None):
         self.set_version(0)
         self.init_params(params)

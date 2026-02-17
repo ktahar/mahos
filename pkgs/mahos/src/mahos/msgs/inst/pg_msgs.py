@@ -83,6 +83,17 @@ AcceptedPattern = T.NewType("AcceptedPattern", T.List[AcceptedPulse])
 
 
 class Block(Message):
+    """Pulse-generator block with a named pattern and repeat/trigger metadata.
+
+    :ivar name: Block name used for sequence generation and debugging.
+    :ivar pattern: Regularized list of pulses as ``(channels, duration)`` tuples,
+        where channels may be ``None``, one channel, or a channel tuple/list.
+        ``None`` or empty tuple/list are regarded as all-zero outputs.
+    :ivar Nrep: Number of block repetitions.
+    :ivar trigger: Whether this block waits for an external/software trigger.
+
+    """
+
     def __init__(
         self,
         name: str,
@@ -90,16 +101,6 @@ class Block(Message):
         Nrep: int = 1,
         trigger: bool = False,
     ):
-        """The block representation of pulse pattern.
-
-        :param pattern: pattern is list of 2-tuple:
-            (channels (tuple/list of str/int or str or int or None),
-            period (int))
-
-        channel names is None or empty tuple, output is all-zero during the period.
-
-        """
-
         self.name = name
         self.pattern = self.regularize_pattern(pattern)
         self.Nrep = Nrep

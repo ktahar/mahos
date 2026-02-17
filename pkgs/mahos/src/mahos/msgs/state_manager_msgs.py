@@ -14,6 +14,12 @@ from mahos.msgs.common_msgs import Request, Status
 
 
 class ManagerStatus(Status):
+    """Aggregated state snapshot published by StateManager.
+
+    :ivar states: Mapping from node name to its current state object.
+
+    """
+
     def __init__(self, states: dict):
         self.states = states
 
@@ -25,10 +31,22 @@ class ManagerStatus(Status):
 
 
 class CommandReq(Request):
+    """Request to apply a named state-manager command profile.
+
+    :ivar name: Command profile name defined in StateManager configuration.
+
+    """
+
     def __init__(self, name: str):
         self.name = name
 
 
 class RestoreReq(Request):
+    """Request to restore a previously stored state-manager profile.
+
+    :ivar name: Restore-point name to re-apply.
+
+    """
+
     def __init__(self, name: str):
         self.name = name

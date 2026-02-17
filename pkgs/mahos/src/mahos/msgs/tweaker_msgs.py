@@ -16,6 +16,12 @@ from mahos.msgs import param_msgs as P
 
 
 class TweakerStatus(Status):
+    """Status message listing available parameter dictionaries.
+
+    :ivar param_dict_ids: Registered ParamDict identifiers exposed by Tweaker.
+
+    """
+
     def __init__(self, param_dict_ids: list[str]):
         self.param_dict_ids = param_dict_ids
 

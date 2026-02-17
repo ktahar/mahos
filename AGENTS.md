@@ -52,8 +52,11 @@ from formatting and linting.
     - For nested configuration dictionaries, express nested keys with dot notation
       (for example, `first_level_key.second_level_key`).
   - For the `Message` classes, the list of attributes using `:ivar:` directive.
+  - Exception: for `Message` classes that are also `enum.Enum` (including subclasses
+    via `State`), use a one-line docstring only and omit `:ivar:` listings.
   - Optional minor notes may follow, but use them sparingly.
-- For one-line docstrings, use single-line triple double quotes (for example, ``"""Summary."""``) without internal newlines or blank lines.
+- For one-line docstrings, use single-line triple double quotes
+  (for example, ``"""Summary."""``) without internal newlines or blank lines.
 - Insert exactly one blank line immediately after a class docstring before the following code.
 
 ## Testing Guidelines

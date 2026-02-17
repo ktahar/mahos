@@ -81,5 +81,19 @@ class DigitalOutWidget(ClientTopWidget):
 
 
 class DigitalOutGUI(GUINode):
+    """GUINode for manual ON/OFF control of DigitalOut instruments.
+
+    This node creates :class:`DigitalOutWidget` and uses the node-local configuration
+    to build one toggle button per target server.
+
+    :param target.servers: Mapping of display names to target DigitalOut server nodes.
+    :type target.servers: dict[str, tuple[str, str] | str]
+    :param alias: Optional per-output labels for low/high states.
+    :type alias: dict[str, tuple[str, str]]
+    :param fontsize: Font size applied to the labels and toggle buttons.
+    :type fontsize: int
+
+    """
+
     def init_widget(self, gconf: dict, name, context):
         return DigitalOutWidget(gconf, name, context)

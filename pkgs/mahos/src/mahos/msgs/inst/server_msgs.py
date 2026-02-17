@@ -17,6 +17,16 @@ from mahos.msgs.common_msgs import Message, Request, Status
 
 
 class ServerStatus(Status):
+    """Instrument server status including lock ownership and inventory counts.
+
+    :ivar host: Host name of the instrument server.
+    :ivar name: Node name of the instrument server.
+    :ivar locks: Mapping from instrument name to current lock owner information.
+    :ivar inst_num: Number of instantiated instruments.
+    :ivar overlay_num: Number of instantiated overlays.
+
+    """
+
     def __init__(self, host, name, locks, inst_num, overlay_num):
         self.host = host
         self.name = name
@@ -35,6 +45,13 @@ class ServerStatus(Status):
 
 
 class Ident(Message):
+    """Client identity token used by instrument lock and RPC requests.
+
+    :ivar name: Human-readable client name.
+    :ivar uuid: Random UUID assigned once to distinguish concurrent clients.
+
+    """
+
     def __init__(self, name: str):
         self.name = name
         self.uuid = uuid.uuid4()
@@ -50,12 +67,27 @@ class Ident(Message):
 
 
 class NoArgReq(Request):
+    """Base request carrying client identity and target instrument name.
+
+    :ivar ident: Client identity token used for lock ownership checks.
+    :ivar inst: Target instrument name.
+
+    """
+
     def __init__(self, ident: Ident, inst: str):
         self.ident = ident
         self.inst = inst
 
 
 class LabeledReq(Request):
+    """Base request carrying identity/instrument with an optional label.
+
+    :ivar ident: Client identity token used for lock ownership checks.
+    :ivar inst: Target instrument name.
+    :ivar label: Optional method label for multi-profile operations.
+
+    """
+
     def __init__(self, ident: Ident, inst: str, label: str = ""):
         self.ident = ident
         self.inst = inst

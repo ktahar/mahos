@@ -25,6 +25,8 @@ from mahos.msgs.inst.piezo_msgs import Axis
 
 
 class ConfocalState(State):
+    """State machine values used by the confocal node."""
+
     IDLE = 0  # do nothing.
     PIEZO = 1  # move piezo position (piezo)
     INTERACT = 2  # move piezo position and trace PD outputs. (piezo, daq)
@@ -32,6 +34,8 @@ class ConfocalState(State):
 
 
 class ScanDirection(Message, enum.Enum):
+    """Plane selection for confocal image scans."""
+
     XY = 0
     XZ = 1
     YZ = 2
@@ -64,6 +68,8 @@ def direction_to_axes(d: ScanDirection):
 
 
 class ScanMode(Message, enum.Enum):
+    """Acquisition backend selection for confocal scanner execution."""
+
     COM_NOWAIT = 0  # Command scan without explicit wait
     COM_COMMAND = 1  # Command scan with command wait
     COM_DIPOLL = 2  # Command scan with digital input wait
@@ -83,6 +89,8 @@ def str_to_mode(s: str) -> ScanMode:
 
 
 class LineMode(Message, enum.Enum):
+    """Line traversal order used within each scan frame."""
+
     ASCEND = 0
     DESCEND = 1
     ZIGZAG = 2
@@ -101,18 +109,39 @@ def str_to_line_mode(s: str) -> LineMode:
 
 
 class TraceCommand(Message, enum.Enum):
+    """Control command for confocal trace buffering."""
+
     PAUSE = 0
     RESUME = 1
     CLEAR = 2
 
 
 class BufferCommand(Message, enum.Enum):
+    """Control command for image buffer operations."""
+
     POP = 0
     CLEAR = 1
     GET_ALL = 2
 
 
 class PiezoPos(Message):
+    """Piezo position snapshot with current, target, and range values.
+
+    :ivar x: Current X position.
+    :ivar y: Current Y position.
+    :ivar z: Current Z position.
+    :ivar x_range: Configured ``(min, max)`` range for X.
+    :ivar y_range: Configured ``(min, max)`` range for Y.
+    :ivar z_range: Configured ``(min, max)`` range for Z.
+    :ivar x_ont: Whether the X axis is on target.
+    :ivar y_ont: Whether the Y axis is on target.
+    :ivar z_ont: Whether the Z axis is on target.
+    :ivar x_tgt: Current X target position.
+    :ivar y_tgt: Current Y target position.
+    :ivar z_tgt: Current Z target position.
+
+    """
+
     def __init__(
         self,
         x=None,
@@ -175,6 +204,19 @@ class PiezoPos(Message):
 
 
 class Image(Data, ComplexDataMixin, FormatTimeMixin):
+    """Confocal image frame and acquisition state snapshot.
+
+    :ivar direction: Scan plane for this image (XY/XZ/YZ).
+    :ivar image: 2D image array, possibly complex-valued.
+    :ivar running: True while scan acquisition is active.
+    :ivar aborted: True when acquisition was aborted before normal completion.
+    :ivar start_time: Acquisition start timestamp.
+    :ivar finish_time: Acquisition finish timestamp, or ``None`` while running.
+    :ivar clabel: Colorbar label string for visualization.
+    :ivar cunit: Colorbar unit string for visualization.
+
+    """
+
     def __init__(self, params: dict | None = None):
         self.set_version(1)
         self.init_params(params)
@@ -269,6 +311,16 @@ def update_image(image: Image):
 
 
 class Trace(Data, ComplexDataMixin):
+    """Multi-channel confocal trace buffer with timestamped samples.
+
+    :ivar _complex: True when trace storage uses complex dtype.
+    :ivar traces: Per-channel trace arrays.
+    :ivar stamps: Per-channel ``datetime64[ns]`` timestamp arrays.
+    :ivar ylabel: Y-axis label used by viewers.
+    :ivar yunit: Y-axis unit used by viewers.
+
+    """
+
     def __init__(self, size: int = 0, channels: int = 2, _complex: bool = False):
         self.set_version(1)
 
@@ -348,6 +400,14 @@ def update_trace(trace: Trace):
 
 
 class ConfocalStatus(Status):
+    """Status message published by the confocal node.
+
+    :ivar state: Current confocal state.
+    :ivar pos: Current piezo position snapshot.
+    :ivar tracer_paused: True when trace acquisition is paused.
+
+    """
+
     def __init__(self, state: ConfocalState, pos: PiezoPos, tracer_paused: bool):
         self.state = state
         self.pos = pos
@@ -361,6 +421,13 @@ class ConfocalStatus(Status):
 
 
 class TraceStatus(Status):
+    """Status message published by the TraceNode (trace-only node).
+
+    :ivar state: Current binary state of the trace node.
+    :ivar tracer_paused: True when trace acquisition is paused.
+
+    """
+
     def __init__(self, state: BinaryState, tracer_paused: bool):
         self.state = state
         self.tracer_paused = tracer_paused
@@ -373,12 +440,27 @@ class TraceStatus(Status):
 
 
 class MoveReq(Request):
+    """Request to move one or more piezo axes.
+
+    :ivar ax: Target axis (or axis list) to move.
+    :ivar pos: Target position (or position list) paired with ``ax``.
+
+    """
+
     def __init__(self, ax: Axis | list[Axis], pos: float | list[float]):
         self.ax = ax
         self.pos = pos
 
 
 class SaveImageReq(SaveDataReq):
+    """Request to save the latest or buffered confocal image.
+
+    :ivar file_name: Output file path.
+    :ivar direction: Optional buffered direction; ``None`` uses current scan image.
+    :ivar note: Optional note string stored with the dataset.
+
+    """
+
     def __init__(self, file_name: str, direction: ScanDirection | None = None, note: str = ""):
         self.file_name = file_name
         self.direction = direction
@@ -386,6 +468,14 @@ class SaveImageReq(SaveDataReq):
 
 
 class ExportImageReq(ExportDataReq):
+    """Request to export an image using visualization/export parameters.
+
+    :ivar file_name: Output file path.
+    :ivar direction: Optional buffered direction; ``None`` uses current scan image.
+    :ivar params: Export parameter dictionary.
+
+    """
+
     def __init__(self, file_name: str, direction: ScanDirection | None = None, params=None):
         self.file_name = file_name
         self.direction = direction
@@ -393,33 +483,83 @@ class ExportImageReq(ExportDataReq):
 
 
 class ExportViewReq(ExportDataReq):
+    """Request to export a combined multi-plane confocal view.
+
+    :ivar file_name: Output file path.
+    :ivar params: Export parameter dictionary.
+
+    """
+
     def __init__(self, file_name: str, params=None):
         self.file_name = file_name
         self.params = params
 
 
 class LoadImageReq(LoadDataReq):
+    """Request to load a confocal image from disk.
+
+    :ivar file_name: Input file path.
+    :ivar to_buffer: If True, append loaded data to node-side buffer.
+
+    """
+
     pass
 
 
 class SaveTraceReq(SaveDataReq):
+    """Request to save the latest confocal trace dataset.
+
+    :ivar file_name: Output file path.
+    :ivar params: Optional save parameters.
+    :ivar note: Optional note string stored with the dataset.
+
+    """
+
     pass
 
 
 class ExportTraceReq(ExportDataReq):
+    """Request to export trace data with visualization/export parameters.
+
+    :ivar file_name: Output file path.
+    :ivar data: Optional explicit data payload for exporting.
+    :ivar params: Export parameter dictionary.
+
+    """
+
     pass
 
 
 class LoadTraceReq(LoadDataReq):
+    """Request to load trace data from disk.
+
+    :ivar file_name: Input file path.
+    :ivar to_buffer: If True, append loaded data to node-side buffer.
+
+    """
+
     pass
 
 
 class CommandTraceReq(Request):
+    """Request to execute a trace command.
+
+    :ivar command: Trace command enum value.
+
+    """
+
     def __init__(self, command: TraceCommand):
         self.command = command
 
 
 class CommandBufferReq(Request):
+    """Request to execute an image-buffer command for one scan direction.
+
+    :ivar direction: Buffer direction (XY/XZ/YZ) to operate on.
+    :ivar command: Buffer command enum value.
+
+    """
+
     def __init__(self, direction: ScanDirection, command: BufferCommand):
         self.direction = direction
         self.command = command

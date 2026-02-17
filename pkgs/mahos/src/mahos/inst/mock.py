@@ -25,6 +25,13 @@ from mahos.msgs import param_msgs as P
 
 
 class Clock_mock(Instrument):
+    """Mock clock instrument that exposes a deterministic internal output line.
+
+    :param line: Base digital line name returned by ``get('internal_output')``.
+    :type line: str
+
+    """
+
     def __init__(self, name, conf, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         self.line = self.conf["line"]
@@ -54,6 +61,17 @@ class Clock_mock(Instrument):
 
 
 class SG_mock(Instrument):
+    """Mock signal generator that accepts RF/modulation commands without hardware I/O.
+
+    :param resource: Optional resource string kept for logging/debug visibility.
+    :type resource: str
+    :param power_bounds: Optional ``(min_dBm, max_dBm)`` tuple returned by ``get('bounds')``.
+    :type power_bounds: tuple[float, float]
+    :param freq_bounds: Optional ``(min_Hz, max_Hz)`` tuple returned by ``get('bounds')``.
+    :type freq_bounds: tuple[float, float]
+
+    """
+
     def __init__(self, name, conf, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         self._resource = self.conf.get("resource")
@@ -216,6 +234,13 @@ class SG_mock(Instrument):
 
 
 class FG_mock(Instrument):
+    """Mock function generator with fixed amplitude/frequency limits.
+
+    :param resource: Optional resource string kept for logging/debug visibility.
+    :type resource: str
+
+    """
+
     def __init__(self, name, conf, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         self._resource = self.conf.get("resource")
@@ -261,6 +286,13 @@ class FG_mock(Instrument):
 
 
 class Piezo_mock(Instrument):
+    """Mock 3-axis piezo stage that tracks target coordinates in memory.
+
+    This mock does not require static configuration keys and reports a fixed
+    movement range with small random readback noise.
+
+    """
+
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         self.target = [0.0, 0.0, 0.0]
@@ -355,6 +387,15 @@ class Piezo_mock(Instrument):
 
 
 class DigitalOut_mock(Instrument):
+    """Mock digital-output instrument that logs output vectors and named commands.
+
+    :param lines: Ordered list of output line names.
+    :type lines: list[str]
+    :param command: Optional predefined command dictionary mapped to output vectors.
+    :type command: dict[str, bool | list[int] | tuple[int, ...]]
+
+    """
+
     def __init__(self, name, conf, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
 
@@ -427,6 +468,13 @@ class DigitalOut_mock(Instrument):
 
 
 class Counter_mock(Instrument):
+    """Mock counter instrument that returns normally distributed count samples.
+
+    :param source: Optional source label for debugging and test configuration.
+    :type source: str
+
+    """
+
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         self.source = self.conf.get("source")
@@ -474,6 +522,13 @@ class Counter_mock(Instrument):
 
 
 class MCS_mock(Instrument):
+    """Mock TDC with synthetic histogram and status data.
+
+    This mock uses internal defaults for range and timing and does not require
+    static configuration keys.
+
+    """
+
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         self._range = 10
@@ -575,6 +630,13 @@ class MCS_mock(Instrument):
 
 
 class Spectrometer_mock(Instrument):
+    """Mock spectrometer that generates synthetic spectra and temperature status.
+
+    :param base_config: Optional initial base configuration name.
+    :type base_config: str
+
+    """
+
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         if conf.get("base_config"):
@@ -681,6 +743,13 @@ class Spectrometer_mock(Instrument):
 
 
 class Camera_mock(Instrument):
+    """Mock camera that supports continuous and software-triggered frame capture.
+
+    This mock does not require static configuration keys and keeps runtime mode
+    and exposure settings in memory.
+
+    """
+
     class Mode(enum.Enum):
         UNCONFIGURED = 0
         CONTINUOUS = 1
@@ -832,6 +901,17 @@ class Params_mock(Instrument):
 
 
 class DTG5274_mock(Instrument, DTGCoreMixin):
+    """Mock DTG5274 pulse generator for block/blockseq validation and timing.
+
+    :param local_dir: Local directory used for generated scaffold/setup artifacts.
+    :type local_dir: str
+    :param scaffold_filename: Optional scaffold file name used by DTG core helpers.
+    :type scaffold_filename: str
+    :param channels: Optional mapping from logical channel labels to channel numbers.
+    :type channels: dict[str | bytes, int]
+
+    """
+
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf, prefix)
 
@@ -959,6 +1039,21 @@ class DTG5274_mock(Instrument, DTGCoreMixin):
 
 
 class PulseStreamer_mock(Instrument):
+    """Mock Swabian PulseStreamer with digital and optional analog conversion.
+
+    :param resource: Resource identifier string used for connection logging.
+    :type resource: str
+    :param channels: Optional logical-to-physical mapping for digital channels.
+    :type channels: dict[str | bytes, int]
+    :param analog.channels: Optional two-channel labels used for analog conversion.
+    :type analog.channels: list[str | int]
+    :param analog.values: Optional sparse digital-to-analog value lookup table.
+    :type analog.values: dict[str, list[float]]
+    :param strict: If True, reject non-8ns-aligned total pattern lengths.
+    :type strict: bool
+
+    """
+
     def __init__(self, name, conf, prefix=None):
         Instrument.__init__(self, name, conf, prefix=prefix)
 
@@ -1231,6 +1326,13 @@ class PulseStreamer_mock(Instrument):
 
 
 class DMM_mock(Instrument):
+    """Mock digital multimeter with per-channel DCV/DCI modes.
+
+    :param bias: Mean value used to generate synthetic readings.
+    :type bias: float
+
+    """
+
     class Mode(enum.Enum):
         UNCONFIGURED = 0
         DCV = 1
@@ -1331,6 +1433,13 @@ class DMM_mock(Instrument):
 
 
 class Positioner_mock(Instrument):
+    """Mock one-axis positioner supporting move/home/status operations.
+
+    :param range: Inclusive ``[min, max]`` travel range used by move validation.
+    :type range: list[float]
+
+    """
+
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         self.range = self.conf.get("range", [0.0, 10.0])

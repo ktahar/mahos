@@ -79,6 +79,13 @@ def is_correlation(method: str) -> bool:
 
 
 class PODMRStatus(Status):
+    """Status message for pulse ODMR measurements.
+
+    :ivar state: Measurement state (IDLE/ACTIVE).
+    :ivar pg_freq: Pulse generator frequency used by the current sequence.
+
+    """
+
     def __init__(self, state: BinaryState, pg_freq: float):
         self.state = state
         self.pg_freq = pg_freq
@@ -91,6 +98,20 @@ class PODMRStatus(Status):
 
 
 class PODMRData(BasicMeasData):
+    """Pulse ODMR data container with TDC-derived raw traces.
+
+    :ivar tdc_status: Latest time-to-digital-converter status summary.
+    :ivar data0: Primary accumulated signal sequence.
+    :ivar data1: Secondary accumulated signal sequence.
+    :ivar data0ref: Reference data paired with ``data0``.
+    :ivar data1ref: Reference data paired with ``data1``.
+    :ivar raw_data: Raw detector events or histogram data.
+    :ivar raw_xdata: X-axis for ``raw_data``.
+    :ivar marker_indices: Cached marker ranges for signal/reference windows.
+    :ivar laser_timing: Pulse timing array used for ROI calculation.
+
+    """
+
     def __init__(self, params: dict | None = None, label: str = ""):
         self.set_version(6)
         self.init_params(params, label)

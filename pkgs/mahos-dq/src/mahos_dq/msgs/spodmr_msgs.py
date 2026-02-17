@@ -66,6 +66,13 @@ def is_correlation(method: str) -> bool:
 
 
 class SPODMRStatus(Status):
+    """Status message for slow-detector pulse ODMR measurements.
+
+    :ivar state: Measurement state (IDLE/ACTIVE).
+    :ivar pg_freq: Pulse generator frequency used by the current sequence.
+
+    """
+
     def __init__(self, state: BinaryState, pg_freq: float):
         self.state = state
         self.pg_freq = pg_freq
@@ -78,6 +85,14 @@ class SPODMRStatus(Status):
 
 
 class SPODMRData(BasicMeasData, ComplexDataMixin):
+    """Slow-detector pulse ODMR data container.
+
+    :ivar data0: Primary accumulated signal matrix.
+    :ivar data1: Secondary accumulated signal matrix for dual-sequence methods.
+    :ivar laser_duties: Per-point laser duty factors used for normalization.
+
+    """
+
     def __init__(self, params: dict | None = None, label: str = ""):
         self.set_version(3)
         self.init_params(params, label)

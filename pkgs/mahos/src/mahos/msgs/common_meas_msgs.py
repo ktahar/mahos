@@ -187,6 +187,14 @@ class ImageMeasData(BasicMeasData):
 
 
 class Buffer(Message, UserList):
+    """Measurement buffer message storing file-name/data pairs.
+
+    :ivar data: Ordered list of ``(file_name, data)`` tuples kept by :class:`UserList`.
+    :ivar data[i][0]: File name associated with the buffered dataset.
+    :ivar data[i][1]: Buffered measurement data object.
+
+    """
+
     def file_names(self) -> list[str]:
         return [n for n, data in self.data]
 

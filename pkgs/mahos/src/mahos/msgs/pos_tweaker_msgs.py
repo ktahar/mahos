@@ -15,6 +15,13 @@ from mahos.msgs.common_msgs import Request, Status
 
 
 class PosTweakerStatus(Status):
+    """Status snapshot of per-axis positioner states.
+
+    :ivar axis_states: Mapping from axis name to status dictionary
+        (position/target/range/homing flags).
+
+    """
+
     def __init__(self, axis_states: dict[str, dict[str, [float, bool]]]):
         self.axis_states = axis_states
 

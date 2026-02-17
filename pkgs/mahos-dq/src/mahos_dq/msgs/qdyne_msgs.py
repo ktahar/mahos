@@ -36,6 +36,19 @@ class DiscardReq(Request):
 
 
 class QdyneData(BasicMeasData):
+    """Qdyne measurement data with time-domain and FFT representations.
+
+    :ivar tdc_status: Latest time-to-digital-converter status summary.
+    :ivar xdata: Time-domain x-axis values.
+    :ivar data: Time-domain measured signal.
+    :ivar fft_xdata: Cached FFT frequency axis.
+    :ivar fft_data: Cached FFT amplitude data.
+    :ivar raw_data: Raw detector events.
+    :ivar marker_indices: Cached marker ranges for signal/reference windows.
+    :ivar laser_timing: Laser timing array in seconds.
+
+    """
+
     def __init__(self, params: dict | None = None, label: str = ""):
         self.set_version(2)
         self.init_params(params, label)

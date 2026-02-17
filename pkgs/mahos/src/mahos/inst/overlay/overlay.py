@@ -29,15 +29,12 @@ class InstrumentOverlay(Instrument):
     InstOverlay is accessed by meas layer or custom codes
     via same interface with instrument (usually via Instrument :term:`RPC`).
 
+    Instruments should be registered during initialization by
+    :meth:`add_instruments` in inherited classes.
+
     """
 
     def __init__(self, name: str, conf: dict | None = None, prefix: str | None = None):
-        """Init Instrument and internal instrument list (_instruments).
-
-        Instruments should be added on initialization by add_instruments() in inherited class.
-
-        """
-
         Instrument.__init__(self, name, conf, prefix)
         self._instruments: list[Instrument] = []
 

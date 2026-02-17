@@ -22,6 +22,13 @@ from mahos.util.stat import filter_outlier_2d
 
 
 class SpectroscopyStatus(Status):
+    """Status message for spectroscopy measurements.
+
+    :ivar state: Measurement state (IDLE/ACTIVE).
+    :ivar temperature: Latest spectrometer temperature reading, if available.
+
+    """
+
     def __init__(self, state: BinaryState, temperature: Temperature | None):
         self.state = state
         self.temperature = temperature
@@ -34,6 +41,13 @@ class SpectroscopyStatus(Status):
 
 
 class SpectroscopyData(BasicMeasData):
+    """Spectroscopy dataset with wavelength axis and stacked acquisitions.
+
+    :ivar data: 2D array of spectra where columns are acquisitions.
+    :ivar xdata: Wavelength axis values in nanometers.
+
+    """
+
     def __init__(self, params: dict | None = None):
         self.set_version(2)
         self.init_params(params)

@@ -14,6 +14,8 @@ from mahos.msgs.common_msgs import Message
 
 
 class PeakType(Message, enum.Enum):
+    """Peak-shape selector used by fitting routines."""
+
     Gaussian = 0
     Lorentzian = 1
     Voigt = 2

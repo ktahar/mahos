@@ -14,6 +14,8 @@ from mahos.msgs.common_msgs import Message, Status, Request, BinaryState
 
 
 class OptMode(Message, enum.Enum):
+    """Optimization mode selection for confocal tracker image processing."""
+
     Disable = 0  # Disable
     POC = 1  # Phase Only Correlation
     Gauss2D = 2  # 2D Gaussian fitting
@@ -25,21 +27,43 @@ class OptMode(Message, enum.Enum):
 
 
 class ConfocalTrackerStatus(Status):
+    """Runtime status of the confocal tracker node.
+
+    :ivar state: Tracker state (IDLE/ACTIVE).
+    :ivar tracking: True while a tracking cycle is currently running.
+
+    """
+
     def __init__(self, state: BinaryState, tracking: bool):
         self.state = state
         self.tracking = tracking
 
 
 class SaveParamsReq(Request):
+    """Request to save tracker parameter dictionary to disk.
+
+    :ivar params: Tracker parameter dictionary to persist.
+    :ivar file_name: Optional output path; default path is used when omitted.
+
+    """
+
     def __init__(self, params: dict, file_name=None):
         self.params = params
         self.file_name = file_name
 
 
 class LoadParamsReq(Request):
+    """Request to load tracker parameters from disk.
+
+    :ivar file_name: Optional input path; default path is used when omitted.
+
+    """
+
     def __init__(self, file_name=None):
         self.file_name = file_name
 
 
 class TrackNowReq(Request):
+    """Request to force immediate tracker execution on the next node cycle."""
+
     pass

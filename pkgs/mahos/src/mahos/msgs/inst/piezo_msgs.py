@@ -15,6 +15,8 @@ from mahos.msgs.common_msgs import Message
 
 
 class Axis(Message, enum.Enum):
+    """Piezo axis identifier used in move and status messages."""
+
     X = 0
     Y = 1
     Z = 2

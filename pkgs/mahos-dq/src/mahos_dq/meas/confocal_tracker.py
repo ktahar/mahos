@@ -191,6 +191,18 @@ class ConfocalTrackerClient(StateClient):
 
 
 class ConfocalTracker(Node):
+    """Node that performs periodic position re-centering of confocal.
+
+    The tracker coordinates Confocal and StateManager nodes, runs scheduled
+    scan-and-optimize cycles, and publishes whether a tracking cycle is active.
+
+    :param target.confocal: Target Confocal node name used for scan/move requests.
+    :type target.confocal: tuple[str, str] | str
+    :param target.manager: StateManager node name used for state coordination.
+    :type target.manager: tuple[str, str] | str
+
+    """
+
     CLIENT = ConfocalTrackerClient
 
     def __init__(self, gconf: dict, name, context=None):

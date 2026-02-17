@@ -313,5 +313,17 @@ class PulseMonitorWidget(ClientTopWidget):
 
 
 class PulseMonitor(GUINode):
+    """GUINode that visualizes pulse patterns from a pulse-capable measurement node.
+
+    The node instantiates :class:`PulseMonitorWidget`, subscribes to pulse updates,
+    and renders digital/analog channels with optional marker-based regions.
+
+    :param target.pulse: Target pulse publisher node name.
+    :type target.pulse: tuple[str, str] | str
+    :param colormap: PyQtGraph colormap name used for channel traces.
+    :type colormap: str
+
+    """
+
     def init_widget(self, gconf: dict, name, context):
         return PulseMonitorWidget(gconf, name, context)

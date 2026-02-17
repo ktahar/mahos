@@ -259,6 +259,20 @@ class DTG5000(VisaInstrument, DTGCoreMixin):
 
 
 class DTG5078(DTG5000):
+    """DTG5078 model specialization of :class:`DTG5000`.
+
+    This subclass redefines hardware timing limits while using the same
+    configuration keys as :class:`DTG5000`.
+
+    :param local_dir: Data exchange directory on the control host.
+    :type local_dir: str
+    :param remote_dir: Data exchange directory on the DTG instrument.
+    :type remote_dir: str
+    :param channels: Optional mapping from logical channel labels to indices.
+    :type channels: dict[str | bytes, int]
+
+    """
+
     MIN_BLOCK_LENGTH = (240, 120, 60, 30, 15, 12, 6, 3, 2, 2, 1, 1, 1)
 
     def max_block_len(self):
@@ -272,6 +286,20 @@ class DTG5078(DTG5000):
 
 
 class DTG5274(DTG5000):
+    """DTG5274 model specialization with conservative block constraints.
+
+    This subclass keeps compatibility-focused granularity/length rules and uses
+    the same configuration keys as :class:`DTG5000`.
+
+    :param local_dir: Data exchange directory on the control host.
+    :type local_dir: str
+    :param remote_dir: Data exchange directory on the DTG instrument.
+    :type remote_dir: str
+    :param channels: Optional mapping from logical channel labels to indices.
+    :type channels: dict[str | bytes, int]
+
+    """
+
     def block_granularity(self, freq):
         """Default implementation of DTG5000 follows manual,
         but causes block granularity error in some cases.
@@ -296,6 +324,20 @@ class DTG5274(DTG5000):
 
 
 class DTG5334(DTG5000):
+    """DTG5334 model specialization of :class:`DTG5000`.
+
+    This subclass provides device-specific timing bounds while keeping the
+    common DTG5000 configuration schema.
+
+    :param local_dir: Data exchange directory on the control host.
+    :type local_dir: str
+    :param remote_dir: Data exchange directory on the DTG instrument.
+    :type remote_dir: str
+    :param channels: Optional mapping from logical channel labels to indices.
+    :type channels: dict[str | bytes, int]
+
+    """
+
     MIN_BLOCK_LENGTH = (960, 480, 240, 120, 60, 48, 24, 12, 6, 5, 3, 2, 1)
 
     def max_block_len(self):

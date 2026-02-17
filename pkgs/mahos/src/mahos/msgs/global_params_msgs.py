@@ -14,6 +14,12 @@ from mahos.msgs.common_msgs import Request, Status
 
 
 class GlobalParamsStatus(Status):
+    """Status message carrying the global key-value parameter map.
+
+    :ivar params: Dictionary of global runtime parameters shared across nodes.
+
+    """
+
     def __init__(self, params: dict):
         self.params = params
 
@@ -25,6 +31,13 @@ class GlobalParamsStatus(Status):
 
 
 class SetParamReq(Request):
+    """Request to update one key in the global parameter dictionary.
+
+    :ivar key: Parameter key to update.
+    :ivar value: New value stored for ``key``.
+
+    """
+
     def __init__(self, key: str, value):
         self.key = key
         self.value = value

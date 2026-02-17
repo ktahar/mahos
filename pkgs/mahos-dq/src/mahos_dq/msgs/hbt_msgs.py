@@ -24,6 +24,16 @@ class UpdatePlotParamsReq(Request):
 
 
 class HBTData(BasicMeasData):
+    """HBT measurement data with raw and normalized correlation traces.
+
+    :ivar data: Raw correlation histogram values.
+    :ivar data_normalized: Optional normalized histogram values.
+    :ivar timebin: Time resolution per histogram bin.
+    :ivar tdc_correlation: True when data is TDC-generated correlation.
+        False when data is raw event data.
+
+    """
+
     def __init__(self, params: dict | None = None):
         self.set_version(3)
         self.init_params(params)

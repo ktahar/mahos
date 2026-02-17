@@ -233,53 +233,74 @@ class ImageBuffer(object):
 
 
 class Confocal(Node):
+    """Node that coordinates confocal scan, piezo control, and PD tracing.
+
+    The node switches between IDLE/PIEZO/INTERACT/SCAN states, starts the required
+    workers per state, and publishes status, image, and trace messages.
+
+    :param target.servers: Instrument server mapping for scanner/piezo/tracer and
+        optional switch/pg.
+    :type target.servers: dict[str, tuple[str, str] | str]
+    :param target.tweakers: Optional Tweaker node names whose settings are saved
+        alongside saved confocal data.
+    :type target.tweakers: list[str]
+    :param inst_remap: Optional mapping to override instrument name.
+    :type inst_remap: dict[str, str]
+    :param switch_names: Names of switch instruments activated in INTERACT/SCAN.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label used when enabling confocal routing.
+    :type switch_command: str
+    :param pg_channels: (default: ["laser"], only target.servers.pg is given)
+        List of PG channels to set high continuously on INTERACT or SCAN states.
+    :type pg_channels: list[str]
+    :param pub_interval_sec: Period for forced periodic publication while running.
+    :type pub_interval_sec: float
+    :param scanner: Scanner worker configuration dictionary.
+    :type scanner: dict
+    :param scanner.xnum: (default: 51) Default value of param xnum.
+    :type scanner.xnum: int
+    :param scanner.ynum: (default: 51) Default value of param ynum.
+    :type scanner.ynum: int
+    :param scanner.delay: (default: 0.0) Default value of param delay.
+    :type scanner.delay: float
+    :param scanner.time_window: (default: 0.01) Default value of param time_window.
+    :type scanner.time_window: float
+    :param scanner.pd_analog: set True if PD is AnalogIn-based.
+    :type scanner.pd_analog: bool
+    :param scanner.pd_bounds: (default: (-10.0, 10.0)) Default value of param pd_bounds.
+    :type scanner.pd_bounds: tuple[float, float]
+    :param scanner.oversample: (default: 1) Default value of param oversample.
+    :type scanner.oversample: int
+    :param scanner.dummy_samples: (default: 10) Default value of param dummy_samples.
+    :type scanner.dummy_samples: int
+    :param scanner.poll_samples: (default: 1) Default value of param poll_samples.
+    :type scanner.poll_samples: int
+    :param piezo: Piezo worker configuration dictionary.
+    :type piezo: dict
+    :param piezo.interval_sec: (default: 0.5) Interval to poll piezo pos.
+    :type piezo.interval_sec: float
+    :param tracer: Trace worker configuration dictionary.
+    :type tracer: dict
+    :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
+    :type tracer.pd_names: list[str]
+    :param tracer.interval_sec: (default: 0.5) Interval to poll trace data.
+    :type tracer.interval_sec: float
+    :param tracer.size: (default: 500) Size of trace data.
+    :type tracer.size: int
+    :param tracer.samples: (default: 5) Number of samples per chunk.
+    :type tracer.samples: int
+    :param tracer.oversample: (default: 1) Oversample factor.
+    :type tracer.oversample: int
+    :param tracer.time_window_sec: (default: 0.01) Time window for single data point.
+    :type tracer.time_window_sec: float
+    :param tracer.pd_bounds: (default: (-10.0, 10.0)) PD's voltage bounds.
+    :type tracer.pd_bounds: tuple[float, float]
+
+    """
+
     CLIENT = ConfocalClient
 
     def __init__(self, gconf: dict, name, context=None):
-        """Confocal scanner and interactive positioning.
-
-        :param piezo.interval_sec: (default: 0.5) Interval to poll piezo pos.
-        :type piezo.interval_sec: float
-        :param pg_channels: (default: ["laser"], only target.servers.pg is given)
-            List of PG channels to set high continuously on INTERACT or SCAN states.
-        :type pg_channels: list[str]
-
-        :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
-        :type tracer.pd_names: list[str]
-        :param tracer.interval_sec: (default: 0.5) Interval to poll trace data.
-        :type tracer.interval_sec: float
-        :param tracer.size: (default: 500) Size of trace data.
-        :type tracer.size: int
-        :param tracer.samples: (default: 5) Number of samples per chunk.
-        :type tracer.samples: int
-        :param tracer.oversample: (default: 1) Oversample factor.
-        :type tracer.oversample: int
-        :param tracer.time_window_sec: (default: 0.01) Time window for single data point.
-        :type tracer.time_window_sec: float
-        :param tracer.pd_bounds: (default: (-10.0, 10.0)) PD's voltage bounds.
-        :type tracer.pd_bounds: tuple[float, float]
-
-        :param scanner.xnum: (default: 51) Default value of param xnum.
-        :type scanner.xnum: int
-        :param scanner.ynum: (default: 51) Default value of param ynum.
-        :type scanner.ynum: int
-        :param scanner.delay: (default: 0.0) Default value of param delay.
-        :type scanner.delay: float
-        :param scanner.time_window: (default: 0.01) Default value of param time_window.
-        :type scanner.time_window: float
-        :param scanner.pd_analog: set True if PD is AnalogIn-based.
-        :type scanner.pd_analog: bool
-        :param scanner.pd_bounds: (default: (-10.0, 10.0)) Default value of param pd_bounds.
-        :type scanner.pd_bounds: tuple[float, float]
-        :param scanner.oversample: (default: 1) Default value of param oversample.
-        :type scanner.oversample: int
-        :param scanner.dummy_samples: (default: 10) Default value of param dummy_samples.
-        :type scanner.dummy_samples: int
-        :param scanner.poll_samples: (default: 1) Default value of param poll_samples.
-        :type scanner.poll_samples: int
-
-        """
-
         Node.__init__(self, gconf, name, context=context)
 
         self.state = ConfocalState.IDLE
@@ -708,34 +729,47 @@ class TraceNodeClient(NodeClient, BaseMeasClientMixin):
 
 
 class TraceNode(Node):
+    """Node that provides standalone PD trace acquisition without scanning.
+
+    This node reuses tracer(switch/pg) workers from the confocal stack, but exposes
+    only binary ACTIVE/IDLE operation and trace-oriented request handling.
+
+    :param target.servers: Instrument server mapping for tracer and optional switch/pg.
+    :type target.servers: dict[str, tuple[str, str] | str]
+    :param target.tweakers: Optional Tweaker node names saved with trace files.
+    :type target.tweakers: list[str]
+    :param inst_remap: Optional mapping to override instrument name.
+    :type inst_remap: dict[str, str]
+    :param switch_names: Names of switch instruments activated while ACTIVE.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label used when enabling confocal routing.
+    :type switch_command: str
+    :param pg_channels: (default: ["laser"], only target.servers.pg is given)
+        List of PG channels to set high continuously when ACTIVE.
+    :type pg_channels: list[str]
+
+    :param tracer: Trace worker configuration dictionary.
+    :type tracer: dict
+    :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
+    :type tracer.pd_names: list[str]
+    :param tracer.interval_sec: (default: 0.5) Interval to poll trace data.
+    :type tracer.interval_sec: float
+    :param tracer.size: (default: 500) Size of trace data.
+    :type tracer.size: int
+    :param tracer.samples: (default: 5) Number of samples per chunk.
+    :type tracer.samples: int
+    :param tracer.oversample: (default: 1) Oversample factor.
+    :type tracer.oversample: int
+    :param tracer.time_window_sec: (default: 0.01) Time window for single data point.
+    :type tracer.time_window_sec: float
+    :param tracer.pd_bounds: (default: (-10.0, 10.0)) PD's voltage bounds.
+    :type tracer.pd_bounds: tuple[float, float]
+
+    """
+
     CLIENT = TraceNodeClient
 
     def __init__(self, gconf: dict, name, context=None):
-        """Node for only Trace function from Confocal.
-
-        Collect time trace of PD, no piezo scan or positioning.
-
-        :param pg_channels: (default: ["laser"], only target.servers.pg is given)
-            List of PG channels to set high continuously when ACTIVE.
-        :type pg_channels: list[str]
-
-        :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
-        :type tracer.pd_names: list[str]
-        :param tracer.interval_sec: (default: 0.5) Interval to poll trace data.
-        :type tracer.interval_sec: float
-        :param tracer.size: (default: 500) Size of trace data.
-        :type tracer.size: int
-        :param tracer.samples: (default: 5) Number of samples per chunk.
-        :type tracer.samples: int
-        :param tracer.oversample: (default: 1) Oversample factor.
-        :type tracer.oversample: int
-        :param tracer.time_window_sec: (default: 0.01) Time window for single data point.
-        :type tracer.time_window_sec: float
-        :param tracer.pd_bounds: (default: (-10.0, 10.0)) PD's voltage bounds.
-        :type tracer.pd_bounds: tuple[float, float]
-
-        """
-
         Node.__init__(self, gconf, name, context=context)
 
         self.state = BinaryState.IDLE
