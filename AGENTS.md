@@ -36,7 +36,8 @@ from formatting and linting.
 ## Docstring Guidelines
 
 - Write all docstrings in reStructuredText (reST).
-- Provide comprehensive top-level class docstrings for all `Instrument` and `Node` classes.
+- Provide comprehensive top-level class docstrings for all `Instrument`, `Node`,
+  `GUINode`, and `Message` classes.
 - For measurement Nodes with exactly one Worker, the Worker docstring may be omitted if the
   Worker behavior is documented in the Node docstring.
 - For measurement Nodes with multiple Workers, each Worker should have its own docstring, and
@@ -46,12 +47,12 @@ from formatting and linting.
   - A one-line summary, followed by a blank line.
   - A few paragraphs with detailed behavior and important requirements (for example,
     required dependent libraries), when applicable.
-  - A list of static configuration keys in `self.conf` (loaded from `conf.toml`),
-    using `:param:` and `:type:` directives.
-  - For nested configuration dictionaries, express nested keys with dot notation
-    (for example, `first_level_key.second_level_key`).
+  - For the `Instrument`, `Node`, and `GUINode` classes, a list of static configuration keys in
+    `self.conf` (loaded from `conf.toml`), using `:param:` and `:type:` directives.
+    - For nested configuration dictionaries, express nested keys with dot notation
+      (for example, `first_level_key.second_level_key`).
+  - For the `Message` classes, the list of attributes using `:ivar:` directive.
   - Optional minor notes may follow, but use them sparingly.
-- All `Instrument` and `Node` methods should have at least a one-line docstring.
 
 ## Testing Guidelines
 
