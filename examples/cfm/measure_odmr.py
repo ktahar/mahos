@@ -7,7 +7,7 @@ from mahos_dq.meas.odmr import ODMRClient, BinaryState
 
 
 def main():
-    gconf = load_gconf("conf.toml")
+    gconf = load_gconf("conf_mock.toml")
     cli = ODMRClient(gconf, "localhost::odmr")
     params = cli.get_param_dict("cw")
     params["start"].set(2.0e9)

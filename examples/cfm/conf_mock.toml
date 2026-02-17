@@ -6,24 +6,24 @@ poll_timeout_ms = 100
 module = "mahos.node.log_broker"
 class = "LogBroker"
 target = { log = "localhost::log" }
-xpub_endpoint = "tcp://127.0.0.1:5555"
-xsub_endpoint = "tcp://127.0.0.1:5556"
+xpub_endpoint = "tcp://127.0.0.1:5755"
+xsub_endpoint = "tcp://127.0.0.1:5756"
 file = false
 
 [localhost.gparams]
 module = "mahos.node.global_params"
 class = "GlobalParams"
 target = { log = "localhost::log" }
-rep_endpoint = "tcp://127.0.0.1:5557"
-pub_endpoint = "tcp://127.0.0.1:5558"
+rep_endpoint = "tcp://127.0.0.1:5757"
+pub_endpoint = "tcp://127.0.0.1:5758"
 
 [localhost.server]
 module = "mahos.inst.server"
 class = "InstrumentServer"
 target = { log = "localhost::log" }
 log_level = "DEBUG"
-rep_endpoint = "tcp://127.0.0.1:5559"
-pub_endpoint = "tcp://127.0.0.1:5560"
+rep_endpoint = "tcp://127.0.0.1:5759"
+pub_endpoint = "tcp://127.0.0.1:5760"
 
 [localhost.server.instrument.switch]
 module = "mock"
@@ -111,8 +111,8 @@ pd1 = "$pd1"
 module = "mahos_dq.meas.confocal"
 class = "Confocal"
 log_level = "DEBUG"
-rep_endpoint = "tcp://127.0.0.1:5570"
-pub_endpoint = "tcp://127.0.0.1:5571"
+rep_endpoint = "tcp://127.0.0.1:5770"
+pub_endpoint = "tcp://127.0.0.1:5771"
 poll_timeout_ms = 80
 [localhost.confocal.tracer]
 size = 1000
@@ -135,64 +135,64 @@ switch = "localhost::server"
 module = "mahos_dq.meas.confocal_tracker"
 class = "ConfocalTracker"
 log_level = "DEBUG"
-rep_endpoint = "tcp://127.0.0.1:5572"
-pub_endpoint = "tcp://127.0.0.1:5573"
+rep_endpoint = "tcp://127.0.0.1:5772"
+pub_endpoint = "tcp://127.0.0.1:5773"
 [localhost.tracker.target]
 log = "localhost::log"
 confocal = "localhost::confocal"
 manager = "localhost::manager"
 
-[localhost.odmr]
-module = "mahos_dq.meas.odmr"
-class = "ODMR"
-rep_endpoint = "tcp://127.0.0.1:5574"
-pub_endpoint = "tcp://127.0.0.1:5575"
-[localhost.odmr.sweeper]
-pd_clock = "/DummyDev1/PFI2"
-[localhost.odmr.target]
-log = "localhost::log"
-[localhost.odmr.target.servers]
-sg = "localhost::server"
-pg = "localhost::server"
-pd0 = "localhost::server"
-pd1 = "localhost::server"
-switch = "localhost::server"
-
 [localhost.hbt]
 module = "mahos_dq.meas.hbt"
 class = "HBT"
-rep_endpoint = "tcp://127.0.0.1:5576"
-pub_endpoint = "tcp://127.0.0.1:5577"
+rep_endpoint = "tcp://127.0.0.1:5774"
+pub_endpoint = "tcp://127.0.0.1:5775"
 [localhost.hbt.target]
 log = "localhost::log"
 [localhost.hbt.target.servers]
 tdc = "localhost::server"
 switch = "localhost::server"
 
+[localhost.odmr]
+module = "mahos_dq.meas.odmr"
+class = "ODMR"
+rep_endpoint = "tcp://127.0.0.1:5778"
+pub_endpoint = "tcp://127.0.0.1:5779"
+[localhost.odmr.sweeper]
+pd_clock = "/DummyDev1/PFI2"
+[localhost.odmr.target]
+log = "localhost::log"
+[localhost.odmr.target.servers]
+switch = "localhost::server"
+sg = "localhost::server"
+pg = "localhost::server"
+pd0 = "localhost::server"
+pd1 = "localhost::server"
+
 [localhost.podmr]
 module = "mahos_dq.meas.podmr"
 class = "PODMR"
 log_level = "DEBUG"
-rep_endpoint = "tcp://127.0.0.1:5578"
-pub_endpoint = "tcp://127.0.0.1:5579"
+rep_endpoint = "tcp://127.0.0.1:5780"
+pub_endpoint = "tcp://127.0.0.1:5781"
 [localhost.podmr.target]
 log = "localhost::log"
 [localhost.podmr.pulser]
 mw_modes = [0, 0]
 [localhost.podmr.target.servers]
+switch = "localhost::server"
 tdc = "localhost::server"
 sg = "localhost::server"
 sg1 = "localhost::server"
 pg = "localhost::server"
 fg = "localhost::server"
-switch = "localhost::server"
 
 [localhost.qdyne]
 module = "mahos_dq.meas.qdyne"
 class = "Qdyne"
 log_level = "DEBUG"
-rep_endpoint = "tcp://127.0.0.1:5588"
-pub_endpoint = "tcp://127.0.0.1:5589"
+rep_endpoint = "tcp://127.0.0.1:5782"
+pub_endpoint = "tcp://127.0.0.1:5783"
 [localhost.qdyne.target]
 log = "localhost::log"
 [localhost.qdyne.target.servers]
@@ -206,16 +206,16 @@ switch = "localhost::server"
 module = "mahos.meas.state_manager"
 class = "StateManager"
 target = { log = "localhost::log" }
-rep_endpoint = "tcp://127.0.0.1:5590"
-pub_endpoint = "tcp://127.0.0.1:5591"
+rep_endpoint = "tcp://127.0.0.1:5788"
+pub_endpoint = "tcp://127.0.0.1:5789"
 
 [localhost.manager.node]
+"localhost::confocal" = ["mahos_dq.msgs.confocal_msgs", "ConfocalState"]
 "localhost::hbt" = ["mahos.msgs.common_msgs", "BinaryState"]
+"localhost::tracker" = ["mahos.msgs.common_msgs", "BinaryState"]
 "localhost::odmr" = ["mahos.msgs.common_msgs", "BinaryState"]
 "localhost::podmr" = ["mahos.msgs.common_msgs", "BinaryState"]
 "localhost::qdyne" = ["mahos.msgs.common_msgs", "BinaryState"]
-"localhost::confocal" = ["mahos_dq.msgs.confocal_msgs", "ConfocalState"]
-"localhost::tracker" = ["mahos.msgs.common_msgs", "BinaryState"]
 
 [localhost.manager.command.prepare_scan]
 "localhost::hbt" = "IDLE"

@@ -7,3 +7,5 @@ with optically detected magnetic resonance (ODMR) feature for color center resea
 - Rather featureful (complex) example: ``conf.toml``
 - Almost same but with different instruments: ``conf_alt.toml``
 - Reduced (simpler) example: ``conf_simple.toml``
+- Mock without real hardware: ``conf_mock.toml``
+- Simple scripted measurement: ``measure_odmr.py``
