@@ -16,17 +16,24 @@ from mahos.node.log import DummyLogger
 
 
 def parse_args(args):
+    parser = build_parser()
+    args = parser.parse_args(args)
+
+    return args
+
+
+def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
-        prog="mahos data note", description="Print or amend the note attribute in h5 data file(s)."
+        prog="mahos data note",
+        description="Print or amend the note attribute in h5 data file(s).",
+        add_help=add_help,
     )
     parser.add_argument("-a", "--amend", type=str, help="amend the note")
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="print the note even in amend mode"
     )
     parser.add_argument("names", nargs="+", help="file names")
-    args = parser.parse_args(args)
-
-    return args
+    return parser
 
 
 logger = DummyLogger()

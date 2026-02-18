@@ -14,9 +14,9 @@ from mahos.node.node import join_name, local_conf, host_nodes, hosts, threaded_n
 from mahos.cli.util import check_load_gconf
 
 
-def parse_args(args):
+def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
-        prog="mahos ls", description="List available node in a config file."
+        prog="mahos ls", description="List available node in a config file.", add_help=add_help
     )
     parser.add_argument(
         "-c", "--conf", type=str, default="conf.toml", help="config file name (default: conf.toml)"
@@ -24,7 +24,11 @@ def parse_args(args):
     parser.add_argument(
         "-i", "--inst", action="store_true", help="print list of Instruments for InstrumentServer"
     )
+    return parser
 
+
+def parse_args(args):
+    parser = build_parser()
     args = parser.parse_args(args)
 
     return args

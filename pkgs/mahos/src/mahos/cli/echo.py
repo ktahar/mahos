@@ -18,9 +18,11 @@ from mahos.node.client import EchoSubscriber
 from mahos.cli.util import init_gconf_host_node
 
 
-def parse_args(args):
+def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
-        prog="mahos echo", description="Echo published topic from running mahos node."
+        prog="mahos echo",
+        description="Echo published topic from running mahos node.",
+        add_help=add_help,
     )
     parser.add_argument(
         "-c", "--conf", type=str, default="conf.toml", help="config file name (default: conf.toml)"
@@ -38,7 +40,11 @@ def parse_args(args):
     parser.add_argument(
         "node", type=str, help="node name or full name ({})".format(join_name(("host", "node")))
     )
+    return parser
 
+
+def parse_args(args):
+    parser = build_parser()
     args = parser.parse_args(args)
 
     return args

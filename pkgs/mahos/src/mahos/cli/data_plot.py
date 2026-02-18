@@ -8,6 +8,22 @@ mahos data plot command.
 
 """
 
+import argparse
+
+
+def build_parser(add_help: bool = True):
+    try:
+        from mahos_dq.cli import plot as dq_plot
+
+        return dq_plot.build_parser(add_help=add_help)
+    except ImportError:
+        parser = argparse.ArgumentParser(
+            prog="mahos data plot", description="Plot data file(s).", add_help=add_help
+        )
+        # Accept and ignore any extra tokens in the no-dq fallback parser.
+        parser.add_argument("args", nargs=argparse.REMAINDER, help=argparse.SUPPRESS)
+        return parser
+
 
 def _main(args=None):
     print("mahos data plot only works with mahos_dq installed")

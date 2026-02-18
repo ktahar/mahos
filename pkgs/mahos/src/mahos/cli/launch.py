@@ -28,8 +28,10 @@ from mahos.cli.util import init_gconf_host
 from mahos.cli.threaded_nodes import start_threaded_nodes_proc
 
 
-def parse_args(args):
-    parser = argparse.ArgumentParser(prog="mahos launch", description="Launch mahos nodes.")
+def build_parser(add_help: bool = True):
+    parser = argparse.ArgumentParser(
+        prog="mahos launch", description="Launch mahos nodes.", add_help=add_help
+    )
     parser.add_argument(
         "-c", "--conf", type=str, default="conf.toml", help="config file name (default: conf.toml)"
     )
@@ -49,7 +51,11 @@ def parse_args(args):
         default=[],
         help="node names (or threaded nodes names) to include. leave empty to launch all.",
     )
+    return parser
 
+
+def parse_args(args):
+    parser = build_parser()
     args = parser.parse_args(args)
 
     if args.include and args.exclude:

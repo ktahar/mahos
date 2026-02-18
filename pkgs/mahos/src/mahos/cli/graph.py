@@ -20,9 +20,9 @@ from mahos.util.conv import invert_mapping
 from mahos.cli.util import check_load_gconf
 
 
-def parse_args(args):
+def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
-        prog="mahos graph", description="Visualize a config file as graph."
+        prog="mahos graph", description="Visualize a config file as graph.", add_help=add_help
     )
     parser.add_argument(
         "-c", "--conf", type=str, default="conf.toml", help="config file name (default: conf.toml)"
@@ -48,7 +48,11 @@ def parse_args(args):
         default=[],
         help="full name (hostname::nodename) to exclude",
     )
+    return parser
 
+
+def parse_args(args):
+    parser = build_parser()
     args = parser.parse_args(args)
 
     return args

@@ -51,8 +51,17 @@ class Clients(object):
 
 
 def parse_args(args):
+    parser = build_parser()
+    args = parser.parse_args(args)
+
+    return args
+
+
+def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
-        prog="mahos shell", description="Start shell with a client for mahos node."
+        prog="mahos shell",
+        description="Start shell with a client for mahos node.",
+        add_help=add_help,
     )
     parser.add_argument(
         "-c", "--conf", type=str, default="conf.toml", help="config file name (default: conf.toml)"
@@ -72,10 +81,7 @@ def parse_args(args):
         nargs="+",
         help="list of node name or full name ({})".format(join_name(("host", "node"))),
     )
-
-    args = parser.parse_args(args)
-
-    return args
+    return parser
 
 
 def main(args=None):

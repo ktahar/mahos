@@ -33,8 +33,17 @@ except ImportError:
 
 
 def parse_args(args):
+    parser = build_parser()
+    args = parser.parse_args(args)
+
+    return args
+
+
+def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
-        prog="mahos data print", description="Print attributes of h5 data file(s)."
+        prog="mahos data print",
+        description="Print attributes of h5 data file(s).",
+        add_help=add_help,
     )
     parser.add_argument(
         "-k", "--keys", nargs="*", help="attribute keys to print. default is ['params']"
@@ -49,9 +58,7 @@ def parse_args(args):
         help="print all the attributes. if given, -k is ignored",
     )
     parser.add_argument("names", nargs="+", help="file names")
-    args = parser.parse_args(args)
-
-    return args
+    return parser
 
 
 logger = DummyLogger()

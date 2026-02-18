@@ -25,8 +25,10 @@ from mahos.cli.util import init_gconf_host_node, host_is_local
 from mahos.cli.launch import Launcher
 
 
-def parse_args(args):
-    parser = argparse.ArgumentParser(prog="mahos log", description="Print logs from LogBroker.")
+def build_parser(add_help: bool = True):
+    parser = argparse.ArgumentParser(
+        prog="mahos log", description="Print logs from LogBroker.", add_help=add_help
+    )
     parser.add_argument(
         "-c", "--conf", type=str, default="conf.toml", help="config file name (default: conf.toml)"
     )
@@ -46,7 +48,11 @@ def parse_args(args):
         default="log",
         help="node name or full name ({}) (default: log)".format(join_name(("host", "node"))),
     )
+    return parser
 
+
+def parse_args(args):
+    parser = build_parser()
     args = parser.parse_args(args)
 
     return args

@@ -18,8 +18,10 @@ from mahos.cli.util import init_gconf_host_node
 from mahos.cli.threaded_nodes import ThreadedNodes
 
 
-def parse_args(args):
-    parser = argparse.ArgumentParser(prog="mahos run", description="Run a mahos node.")
+def build_parser(add_help: bool = True):
+    parser = argparse.ArgumentParser(
+        prog="mahos run", description="Run a mahos node.", add_help=add_help
+    )
     parser.add_argument(
         "-c", "--conf", type=str, default="conf.toml", help="config file name (default: conf.toml)"
     )
@@ -42,7 +44,11 @@ def parse_args(args):
         nargs="*",
         help="instrument names to exclude (only for InstrumentServer)",
     )
+    return parser
 
+
+def parse_args(args):
+    parser = build_parser()
     args = parser.parse_args(args)
 
     if args.include and args.exclude:

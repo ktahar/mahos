@@ -796,11 +796,19 @@ def add_parsers(sub_parsers):
     add_spec_parser(sub_parsers)
 
 
-def parse_args(args):
-    parser = argparse.ArgumentParser(prog="mahos data plot", description="(Re-)plot data file(s).")
+def build_parser(add_help: bool = True):
+    parser = argparse.ArgumentParser(
+        prog="mahos data plot",
+        description="(Re-)plot data file(s).",
+        add_help=add_help,
+    )
     sub_parsers = parser.add_subparsers(help="type of the files")
     add_parsers(sub_parsers)
+    return parser
 
+
+def parse_args(args):
+    parser = build_parser()
     args = parser.parse_args(args)
 
     # why do we have to manually handle error when subcommand is not given.
