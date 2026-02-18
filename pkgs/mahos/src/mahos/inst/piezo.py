@@ -30,21 +30,22 @@ from mahos.util.conf import PresetLoader
 
 
 class BasePiezo3Axes(Instrument):
-    """Base Class for Piezo with 3 axes.
+    """Base class for a piezo stage with three axes.
 
-    Listed parameters (confs) are common for all the child classes.
+    The listed parameters (configs) are common to all child classes.
 
     :param transform: (default: identity matrix) a 3x3 linear transformation matrix
         from (real) target coordinate to command-value coordinate.
-        This is usable for tilt correction to compensate the cross-talks in piezo axes.
+        This can be used for tilt correction to compensate for cross-talk among piezo axes.
     :type transform: list[list[float]]
     :param limit_um: (default: [[0.0, 100.0], [0.0, 100.0], [0.0, 100.0)]) limits of positions
         in command coordinate in the following format:
-        [[Xmin, Xmax], [Ymin, Ymax], [Ymin, Ymax]].
+        [[Xmin, Xmax], [Ymin, Ymax], [Zmin, Zmax]].
     :param range_um: travel ranges in target coordinate in the following format:
         [[xmin, xmax], [ymin, ymax], [zmin, zmax]].
-        This should be identical to limit_um if transform is default (identity matrix), i.e.,
-        the target corrdinate and the command-value coordinate are identical.
+        This should be identical to ``limit_um`` if ``transform`` is the default
+        (identity matrix), i.e., the target coordinate and command-value coordinate are
+        identical.
     :type range_um: list[tuple[float, float]]
 
     """

@@ -850,7 +850,7 @@ class Camera_mock(Instrument):
 
 
 class Params_mock(Instrument):
-    """Mock for instrument with configurable ParamDict."""
+    """Mock instrument with a configurable ParamDict."""
 
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)

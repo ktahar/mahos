@@ -25,7 +25,7 @@ from mahos.msgs.inst.camera_msgs import FrameResult
 class ThorlabsCamera(Instrument):
     """Wrapper for Thorlabs Scientific Camera SDK.
 
-    You need following:
+    You need the following:
     1. Install SDK's Python wrapper library (thorlabs_tsi_sdk).
     2. Place SDK native DLLs somewhere.
 
@@ -383,18 +383,18 @@ class ThorlabsCamera(Instrument):
 class BaslerPylonCamera(Instrument):
     """Wrapper for Basler Pylon.
 
-    :param emulation: (default: False) use emulation mode.
+    :param emulation: (default: False) Use emulation mode.
     :type emulation: bool
-    :param trigger_source: (default: "Line1") trigger source line.
+    :param trigger_source: (default: "Line1") Trigger source line.
     :type trigger_source: str
-    :param trigger_wait_line: (default: "Line2") trigger wait line.
+    :param trigger_wait_line: (default: "Line2") Trigger wait line.
     :type trigger_wait_line: str
-    :param trigger_wait_invert: (default: False) set True to invert trigger wait polarity.
+    :param trigger_wait_invert: (default: False) Set True to invert trigger-wait polarity.
     :type trigger_wait_invert: bool
-    :param pixel_format: (default: "") the pixel format for camera acquisition.
-        Leave black to skip setting.
+    :param pixel_format: (default: "") The pixel format for camera acquisition.
+        Leave blank to skip setting.
     :type pixel_format: str
-    :param queue_size: (default: 8) size of the software frame queue.
+    :param queue_size: (default: 8) Size of the software frame queue.
     :type queue_size: int
 
     """

@@ -40,8 +40,8 @@ class GlobalParamsClient(StatusClient):
 class GlobalParams(Node):
     """Node to handle the global parameter dictionary (gparams).
 
-    A parameter is set by SetParamReq (set_param() method of the client).
-    Whole dictionary is distributed inside GlobalParamsStatus ('status' topic).
+    A parameter is set by SetParamReq (the client's ``set_param()`` method).
+    The whole dictionary is distributed in GlobalParamsStatus (``status`` topic).
 
     """
 

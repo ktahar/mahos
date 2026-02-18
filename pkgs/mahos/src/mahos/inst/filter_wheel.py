@@ -22,9 +22,9 @@ class Thorlabs_FW102(Instrument):
 
     You need to place the native (C) DLL somewhere.
 
-    :param dll_dir: The directory path containing DLL.
+    :param dll_dir: The directory path containing the DLL.
     :type dll_dir: str
-    :param dll_name: (default: FilterWheel102_win64.dll) The file name of DLL.
+    :param dll_name: (default: FilterWheel102_win64.dll) The file name of the DLL.
     :type dll_name: str
     :param serial: (default: "") Serial string to discriminate multiple wheels.
         Blank is fine if only one wheel is connected.

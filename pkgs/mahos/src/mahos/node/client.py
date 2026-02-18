@@ -45,8 +45,8 @@ def init_node_client(
 class HandlerWrapper(object):
     """Wrap custom handler along with the default handler.
 
-    Default handler just stores the latest message and provide get_latest_msg() function.
-    Other handler(s) can be added to custom the callback behaviour.
+    The default handler stores the latest message and provides ``get_latest_msg()``.
+    Additional handlers can be added to customize callback behavior.
 
     """
 
@@ -104,7 +104,7 @@ class SubWorker(object):
 
 
 class NodeClient(object):
-    """Client to use Node's function.
+    """Client for using a node's functions.
 
     :param gconf: global config dict.
     :param name: name of target node.
@@ -343,7 +343,7 @@ class StateClientMixin(object):
 
 
 class StateClient(StatusClient, StateClientMixin):
-    """Client for Stateful node.
+    """Client for a stateful node.
 
     Client with a subscriber to status (with state inside) and a requester.
 

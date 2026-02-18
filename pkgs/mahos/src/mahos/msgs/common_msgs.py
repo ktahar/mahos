@@ -66,9 +66,9 @@ class Message(object):
 class Reply(Message):
     """Generic reply message for requests.
 
-    :ivar success: requests are successful or not.
-    :ivar message: message from server (usually error message).
-    :ivar ret: return value.
+    :ivar success: Whether the request succeeded.
+    :ivar message: Message from the server (usually an error message).
+    :ivar ret: Return value.
 
     """
 
@@ -82,19 +82,19 @@ class Reply(Message):
 
 
 class Request(Message):
-    """Base class for Request to Node."""
+    """Base class for requests to a Node."""
 
     pass
 
 
 class Status(Message):
-    """Base class for Node Status."""
+    """Base class for node status."""
 
     pass
 
 
 class State(Message, enum.Enum):
-    """Base class for Node State."""
+    """Base class for node state."""
 
     pass
 

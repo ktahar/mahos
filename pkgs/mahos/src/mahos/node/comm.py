@@ -141,24 +141,25 @@ def null_handler(msg):
 
 
 class Context(object):
-    """The communication context for mahos Node.
+    """The communication context for mahos nodes.
 
     :param context: if passed, internal ZMQ context is shared.
     :param poll_timeout_ms: polling timeout in milliseconds.
 
     Current implementation is based on ZMQ.
 
-    The communications are divided into two classes:
+    Communication is divided into two classes:
     1. Inbound (rep, sub, broker)
     2. Outbound (req, pub)
 
-    On adding inbound communication, register a function `handler`.
-    The `handler` is called upon inbound message reception.
-    The poll() method does polling and handling of all registered inbound messages.
+    When adding inbound communication, register a function ``handler``.
+    The ``handler`` is called when an inbound message is received.
+    The ``poll()`` method polls and handles all registered inbound messages.
     (So, users don't have to care about it.)
 
-    By adding outbound communication, a sender object (Requester or Publisher) is returned.
-    Through the object, users can send the message (and get reply for Requester) on their timing.
+    When adding outbound communication, a sender object (Requester or Publisher) is returned.
+    Through that object, users can send messages
+    (and receive replies for Requester) at their own timing.
 
     Note that context itself is thread-safe, but derived objects (ZMQ sockets) are not.
     Let's consider a use case:

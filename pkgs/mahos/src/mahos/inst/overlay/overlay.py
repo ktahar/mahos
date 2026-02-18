@@ -17,20 +17,20 @@ from mahos.util.conv import args_to_list
 class InstrumentOverlay(Instrument):
     """Base class for InstrumentOverlay.
 
-    InstrumentOverlay provides a way to define `virtual instrument`
+    InstrumentOverlay provides a way to define a ``virtual instrument``
     that consists of multiple instruments.
-    The role is similar to meas layer; however,
-    overlay works on the same process / thread with each instrument.
-    Thus, procedures should be implemented as overlay
-    when it needs strictly synchronous behaviour or the best performance (in terms of latency).
-    It is also useful to define application-specific
-    parametrization or fundamental modification to an instrument.
+    The role is similar to the meas (measurement) layer nodes; however,
+    overlays run in the same process/thread as each instrument.
+    Thus, procedures should be implemented as overlays
+    when they need strictly synchronous behavior or the best performance (in terms of latency).
+    This is also useful for application-specific
+    parameterization or fundamental modification of an instrument.
 
-    InstOverlay is accessed by meas layer or custom codes
-    via same interface with instrument (usually via Instrument :term:`RPC`).
+    InstrumentOverlay is accessed by the measurement layer or custom code
+    through the same interface as an instrument (usually via instrument :term:`RPC`).
 
-    Instruments should be registered during initialization by
-    :meth:`add_instruments` in inherited classes.
+    Instruments should be registered during initialization
+    by calling :meth:`add_instruments` in inherited classes.
 
     """
 

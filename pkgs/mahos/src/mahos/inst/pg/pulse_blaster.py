@@ -44,9 +44,9 @@ class SpinCore_PulseBlasterESR_PRO(Instrument):
     :type freq: float
     :param max_instructions: (default: 4096) Max number of instructions. Depends on the board type.
     :type max_instructions: int
-    :param verbose: (default: False) Set True to log every instuctions.
+    :param verbose: (default: False) Set True to log every instruction.
     :type verbose: bool
-    :param sanity_check: (default: False) Set True do sanity check on BlockSeq fix.
+    :param sanity_check: (default: False) Set True to run a sanity check on BlockSeq fixing.
         Note that this can be very time-consuming for long pulse pattern.
     :type sanity_check: bool
 

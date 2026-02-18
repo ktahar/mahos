@@ -44,10 +44,10 @@ except (ImportError, KeyError):
 
 
 class Princeton_LightField(Instrument):
-    """Spectrometer using LightField Software from Princeton Instrument.
+    """Spectrometer using LightField software from Princeton Instruments.
 
     :param base_config: A base configuration (Experiment) name to load on init.
-    :param base_config: str | None
+    :type base_config: str | None
 
     """
 

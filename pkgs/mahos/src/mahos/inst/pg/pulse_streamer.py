@@ -21,23 +21,23 @@ class PulseStreamer(Instrument):
 
     :param channels: mapping from channel names to indices.
     :type channels: dict[str | bytes, int]
-    :param analog.channels: list of channel names to represent analog output
+    :param analog.channels: List of channel names used to represent analog output.
     :type analog.channels: list[str | bytes]
     :param analog.values: mapping from digital patterns to analog output values.
-        If this is defined, digital pattern can be given for analog.channels.
-        In such case, analog.channels outputs analog values after sparse D/A conversion.
+        If this is defined, a digital pattern can be given for ``analog.channels``.
+        In that case, ``analog.channels`` outputs analog values after sparse D/A conversion.
         {"00": [0.5, 0.5], "01": [-0.5, 0.0]} reads as follows.
         When analog.channels[0] is L and analog.channels[1] is L, output A0 = 0.5 V, A1 = 0.5 V.
         When analog.channels[0] is L and analog.channels[1] is H, output A0 = -0.5 V, A1 = 0.0 V.
-        It's also possible to use more than two channels though not very practical.
+        It is also possible to use more than two channels, though this is not very practical.
     :type analog.values: dict[str, tuple[float, float]]
-    :param ext_ref_clock: external reference clock source.
+    :param ext_ref_clock: External reference clock source.
         Set 10 for 10 MHz or 125 for 125 MHz.
-        All the other values are considered `disable` (internal clock source is used).
+        All other values are treated as disabled (the internal clock source is used).
     :type ext_ref_clock: int
     :param strict: (default: True) If True, check generated data strictly.
         Since offset will not be allowed in strict mode, the pulse pattern data must have
-        total length of integer multiple of 8 ns.
+        a total length that is an integer multiple of 8 ns.
     :type strict: bool
 
     """

@@ -82,9 +82,9 @@ class TweakSaver(NodeClient):
 
 
 class Tweaker(Node):
-    """Generic tweaker for manually-tunable Instrument's ParamDicts.
+    """Generic tweaker for manually tunable Instrument ParamDicts.
 
-    The instrument must provide ParamDict-based interface, i.e.,
+    The instrument must provide a ParamDict-based interface, i.e.,
     ``get_param_dict_labels()``, ``get_param_dict()``, and ``configure()``.
 
     :param target.servers: InstrumentServer targets (instrument name, server full name).

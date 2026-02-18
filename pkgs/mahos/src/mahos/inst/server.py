@@ -569,14 +569,14 @@ class InstrumentServer(Node):
     """Instrument RPC Server.
 
     Provides RPC services for instruments.
-    Communication is done by REQ/REP pattern.
+    Communication is done with the REQ/REP pattern.
     Multiple clients can use the resource.
     Each client can lock some instruments for exclusive procedure execution.
 
     An :class:`Instrument <mahos.inst.instrument.Instrument>` config is defined
-    under ``instrument`` dictionary in this node's conf.
-    The key of that is the instrument name, and value (dict) is instrument configuration.
-    Following three keys are given in value (dict).
+    under the ``instrument`` dictionary in this node's config.
+    The key is the instrument name, and the value (dict) is the instrument configuration.
+    The following three keys are used in each value dict.
 
     - ``module``: The module name holding the Instrument class.
       It must be an importable Python module, but leading ``mahos.inst.`` can be omitted
@@ -586,9 +586,9 @@ class InstrumentServer(Node):
       (this is optional, but usually necessary).
 
     An :class:`InstrumentOverlay <mahos.inst.overlay.overlay.InstrumentOverlay>` config is
-    defined under ``instrument_overlay`` dictionary in the conf.
-    The key of that is the overlay name, and value (dict) is overlay configuration.
-    Following three keys are given in value (dict).
+    defined under the ``instrument_overlay`` dictionary in the config.
+    The key is the overlay name, and the value (dict) is the overlay configuration.
+    The following three keys are used in each value dict.
 
     - ``module``: The module name holding the InstrumentOverlay class.
       It must be an importable Python module, but leading ``mahos.inst.overlay.`` can be omitted
@@ -597,8 +597,8 @@ class InstrumentServer(Node):
       The class must be an attribute of the ``module``.
     - ``conf``: The configuration dictionary for the InstrumentOverlay.
       If a value in this dictionary is a string starting with ``$``,
-      it is considered a reference to Instrument / InstrumentOverlay in this server.
-      The overlay receives resolved value, i.e., an Instrument / InstrumentOverlay instance
+      it is considered a reference to an Instrument/InstrumentOverlay in this server.
+      The overlay receives the resolved value, i.e., an Instrument/InstrumentOverlay instance
       instead of a string.
 
     :param instrument: Instrument class configuration mapping.

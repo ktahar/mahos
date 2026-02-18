@@ -462,13 +462,13 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.server.</span></span><span class="sig-name descname"><span class="pre">InstrumentServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.server.InstrumentServer" title="Link to this definition">#</a></dt>
 <dd><p>Instrument RPC Server.</p>
 <p>Provides RPC services for instruments.
-Communication is done by REQ/REP pattern.
+Communication is done with the REQ/REP pattern.
 Multiple clients can use the resource.
 Each client can lock some instruments for exclusive procedure execution.</p>
 <p>An <a class="reference internal" href="../Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instrument</span></code></a> config is defined
-under <code class="docutils literal notranslate"><span class="pre">instrument</span></code> dictionary in this node’s conf.
-The key of that is the instrument name, and value (dict) is instrument configuration.
-Following three keys are given in value (dict).</p>
+under the <code class="docutils literal notranslate"><span class="pre">instrument</span></code> dictionary in this node’s config.
+The key is the instrument name, and the value (dict) is the instrument configuration.
+The following three keys are used in each value dict.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">module</span></code>: The module name holding the Instrument class.
 It must be an importable Python module, but leading <code class="docutils literal notranslate"><span class="pre">mahos.inst.</span></code> can be omitted
@@ -478,9 +478,9 @@ if a submodule in <code class="docutils literal notranslate"><span class="pre">m
 (this is optional, but usually necessary).</p></li>
 </ul>
 <p>An <a class="reference internal" href="../InstrumentOverlay.html#mahos.inst.overlay.overlay.InstrumentOverlay" title="mahos.inst.overlay.overlay.InstrumentOverlay"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstrumentOverlay</span></code></a> config is
-defined under <code class="docutils literal notranslate"><span class="pre">instrument_overlay</span></code> dictionary in the conf.
-The key of that is the overlay name, and value (dict) is overlay configuration.
-Following three keys are given in value (dict).</p>
+defined under the <code class="docutils literal notranslate"><span class="pre">instrument_overlay</span></code> dictionary in the config.
+The key is the overlay name, and the value (dict) is the overlay configuration.
+The following three keys are used in each value dict.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">module</span></code>: The module name holding the InstrumentOverlay class.
 It must be an importable Python module, but leading <code class="docutils literal notranslate"><span class="pre">mahos.inst.overlay.</span></code> can be omitted
@@ -489,8 +489,8 @@ if a submodule in <code class="docutils literal notranslate"><span class="pre">m
 The class must be an attribute of the <code class="docutils literal notranslate"><span class="pre">module</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">conf</span></code>: The configuration dictionary for the InstrumentOverlay.
 If a value in this dictionary is a string starting with <code class="docutils literal notranslate"><span class="pre">$</span></code>,
-it is considered a reference to Instrument / InstrumentOverlay in this server.
-The overlay receives resolved value, i.e., an Instrument / InstrumentOverlay instance
+it is considered a reference to an Instrument/InstrumentOverlay in this server.
+The overlay receives the resolved value, i.e., an Instrument/InstrumentOverlay instance
 instead of a string.</p></li>
 </ul>
 <dl class="field-list simple">

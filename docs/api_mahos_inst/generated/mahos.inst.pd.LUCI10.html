@@ -473,7 +473,7 @@
 <dt class="sig sig-object py" id="mahos.inst.pd.LUCI10">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.pd.</span></span><span class="sig-name descname"><span class="pre">LUCI10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.pd.LUCI10" title="Link to this definition">#</a></dt>
 <dd><p>Wrapper for FEMTO Messtechnik LUCI-10 DLL.</p>
-<p>You need following:
+<p>You need the following:
 1. Install LUCI-10 software (you can skip LabVIEW driver installation).
 2. Place C DLL (C:Program Files (x86)FEMTOLUCI-10DriverLUCI_10_x64.dll) somewhere.</p>
 <dl class="field-list simple">
@@ -484,7 +484,7 @@
 <li><p><strong>id</strong> (<em>int</em>) – (default: -1) ID of LUCI-10 device.
 If valid value (0 &lt;= id &lt;= 255) is given, access the device via id instead of index.
 Because the id is persistent (it’s written in device’s EEPROM) and index is not,
-it would be better to use id instead of index when you have more than 2 LUCI-10s.</p></li>
+it is better to use id instead of index when you have more than two LUCI-10 devices.</p></li>
 </ul>
 </dd>
 </dl>

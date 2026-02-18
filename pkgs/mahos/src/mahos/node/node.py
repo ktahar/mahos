@@ -68,7 +68,7 @@ def infer_name(name_or_nodename: str, default_host="localhost") -> tuple[str, st
 
 
 class PickleableTomlDecoder(toml.TomlDecoder):
-    """TomlDecoder to fix issues of toml. https://github.com/uiri/toml/issues/362"""
+    """TomlDecoder workaround for a toml issue. https://github.com/uiri/toml/issues/362"""
 
     def get_empty_inline_table(self):
         return self.get_empty_table()
@@ -176,7 +176,7 @@ def get_value(gconf: dict, lconf: dict, key: str, default=None):
 
 
 class NodeBase(object):
-    """The base class for Nodes. Implements basics: configuration and name.
+    """The base class for nodes. Implements the basics: configuration and name.
 
     :param gconf: global config dict.
     :param name: name of this node.
@@ -237,11 +237,11 @@ def init_logger(gconf, my_name, log_name, context: Context):
 
 
 class Node(NodeBase):
-    """Node is the main type of Nodes that works in the loop and communicates each other.
+    """Node is the main node type that runs in a loop and communicates with other nodes.
 
-    Node implements main() function that is iterated until shutdown.
-    If loop should be at constant rate (i.e. not busy loop),
-    the rate management should be done inside main() function.
+    Node implements ``main()``, which is iterated until shutdown.
+    If the loop should run at a constant rate (i.e. not a busy loop),
+    rate management should be done inside ``main()``.
 
     :param gconf: global config dict.
     :param name: name of this node.

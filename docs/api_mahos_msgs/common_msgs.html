@@ -473,7 +473,7 @@ Override this method (and serialize()) to implement custom serialization.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos.msgs.common_msgs.Request">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.msgs.common_msgs.</span></span><span class="sig-name descname"><span class="pre">Request</span></span><a class="headerlink" href="#mahos.msgs.common_msgs.Request" title="Link to this definition">#</a></dt>
-<dd><p>Base class for Request to Node.</p>
+<dd><p>Base class for requests to a Node.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -483,9 +483,9 @@ Override this method (and serialize()) to implement custom serialization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>success</strong> – requests are successful or not.</p></li>
-<li><p><strong>message</strong> – message from server (usually error message).</p></li>
-<li><p><strong>ret</strong> – return value.</p></li>
+<li><p><strong>success</strong> – Whether the request succeeded.</p></li>
+<li><p><strong>message</strong> – Message from the server (usually an error message).</p></li>
+<li><p><strong>ret</strong> – Return value.</p></li>
 </ul>
 </dd>
 </dl>
@@ -494,13 +494,13 @@ Override this method (and serialize()) to implement custom serialization.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos.msgs.common_msgs.State">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.msgs.common_msgs.</span></span><span class="sig-name descname"><span class="pre">State</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names=&lt;not</span> <span class="pre">given&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.msgs.common_msgs.State" title="Link to this definition">#</a></dt>
-<dd><p>Base class for Node State.</p>
+<dd><p>Base class for node state.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos.msgs.common_msgs.Status">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.msgs.common_msgs.</span></span><span class="sig-name descname"><span class="pre">Status</span></span><a class="headerlink" href="#mahos.msgs.common_msgs.Status" title="Link to this definition">#</a></dt>
-<dd><p>Base class for Node Status.</p>
+<dd><p>Base class for node status.</p>
 </dd></dl>
 
 <dl class="py class">

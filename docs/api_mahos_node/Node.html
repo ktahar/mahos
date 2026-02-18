@@ -447,10 +447,10 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos.node.node.Node">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.node.node.</span></span><span class="sig-name descname"><span class="pre">Node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gconf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">NodeName</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="generated/mahos.node.comm.Context.html#mahos.node.comm.Context" title="mahos.node.comm.Context"><span class="pre">Context</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.node.node.Node" title="Link to this definition">#</a></dt>
-<dd><p>Node is the main type of Nodes that works in the loop and communicates each other.</p>
-<p>Node implements main() function that is iterated until shutdown.
-If loop should be at constant rate (i.e. not busy loop),
-the rate management should be done inside main() function.</p>
+<dd><p>Node is the main node type that runs in a loop and communicates with other nodes.</p>
+<p>Node implements <code class="docutils literal notranslate"><span class="pre">main()</span></code>, which is iterated until shutdown.
+If the loop should run at a constant rate (i.e. not a busy loop),
+rate management should be done inside <code class="docutils literal notranslate"><span class="pre">main()</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

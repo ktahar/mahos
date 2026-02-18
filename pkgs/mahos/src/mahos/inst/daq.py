@@ -99,7 +99,7 @@ def _data_transfer_of_str(mode: str) -> int:
 
 
 class ConfigurableTask(Instrument):
-    """Base class for configurable DAQ Tasks.
+    """Base class for configurable DAQ tasks.
 
     :ivar running: True when measurement is running.
     :ivar finite: True when configured as finite sampling task.
@@ -1260,7 +1260,7 @@ class BufferedEdgeCounter(ConfigurableTask):
 
 
 class SingleShotTask(Instrument):
-    """Base class for simple DAQ Task which won't need task stop/restart."""
+    """Base class for a simple DAQ task that does not need task stop/restart."""
 
     def __init__(self, name, conf, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)

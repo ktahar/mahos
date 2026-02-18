@@ -23,7 +23,7 @@ from mahos.gui.breeze_resources import dark
 
 
 class GUINode(NodeBase):
-    """GUINode is a variant of Nodes for Qt-based GUI frontends."""
+    """GUINode is a variant of Node for Qt-based GUI frontends."""
 
     def __init__(self, gconf: dict, name: NodeName, context: Context | None = None):
         NodeBase.__init__(self, gconf, name)

@@ -32,7 +32,7 @@ class StateManagerClient(StatusClient):
 
 
 class StateManager(Node):
-    """StateManager for meas nodes.
+    """StateManager for measurement nodes.
 
     :param node: Mapping from managed node name to state enum specification
         ``(module_path, class_name)``.

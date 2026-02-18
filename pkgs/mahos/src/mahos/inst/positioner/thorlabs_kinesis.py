@@ -40,7 +40,7 @@ except ImportError:
 class _Thorlabs_Kinesis(Instrument):
     """Base class for Thorlabs Kinesis.
 
-    Inherited class must define following methods.
+    An inherited class must define the following methods.
 
     - _device_prefix
     - _create_device

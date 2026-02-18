@@ -19,14 +19,14 @@ from mahos.msgs import param_msgs as P
 
 
 class PI_OneAxis_USB(Instrument):
-    """Base class for PI's One-Axis positioner with USB connection.
+    """Base class for PI's one-axis positioner with a USB connection.
 
     You need to install PI GCS software and pipython.
 
     :param dev: The device model number.
     :type dev: str
     :param mask: (default: dev) Mask string to discriminate multiple devices.
-        Blank will be fine if only one device is connected.
+        A blank mask is fine if only one device is connected.
     :type mask: str
     :param range: travel range. (lower, upper) bounds of the position.
     :type range: tuple[float, float]

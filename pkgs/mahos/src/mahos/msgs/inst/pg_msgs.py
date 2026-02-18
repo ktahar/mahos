@@ -884,9 +884,9 @@ class Blocks(UserList):
 class BlockSeq(Message):
     """Nestable and named sequence of Blocks.
 
-    Methods compatible with Blocks are implemented.
+    Methods compatible with ``Blocks`` are implemented.
     Blocks[Block] and BlockSeq are almost equivalent if BlockSeq contains Block only.
-    Blocks[Block] may be a bit handier if you don't need the nested repeat
+    Blocks[Block] may be a bit handier if you do not need nested repeats
     because it supports list-like operations.
 
     """

@@ -468,13 +468,13 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos.inst.tdc.MCS">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.tdc.</span></span><span class="sig-name descname"><span class="pre">MCS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.tdc.MCS" title="Link to this definition">#</a></dt>
-<dd><p>Wrapper Class of DMCSX.dll for Fast ComTec MCS6 / MCS8 Series.</p>
+<dd><p>Wrapper class for DMCSX.dll for Fast ComTec MCS6/MCS8 series.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>base_configs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Mapping from base config name to actual file name.
 Used in configure_base_range_bin() etc. See load_config() for details.</p></li>
-<li><p><strong>ext_ref_clock</strong> (<em>bool</em>) – use external reference clock source.</p></li>
+<li><p><strong>ext_ref_clock</strong> (<em>bool</em>) – Use an external reference clock source.</p></li>
 <li><p><strong>mcs_dir</strong> (<em>str</em>) – (default: “C:mcs8x64”) The directory containing mcs8 software.</p></li>
 <li><p><strong>raw_events_dir</strong> (<em>str</em>) – (default: mcs_dir) The directory to save RawEvents data.</p></li>
 <li><p><strong>remove_lst</strong> (<em>bool</em>) – (default: True) Remove .lst file after loading it.</p></li>
@@ -489,12 +489,12 @@ Set False if DLL is the original version.</p></li>
 </dl>
 <section id="dll-modifications">
 <h2>DLL Modifications<a class="headerlink" href="#dll-modifications" title="Link to this heading">#</a></h2>
-<p>We’ve made some modification on DMCSX.dll itself.</p>
+<p>We have made some modifications to DMCSX.dll itself.</p>
 <section id="runcmd">
 <h3>RunCmd<a class="headerlink" href="#runcmd" title="Link to this heading">#</a></h3>
-<p>In original code, return type was void.
-Fixed this function to return int.
-Return 0 on success and some negative values on error.</p>
+<p>In the original code, the return type was <code class="docutils literal notranslate"><span class="pre">void</span></code>.
+This function was fixed to return <code class="docutils literal notranslate"><span class="pre">int</span></code>.
+It returns 0 on success and negative values on error.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="mahos.inst.tdc.MCS.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.tdc.MCS.__init__" title="Link to this definition">#</a></dt>

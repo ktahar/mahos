@@ -471,21 +471,22 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos.inst.piezo.BasePiezo3Axes">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.piezo.</span></span><span class="sig-name descname"><span class="pre">BasePiezo3Axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.piezo.BasePiezo3Axes" title="Link to this definition">#</a></dt>
-<dd><p>Base Class for Piezo with 3 axes.</p>
-<p>Listed parameters (confs) are common for all the child classes.</p>
+<dd><p>Base class for a piezo stage with three axes.</p>
+<p>The listed parameters (configs) are common to all child classes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>transform</strong> (<em>list</em><em>[</em><em>list</em><em>[</em><em>float</em><em>]</em><em>]</em>) – (default: identity matrix) a 3x3 linear transformation matrix
 from (real) target coordinate to command-value coordinate.
-This is usable for tilt correction to compensate the cross-talks in piezo axes.</p></li>
+This can be used for tilt correction to compensate for cross-talk among piezo axes.</p></li>
 <li><p><strong>limit_um</strong> – (default: [[0.0, 100.0], [0.0, 100.0], [0.0, 100.0)]) limits of positions
 in command coordinate in the following format:
-[[Xmin, Xmax], [Ymin, Ymax], [Ymin, Ymax]].</p></li>
+[[Xmin, Xmax], [Ymin, Ymax], [Zmin, Zmax]].</p></li>
 <li><p><strong>range_um</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – travel ranges in target coordinate in the following format:
 [[xmin, xmax], [ymin, ymax], [zmin, zmax]].
-This should be identical to limit_um if transform is default (identity matrix), i.e.,
-the target corrdinate and the command-value coordinate are identical.</p></li>
+This should be identical to <code class="docutils literal notranslate"><span class="pre">limit_um</span></code> if <code class="docutils literal notranslate"><span class="pre">transform</span></code> is the default
+(identity matrix), i.e., the target coordinate and command-value coordinate are
+identical.</p></li>
 </ul>
 </dd>
 </dl>

@@ -26,9 +26,9 @@ class PUBHandler(logging.Handler):
 
     :param socket: a PUB socket already bound to interfaces.
 
-    Log messages handled by this handler are broadcast with a ZMQ topics
+    Log messages handled by this handler are broadcast with ZMQ topics
     `(self.root_topic->)loglevel(->additional_topic)`.
-    Here, loglevel is like DEBUG, INFO, WARN, etc.
+    Here, the log level is DEBUG, INFO, WARN, etc.
     The additional_topic can be included by submitting the log message like:
     log.info("additional_topic->real message")
 
@@ -156,7 +156,7 @@ class TopicLogger(logging.Logger):
 
 
 class DummyLogger(object):
-    """Dummy for logger. Just print to report the message."""
+    """Dummy logger. Just prints messages."""
 
     def __init__(self, name: str = ""):
         self.name = name
@@ -198,7 +198,7 @@ class DummyLogger(object):
 
 
 class NullLogger(DummyLogger):
-    """Dummy for logger. Silently discard debug / info messages."""
+    """Dummy logger. Silently discards debug/info messages."""
 
     def __init__(self, name: str = ""):
         self.name = name

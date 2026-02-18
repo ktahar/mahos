@@ -12,6 +12,6 @@ from mahos.msgs.common_msgs import Message
 
 
 class GetResult(Message):
-    """Base class for Result of Get Request."""
+    """Base class for results of get requests."""
 
     pass

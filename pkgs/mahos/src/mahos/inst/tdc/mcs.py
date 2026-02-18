@@ -28,12 +28,12 @@ def c_str(s: str) -> C.c_char_p:
 
 
 class MCS(Instrument):
-    """Wrapper Class of DMCSX.dll for Fast ComTec MCS6 / MCS8 Series.
+    """Wrapper class for DMCSX.dll for Fast ComTec MCS6/MCS8 series.
 
     :param base_configs: Mapping from base config name to actual file name.
         Used in configure_base_range_bin() etc. See load_config() for details.
     :type base_configs: dict[str, str]
-    :param ext_ref_clock: use external reference clock source.
+    :param ext_ref_clock: Use an external reference clock source.
     :type ext_ref_clock: bool
     :param mcs_dir: (default: "C:\\mcs8x64") The directory containing mcs8 software.
     :type mcs_dir: str
@@ -52,14 +52,14 @@ class MCS(Instrument):
     DLL Modifications
     =================
 
-    We've made some modification on DMCSX.dll itself.
+    We have made some modifications to DMCSX.dll itself.
 
     RunCmd
     ------
 
-    In original code, return type was void.
-    Fixed this function to return int.
-    Return 0 on success and some negative values on error.
+    In the original code, the return type was ``void``.
+    This function was fixed to return ``int``.
+    It returns 0 on success and negative values on error.
 
     """
 

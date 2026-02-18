@@ -16,7 +16,7 @@ from mahos.msgs.common_msgs import Message
 
 
 class PulsePattern(Message):
-    """Pulse Pattern message for visualization / debug."""
+    """Pulse pattern message for visualization/debug."""
 
     def __init__(
         self,

@@ -461,18 +461,18 @@
 <dt class="sig sig-object py" id="mahos.inst.overlay.overlay.InstrumentOverlay">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.overlay.overlay.</span></span><span class="sig-name descname"><span class="pre">InstrumentOverlay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.overlay.overlay.InstrumentOverlay" title="Link to this definition">#</a></dt>
 <dd><p>Base class for InstrumentOverlay.</p>
-<p>InstrumentOverlay provides a way to define <cite>virtual instrument</cite>
+<p>InstrumentOverlay provides a way to define a <code class="docutils literal notranslate"><span class="pre">virtual</span> <span class="pre">instrument</span></code>
 that consists of multiple instruments.
-The role is similar to meas layer; however,
-overlay works on the same process / thread with each instrument.
-Thus, procedures should be implemented as overlay
-when it needs strictly synchronous behaviour or the best performance (in terms of latency).
-It is also useful to define application-specific
-parametrization or fundamental modification to an instrument.</p>
-<p>InstOverlay is accessed by meas layer or custom codes
-via same interface with instrument (usually via Instrument <a class="reference internal" href="../glossary.html#term-RPC"><span class="xref std std-term">RPC</span></a>).</p>
-<p>Instruments should be registered during initialization by
-<a class="reference internal" href="#mahos.inst.overlay.overlay.InstrumentOverlay.add_instruments" title="mahos.inst.overlay.overlay.InstrumentOverlay.add_instruments"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_instruments()</span></code></a> in inherited classes.</p>
+The role is similar to the meas (measurement) layer nodes; however,
+overlays run in the same process/thread as each instrument.
+Thus, procedures should be implemented as overlays
+when they need strictly synchronous behavior or the best performance (in terms of latency).
+This is also useful for application-specific
+parameterization or fundamental modification of an instrument.</p>
+<p>InstrumentOverlay is accessed by the measurement layer or custom code
+through the same interface as an instrument (usually via instrument <a class="reference internal" href="../glossary.html#term-RPC"><span class="xref std std-term">RPC</span></a>).</p>
+<p>Instruments should be registered during initialization
+by calling <a class="reference internal" href="#mahos.inst.overlay.overlay.InstrumentOverlay.add_instruments" title="mahos.inst.overlay.overlay.InstrumentOverlay.add_instruments"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_instruments()</span></code></a> in inherited classes.</p>
 </dd></dl>
 
 <p>InstrumentOverlay is subclass of <a class="reference internal" href="Instrument.html#mahos.inst.instrument.Instrument" title="mahos.inst.instrument.Instrument"><code class="xref py py-class docutils literal notranslate"><span class="pre">mahos.inst.instrument.Instrument</span></code></a>.

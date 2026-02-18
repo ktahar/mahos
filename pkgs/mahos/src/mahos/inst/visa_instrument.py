@@ -13,7 +13,7 @@ from mahos.inst.instrument import Instrument
 
 
 class VisaInstrument(Instrument):
-    """Base class for visa instrument. Implements common visa set/query commands."""
+    """Base class for VISA instruments. Implements common VISA set/query commands."""
 
     def __init__(self, name, conf, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)

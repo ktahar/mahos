@@ -264,7 +264,7 @@ class LockinAnalogPD(AnalogIn):
 class LUCI10(Instrument):
     """Wrapper for FEMTO Messtechnik LUCI-10 DLL.
 
-    You need following:
+    You need the following:
     1. Install LUCI-10 software (you can skip LabVIEW driver installation).
     2. Place C DLL (C:\\Program Files (x86)\\FEMTO\\LUCI-10\\Driver\\LUCI_10_x64.dll) somewhere.
 
@@ -275,7 +275,7 @@ class LUCI10(Instrument):
     :param id: (default: -1) ID of LUCI-10 device.
         If valid value (0 <= id <= 255) is given, access the device via id instead of index.
         Because the id is persistent (it's written in device's EEPROM) and index is not,
-        it would be better to use id instead of index when you have more than 2 LUCI-10s.
+        it is better to use id instead of index when you have more than two LUCI-10 devices.
     :type id: int
 
     """

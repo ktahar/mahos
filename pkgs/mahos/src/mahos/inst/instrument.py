@@ -16,9 +16,9 @@ from mahos.msgs import param_msgs as P
 
 
 class Instrument(object):
-    """Base class for Instrument.
+    """Base class for instruments.
 
-    :param conf: instrument's local config. if None, empty dict is set.
+    :param conf: instrument's local config. If None, an empty dict is set.
 
     :ivar conf: instrument's local config.
     :ivar logger: configured logger.

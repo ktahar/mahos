@@ -169,9 +169,10 @@ class BasicMeasClient(BasicMeasClientBase, BaseMeasClientMixin, BasicMeasReqMixi
 
 
 class BasicMeasNode(Node):
-    """Base Implementation for Basic Meas Nodes (Node with the BinaryState, Data, and Buffer).
+    """Base implementation for basic measurement nodes (a node with BinaryState, Data, and Buffer).
 
-    implements initialization (client and communication), change_state() and get_param_dict().
+    Implements initialization (clients and communication), ``change_state()``,
+    and ``get_param_dict()``.
 
     :param target.servers: InstrumentServer targets (instrument name -> server full name).
     :type target.servers: dict[str, str]

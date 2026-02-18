@@ -237,7 +237,7 @@ def log_broker_is_up(gconf: dict, name: NodeName) -> bool:
 
 
 class LogBroker(Node):
-    """Broker Node for logs.
+    """Log broker node.
 
     :param xpub_endpoint: XPUB endpoint address for log subscribers.
     :type xpub_endpoint: str

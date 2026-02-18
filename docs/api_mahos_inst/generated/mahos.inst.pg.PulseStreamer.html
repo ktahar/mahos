@@ -478,20 +478,20 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>channels</strong> (<em>dict</em><em>[</em><em>str</em><em> | </em><em>bytes</em><em>, </em><em>int</em><em>]</em>) – mapping from channel names to indices.</p></li>
-<li><p><strong>analog.channels</strong> (<em>list</em><em>[</em><em>str</em><em> | </em><em>bytes</em><em>]</em>) – list of channel names to represent analog output</p></li>
+<li><p><strong>analog.channels</strong> (<em>list</em><em>[</em><em>str</em><em> | </em><em>bytes</em><em>]</em>) – List of channel names used to represent analog output.</p></li>
 <li><p><strong>analog.values</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>]</em>) – mapping from digital patterns to analog output values.
-If this is defined, digital pattern can be given for analog.channels.
-In such case, analog.channels outputs analog values after sparse D/A conversion.
+If this is defined, a digital pattern can be given for <code class="docutils literal notranslate"><span class="pre">analog.channels</span></code>.
+In that case, <code class="docutils literal notranslate"><span class="pre">analog.channels</span></code> outputs analog values after sparse D/A conversion.
 {“00”: [0.5, 0.5], “01”: [-0.5, 0.0]} reads as follows.
 When analog.channels[0] is L and analog.channels[1] is L, output A0 = 0.5 V, A1 = 0.5 V.
 When analog.channels[0] is L and analog.channels[1] is H, output A0 = -0.5 V, A1 = 0.0 V.
-It’s also possible to use more than two channels though not very practical.</p></li>
-<li><p><strong>ext_ref_clock</strong> (<em>int</em>) – external reference clock source.
+It is also possible to use more than two channels, though this is not very practical.</p></li>
+<li><p><strong>ext_ref_clock</strong> (<em>int</em>) – External reference clock source.
 Set 10 for 10 MHz or 125 for 125 MHz.
-All the other values are considered <cite>disable</cite> (internal clock source is used).</p></li>
+All other values are treated as disabled (the internal clock source is used).</p></li>
 <li><p><strong>strict</strong> (<em>bool</em>) – (default: True) If True, check generated data strictly.
 Since offset will not be allowed in strict mode, the pulse pattern data must have
-total length of integer multiple of 8 ns.</p></li>
+a total length that is an integer multiple of 8 ns.</p></li>
 </ul>
 </dd>
 </dl>

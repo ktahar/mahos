@@ -16,7 +16,7 @@ from mahos.msgs.data_msgs import Message, Data
 
 
 class ChannelStatus(Message):
-    """Status of a (stop) channel.
+    """Status of a stop channel.
 
     :ivar running: Measurement is running.
     :ivar runtime: Measurement runtime in sec.
