@@ -9,6 +9,19 @@ After installing the mahos package, a command named ``mahos`` is installed.
 This command serves as a command line interface (CLI) to use mahos.
 The ``mahos`` CLI provides several sub-commands described below.
 
+Shell completion
+----------------
+
+The ``mahos`` CLI supports shell completion via ``argcomplete`` for bash and zsh.
+
+Enable completion in the current shell session:
+
+.. code-block:: bash
+
+   eval "$(register-python-argcomplete mahos)"
+
+To enable persistently, add the same line to ``~/.bashrc`` or ``~/.zshrc``.
+
 Node operations
 ---------------
 

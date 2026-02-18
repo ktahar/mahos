@@ -419,6 +419,15 @@
 <p>After installing the mahos package, a command named <code class="docutils literal notranslate"><span class="pre">mahos</span></code> is installed.
 This command serves as a command line interface (CLI) to use mahos.
 The <code class="docutils literal notranslate"><span class="pre">mahos</span></code> CLI provides several sub-commands described below.</p>
+<section id="shell-completion">
+<h2>Shell completion<a class="headerlink" href="#shell-completion" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">mahos</span></code> CLI supports shell completion via <code class="docutils literal notranslate"><span class="pre">argcomplete</span></code> for bash and zsh.</p>
+<p>Enable completion in the current shell session:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>register-python-argcomplete<span class="w"> </span>mahos<span class="k">)</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>To enable persistently, add the same line to <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code> or <code class="docutils literal notranslate"><span class="pre">~/.zshrc</span></code>.</p>
+</section>
 <section id="node-operations">
 <h2>Node operations<a class="headerlink" href="#node-operations" title="Link to this heading">#</a></h2>
 <section id="common-arguments">
@@ -547,6 +556,7 @@ For each client, <code class="docutils literal notranslate"><span class="pre">cl
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#shell-completion">Shell completion</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#node-operations">Node operations</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#common-arguments">Common arguments</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#c-config-file">-c [config file]</a></li>
