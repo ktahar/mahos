@@ -299,6 +299,13 @@ class LogBroker(Node):
             self.file_logger.write("# {}\n".format(line))
 
     def log_mahos_runtime_info(self):
+        """Log mahos runtime info to stdout and file (if enabled).
+
+        self.logger.info() is not used here because the messages can be dropped
+        if they are emitted in constructor.
+
+        """
+
         info = get_mahos_runtime_info()
         warn_msg, info_msg = self._build_runtime_info_messages(info)
         if warn_msg is not None:

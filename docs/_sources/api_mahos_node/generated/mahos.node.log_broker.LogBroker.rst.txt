@@ -18,6 +18,7 @@
    
       ~LogBroker.__init__
       ~LogBroker.close_resources
+      ~LogBroker.log_mahos_runtime_info
       ~LogBroker.xsub_handler
    
    

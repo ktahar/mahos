@@ -15,6 +15,8 @@ Added
   (SRS_SG390 and Windfreak_SynthHD), and PI positioner.
 - msgs.param_msgs: add ``read_only`` option for parameters.
 - ODMR: add ``point`` conf for per-point data update.
+- version: LogBroker now prints and writes mahos's runtime version info.
+- cli: completion feature using argcomplete
 
 Changed
 ^^^^^^^
@@ -28,13 +30,19 @@ Changed
   and ``infinite_wait`` configuration.
 - IV (SMU-based implementation): moved to examples for manual / scripted usage.
 - inst.smu: rename parameter ``logx`` to ``log``.
+- Internal Python API cleanup: standardized ``filename`` to ``file_name`` in Tweaker /
+  PosTweaker save-load paths and related request message attributes.
+- inst.sg.DS_SG: add standard ``start()`` / ``stop()`` handling for point-trigger sweep;
+  iodmr worker now uses these APIs.
 - Dependencies and development environment updates (including Python/scipy stack related
-  updates and pyzmq/msgpack version refresh). Now using numpy 2.
+  updates and pyzmq/msgpack version refresh). Now using Numpy 2.
 
 Fixed
 ^^^^^
 
 - InstrumentServer: improve error message for module import failures.
+- qdyne_worker (Windows): when a Qt binding is already loaded, skip C-extension import
+  to avoid Qt / extension import-order crashes.
 - GUI stability and usability improvements across camera / IODMR / ODMR / SPODMR /
   spectroscopy / pos_tweaker (ROI limits, empty/NaN handling, control states).
 

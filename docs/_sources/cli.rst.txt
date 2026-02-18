@@ -9,6 +9,8 @@ After installing the mahos package, a command named ``mahos`` is installed.
 This command serves as a command line interface (CLI) to use mahos.
 The ``mahos`` CLI provides several sub-commands described below.
 
+.. _mahos shell completion:
+
 Shell completion
 ----------------
 

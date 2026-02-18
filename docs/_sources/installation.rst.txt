@@ -111,7 +111,7 @@ mahos
 
 Here, ``-e`` (editable) is optional but recommended.
 Runtime requirements in ``requirements.txt`` are installed by this command.
-This includes ``argcomplete``, which is used for bash/zsh CLI completion.
+This includes ``argcomplete``, which is used for :ref:`bash/zsh CLI completion <mahos shell completion>`.
 
 Dev requirements
 ................
