@@ -526,7 +526,14 @@ class IODMRMainWindow(ClientMainWindow):
 
 
 class IODMRGUI(GUINode):
-    """GUINode for IODMR using IODMRWidget."""
+    """GUINode for IODMR using IODMRWidget.
+
+    :param target.iodmr: Target IODMR node full name.
+    :type target.iodmr: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         target = local_conf(gconf, name)["target"]

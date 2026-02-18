@@ -284,7 +284,14 @@ class BasicMeasMainWindow(QtWidgets.QMainWindow):
 
 
 class BasicMeasGUI(GUINode):
-    """GUINode for BasicMeasNode using BasicMeasWidget."""
+    """GUINode for BasicMeasNode using BasicMeasWidget.
+
+    :param target.meas: Target BasicMeas node full name.
+    :type target.meas: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         return BasicMeasMainWindow(gconf, name, context)

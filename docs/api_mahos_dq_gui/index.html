@@ -44,7 +44,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_dq_gui/index';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="mahos_dq.gui.confocal.ConfocalWidget" href="generated/mahos_dq.gui.confocal.ConfocalWidget.html" />
+    <link rel="next" title="mahos_dq.gui.confocal.ConfocalGUI" href="generated/mahos_dq.gui.confocal.ConfocalGUI.html" />
     <link rel="prev" title="mahos_dq.meas.spectroscopy.SpectroscopyIO" href="../api_mahos_dq_meas/SpectroscopyIO.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -370,27 +370,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../api_mahos_dq_inst/index.html">mahos_dq.inst</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api_mahos_dq_meas/index.html">mahos_dq.meas</a></li>
 <li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">mahos_dq.gui</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.confocal.ConfocalWidget.html">mahos_dq.gui.confocal.ConfocalWidget</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.confocal.traceView.html">mahos_dq.gui.confocal.traceView</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.confocal.ConfocalMainWindow.html">mahos_dq.gui.confocal.ConfocalMainWindow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.confocal.ConfocalGUI.html">mahos_dq.gui.confocal.ConfocalGUI</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.odmr.ODMRWidget.html">mahos_dq.gui.odmr.ODMRWidget</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.odmr.ODMRMainWindow.html">mahos_dq.gui.odmr.ODMRMainWindow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.odmr.ODMRGUI.html">mahos_dq.gui.odmr.ODMRGUI</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.podmr.PODMRWidget.html">mahos_dq.gui.podmr.PODMRWidget</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.podmr.PODMRMainWindow.html">mahos_dq.gui.podmr.PODMRMainWindow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.podmr.PODMRGUI.html">mahos_dq.gui.podmr.PODMRGUI</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.spodmr.SPODMRWidget.html">mahos_dq.gui.spodmr.SPODMRWidget</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.spodmr.SPODMRMainWindow.html">mahos_dq.gui.spodmr.SPODMRMainWindow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.spodmr.SPODMRGUI.html">mahos_dq.gui.spodmr.SPODMRGUI</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.iodmr.IODMRWidget.html">mahos_dq.gui.iodmr.IODMRWidget</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.iodmr.IODMRMainWindow.html">mahos_dq.gui.iodmr.IODMRMainWindow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.iodmr.IODMRGUI.html">mahos_dq.gui.iodmr.IODMRGUI</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.hbt.HBTWidget.html">mahos_dq.gui.hbt.HBTWidget</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.hbt.HBTMainWindow.html">mahos_dq.gui.hbt.HBTMainWindow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.hbt.HBTGUI.html">mahos_dq.gui.hbt.HBTGUI</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.spectroscopy.SpectroscopyWidget.html">mahos_dq.gui.spectroscopy.SpectroscopyWidget</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.spectroscopy.SpectroscopyMainWindow.html">mahos_dq.gui.spectroscopy.SpectroscopyMainWindow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/mahos_dq.gui.spectroscopy.SpectroscopyGUI.html">mahos_dq.gui.spectroscopy.SpectroscopyGUI</a></li>
 </ul>
 </details></li>
@@ -459,70 +444,25 @@
 <p>The mahos_dq.gui package implements Qt-based GUI for mahos_dq.meas.</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.confocal.ConfocalWidget.html#mahos_dq.gui.confocal.ConfocalWidget" title="mahos_dq.gui.confocal.ConfocalWidget"><code class="xref py py-obj docutils literal notranslate"><span class="pre">confocal.ConfocalWidget</span></code></a>(gconf, name, ...[, ...])</p></td>
-<td><p>Main widget for Confocal (scan and interact)</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.confocal.traceView.html#mahos_dq.gui.confocal.traceView" title="mahos_dq.gui.confocal.traceView"><code class="xref py py-obj docutils literal notranslate"><span class="pre">confocal.traceView</span></code></a>(gconf, name, ...[, cli, ...])</p></td>
-<td><p>Widget for Confocal trace view.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.confocal.ConfocalMainWindow.html#mahos_dq.gui.confocal.ConfocalMainWindow" title="mahos_dq.gui.confocal.ConfocalMainWindow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">confocal.ConfocalMainWindow</span></code></a>(gconf, name, context)</p></td>
-<td><p>MainWindow with ConfocalWidget and traceView.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.confocal.ConfocalGUI.html#mahos_dq.gui.confocal.ConfocalGUI" title="mahos_dq.gui.confocal.ConfocalGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">confocal.ConfocalGUI</span></code></a>(gconf, name[, context])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.confocal.ConfocalGUI.html#mahos_dq.gui.confocal.ConfocalGUI" title="mahos_dq.gui.confocal.ConfocalGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">confocal.ConfocalGUI</span></code></a>(gconf, name[, context])</p></td>
 <td><p>GUINode for Confocal using ConfocalMainWindow.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.odmr.ODMRWidget.html#mahos_dq.gui.odmr.ODMRWidget" title="mahos_dq.gui.odmr.ODMRWidget"><code class="xref py py-obj docutils literal notranslate"><span class="pre">odmr.ODMRWidget</span></code></a>(gconf, name, gparams_name, ...)</p></td>
-<td><p>Widget for ODMR.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.odmr.ODMRMainWindow.html#mahos_dq.gui.odmr.ODMRMainWindow" title="mahos_dq.gui.odmr.ODMRMainWindow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">odmr.ODMRMainWindow</span></code></a>(gconf, name, context[, ...])</p></td>
-<td><p>MainWindow with ODMRWidget and PlotWidget.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.odmr.ODMRGUI.html#mahos_dq.gui.odmr.ODMRGUI" title="mahos_dq.gui.odmr.ODMRGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">odmr.ODMRGUI</span></code></a>(gconf, name[, context])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.odmr.ODMRGUI.html#mahos_dq.gui.odmr.ODMRGUI" title="mahos_dq.gui.odmr.ODMRGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">odmr.ODMRGUI</span></code></a>(gconf, name[, context])</p></td>
 <td><p>GUINode for ODMR using ODMRWidget.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.podmr.PODMRWidget.html#mahos_dq.gui.podmr.PODMRWidget" title="mahos_dq.gui.podmr.PODMRWidget"><code class="xref py py-obj docutils literal notranslate"><span class="pre">podmr.PODMRWidget</span></code></a>(gconf, name, gparams_name, ...)</p></td>
-<td><p>Widget for Pulse ODMR.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.podmr.PODMRMainWindow.html#mahos_dq.gui.podmr.PODMRMainWindow" title="mahos_dq.gui.podmr.PODMRMainWindow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">podmr.PODMRMainWindow</span></code></a>(gconf, name, context)</p></td>
-<td><p>MainWindow with PODMRWidget and PlotWidget.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.podmr.PODMRGUI.html#mahos_dq.gui.podmr.PODMRGUI" title="mahos_dq.gui.podmr.PODMRGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">podmr.PODMRGUI</span></code></a>(gconf, name[, context])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.podmr.PODMRGUI.html#mahos_dq.gui.podmr.PODMRGUI" title="mahos_dq.gui.podmr.PODMRGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">podmr.PODMRGUI</span></code></a>(gconf, name[, context])</p></td>
 <td><p>GUINode for Pulse ODMR using PODMRWidget.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.spodmr.SPODMRWidget.html#mahos_dq.gui.spodmr.SPODMRWidget" title="mahos_dq.gui.spodmr.SPODMRWidget"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spodmr.SPODMRWidget</span></code></a>(gconf, name, ...[, parent])</p></td>
-<td><p>Widget for Pulse ODMR with Slow detectors.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.spodmr.SPODMRMainWindow.html#mahos_dq.gui.spodmr.SPODMRMainWindow" title="mahos_dq.gui.spodmr.SPODMRMainWindow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spodmr.SPODMRMainWindow</span></code></a>(gconf, name, context)</p></td>
-<td><p>MainWindow with SPODMRWidget and PlotWidget.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.spodmr.SPODMRGUI.html#mahos_dq.gui.spodmr.SPODMRGUI" title="mahos_dq.gui.spodmr.SPODMRGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spodmr.SPODMRGUI</span></code></a>(gconf, name[, context])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.spodmr.SPODMRGUI.html#mahos_dq.gui.spodmr.SPODMRGUI" title="mahos_dq.gui.spodmr.SPODMRGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spodmr.SPODMRGUI</span></code></a>(gconf, name[, context])</p></td>
 <td><p>GUINode for Pulse ODMR with Slow detectors using SPODMRWidget.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.iodmr.IODMRWidget.html#mahos_dq.gui.iodmr.IODMRWidget" title="mahos_dq.gui.iodmr.IODMRWidget"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iodmr.IODMRWidget</span></code></a>([parent])</p></td>
-<td><p>Central widget (parameter setting and commanding) for IODMR.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.iodmr.IODMRMainWindow.html#mahos_dq.gui.iodmr.IODMRMainWindow" title="mahos_dq.gui.iodmr.IODMRMainWindow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iodmr.IODMRMainWindow</span></code></a>(gconf, name, ...[, parent])</p></td>
-<td><p>MainWindow with ConfocalWidget and traceView.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.iodmr.IODMRGUI.html#mahos_dq.gui.iodmr.IODMRGUI" title="mahos_dq.gui.iodmr.IODMRGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iodmr.IODMRGUI</span></code></a>(gconf, name[, context])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.iodmr.IODMRGUI.html#mahos_dq.gui.iodmr.IODMRGUI" title="mahos_dq.gui.iodmr.IODMRGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iodmr.IODMRGUI</span></code></a>(gconf, name[, context])</p></td>
 <td><p>GUINode for IODMR using IODMRWidget.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.hbt.HBTWidget.html#mahos_dq.gui.hbt.HBTWidget" title="mahos_dq.gui.hbt.HBTWidget"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hbt.HBTWidget</span></code></a>(gconf, name, gparams_name, ...)</p></td>
-<td><p>Control widget for HBT.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.hbt.HBTMainWindow.html#mahos_dq.gui.hbt.HBTMainWindow" title="mahos_dq.gui.hbt.HBTMainWindow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hbt.HBTMainWindow</span></code></a>(gconf, name, context[, parent])</p></td>
-<td><p>MainWindow with HBTWidget and PlotWidget.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.hbt.HBTGUI.html#mahos_dq.gui.hbt.HBTGUI" title="mahos_dq.gui.hbt.HBTGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hbt.HBTGUI</span></code></a>(gconf, name[, context])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.hbt.HBTGUI.html#mahos_dq.gui.hbt.HBTGUI" title="mahos_dq.gui.hbt.HBTGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hbt.HBTGUI</span></code></a>(gconf, name[, context])</p></td>
 <td><p>GUINode for HBT using HBTWidget.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.spectroscopy.SpectroscopyWidget.html#mahos_dq.gui.spectroscopy.SpectroscopyWidget" title="mahos_dq.gui.spectroscopy.SpectroscopyWidget"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spectroscopy.SpectroscopyWidget</span></code></a>(gconf, name, ...)</p></td>
-<td><p>Control widget for Spectroscopy.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.spectroscopy.SpectroscopyMainWindow.html#mahos_dq.gui.spectroscopy.SpectroscopyMainWindow" title="mahos_dq.gui.spectroscopy.SpectroscopyMainWindow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spectroscopy.SpectroscopyMainWindow</span></code></a>(gconf, ...)</p></td>
-<td><p>MainWindow with SpectroscopyWidget and PlotWidget.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos_dq.gui.spectroscopy.SpectroscopyGUI.html#mahos_dq.gui.spectroscopy.SpectroscopyGUI" title="mahos_dq.gui.spectroscopy.SpectroscopyGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spectroscopy.SpectroscopyGUI</span></code></a>(gconf, name[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos_dq.gui.spectroscopy.SpectroscopyGUI.html#mahos_dq.gui.spectroscopy.SpectroscopyGUI" title="mahos_dq.gui.spectroscopy.SpectroscopyGUI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">spectroscopy.SpectroscopyGUI</span></code></a>(gconf, name[, ...])</p></td>
 <td><p>GUINode for Spectroscopy using SpectroscopyWidget.</p></td>
 </tr>
 </tbody>
@@ -550,11 +490,11 @@
       </div>
     </a>
     <a class="right-next"
-       href="generated/mahos_dq.gui.confocal.ConfocalWidget.html"
+       href="generated/mahos_dq.gui.confocal.ConfocalGUI.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">mahos_dq.gui.confocal.ConfocalWidget</p>
+        <p class="prev-next-title">mahos_dq.gui.confocal.ConfocalGUI</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

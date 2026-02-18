@@ -482,7 +482,16 @@ class SpectroscopyMainWindow(QtWidgets.QMainWindow):
 
 
 class SpectroscopyGUI(GUINode):
-    """GUINode for Spectroscopy using SpectroscopyWidget."""
+    """GUINode for Spectroscopy using SpectroscopyWidget.
+
+    :param target.spectroscopy: Target Spectroscopy node full name.
+    :type target.spectroscopy: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+    :param target.confocal: Optional Confocal node used for view export on save.
+    :type target.confocal: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         return SpectroscopyMainWindow(gconf, name, context)

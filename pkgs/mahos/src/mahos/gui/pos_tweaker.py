@@ -92,7 +92,7 @@ class AxisWidgets(object):
 class PosTweakerWidget(ClientTopWidget):
     """Top widget for PosTweakerGUI"""
 
-    def __init__(self, gconf: dict, name, gparams_name, verbose, fontsize, decimals, context):
+    def __init__(self, gconf: dict, name, gparams_name, fontsize, decimals, context):
         ClientTopWidget.__init__(self)
         self.setWindowTitle(f"MAHOS.PosTweakerGUI ({join_name(name)})")
 
@@ -293,14 +293,24 @@ class PosTweakerWidget(ClientTopWidget):
 
 
 class PosTweakerGUI(GUINode):
-    """GUINode for PosTweakerWidget."""
+    """GUINode for PosTweakerWidget.
+
+    :param target.pos_tweaker: Target PosTweaker node full name.
+    :type target.pos_tweaker: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+    :param fontsize: Font size for axis labels and operation buttons.
+    :type fontsize: int
+    :param decimals: Number of decimal digits for target and step spin boxes.
+    :type decimals: int
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         lconf = local_conf(gconf, name)
         target = lconf["target"]
-        verbose = lconf.get("verbose", True)
         fontsize = lconf.get("fontsize", 26)
         decimals = lconf.get("decimals", 3)
         return PosTweakerWidget(
-            gconf, target["pos_tweaker"], target["gparams"], verbose, fontsize, decimals, context
+            gconf, target["pos_tweaker"], target["gparams"], fontsize, decimals, context
         )

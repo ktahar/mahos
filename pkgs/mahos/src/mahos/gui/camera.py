@@ -207,7 +207,14 @@ class CameraWidget(ClientTopWidget, Ui_Camera):
 
 
 class CameraGUI(GUINode):
-    """GUINode for Camera using CameraWidget."""
+    """GUINode for Camera using CameraWidget.
+
+    :param target.camera: Target Camera node full name.
+    :type target.camera: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         target = local_conf(gconf, name)["target"]

@@ -2423,7 +2423,7 @@ class ConfocalMainWindow(QtWidgets.QMainWindow):
             lconf.get("key_move_step_fine", 0.02),
             lconf.get("key_move_step_coarse", 0.10),
         )
-        move_interval_ms = lconf.get("move_interval_ms", 0)
+        move_interval_ms = lconf.get("move_interval_ms", 10)
 
         self.confocal = ConfocalWidget(
             gconf,
@@ -2528,14 +2528,41 @@ class TraceWidget(QtWidgets.QWidget):
 
 
 class ConfocalGUI(GUINode):
-    """GUINode for Confocal using ConfocalMainWindow."""
+    """GUINode for Confocal using ConfocalMainWindow.
+
+    :param target.confocal: Target Confocal node full name.
+    :type target.confocal: tuple[str, str] | str
+    :param target.tracker: Target ConfocalTracker node full name.
+    :type target.tracker: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+    :param style: Optional style overrides for scan image rendering.
+    :type style: dict
+    :param invert: Optional per-axis inversion flags for XY/XZ/YZ views.
+    :type invert: tuple[bool, bool, bool]
+    :param key_move_step_fine: Keyboard move step used with Shift+arrow.
+    :type key_move_step_fine: float
+    :param key_move_step_coarse: Keyboard move step used with Ctrl+arrow.
+    :type key_move_step_coarse: float
+    :param move_interval_ms: (default: 10) Minimum move update interval in milliseconds.
+        If zero, target position updates are sent immediately.
+    :type move_interval_ms: int
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         return ConfocalMainWindow(gconf, name, context)
 
 
 class TraceGUI(GUINode):
-    """GUINode for Confocal using ConfocalMainWindow."""
+    """GUINode for trace-only view using TraceWidget.
+
+    :param target.trace: Target tracer/trace node full name.
+    :type target.trace: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         return TraceWidget(gconf, name, context)

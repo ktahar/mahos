@@ -137,7 +137,12 @@ class IVCurveWidget(ClientTopWidget):
 
 
 class IVCurveGUI(GUINode):
-    """GUINode for IVCurve using IVCurveWidget."""
+    """GUINode for IVCurve using IVCurveWidget.
+
+    :param target.ivcurve: Target IVCurve node full name.
+    :type target.ivcurve: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         target = local_conf(gconf, name)["target"]

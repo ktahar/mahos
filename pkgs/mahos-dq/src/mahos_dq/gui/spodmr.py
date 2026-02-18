@@ -1221,7 +1221,14 @@ class SPODMRMainWindow(QtWidgets.QMainWindow):
 
 
 class SPODMRGUI(GUINode):
-    """GUINode for Pulse ODMR with Slow detectors using SPODMRWidget."""
+    """GUINode for Pulse ODMR with Slow detectors using SPODMRWidget.
+
+    :param target.spodmr: Target SPODMR node full name.
+    :type target.spodmr: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         return SPODMRMainWindow(gconf, name, context)

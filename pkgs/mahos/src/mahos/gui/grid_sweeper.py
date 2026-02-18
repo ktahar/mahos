@@ -426,7 +426,14 @@ class GridSweeperWidget(ClientTopWidget):
 
 
 class GridSweeperGUI(GUINode):
-    """GUINode for GridSweeperWidget."""
+    """GUINode for GridSweeperWidget.
+
+    :param target.grid_sweeper: Target GridSweeper node full name.
+    :type target.grid_sweeper: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         target = local_conf(gconf, name)["target"]

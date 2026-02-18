@@ -238,7 +238,14 @@ class IVWidget(ClientTopWidget):
 
 
 class IVGUI(GUINode):
-    """GUINode for IV using IVWidget."""
+    """GUINode for IV using IVWidget.
+
+    :param target.iv: Target IV node full name.
+    :type target.iv: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         target = local_conf(gconf, name)["target"]

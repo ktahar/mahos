@@ -172,7 +172,16 @@ class TweakerWidget(ClientTopWidget, Ui_TweakerWidget):
 
 
 class TweakerGUI(GUINode):
-    """GUINode for TweakerWidget."""
+    """GUINode for TweakerWidget.
+
+    :param target.tweaker: Target Tweaker node full name.
+    :type target.tweaker: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+    :param verbose: Show warning dialogs when RPC requests fail.
+    :type verbose: bool
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         lconf = local_conf(gconf, name)

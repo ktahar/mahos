@@ -266,7 +266,14 @@ class RecorderMainWindow(QtWidgets.QMainWindow):
 
 
 class RecorderGUI(GUINode):
-    """GUINode for Recorder using RecorderMainWindow."""
+    """GUINode for Recorder using RecorderMainWindow.
+
+    :param target.recorder: Target Recorder node full name.
+    :type target.recorder: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         return RecorderMainWindow(gconf, name, context)

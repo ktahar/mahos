@@ -222,12 +222,16 @@ class MainMonitor(GUINode):
     to display log streams, instrument locks, and node states in one window.
 
     :param target.gparams: GlobalParams node name for note and work-dir synchronization.
+        Optional; if omitted, work-dir and note synchronization are disabled.
     :type target.gparams: tuple[str, str] | str
     :param target.log: LogBroker node name used for log subscription.
+        Optional; if omitted, log streaming is disabled.
     :type target.log: tuple[str, str] | str
     :param target.servers: Instrument server node names used to display lock owners.
+        Optional; if omitted, lock table updates are disabled.
     :type target.servers: list[tuple[str, str] | str]
     :param target.manager: StateManager node name used for system state table updates.
+        Optional; if omitted, node-state table updates are disabled.
     :type target.manager: tuple[str, str] | str
     :param work_dir: Optional initial working directory pushed to global parameters.
     :type work_dir: str

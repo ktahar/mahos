@@ -1669,7 +1669,14 @@ class PODMRMainWindow(QtWidgets.QMainWindow):
 
 
 class PODMRGUI(GUINode):
-    """GUINode for Pulse ODMR using PODMRWidget."""
+    """GUINode for Pulse ODMR using PODMRWidget.
+
+    :param target.podmr: Target PODMR node full name.
+    :type target.podmr: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         return PODMRMainWindow(gconf, name, context)

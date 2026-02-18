@@ -983,7 +983,16 @@ class ODMRMainWindow(QtWidgets.QMainWindow):
 
 
 class ODMRGUI(GUINode):
-    """GUINode for ODMR using ODMRWidget."""
+    """GUINode for ODMR using ODMRWidget.
+
+    :param target.odmr: Target ODMR node full name.
+    :type target.odmr: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+    :param target.confocal: Optional Confocal node used for view export on save.
+    :type target.confocal: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         return ODMRMainWindow(gconf, name, context)

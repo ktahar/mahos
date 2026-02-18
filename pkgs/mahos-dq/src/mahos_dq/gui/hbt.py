@@ -524,7 +524,16 @@ class HBTMainWindow(QtWidgets.QMainWindow):
 
 
 class HBTGUI(GUINode):
-    """GUINode for HBT using HBTWidget."""
+    """GUINode for HBT using HBTWidget.
+
+    :param target.hbt: Target HBT node full name.
+    :type target.hbt: tuple[str, str] | str
+    :param target.gparams: Target GlobalParams node full name.
+    :type target.gparams: tuple[str, str] | str
+    :param target.confocal: Optional Confocal node used for view export on save.
+    :type target.confocal: tuple[str, str] | str
+
+    """
 
     def init_widget(self, gconf: dict, name, context):
         return HBTMainWindow(gconf, name, context)
