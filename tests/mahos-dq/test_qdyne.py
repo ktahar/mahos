@@ -8,6 +8,9 @@ Tests for mahos_dq.meas.qdyne.
 
 """
 
+import os
+import sys
+
 import numpy as np
 import pytest
 
@@ -19,7 +22,14 @@ from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, qdyne, server_conf, qdyne_conf
 
 
+def _qt_binding_loaded() -> bool:
+    return any(name in sys.modules for name in ("PyQt6", "PySide6", "PyQt5", "PySide2"))
+
+
 def test_cqdyne_analyzer():
+    if os.name == "nt" and _qt_binding_loaded():
+        pytest.skip("Skip C extension import on Windows when Qt binding is already loaded.")
+
     C = pytest.importorskip("mahos_dq_ext.cqdyne_analyzer")
     N = 3
     T = 5

@@ -8,13 +8,40 @@ Runner for threaded nodes for mahos run/launch.
 
 """
 
-import importlib
+import os
 import time
+import importlib
 import multiprocessing as mp
 
 from mahos.node.node import Node, join_name, local_conf, start_node_thread, threaded_nodes
 from mahos.node.comm import Context
-from mahos.gui.gui_node import GUINode, start_gui_node_thread
+
+
+def is_gui_node_class(NodeClass):
+    from mahos.gui.gui_node import GUINode
+
+    return issubclass(NodeClass, GUINode)
+
+
+def is_gui_like_conf(conf: dict) -> bool:
+    module = conf.get("module", "")
+    class_name = conf.get("class", "")
+    return ".gui." in module or class_name.endswith("GUI")
+
+
+def gui_nodes_in_group(gconf: dict, host: str, node_names: list[str]) -> list[str]:
+    gui_names = []
+    for node_name in node_names:
+        conf = local_conf(gconf, join_name((host, node_name)))
+        if is_gui_like_conf(conf):
+            gui_names.append(node_name)
+    return gui_names
+
+
+def start_gui_node_thread_lazy(ctx: Context, NodeClass, gconf: dict, name: str):
+    from mahos.gui.gui_node import start_gui_node_thread
+
+    return start_gui_node_thread(ctx, NodeClass, gconf, name)
 
 
 class ThreadedNodes(object):
@@ -42,6 +69,15 @@ class ThreadedNodes(object):
                 self.host, self.name, ", ".join(tnodes[self.name])
             )
         )
+        gui_names = gui_nodes_in_group(self.gconf, self.host, tnodes[self.name])
+        if gui_names and os.name == "nt":
+            joined = ", ".join(gui_names)
+            print(
+                f"[WARN] Threaded nodes '{self.name}' include GUI node(s): {joined}. "
+                "Mixing GUINode with non-GUI nodes in one threaded process is strongly "
+                "discouraged on Windows "
+                "because native module import order can cause crashes."
+            )
 
         for node_name in tnodes[self.name]:
             name = join_name((self.host, node_name))
@@ -51,8 +87,8 @@ class ThreadedNodes(object):
 
             if issubclass(NodeClass, Node):
                 thread, ev = start_node_thread(ctx, NodeClass, self.gconf, name)
-            elif issubclass(NodeClass, GUINode):
-                thread = start_gui_node_thread(ctx, NodeClass, self.gconf, name)
+            elif is_gui_node_class(NodeClass):
+                thread = start_gui_node_thread_lazy(ctx, NodeClass, self.gconf, name)
                 ev = None
 
             self.threads[name] = thread

@@ -10,6 +10,7 @@ Worker for Qdyne.
 
 from __future__ import annotations
 import os
+import sys
 import time
 from itertools import chain
 
@@ -32,11 +33,23 @@ from mahos.meas.common_worker import Worker
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from mahos_dq.meas.podmr_generator.generator import make_generators
 
-try:
-    from mahos_dq_ext import cqdyne_analyzer as C
-except ImportError:
-    print("mahos_dq.meas.qdyne_worker: failed to import mahos_dq_ext")
+
+def _is_qt_loaded() -> bool:
+    return any(name in sys.modules for name in ("PyQt6", "PySide6", "PyQt5", "PySide2"))
+
+
+if os.name == "nt" and _is_qt_loaded():
+    print(
+        "mahos_dq.meas.qdyne_worker: skip importing mahos_dq_ext because Qt binding is already "
+        "loaded on Windows"
+    )
     C = None
+else:
+    try:
+        from mahos_dq_ext import cqdyne_analyzer as C
+    except ImportError:
+        print("mahos_dq.meas.qdyne_worker: failed to import mahos_dq_ext")
+        C = None
 
 
 class Bounds(object):

@@ -13,9 +13,7 @@ import importlib
 import argparse
 
 from mahos.node.node import Node, join_name
-from mahos.gui.gui_node import GUINode
 from mahos.cli.util import init_gconf_host_node
-from mahos.cli.threaded_nodes import ThreadedNodes
 
 
 def build_parser(add_help: bool = True):
@@ -58,8 +56,16 @@ def parse_args(args):
 
 
 def main_thread(gconf: dict, host: str, name: str):
+    from mahos.cli.threaded_nodes import ThreadedNodes
+
     n = ThreadedNodes(gconf, host, name)
     return n.main_interrupt()
+
+
+def is_gui_node_class(NodeClass):
+    from mahos.gui.gui_node import GUINode
+
+    return issubclass(NodeClass, GUINode)
 
 
 def main(args=None):
@@ -90,8 +96,8 @@ def main(args=None):
     elif issubclass(NodeClass, Node):
         n: Node = NodeClass(gconf, joined_name)
         return n.main_interrupt()
-    elif issubclass(NodeClass, GUINode):
-        n: GUINode = NodeClass(gconf, joined_name)
+    elif is_gui_node_class(NodeClass):
+        n = NodeClass(gconf, joined_name)
         return n.main()
     else:
         print("[ERROR] {} isn't a valid Node class: {}".format(joined_name, NodeClass.__name__))

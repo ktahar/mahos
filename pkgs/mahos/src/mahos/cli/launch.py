@@ -9,6 +9,7 @@ mahos launch command.
 """
 
 from __future__ import annotations
+
 import time
 import importlib
 import argparse
@@ -16,16 +17,13 @@ import multiprocessing as mp
 
 from mahos.node.node import (
     Node,
-    start_node_proc,
     join_name,
     local_conf,
     threaded_nodes,
     is_threaded,
 )
 from mahos.node.log_broker import log_broker_is_up
-from mahos.gui.gui_node import GUINode, start_gui_node_proc
 from mahos.cli.util import init_gconf_host
-from mahos.cli.threaded_nodes import start_threaded_nodes_proc
 
 
 def build_parser(add_help: bool = True):
@@ -62,6 +60,58 @@ def parse_args(args):
         parser.error("Only one of include or -e (--exclude) can be used.")
 
     return args
+
+
+def is_gui_node_class(NodeClass):
+    from mahos.gui.gui_node import GUINode
+
+    return issubclass(NodeClass, GUINode)
+
+
+def run_node_name_proc(gconf: dict, name: str, shutdown_ev: mp.Event):
+    conf = local_conf(gconf, name)
+    module = importlib.import_module(conf["module"])
+    NodeClass = getattr(module, conf["class"])
+
+    if issubclass(NodeClass, Node):
+        n: Node = NodeClass(gconf, name)
+        n.main_event(shutdown_ev)
+    elif is_gui_node_class(NodeClass):
+        n = NodeClass(gconf, name)
+        n.main()
+    else:
+        raise ValueError(f"{name} isn't a valid Node class: {NodeClass.__name__}")
+
+
+def start_node_name_proc(
+    ctx: mp.context.BaseContext, gconf: dict, name: str
+) -> tuple[mp.Process, mp.Event]:
+    """Start a node process for both Node and GUINode without parent-side class import.
+
+    This helper defers module/class resolution to :func:`run_node_name_proc` in the child process,
+    so one launch path can handle both :class:`~mahos.node.node.Node` and
+    :class:`~mahos.gui.gui_node.GUINode`.
+
+    We intentionally avoid :func:`mahos.node.node.start_node_proc` here because it requires
+    resolving ``NodeClass`` in the parent process. That parent import order can trigger Windows
+    native module conflicts (for example, ``PyQt6`` and ``mahos_dq_ext.cqdyne_analyzer``).
+
+    """
+
+    shutdown_ev = mp.Event()
+    proc = ctx.Process(
+        target=run_node_name_proc,
+        args=(gconf, name, shutdown_ev),
+        name=join_name(name),
+    )
+    proc.start()
+    return proc, shutdown_ev
+
+
+def start_threaded_nodes_proc_lazy(ctx: mp.context.BaseContext, gconf: dict, host: str, name: str):
+    from mahos.cli.threaded_nodes import start_threaded_nodes_proc
+
+    return start_threaded_nodes_proc(ctx, gconf, host, name)
 
 
 class Launcher(object):
@@ -101,19 +151,11 @@ class Launcher(object):
 
     def start_node(self, name: str):
         conf = local_conf(self.gconf, name)
-        module = importlib.import_module(conf["module"])
-        NodeClass = getattr(module, conf["class"])
 
         print(f"Starting {name}.")
 
-        if issubclass(NodeClass, Node):
-            proc, ev = start_node_proc(self.ctx, NodeClass, self.gconf, name)
-            return proc, ev, conf["class"]
-        elif issubclass(NodeClass, GUINode):
-            proc = start_gui_node_proc(self.ctx, NodeClass, self.gconf, name)
-            return proc, None, conf["class"]
-        else:
-            raise ValueError("{} isn't a valid Node class: {}".format(name, NodeClass.__name__))
+        proc, ev = start_node_name_proc(self.ctx, self.gconf, name)
+        return proc, ev, conf["class"]
 
     def is_excluded(self, name: str):
         return (
@@ -126,7 +168,8 @@ class Launcher(object):
         for name, node_names in threaded_nodes(self.gconf, self.host).items():
             if self.is_excluded(name):
                 continue
-            proc, ev = start_threaded_nodes_proc(self.ctx, self.gconf, self.host, name)
+
+            proc, ev = start_threaded_nodes_proc_lazy(self.ctx, self.gconf, self.host, name)
 
             # Try to avoid name conflict with raw node names. just in case.
             n = f"thread::{self.host}::{name}"
