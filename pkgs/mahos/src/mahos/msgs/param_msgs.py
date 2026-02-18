@@ -158,11 +158,11 @@ class NumberParam(Param):
     :param minimum: Inclusive lower bound. Set None to disable lower bound.
     :param maximum: Inclusive upper bound. Set None to disable upper bound.
     :param unit: Unit string used for formatting / display.
-    :param SI_prefix: Enable SI-prefix display in GUI widgets (GUI-oriented).
-    :param digit: Number of decimals shown in GUI widgets (GUI-oriented).
-    :param step: Base increment/decrement step for GUI widgets (GUI-oriented).
-    :param adaptive_step: Enable magnitude-dependent stepping in GUI widgets (GUI-oriented).
-    :param adaptive_min_step: Minimum step for adaptive stepping in GUI widgets (GUI-oriented).
+    :param SI_prefix: (GUI) Enable SI-prefix display in GUI widgets.
+    :param digit: (GUI) Number of decimals shown in GUI widgets.
+    :param step: (GUI) Base increment/decrement step for GUI widgets.
+    :param adaptive_step: (GUI) Enable magnitude-dependent stepping in GUI widgets.
+    :param adaptive_min_step: (GUI) Minimum step for adaptive stepping in GUI widgets.
     :param optional: If True, this parameter can be enabled/disabled.
     :param enable: Initial enabled state.
     :param read_only: If True, updates through :meth:`set` are rejected.
@@ -363,11 +363,11 @@ class IntParam(NumberParam):
     :param minimum: Inclusive lower bound. Set None to disable lower bound.
     :param maximum: Inclusive upper bound. Set None to disable upper bound.
     :param unit: Unit string used for formatting / display.
-    :param SI_prefix: Enable SI-prefix display in GUI widgets (GUI-oriented).
-    :param digit: Number of decimals shown in GUI widgets (GUI-oriented).
-    :param step: Base increment/decrement step for GUI widgets (GUI-oriented).
-    :param adaptive_step: Enable magnitude-dependent stepping in GUI widgets (GUI-oriented).
-    :param adaptive_min_step: Minimum step for adaptive stepping in GUI widgets (GUI-oriented).
+    :param SI_prefix: (GUI) Enable SI-prefix display in GUI widgets.
+    :param digit: (GUI) Number of decimals shown in GUI widgets.
+    :param step: (GUI) Base increment/decrement step for GUI widgets.
+    :param adaptive_step: (GUI) Enable magnitude-dependent stepping in GUI widgets.
+    :param adaptive_min_step: (GUI) Minimum step for adaptive stepping in GUI widgets.
     :param optional: If True, this parameter can be enabled/disabled.
     :param enable: Initial enabled state.
     :param read_only: If True, updates through :meth:`set` are rejected.
@@ -417,11 +417,11 @@ class FloatParam(NumberParam):
     :param minimum: Inclusive lower bound. Set None to disable lower bound.
     :param maximum: Inclusive upper bound. Set None to disable upper bound.
     :param unit: Unit string used for formatting / display.
-    :param SI_prefix: Enable SI-prefix display in GUI widgets (GUI-oriented).
-    :param digit: Number of decimals shown in GUI widgets (GUI-oriented).
-    :param step: Base increment/decrement step for GUI widgets (GUI-oriented).
-    :param adaptive_step: Enable magnitude-dependent stepping in GUI widgets (GUI-oriented).
-    :param adaptive_min_step: Minimum step for adaptive stepping in GUI widgets (GUI-oriented).
+    :param SI_prefix: (GUI) Enable SI-prefix display in GUI widgets.
+    :param digit: (GUI) Number of decimals shown in GUI widgets.
+    :param step: (GUI) Base increment/decrement step for GUI widgets.
+    :param adaptive_step: (GUI) Enable magnitude-dependent stepping in GUI widgets.
+    :param adaptive_min_step: (GUI) Minimum step for adaptive stepping in GUI widgets.
     :param optional: If True, this parameter can be enabled/disabled.
     :param enable: Initial enabled state.
     :param read_only: If True, updates through :meth:`set` are rejected.
