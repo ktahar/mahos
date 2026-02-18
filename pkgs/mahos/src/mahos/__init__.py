@@ -12,8 +12,22 @@ import os
 
 # top level exports for frequently used functions
 from mahos.node.node import load_gconf, local_conf
+from mahos.version import get_mahos_version
 
-__all__ = ["cli", "gui", "inst", "meas", "msgs", "node", "util", "load_gconf", "local_conf"]
+__version__ = get_mahos_version()
+
+__all__ = [
+    "cli",
+    "gui",
+    "inst",
+    "meas",
+    "msgs",
+    "node",
+    "util",
+    "load_gconf",
+    "local_conf",
+    "__version__",
+]
 
 HOME_DIR = os.environ.get("MAHOS_HOME", os.path.expanduser(os.path.join("~", ".mahos")))
 CONFIG_DIR = os.path.join(HOME_DIR, "config")

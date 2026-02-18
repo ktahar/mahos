@@ -24,6 +24,7 @@ from mahos.node.client import NodeClient, SubWorker
 from mahos.node.log import TOPIC_DELIM, TIME_DELIM
 from mahos.util.term_color import col
 from mahos import LOG_DIR
+from mahos.version import get_mahos_runtime_info
 
 
 class LogEntry(T.NamedTuple):
@@ -261,10 +262,10 @@ class LogBroker(Node):
         )
 
         if self.conf.get("file", False):
+            dt = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S.%f")
             if "file_name" in self.conf:
                 n = self.conf["file_name"]
             else:
-                dt = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S.%f")
                 n = path.join(
                     LOG_DIR, "{}_{}.log".format(self.joined_name().replace("::", "-"), dt)
                 )
@@ -272,6 +273,37 @@ class LogBroker(Node):
             self.file_logger.write("# LogBroker started at {}\n".format(dt))
         else:
             self.file_logger = None
+
+        self.log_mahos_runtime_info()
+
+    @staticmethod
+    def _build_runtime_info_messages(info):
+        warn_msg = None
+        if info.editable and info.error:
+            warn_msg = "Could not fetch git metadata for editable mahos install: {}".format(
+                info.error
+            )
+
+        if info.editable and info.git_commit is not None and info.git_clean is not None:
+            clean = "clean" if info.git_clean else "dirty"
+            info_msg = "MAHOS version: {} (git: {}, {})".format(
+                info.version, info.git_commit, clean
+            )
+        else:
+            info_msg = "MAHOS version: {}".format(info.version)
+        return warn_msg, info_msg
+
+    def _write_startup_info_line(self, line: str):
+        print(line)
+        if self.file_logger is not None:
+            self.file_logger.write("# {}\n".format(line))
+
+    def log_mahos_runtime_info(self):
+        info = get_mahos_runtime_info()
+        warn_msg, info_msg = self._build_runtime_info_messages(info)
+        if warn_msg is not None:
+            self._write_startup_info_line(warn_msg)
+        self._write_startup_info_line(info_msg)
 
     def close_resources(self):
         if hasattr(self, "file_logger") and self.file_logger is not None:
