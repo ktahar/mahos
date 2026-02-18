@@ -32,19 +32,19 @@ class ConfocalIO(object):
         else:
             self.logger = logger
 
-    def save_image(self, filename: str, image: Image, note: str = "") -> bool:
-        """Save image to filename. return True on success."""
+    def save_image(self, file_name: str, image: Image, note: str = "") -> bool:
+        """Save image to file_name. return True on success."""
 
-        return save_pickle_or_h5(filename, image, Image, self.logger, note=note)
+        return save_pickle_or_h5(file_name, image, Image, self.logger, note=note)
 
-    def load_image(self, filename: str) -> Image | None:
-        """Load image from filename. return None if load is failed."""
+    def load_image(self, file_name: str) -> Image | None:
+        """Load image from file_name. return None if load is failed."""
 
-        d = load_pickle_or_h5(filename, Image, self.logger)
+        d = load_pickle_or_h5(file_name, Image, self.logger)
         if d is not None:
             return update_image(d)
 
-    def export_image(self, filename: str, image: Image, params: dict | None = None) -> bool:
+    def export_image(self, file_name: str, image: Image, params: dict | None = None) -> bool:
         """Export the image to text or image files.
 
         :param params.only: set True to use image only mode
@@ -78,18 +78,18 @@ class ConfocalIO(object):
             self.logger.error(f"Given object ({image}) is not an Image.")
             return False
 
-        fn_head, ext = path.splitext(filename)
+        fn_head, ext = path.splitext(file_name)
         if ext in (".txt", ".csv"):
-            return self._export_image_text(filename, image)
+            return self._export_image_text(file_name, image)
         elif ext in (".png", ".pdf", ".eps"):
-            return self._export_image_image(filename, image, params)
+            return self._export_image_image(file_name, image, params)
         else:
-            self.logger.error(f"Unknown extension to export image: {filename}")
+            self.logger.error(f"Unknown extension to export image: {file_name}")
             return False
 
     def export_view(
         self,
-        filename: str,
+        file_name: str,
         images: tuple[Image, Image, Image],
         pos_xyz: tuple[float, float, float],
         params: tuple[dict, dict, dict] | None = None,
@@ -116,10 +116,10 @@ class ConfocalIO(object):
         def plot(image, param, pos, fig, ax):
             _x, _y = self.get_xylabel(image)
             df = self.create_dataframe(image, param.get("complex_conv", "real"))
-            fn_head, ext = path.splitext(filename)
+            fn_head, ext = path.splitext(file_name)
             units = {_x: "um", _y: "um", "I": image.cunit}
             plot_map(
-                filename,
+                file_name,
                 df,
                 _x,
                 _y,
@@ -149,24 +149,24 @@ class ConfocalIO(object):
             if img is not None:
                 plot(img, param, pos, fig, ax)
 
-        plt.savefig(filename)
+        plt.savefig(file_name)
         plt.close()
-        self.logger.info(f"Exported View to {filename}.")
+        self.logger.info(f"Exported View to {file_name}.")
         return True
 
-    def save_trace(self, filename: str, trace: Trace, note: str = ""):
-        """Save trace to filename. return True on success."""
+    def save_trace(self, file_name: str, trace: Trace, note: str = ""):
+        """Save trace to file_name. return True on success."""
 
-        return save_pickle_or_h5(filename, trace, Trace, self.logger, note=note)
+        return save_pickle_or_h5(file_name, trace, Trace, self.logger, note=note)
 
-    def load_trace(self, filename: str) -> Trace | None:
-        """Load trace from filename. return None if load is failed."""
+    def load_trace(self, file_name: str) -> Trace | None:
+        """Load trace from file_name. return None if load is failed."""
 
-        d = load_pickle_or_h5(filename, Trace, self.logger)
+        d = load_pickle_or_h5(file_name, Trace, self.logger)
         if d is not None:
             return update_trace(d)
 
-    def export_trace(self, filename: str, trace: Trace, params: dict | None = None) -> bool:
+    def export_trace(self, file_name: str, trace: Trace, params: dict | None = None) -> bool:
         """Export the trace to text or image files."""
 
         if not isinstance(trace, Trace):
@@ -176,13 +176,13 @@ class ConfocalIO(object):
         if params is None:
             params = {}
 
-        fn_head, ext = path.splitext(filename)
+        fn_head, ext = path.splitext(file_name)
         if ext == ".txt":
-            return self._export_trace_text(filename, trace)
+            return self._export_trace_text(file_name, trace)
         elif ext in (".png", ".pdf", ".eps"):
-            return self._export_trace_image(filename, trace, params)
+            return self._export_trace_image(file_name, trace, params)
         else:
-            self.logger.error(f"Unknown extension to export trace: {filename}")
+            self.logger.error(f"Unknown extension to export trace: {file_name}")
             return False
 
     def get_xarray(self, image: Image):

@@ -62,13 +62,13 @@ class QTweakerClient(QStatusSubscriber):
         rep = self.req.request(ResetReq(param_dict_id))
         return rep.success
 
-    def save(self, filename: str, group: str = "") -> bool:
-        rep = self.req.request(SaveReq(filename, group))
+    def save(self, file_name: str, group: str = "") -> bool:
+        rep = self.req.request(SaveReq(file_name, group))
         return rep.success
 
     def load(
-        self, filename: str, group: str = ""
+        self, file_name: str, group: str = ""
     ) -> dict[str, P.ParamDict[str, P.PDValue] | None] | None:
-        rep = self.req.request(LoadReq(filename, group))
+        rep = self.req.request(LoadReq(file_name, group))
         if rep.success:
             return rep.ret

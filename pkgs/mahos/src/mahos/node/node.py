@@ -74,15 +74,15 @@ class PickleableTomlDecoder(toml.TomlDecoder):
         return self.get_empty_table()
 
 
-def load_gconf(filename: str) -> dict:
-    """load (global) configuration dict from `filename`.
+def load_gconf(file_name: str) -> dict:
+    """load (global) configuration dict from `file_name`.
 
-    Since the `filename` is passed to os.path.expanduser(),
+    Since the `file_name` is passed to os.path.expanduser(),
     you can use ~ to specify user home directory.
 
     """
 
-    return toml.load(os.path.expanduser(filename), decoder=PickleableTomlDecoder())
+    return toml.load(os.path.expanduser(file_name), decoder=PickleableTomlDecoder())
 
 
 def local_conf(gconf: dict, name: NodeName) -> dict:

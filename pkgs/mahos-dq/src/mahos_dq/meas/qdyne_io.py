@@ -26,9 +26,9 @@ class QdyneIO(object):
             self.logger = logger
 
     def save_data(
-        self, filename: str, data: QdyneData, params: dict | None = None, note: str = ""
+        self, file_name: str, data: QdyneData, params: dict | None = None, note: str = ""
     ) -> bool:
-        """Save data to filename. return True on success."""
+        """Save data to file_name. return True on success."""
 
         if params is None:
             params = {}
@@ -38,7 +38,7 @@ class QdyneIO(object):
         data.set_saved()
 
         return save_pickle_or_h5(
-            filename,
+            file_name,
             data,
             QdyneData,
             self.logger,
@@ -47,17 +47,17 @@ class QdyneIO(object):
             compression_opts=params.get("compression_opts"),
         )
 
-    def load_data(self, filename: str) -> QdyneData | None:
-        """Load data from filename. return None if load is failed."""
+    def load_data(self, file_name: str) -> QdyneData | None:
+        """Load data from file_name. return None if load is failed."""
 
-        d = load_pickle_or_h5(filename, QdyneData, self.logger)
+        d = load_pickle_or_h5(file_name, QdyneData, self.logger)
         if d is not None:
             return update_data(d)
 
-    def export_data(self, filename: str, data: QdyneData, params: dict | None = None):
+    def export_data(self, file_name: str, data: QdyneData, params: dict | None = None):
         """
 
-        :param filename: supported extensions: .png, .pdf, and .eps.
+        :param file_name: supported extensions: .png, .pdf, and .eps.
         :param data: single data
         :param params.trace: If True, plot time-domain trace data too.
         :type params.trace: bool
@@ -69,21 +69,21 @@ class QdyneIO(object):
         if params is None:
             params = {}
 
-        ext = path.splitext(filename)[1]
+        ext = path.splitext(file_name)[1]
         if ext in (".png", ".pdf", ".eps"):
-            return self._export_data_image(filename, data, params)
+            return self._export_data_image(file_name, data, params)
         else:
-            self.logger.error(f"Unknown extension to export data: {filename}")
+            self.logger.error(f"Unknown extension to export data: {file_name}")
             return False
 
-    def _export_data_image(self, filename: str, data: QdyneData, params: dict | None = None):
-        head, ext = path.splitext(filename)
+    def _export_data_image(self, file_name: str, data: QdyneData, params: dict | None = None):
+        head, ext = path.splitext(file_name)
 
         plt.plot(data.get_xdata(True), data.get_ydata(True))
         plt.xlabel("Frequency (Hz)")
         # plt.ylabel("")
         plt.tight_layout()
-        plt.savefig(filename)
+        plt.savefig(file_name)
         plt.close()
 
         if params.get("trace", False):

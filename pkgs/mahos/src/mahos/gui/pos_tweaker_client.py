@@ -53,10 +53,10 @@ class QPosTweakerClient(QStatusSubscriber):
         rep = self.req.request(StopAllReq())
         return rep.success
 
-    def save(self, filename: str, group: str = "") -> bool:
-        rep = self.req.request(SaveReq(filename, group))
+    def save(self, file_name: str, group: str = "") -> bool:
+        rep = self.req.request(SaveReq(file_name, group))
         return rep.success
 
-    def load(self, filename: str, group: str = "") -> bool:
-        rep = self.req.request(LoadReq(filename, group))
+    def load(self, file_name: str, group: str = "") -> bool:
+        rep = self.req.request(LoadReq(file_name, group))
         return rep.success

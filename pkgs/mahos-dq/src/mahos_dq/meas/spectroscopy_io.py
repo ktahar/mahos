@@ -28,16 +28,16 @@ class SpectroscopyIO(object):
         else:
             self.logger = logger
 
-    def save_data(self, filename: str, data: SpectroscopyData, note: str = "") -> bool:
-        """Save data to filename. return True on success."""
+    def save_data(self, file_name: str, data: SpectroscopyData, note: str = "") -> bool:
+        """Save data to file_name. return True on success."""
 
         data.set_saved()
-        return save_pickle_or_h5(filename, data, SpectroscopyData, self.logger, note=note)
+        return save_pickle_or_h5(file_name, data, SpectroscopyData, self.logger, note=note)
 
-    def load_data(self, filename: str) -> SpectroscopyData | None:
-        """Load data from filename. return None if load is failed."""
+    def load_data(self, file_name: str) -> SpectroscopyData | None:
+        """Load data from file_name. return None if load is failed."""
 
-        d = load_pickle_or_h5(filename, SpectroscopyData, self.logger)
+        d = load_pickle_or_h5(file_name, SpectroscopyData, self.logger)
         if d is not None:
             return update_data(d)
 
@@ -50,13 +50,13 @@ class SpectroscopyIO(object):
 
     def export_data(
         self,
-        filename: str,
+        file_name: str,
         data: SpectroscopyData | list[SpectroscopyData],
         params: dict | None = None,
     ) -> bool:
         """Export the data to text or image files.
 
-        :param filename: supported extensions: text: .txt and .csv. image: .png, .pdf, and .eps.
+        :param file_name: supported extensions: text: .txt and .csv. image: .png, .pdf, and .eps.
         :param data: single data or list of data
         :param params.last_n: use last n data. (0 to use all data. this is default.)
         :type params.last_n: int
@@ -113,14 +113,14 @@ class SpectroscopyIO(object):
             if params.get("fit_label") and not self.refit_data(params, d):
                 return False
 
-        ext = path.splitext(filename)[1]
+        ext = path.splitext(file_name)[1]
         if ext in (".txt", ".csv"):
             # TODO: accept data_list ?
-            return self._export_data_csv(filename, data, params)
+            return self._export_data_csv(file_name, data, params)
         elif ext in (".png", ".pdf", ".eps"):
-            return self._export_data_image(filename, data_list, params)
+            return self._export_data_image(file_name, data_list, params)
         else:
-            self.logger.error(f"Unknown extension to export data: {filename}")
+            self.logger.error(f"Unknown extension to export data: {file_name}")
             return False
 
     def _export_data_csv(self, fn, data: SpectroscopyData, params: dict) -> bool:

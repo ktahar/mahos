@@ -68,14 +68,14 @@ class StopAllReq(Request):
 class SaveReq(Request):
     """Save current states to a file"""
 
-    def __init__(self, filename: str, group: str = ""):
-        self.filename = filename
+    def __init__(self, file_name: str, group: str = ""):
+        self.file_name = file_name
         self.group = group
 
 
 class LoadReq(Request):
     """Load target positions from a file"""
 
-    def __init__(self, filename: str, group: str = ""):
-        self.filename = filename
+    def __init__(self, file_name: str, group: str = ""):
+        self.file_name = file_name
         self.group = group

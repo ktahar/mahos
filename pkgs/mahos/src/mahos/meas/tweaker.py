@@ -55,14 +55,14 @@ class TweakerClient(StatusClient):
         rep = self.req.request(ResetReq(param_dict_id))
         return rep.success
 
-    def save(self, filename: str, group: str = "") -> bool:
-        rep = self.req.request(SaveReq(filename, group))
+    def save(self, file_name: str, group: str = "") -> bool:
+        rep = self.req.request(SaveReq(file_name, group))
         return rep.success
 
     def load(
-        self, filename: str, group: str = ""
+        self, file_name: str, group: str = ""
     ) -> dict[str, P.ParamDict[str, P.PDValue] | None] | None:
-        rep = self.req.request(LoadReq(filename, group))
+        rep = self.req.request(LoadReq(file_name, group))
         if rep.success:
             return rep.ret
 
@@ -76,8 +76,8 @@ class TweakSaver(NodeClient):
         NodeClient.__init__(self, gconf, name, context=context, prefix=prefix)
         self.req = self.add_req(gconf)
 
-    def save(self, filename: str, group: str = "") -> bool:
-        rep = self.req.request(SaveReq(filename, group))
+    def save(self, file_name: str, group: str = "") -> bool:
+        rep = self.req.request(SaveReq(file_name, group))
         return rep.success
 
 
@@ -204,7 +204,7 @@ class Tweaker(Node):
         """Save tweaker state (param_dicts and start_stop_state) to file using h5."""
 
         return Reply(
-            self.io.save_data(msg.filename, msg.group, self._param_dicts, self._start_stop_states)
+            self.io.save_data(msg.file_name, msg.group, self._param_dicts, self._start_stop_states)
         )
 
     def load(self, msg: LoadReq) -> Reply:
@@ -214,7 +214,7 @@ class Tweaker(Node):
 
         """
 
-        pds = self.io.load_data(msg.filename, msg.group)
+        pds = self.io.load_data(msg.file_name, msg.group)
         if not pds:
             return Reply(False)
         for pid, params in self._param_dicts.items():

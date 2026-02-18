@@ -55,12 +55,12 @@ class PosTweakerClient(StatusClient):
         rep = self.req.request(StopAllReq())
         return rep.success
 
-    def save(self, filename: str, group: str = "") -> bool:
-        rep = self.req.request(SaveReq(filename, group))
+    def save(self, file_name: str, group: str = "") -> bool:
+        rep = self.req.request(SaveReq(file_name, group))
         return rep.success
 
-    def load(self, filename: str, group: str = "") -> bool:
-        rep = self.req.request(LoadReq(filename, group))
+    def load(self, file_name: str, group: str = "") -> bool:
+        rep = self.req.request(LoadReq(file_name, group))
         return rep.success
 
 
@@ -147,12 +147,12 @@ class PosTweaker(Node):
     def save(self, msg: SaveReq) -> Reply:
         """Save tweaker state (pos, target, homed) to file using h5."""
 
-        return Reply(self.io.save_data(msg.filename, msg.group, self._axis_states))
+        return Reply(self.io.save_data(msg.file_name, msg.group, self._axis_states))
 
     def load(self, msg: LoadReq) -> Reply:
         """Load the tweaker state (target) and set the target."""
 
-        ax_states = self.io.load_data(msg.filename, msg.group)
+        ax_states = self.io.load_data(msg.file_name, msg.group)
         if not ax_states:
             return Reply(False)
         for ax, positioner in self._axis_positioners.items():

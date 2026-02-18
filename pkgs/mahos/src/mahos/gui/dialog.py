@@ -58,9 +58,9 @@ def load_dialog(
 def export_dialog(
     parent, default_path: str, name: str, exts: list[str], append_first_ext: bool = True
 ) -> str:
-    """open export dialog and return filename.
+    """open export dialog and return file_name.
 
-    :param append_first_ext: Change behaviour when extension of returned filename is unknown.
+    :param append_first_ext: Change behaviour when extension of returned file_name is unknown.
                              If True, append the default ext (first element in exts).
                              If False, return empty string (export will be skipped).
 

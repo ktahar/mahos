@@ -693,11 +693,11 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
             self.lastLabel.setText("Last saved: " + t.strftime("%F %T"))
 
     def request_save(self):
-        fn = self.get_filename()
+        fn = self.get_file_name()
         self.cli.save_data(fn, params={"tmp": True})
         self.suffixBox.setValue(self.suffixBox.value() + 1)
 
-    def get_filename(self):
+    def get_file_name(self):
         dirname = self.dirEdit.text()
         fname = "{:s}_{:04d}.podmr.pkl".format(self.fnEdit.text(), self.suffixBox.value())
         return os.path.join(dirname, fname)
@@ -712,9 +712,9 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
         if self.resetBox.isChecked():
             self.suffixBox.setValue(0)
 
-        if os.path.isfile(self.get_filename()):
+        if os.path.isfile(self.get_file_name()):
             if not Qt.question_yn(
-                self, "Overwrite filename?", "File name overlap for autosave. Overwrite?"
+                self, "Overwrite file name?", "File name overlap for autosave. Overwrite?"
             ):
                 self.enableBox.setChecked(False)
                 return

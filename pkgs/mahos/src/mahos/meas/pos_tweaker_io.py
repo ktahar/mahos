@@ -24,12 +24,12 @@ class PosTweakerIO(TweakerIO):
         else:
             self.logger = logger
 
-    def save_data(self, filename: str, group: str, axis_states: dict) -> bool:
+    def save_data(self, file_name: str, group: str, axis_states: dict) -> bool:
         """Save PosTweaker state (axis_states) to file using h5."""
 
-        mode = "r+" if path.exists(filename) else "w"
+        mode = "r+" if path.exists(file_name) else "w"
         try:
-            with h5py.File(filename, mode) as f:
+            with h5py.File(file_name, mode) as f:
                 if group:
                     if group in f:
                         g = f[group]
@@ -45,23 +45,23 @@ class PosTweakerIO(TweakerIO):
                         if key in state:
                             gax.attrs[key] = state[key]
         except Exception:
-            self.logger.exception(f"Error saving {filename}.")
+            self.logger.exception(f"Error saving {file_name}.")
             return False
 
-        self.logger.info(f"Saved {filename}.")
+        self.logger.info(f"Saved {file_name}.")
         return True
 
-    def load_data(self, filename: str, group: str = "") -> dict:
-        """Load params from filename[group] and return as dict."""
+    def load_data(self, file_name: str, group: str = "") -> dict:
+        """Load params from file_name[group] and return as dict."""
 
         d = {}
         try:
-            with h5py.File(filename, "r") as f:
+            with h5py.File(file_name, "r") as f:
                 if group:
                     group = self.demangle_group(group)
                     if group not in f:
-                        msg = f"group {group} doesn't exist in {filename}."
-                        msg += f" available groups: {self.get_groups(filename)}"
+                        msg = f"group {group} doesn't exist in {file_name}."
+                        msg += f" available groups: {self.get_groups(file_name)}"
                         self.logger.error(msg)
                         return {}
                     g = f[group]
@@ -73,8 +73,8 @@ class PosTweakerIO(TweakerIO):
                         if key in gax.attrs:
                             d[ax][key] = gax.attrs[key]
         except Exception:
-            self.logger.exception(f"Error loading {filename}.")
+            self.logger.exception(f"Error loading {file_name}.")
             return {}
 
-        self.logger.info(f"Loaded {filename}.")
+        self.logger.info(f"Loaded {file_name}.")
         return d

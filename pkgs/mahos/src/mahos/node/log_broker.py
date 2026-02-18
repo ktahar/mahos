@@ -148,8 +148,8 @@ def format_log_html_color(log: LogEntry) -> str:
 
 
 class FileLogger(object):
-    def __init__(self, filename, mode="a"):
-        self.stream = open(filename, mode=mode)
+    def __init__(self, file_name, mode="a"):
+        self.stream = open(file_name, mode=mode)
         self._closed = False
 
     def write(self, s: str):

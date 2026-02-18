@@ -49,20 +49,20 @@ class IODMRIO(object):
         self._executor.shutdown(wait=True)
 
     def save_data(
-        self, filename: str, data: IODMRData, params: dict | None = None, note: str = ""
+        self, file_name: str, data: IODMRData, params: dict | None = None, note: str = ""
     ) -> bool:
         if params is None:
             params = {}
 
-        if isinstance(filename, str) and (
-            filename.endswith(".pkl") or filename.endswith(".pkl.bz2")
+        if isinstance(file_name, str) and (
+            file_name.endswith(".pkl") or file_name.endswith(".pkl.bz2")
         ):
             default_compression = None
         else:
             default_compression = "lzf"
 
         return save_pickle_or_h5(
-            filename,
+            file_name,
             data,
             IODMRData,
             self.logger,
@@ -72,48 +72,48 @@ class IODMRIO(object):
         )
 
     def save_data_async(
-        self, filename: str, data: IODMRData, params: dict | None = None, note: str = ""
+        self, file_name: str, data: IODMRData, params: dict | None = None, note: str = ""
     ) -> bool:
         """save data asynchronously using ThreadPoolExecutor."""
 
-        self.logger.info(f"Saving (async) {filename}.")
-        self._executor.submit(self.save_data, filename, data, params=params, note=note)
+        self.logger.info(f"Saving (async) {file_name}.")
+        self._executor.submit(self.save_data, file_name, data, params=params, note=note)
         return True
 
-    def load_data(self, filename: str) -> IODMRData | None:
-        if isinstance(filename, str) and (
-            filename.endswith(".pkl") or filename.endswith(".pkl.bz2")
+    def load_data(self, file_name: str) -> IODMRData | None:
+        if isinstance(file_name, str) and (
+            file_name.endswith(".pkl") or file_name.endswith(".pkl.bz2")
         ):
             # try to load twice (bz2 and no compression) for backward compatibility
             # because old files are named *.pkl with bz2 compression.
-            d = load_pickle(filename, IODMRData, self.logger, compression="bz2")
+            d = load_pickle(file_name, IODMRData, self.logger, compression="bz2")
             if d is None:
-                d = load_pickle(filename, IODMRData, self.logger, compression=None)
+                d = load_pickle(file_name, IODMRData, self.logger, compression=None)
             return d
         else:
-            return load_h5(filename, IODMRData, self.logger)
+            return load_h5(file_name, IODMRData, self.logger)
 
     def fit_data(self, data: IODMRData, params: dict, label: str) -> IODMRFitResult | None:
         fitter = IODMRFitter(data, self.logger)
         return fitter.fit(params, label)
 
     def fit_save_data(
-        self, filename: str, data: IODMRData, params: dict, label: str
+        self, file_name: str, data: IODMRData, params: dict, label: str
     ) -> IODMRFitResult | None:
         res = self.fit_data(data, params, label)
         if res is not None:
-            res.save(filename)
+            res.save(file_name)
         return res
 
-    def load_fit(self, filename: str) -> IODMRFitResult | None:
-        """Load IODMRFitResult from filename. return None if load is failed."""
+    def load_fit(self, file_name: str) -> IODMRFitResult | None:
+        """Load IODMRFitResult from file_name. return None if load is failed."""
 
-        res = IODMRFitResult.load(filename)
-        self.logger.info(f"Loaded {filename}.")
+        res = IODMRFitResult.load(file_name)
+        self.logger.info(f"Loaded {file_name}.")
         return res
 
     def export_data(
-        self, filename: str, data: IODMRData | list[IODMRData], params: dict | None = None
+        self, file_name: str, data: IODMRData | list[IODMRData], params: dict | None = None
     ) -> bool:
         """Export an IODMRData."""
 
@@ -130,22 +130,22 @@ class IODMRIO(object):
             )
             return False
 
-        ext = path.splitext(filename)[1]
+        ext = path.splitext(file_name)[1]
         if ext in (".png", ".pdf", ".eps"):
             return self._export_data_image(
-                filename, data_list, params
-            ) and self._export_freq_slice(filename, data_list, params)
+                file_name, data_list, params
+            ) and self._export_freq_slice(file_name, data_list, params)
         else:
-            self.logger.error(f"Unknown extension to export data: {filename}")
+            self.logger.error(f"Unknown extension to export data: {file_name}")
             return False
 
-    def export_fit(self, filename: str, fit: IODMRFitResult, params: dict | None = None):
+    def export_fit(self, file_name: str, fit: IODMRFitResult, params: dict | None = None):
         """Export an IODMRFitResult."""
 
         if params is None:
             params = {}
 
-        head, ext = path.splitext(filename)
+        head, ext = path.splitext(file_name)
         figsize = params.get("figsize", (12, 12))
         dpi = params.get("dpi")
         fontsize = params.get("fontsize")

@@ -29,22 +29,22 @@ class GridSweeperIO(object):
         else:
             self.logger = logger
 
-    def save_data(self, filename: str, data: GridSweeperData, note: str = "") -> bool:
+    def save_data(self, file_name: str, data: GridSweeperData, note: str = "") -> bool:
         """Save data to file. Returns True on success."""
 
         data.set_saved()
-        return save_pickle_or_h5(filename, data, GridSweeperData, self.logger, note=note)
+        return save_pickle_or_h5(file_name, data, GridSweeperData, self.logger, note=note)
 
-    def load_data(self, filename: str) -> GridSweeperData | None:
+    def load_data(self, file_name: str) -> GridSweeperData | None:
         """Load data from file. Returns None on failure."""
 
-        d = load_pickle_or_h5(filename, GridSweeperData, self.logger)
+        d = load_pickle_or_h5(file_name, GridSweeperData, self.logger)
         if d is not None:
             return update_data(d)
         return None
 
     def export_data(
-        self, filename: str, data: GridSweeperData, params: dict | None = None
+        self, file_name: str, data: GridSweeperData, params: dict | None = None
     ) -> bool:
         if params is None:
             params = {}
@@ -57,13 +57,13 @@ class GridSweeperIO(object):
             self.logger.error("Data is empty, cannot export.")
             return False
 
-        ext = path.splitext(filename)[1]
+        ext = path.splitext(file_name)[1]
         if ext in (".txt", ".csv"):
-            return self._export_data_csv(filename, data, params)
+            return self._export_data_csv(file_name, data, params)
         elif ext in (".png", ".pdf", ".eps"):
-            return self._export_data_image(filename, data, params)
+            return self._export_data_image(file_name, data, params)
         else:
-            self.logger.error(f"Unknown extension to export data: {filename}")
+            self.logger.error(f"Unknown extension to export data: {file_name}")
             return False
 
     def _select_image(self, data: GridSweeperData, params: dict) -> np.ndarray | None:
@@ -78,7 +78,7 @@ class GridSweeperIO(object):
 
         return data.get_latest_image()
 
-    def _export_data_csv(self, filename: str, data: GridSweeperData, params: dict) -> bool:
+    def _export_data_csv(self, file_name: str, data: GridSweeperData, params: dict) -> bool:
         """Export selected 2D image to CSV with x, y, z columns."""
 
         xdata = data.get_xdata()
@@ -90,20 +90,20 @@ class GridSweeperIO(object):
 
         xx, yy = np.meshgrid(xdata, ydata, indexing="ij")
 
-        with open(filename, "w", encoding="utf-8", newline="\n") as fo:
+        with open(file_name, "w", encoding="utf-8", newline="\n") as fo:
             fo.write("# GridSweeper data\n")
             fo.write(f"# x: {data.xlabel} ({data.xunit}), y: {data.ylabel} ({data.yunit})\n")
             fo.write(f"# z: {data.zlabel} ({data.zunit})\n")
             fo.write("# x,y,z\n")
 
-        with open(filename, "ab") as fo:
+        with open(file_name, "ab") as fo:
             arr = np.column_stack((xx.ravel(), yy.ravel(), zdata.ravel()))
             np.savetxt(fo, arr, delimiter=",")
 
-        self.logger.info(f"Exported data to {filename}.")
+        self.logger.info(f"Exported data to {file_name}.")
         return True
 
-    def _export_data_image(self, filename: str, data: GridSweeperData, params: dict) -> bool:
+    def _export_data_image(self, file_name: str, data: GridSweeperData, params: dict) -> bool:
         """Export selected 2D image to image format (PNG, PDF, EPS)."""
 
         zdata = self._select_image(data, params)
@@ -137,8 +137,8 @@ class GridSweeperIO(object):
         cbar.set_label(f"{data.zlabel}{zunit}")
 
         plt.tight_layout()
-        plt.savefig(filename)
+        plt.savefig(file_name)
         plt.close()
 
-        self.logger.info(f"Exported data to {filename}.")
+        self.logger.info(f"Exported data to {file_name}.")
         return True
