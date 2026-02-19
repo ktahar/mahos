@@ -421,12 +421,15 @@ This command serves as a command line interface (CLI) to use mahos.
 The <code class="docutils literal notranslate"><span class="pre">mahos</span></code> CLI provides several sub-commands described below.</p>
 <section id="shell-completion">
 <span id="mahos-shell-completion"></span><h2>Shell completion<a class="headerlink" href="#shell-completion" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">mahos</span></code> CLI supports shell completion via <code class="docutils literal notranslate"><span class="pre">argcomplete</span></code> for bash and zsh.</p>
-<p>Enable completion in the current shell session:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">mahos</span></code> CLI supports shell completion via <code class="docutils literal notranslate"><span class="pre">argcomplete</span></code> for bash and zsh,
+which is enabled by:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">eval</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>register-python-argcomplete<span class="w"> </span>mahos<span class="k">)</span><span class="s2">&quot;</span>
 </pre></div>
 </div>
-<p>To enable persistently, add the same line to <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code> or <code class="docutils literal notranslate"><span class="pre">~/.zshrc</span></code>.</p>
+<p>To enable persistently, add the same line to <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code> or <code class="docutils literal notranslate"><span class="pre">~/.zshrc</span></code>.
+If you are using Git Bash on Windows, you need to add <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">ARGCOMPLETE_USE_TEMPFILES=1</span></code> too.
+See <a class="reference external" href="https://github.com/kislyuk/argcomplete/blob/main/contrib/README.rst#git-bash-support">here</a>
+for details.</p>
 </section>
 <section id="node-operations">
 <h2>Node operations<a class="headerlink" href="#node-operations" title="Link to this heading">#</a></h2>

@@ -14,15 +14,17 @@ The ``mahos`` CLI provides several sub-commands described below.
 Shell completion
 ----------------
 
-The ``mahos`` CLI supports shell completion via ``argcomplete`` for bash and zsh.
-
-Enable completion in the current shell session:
+The ``mahos`` CLI supports shell completion via ``argcomplete`` for bash and zsh,
+which is enabled by:
 
 .. code-block:: bash
 
    eval "$(register-python-argcomplete mahos)"
 
 To enable persistently, add the same line to ``~/.bashrc`` or ``~/.zshrc``.
+If you are using Git Bash on Windows, you need to add ``export ARGCOMPLETE_USE_TEMPFILES=1`` too.
+See `here <https://github.com/kislyuk/argcomplete/blob/main/contrib/README.rst#git-bash-support>`__
+for details.
 
 Node operations
 ---------------

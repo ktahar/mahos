@@ -11,10 +11,10 @@ Added
 - meas: new generic measurements Sweeper (1D) and GridSweeper (2D).
 - Confocal: add TraceNode and related trace configuration options.
 - IODMR: add ``publish_each`` conf.
+- ODMR: add ``point`` conf for per-point data update.
 - inst: add new instrument modules / classes for laser, lock-in (SR860), signal generators
   (SRS_SG390 and Windfreak_SynthHD), and PI positioner.
 - msgs.param_msgs: add ``read_only`` option for parameters.
-- ODMR: add ``point`` conf for per-point data update.
 - version: LogBroker now prints and writes mahos's runtime version info.
 - cli: completion feature using argcomplete
 
@@ -28,12 +28,12 @@ Changed
   optional unit override.
 - Thorlabs_Camera: extend features with software trigger, binning / ROI controls,
   and ``infinite_wait`` configuration.
-- IV (SMU-based implementation): moved to examples for manual / scripted usage.
+- IV (SMU-based implementation): moved to examples.
 - inst.smu: rename parameter ``logx`` to ``log``.
-- Internal Python API cleanup: standardized ``filename`` to ``file_name`` in Tweaker /
+- Internal API cleanup: standardized ``filename`` to ``file_name`` in Tweaker /
   PosTweaker save-load paths and related request message attributes.
-- inst.sg.DS_SG: add standard ``start()`` / ``stop()`` handling for point-trigger sweep;
-  iodmr worker now uses these APIs.
+- DS_SG: support standard ``start()`` / ``stop()`` handling for point-trigger sweep;
+  IODMR worker now uses these APIs.
 - Dependencies and development environment updates (including Python/scipy stack related
   updates and pyzmq/msgpack version refresh). Now using Numpy 2.
 
