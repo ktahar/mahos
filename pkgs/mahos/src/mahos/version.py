@@ -12,7 +12,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
-from urllib.parse import unquote, urlparse
 import json
 import subprocess
 
@@ -55,17 +54,12 @@ def _read_direct_url_json(dist: metadata.Distribution) -> dict | None:
         raise ValueError(f"invalid direct_url.json: {e}") from e
 
 
-def _source_path_from_url(url: str) -> Path | None:
-    parsed = urlparse(url)
-    if parsed.scheme != "file":
-        return None
-    p = unquote(parsed.path)
-    if parsed.netloc:
-        p = f"//{parsed.netloc}{p}"
-    return Path(p).resolve()
+def _module_source_path() -> Path:
+    return Path(__file__).resolve().parent
 
 
 def _find_git_root(start: Path) -> Path | None:
+    start = start.resolve()
     for p in [start] + list(start.parents):
         if (p / ".git").exists():
             return p
@@ -104,11 +98,7 @@ def get_mahos_runtime_info() -> RuntimeInfo:
     if not editable:
         return RuntimeInfo(version=version)
 
-    source_path = _source_path_from_url(str(direct_url.get("url", "")))
-    if source_path is None:
-        return RuntimeInfo(
-            version=version, editable=True, error="editable source URL is not file://"
-        )
+    source_path = _module_source_path()
 
     git_root = _find_git_root(source_path)
     if git_root is None:
