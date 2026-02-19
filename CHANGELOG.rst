@@ -8,34 +8,40 @@ Changelog
 Added
 ^^^^^
 
-- meas: new generic measurements Sweeper (1D) and GridSweeper (2D).
+- meas: add generic measurements Sweeper (1D) and GridSweeper (2D).
 - Confocal: add TraceNode and related trace configuration options.
 - IODMR: add ``publish_each`` conf.
 - ODMR: add ``point`` conf for per-point data update.
-- inst: add new instrument modules / classes for laser, lock-in (SR860), signal generators
+- ODMR: add ``sweeper.pg_immediate`` conf for the case SG cannot trigger PG.
+- ODMR: add support for pulse ODMR sweep with AnalogPD.
+- inst: add new instrument modules/classes for laser, lockin (SR860), SGs
   (SRS_SG390 and Windfreak_SynthHD), and PI positioner.
 - msgs.param_msgs: add ``read_only`` option for parameters.
-- version: LogBroker now prints and writes mahos's runtime version info.
-- cli: completion feature using argcomplete
+- version: LogBroker now prints and writes MAHOS runtime version info.
+- cli: add argcomplete-based completion support.
 
 Changed
 ^^^^^^^
 
 - Introduced application packages: ``mahos_dq`` and ``mahos_dq_ext``.
-  The specific applications (confocal, odmr, etc.) has been moved from ``mahos`` to ``mahos_dq``.
+  The specific applications (confocal, odmr, etc.) have been moved from ``mahos`` to ``mahos_dq``.
+- Packaging: split runtime and development dependencies; moved development tools to the
+  ``mahos[dev]`` extra.
 - Recorder: mode channel configuration now supports dict form
   (``inst``, ``label``, ``key``, ``unit``), allowing configurable acquisition key and
   optional unit override.
-- Thorlabs_Camera: extend features with software trigger, binning / ROI controls,
+- Thorlabs_Camera: extend features with software trigger, binning/ROI controls,
   and ``infinite_wait`` configuration.
 - IV (SMU-based implementation): moved to examples.
 - inst.smu: rename parameter ``logx`` to ``log``.
-- Internal API cleanup: standardized ``filename`` to ``file_name`` in Tweaker /
+- Internal API cleanup: standardize ``filename`` to ``file_name`` in Tweaker/
   PosTweaker save-load paths and related request message attributes.
-- DS_SG: support standard ``start()`` / ``stop()`` handling for point-trigger sweep;
+- DS_SG: support standard ``start()``/``stop()`` handling for point-trigger sweep;
   IODMR worker now uses these APIs.
-- Dependencies and development environment updates (including Python/scipy stack related
-  updates and pyzmq/msgpack version refresh). Now using Numpy 2.
+- ODMR/Spectroscopy fitters: switch to ``scipy.cluster.vq.kmeans2`` for initial
+  peak-position guessing, dropping sklearn dependency.
+- Dependencies and development environment: update Python/scipy stack and pyzmq/msgpack.
+  Now using NumPy 2.
 
 Fixed
 ^^^^^
