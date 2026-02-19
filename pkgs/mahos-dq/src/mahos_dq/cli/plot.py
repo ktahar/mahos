@@ -403,8 +403,8 @@ def add_common_args(parser, default_limits=((None, None), (None, None))):
     parser.add_argument("names", nargs="+", help="file names")
 
 
-def add_confocal_image_parser(sub_parsers):
-    p = sub_parsers.add_parser("image", help="confocal image.")
+def add_confocal_image_parser(subparsers):
+    p = subparsers.add_parser("image", help="confocal image.")
     p.add_argument("-V", "--vmax", type=float, help="Upper bound of color map")
     p.add_argument("-v", "--vmin", type=float, help="Lower bound of color map")
     p.add_argument("-c", "--cmap", type=str, default="inferno", help="color map")
@@ -420,14 +420,14 @@ def add_confocal_image_parser(sub_parsers):
     p.set_defaults(func=plot_confocal_image)
 
 
-def add_confocal_trace_parser(sub_parsers):
-    p = sub_parsers.add_parser("trace", help="confocal trace.")
+def add_confocal_trace_parser(subparsers):
+    p = subparsers.add_parser("trace", help="confocal trace.")
     add_common_args(p)
     p.set_defaults(func=plot_confocal_trace)
 
 
-def add_odmr_parser(sub_parsers):
-    p = sub_parsers.add_parser("odmr", help="odmr spectrum.")
+def add_odmr_parser(subparsers):
+    p = subparsers.add_parser("odmr", help="odmr spectrum.")
 
     p.add_argument(
         "-o", "--one-figure", metavar="FILENAME", type=str, help="Filename for one-figure mode"
@@ -489,8 +489,8 @@ def add_odmr_parser(sub_parsers):
     p.set_defaults(func=plot_odmr)
 
 
-def add_podmr_parser(sub_parsers):
-    p = sub_parsers.add_parser(
+def add_podmr_parser(subparsers):
+    p = subparsers.add_parser(
         "podmr",
         help=" ".join(
             [
@@ -567,8 +567,8 @@ def add_podmr_parser(sub_parsers):
     p.set_defaults(func=plot_podmr)
 
 
-def add_spodmr_parser(sub_parsers):
-    p = sub_parsers.add_parser(
+def add_spodmr_parser(subparsers):
+    p = subparsers.add_parser(
         "spodmr",
         help=" ".join(
             [
@@ -635,8 +635,8 @@ def add_spodmr_parser(sub_parsers):
     p.set_defaults(func=plot_spodmr)
 
 
-def add_iodmr_parser(sub_parsers):
-    p = sub_parsers.add_parser("iodmr", help="imaging odmr spectrum.")
+def add_iodmr_parser(subparsers):
+    p = subparsers.add_parser("iodmr", help="imaging odmr spectrum.")
 
     p.add_argument(
         "-o", "--one-figure", metavar="FILENAME", type=str, help="Filename for one-figure mode"
@@ -660,8 +660,8 @@ def add_iodmr_parser(sub_parsers):
     p.set_defaults(func=plot_iodmr)
 
 
-def add_iodmr_fit_parser(sub_parsers):
-    p = sub_parsers.add_parser("iodmr-fit", help="fitting imaging odmr spectrum.")
+def add_iodmr_fit_parser(subparsers):
+    p = subparsers.add_parser("iodmr-fit", help="fitting imaging odmr spectrum.")
 
     # fit
     p.add_argument(
@@ -701,8 +701,8 @@ def add_iodmr_fit_parser(sub_parsers):
     p.set_defaults(func=fit_iodmr)
 
 
-def add_hbt_parser(sub_parsers):
-    p = sub_parsers.add_parser("hbt", help="HBT data.")
+def add_hbt_parser(subparsers):
+    p = subparsers.add_parser("hbt", help="HBT data.")
     p.add_argument(
         "-o", "--one-figure", metavar="FILENAME", type=str, help="Filename for one-figure mode"
     )
@@ -740,8 +740,8 @@ def add_hbt_parser(sub_parsers):
     p.set_defaults(func=plot_hbt)
 
 
-def add_spec_parser(sub_parsers):
-    p = sub_parsers.add_parser("spec", help="Spectroscopy data.")
+def add_spec_parser(subparsers):
+    p = subparsers.add_parser("spec", help="Spectroscopy data.")
     p.add_argument(
         "-o", "--one-figure", metavar="FILENAME", type=str, help="Filename for one-figure mode"
     )
@@ -784,16 +784,16 @@ def add_spec_parser(sub_parsers):
     p.set_defaults(func=plot_spec)
 
 
-def add_parsers(sub_parsers):
-    add_confocal_image_parser(sub_parsers)
-    add_confocal_trace_parser(sub_parsers)
-    add_odmr_parser(sub_parsers)
-    add_podmr_parser(sub_parsers)
-    add_spodmr_parser(sub_parsers)
-    add_iodmr_parser(sub_parsers)
-    add_iodmr_fit_parser(sub_parsers)
-    add_hbt_parser(sub_parsers)
-    add_spec_parser(sub_parsers)
+def add_parsers(subparsers):
+    add_confocal_image_parser(subparsers)
+    add_confocal_trace_parser(subparsers)
+    add_odmr_parser(subparsers)
+    add_podmr_parser(subparsers)
+    add_spodmr_parser(subparsers)
+    add_iodmr_parser(subparsers)
+    add_iodmr_fit_parser(subparsers)
+    add_hbt_parser(subparsers)
+    add_spec_parser(subparsers)
 
 
 def build_parser(add_help: bool = True):
@@ -802,8 +802,8 @@ def build_parser(add_help: bool = True):
         description="(Re-)plot data file(s).",
         add_help=add_help,
     )
-    sub_parsers = parser.add_subparsers(help="type of the files")
-    add_parsers(sub_parsers)
+    subparsers = parser.add_subparsers(help="type of the files")
+    add_parsers(subparsers)
     return parser
 
 
