@@ -478,6 +478,10 @@ class Pulser(Worker):
         params = data.get_params()
         if not self.conf.get("divide_block", False) and params["divide_block"]:
             self.logger.warn("divide_block is recommended to be False.")
+        if params.get("divide_block", False) and params.get("mw_offset", 0.0) != 0.0:
+            self.logger.warn(
+                "divide_block=True with non-zero mw_offset can break down Nrep optimization."
+            )
         return generate(data.xdata, params)
 
     def validate_params(
@@ -678,6 +682,8 @@ class Pulser(Worker):
         d["trigger_width"] = P.FloatParam(20e-9, 1e-9, 1e-6)
         d["init_delay"] = P.FloatParam(0.0, 0.0, 1e-6)
         d["final_delay"] = P.FloatParam(5e-6, 0.0, 1e-4)
+        ### global mw offset
+        d["mw_offset"] = P.FloatParam(0.0, -1e-4, 1e-4)
 
         ## common switches
         d["invert_sweep"] = P.BoolParam(False)

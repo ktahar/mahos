@@ -98,6 +98,7 @@ def test_qdyne(server, qdyne, server_conf, qdyne_conf):
 
     assert get_some(qdyne.get_status, poll_timeout_ms).state == BinaryState.IDLE
     params = qdyne.get_param_dict("xy8")
+    params["mw_offset"].set(-10e-9)
 
     assert qdyne.validate(params, "xy8")
     assert qdyne.start(params, "xy8")

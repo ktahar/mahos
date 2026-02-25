@@ -93,6 +93,92 @@ def test_podmr_pattern_divide():
         assert pattern_equivalent(ptn, ptn_divide)
 
 
+def test_podmr_mw_offset():
+    tau = np.array([100e-9, 200e-9])
+    params = {
+        "base_width": 320e-9,
+        "laser_delay": 45e-9,
+        "laser_width": 5e-6,
+        "mw_delay": 1e-6,
+        "trigger_width": 20e-9,
+        "init_delay": 0.0,
+        "final_delay": 5e-6,
+        "partial": -1,
+        "nomw": False,
+        "start": 100e-9,
+        "num": 2,
+        "step": 100e-9,
+        "divide_block": False,
+    }
+    params["pulse"] = {
+        "90pulse": 10e-9,
+        "180pulse": 20e-9,
+        "tauconst": 150e-9,
+        "tau2const": 160e-9,
+        "Nconst": 2,
+        "N2const": 2,
+        "N3const": 2,
+        "ddphase": "Y:X:Y:X,Y:X:Y:iX",
+        "supersample": 1,
+        "iq_delay": 16e-9,
+        "readY": False,
+        "invertY": False,
+        "reinitX": False,
+        "flip_head": True,
+    }
+
+    generators = make_generators()
+
+    ptn_ref = generators["rabi"].generate(tau, params)
+    params_zero = copy.deepcopy(params)
+    params_zero["mw_offset"] = 0.0
+    ptn_zero = generators["rabi"].generate(tau, params_zero)
+    assert pattern_equal(ptn_ref, ptn_zero)
+
+    blocks_ref, freq, laser_timing = ptn_ref
+    total_length = blocks_ref.total_length()
+    offset_ticks = 37
+
+    params_offset = copy.deepcopy(params)
+    params_offset["mw_offset"] = offset_ticks / freq
+    blocks_ofs, freq_ofs, laser_timing_ofs = generators["rabi"].generate(tau, params_offset)
+    assert abs(freq_ofs - freq) < 1e-5
+    assert laser_timing_ofs == laser_timing
+    assert blocks_ofs.total_length() == total_length
+
+    channels_ref, patterns_ref = blocks_ref.decode_all()
+    channels_ofs, patterns_ofs = blocks_ofs.decode_all()
+    assert channels_ofs == channels_ref
+    for ch, p_ref, p_ofs in zip(channels_ref, patterns_ref, patterns_ofs):
+        if isinstance(ch, str) and ch.startswith("mw"):
+            assert np.array_equal(p_ofs, np.roll(p_ref, offset_ticks))
+        else:
+            assert np.array_equal(p_ofs, p_ref)
+
+    params_wrap = copy.deepcopy(params)
+    params_wrap["mw_offset"] = (total_length + offset_ticks) / freq
+    blocks_wrap, freq_wrap, laser_timing_wrap = generators["rabi"].generate(tau, params_wrap)
+    assert abs(freq_wrap - freq) < 1e-5
+    assert laser_timing_wrap == laser_timing
+    assert blocks_wrap.equivalent(blocks_ofs)
+
+    # negative offset: advance mw patterns
+    params_adv = copy.deepcopy(params)
+    params_adv["mw_offset"] = -offset_ticks / freq
+    blocks_adv, freq_adv, laser_timing_adv = generators["rabi"].generate(tau, params_adv)
+    assert abs(freq_adv - freq) < 1e-5
+    assert laser_timing_adv == laser_timing
+    assert blocks_adv.total_length() == total_length
+
+    channels_adv, patterns_adv = blocks_adv.decode_all()
+    assert channels_adv == channels_ref
+    for ch, p_ref, p_adv in zip(channels_ref, patterns_ref, patterns_adv):
+        if isinstance(ch, str) and ch.startswith("mw"):
+            assert np.array_equal(p_adv, np.roll(p_ref, -offset_ticks))
+        else:
+            assert np.array_equal(p_adv, p_ref)
+
+
 def test_podmr_patterns():
     tau = np.array([100e-9, 200e-9])
     Ns = [1, 2]

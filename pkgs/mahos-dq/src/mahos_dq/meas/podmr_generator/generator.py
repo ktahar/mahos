@@ -141,6 +141,8 @@ class PatternGenerator(object):
             reduce_start_divisor,
             params.get("fix_base_width"),
         )
+        mw_offset = params.get("mw_offset", 0.0)
+        mw_offset_ticks = int(round(mw_offset * freq))
 
         blocks, laser_timing = K.build_blocks(
             blocks,
@@ -153,6 +155,7 @@ class PatternGenerator(object):
             mw_modes=self.mw_modes,
             num_mw=self.num_mw(),
             iq_amplitude=self.iq_amplitude,
+            mw_offset=mw_offset_ticks,
             channel_remap=self.channel_remap,
         )
         return blocks, freq, laser_timing

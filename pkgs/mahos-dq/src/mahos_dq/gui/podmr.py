@@ -905,6 +905,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
                 ("trigger_width", self.trigwidthBox, 1e9),
                 ("init_delay", self.initdelayBox, 1e9),
                 ("final_delay", self.finaldelayBox, 1e9),
+                ("mw_offset", self.moffsetBox, 1e9),
             ],
         )
         apply_widgets(
@@ -1172,6 +1173,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.trigwidthBox.setValue(p.get("trigger_width", 0.0) * 1e9)
         self.initdelayBox.setValue(p.get("init_delay", 0.0) * 1e9)
         self.finaldelayBox.setValue(p.get("final_delay", 0.0) * 1e9)
+        self.moffsetBox.setValue(p.get("mw_offset", 0.0) * 1e9)
 
     def apply_fg_widgets(self, params=None):
         if params is None:
@@ -1248,6 +1250,8 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         params["trigger_width"] = self.trigwidthBox.value() * 1e-9
         params["init_delay"] = self.initdelayBox.value() * 1e-9
         params["final_delay"] = self.finaldelayBox.value() * 1e-9
+        ## global mw offset
+        params["mw_offset"] = self.moffsetBox.value() * 1e-9
 
         # common switches
         params["invert_sweep"] = self.invertsweepBox.isChecked()
@@ -1485,6 +1489,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
             self.trigwidthBox,
             self.initdelayBox,
             self.finaldelayBox,
+            self.moffsetBox,
             self.paramTable,
         ):
             w.setEnabled(state == BinaryState.IDLE)
@@ -1530,6 +1535,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
             self.trigwidthBox,
             self.initdelayBox,
             self.finaldelayBox,
+            self.moffsetBox,
             self.t90pulseBox,
             self.t180pulseBox,
         )

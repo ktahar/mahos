@@ -10,16 +10,125 @@ Core functions for pattern generators for Pulse ODMR
 
 from __future__ import annotations
 import re
+from bisect import bisect_right
 
 import numpy as np
 from itertools import chain
 
-from mahos.msgs.inst.pg_msgs import Block, Blocks, BlockSeq, AnalogChannel
+from mahos.msgs.inst.pg_msgs import Block, Blocks, BlockSeq, AnalogChannel, Channels
 
 mw_x = AnalogChannel("mw_phase", 0)
 mw_y = AnalogChannel("mw_phase", 90)
 mw_x_inv = AnalogChannel("mw_phase", 180)
 mw_y_inv = AnalogChannel("mw_phase", 270)
+
+
+def is_mw_related_channel(ch: str | int | AnalogChannel) -> bool:
+    if isinstance(ch, str):
+        return ch.startswith("mw")
+    if isinstance(ch, AnalogChannel):
+        return ch.name().startswith("mw")
+    return False
+
+
+def _split_mw_channels(channels: Channels) -> tuple[Channels, Channels]:
+    non_mw = []
+    mw = []
+    for ch in channels:
+        if is_mw_related_channel(ch):
+            mw.append(ch)
+        else:
+            non_mw.append(ch)
+    return tuple(non_mw), tuple(mw)
+
+
+def _expand_pattern(blocks: Blocks[Block]):
+    names = []
+    triggers = []
+    lengths = []
+    pattern = []
+    for block in blocks:
+        names.append(block.name)
+        triggers.append(block.trigger)
+        lengths.append(block.total_length())
+        pattern.extend(block.total_pattern())
+    return names, triggers, lengths, pattern
+
+
+def apply_mw_offset(blocks: Blocks[Block], offset_ticks: int) -> Blocks[Block]:
+    """Apply circular delay to mw-related channels in whole pulse sequence."""
+
+    names, triggers, lengths, pattern = _expand_pattern(blocks)
+    if not pattern:
+        return blocks
+
+    total_length = blocks.total_length()
+    if total_length <= 0:
+        return blocks
+
+    offset_ticks %= total_length
+    if offset_ticks == 0:
+        return blocks
+
+    starts = []
+    non_mw_states = []
+    mw_states = []
+    t = 0
+    boundaries = {0}
+    for channels, duration in pattern:
+        starts.append(t)
+        non_mw, mw = _split_mw_channels(channels)
+        non_mw_states.append(non_mw)
+        mw_states.append(mw)
+        t += duration
+        boundaries.add(t)
+
+    assert t == total_length
+
+    for s in starts:
+        boundaries.add((s + offset_ticks) % total_length)
+
+    # total_length is equivalent to 0 in circular timeline.
+    boundaries.discard(total_length)
+    boundaries = sorted(boundaries)
+    if boundaries[0] != 0:
+        boundaries.insert(0, 0)
+
+    # Rebuild RLE by sampling non-MW at t and MW at (t - offset) for each boundary interval.
+    shifted = []
+    for i, t0 in enumerate(boundaries):
+        t1 = boundaries[i + 1] if i + 1 < len(boundaries) else total_length
+        assert t0 < t1
+
+        idx_non = bisect_right(starts, t0) - 1
+        idx_mw = bisect_right(starts, (t0 - offset_ticks) % total_length) - 1
+        channels = non_mw_states[idx_non] + mw_states[idx_mw]
+        duration = t1 - t0
+
+        if shifted and shifted[-1][0] == channels:
+            shifted[-1] = (channels, shifted[-1][1] + duration)
+        else:
+            shifted.append((channels, duration))
+
+    # Restore original block boundaries so all downstream code keeps block-wise behavior.
+    new_blocks = []
+    pat_i = 0
+    head_ch, head_dur = shifted[0]
+    for name, trigger, length in zip(names, triggers, lengths):
+        consumed = 0
+        block_pattern = []
+        while consumed < length:
+            take = min(head_dur, length - consumed)
+            block_pattern.append((head_ch, take))
+            consumed += take
+            head_dur -= take
+            if head_dur == 0:
+                pat_i += 1
+                if pat_i < len(shifted):
+                    head_ch, head_dur = shifted[pat_i]
+        new_blocks.append(Block(name, block_pattern, trigger=trigger))
+
+    return Blocks(new_blocks).simplify()
 
 
 def round_pulses(
@@ -175,6 +284,7 @@ def build_blocks(
     mw_modes: tuple[int] = (0,),
     num_mw: int = 1,
     iq_amplitude: float = 0.0,
+    mw_offset: int = 0,
     channel_remap: dict | None = None,
 ) -> tuple[Blocks[Block], list[int]]:
     """Build up the blocks by adding init and final blocks.
@@ -247,6 +357,9 @@ def build_blocks(
     if invertY:
         blocks = invert_y_phase(blocks)
     blocks = encode_mw_phase(blocks, params, mw_modes, num_mw, iq_amplitude)
+
+    if mw_offset:
+        blocks = apply_mw_offset(blocks, mw_offset)
 
     if channel_remap is not None:
         blocks = blocks.replace(channel_remap)

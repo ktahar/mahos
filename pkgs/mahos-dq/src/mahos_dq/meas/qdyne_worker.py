@@ -86,7 +86,7 @@ class BlocksBuilder(object):
         self.iq_amplitude = iq_amplitude
         self.channel_remap = channel_remap
 
-    def build_blocks(self, blocks, common_pulses, params, num_mw):
+    def build_blocks(self, blocks, freq, common_pulses, params, num_mw):
         divide = params.get("divide_block", False)
         invertY = params.get("invertY", False)
         minimum_block_length = self.minimum_block_length
@@ -132,6 +132,11 @@ class BlocksBuilder(object):
         if invertY:
             blocks = K.invert_y_phase(blocks)
         blocks = K.encode_mw_phase(blocks, params, self.mw_modes, num_mw, self.iq_amplitude)
+
+        mw_offset = params.get("mw_offset", 0.0)
+        offset_ticks = int(round(mw_offset * freq))
+        if offset_ticks:
+            blocks = K.apply_mw_offset(blocks, offset_ticks)
 
         if self.channel_remap is not None:
             blocks = blocks.replace(self.channel_remap)
@@ -393,9 +398,15 @@ class Pulser(Worker):
         xdata = [data.params["pulse"]["tauconst"]]
         params = data.get_params()
         params["init_delay"] = params["final_delay"] = 0.0
+        if params.get("divide_block", False) and params.get("mw_offset", 0.0) != 0.0:
+            self.logger.warn(
+                "divide_block=True with non-zero mw_offset can break down Nrep optimization."
+            )
 
         blocks, freq, common_pulses = generate(xdata, params)
-        blocks, laser_timing = self.builder.build_blocks(blocks, common_pulses, params, num_mw)
+        blocks, laser_timing = self.builder.build_blocks(
+            blocks, freq, common_pulses, params, num_mw
+        )
         return blocks, freq, laser_timing
 
     def validate_params(
@@ -564,6 +575,8 @@ class Pulser(Worker):
         d["laser_width"] = P.FloatParam(3e-6, 1e-9, 1e-4, unit="s", SI_prefix=True)
         d["mw_delay"] = P.FloatParam(1e-6, 0.0, 1e-4, unit="s", SI_prefix=True)
         d["trigger_width"] = P.FloatParam(20e-9, 1e-9, 1e-6, unit="s", SI_prefix=True)
+        ### global mw offset
+        d["mw_offset"] = P.FloatParam(0.0, -1e-4, 1e-4, unit="s", SI_prefix=True)
         # these are unused
         # d["init_delay"] = P.FloatParam(0.0, 0.0, 1e-6)
         # d["final_delay"] = P.FloatParam(5e-6, 0.0, 1e-4)
