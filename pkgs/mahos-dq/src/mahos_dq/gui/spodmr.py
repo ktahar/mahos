@@ -574,6 +574,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
                 ("laser_delay", self.ldelayBox, 1e9),
                 ("laser_width", self.lwidthBox, 1e9),
                 ("mw_delay", self.mdelayBox, 1e9),
+                ("mw_offset", self.moffsetBox, 1e9),
             ],
         )
 
@@ -812,6 +813,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         self.ldelayBox.setValue(p.get("laser_delay", 0.0) * 1e9)
         self.lwidthBox.setValue(p.get("laser_width", 0.0) * 1e9)
         self.mdelayBox.setValue(p.get("mw_delay", 0.0) * 1e9)
+        self.moffsetBox.setValue(p.get("mw_offset", 0.0) * 1e9)
 
     def apply_fg_widgets(self, params=None):
         if params is None:
@@ -883,6 +885,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         params["laser_delay"] = self.ldelayBox.value() * 1e-9
         params["laser_width"] = self.lwidthBox.value() * 1e-9
         params["mw_delay"] = self.mdelayBox.value() * 1e-9
+        params["mw_offset"] = self.moffsetBox.value() * 1e-9
 
         ## common switches
         params["invert_sweep"] = self.invertsweepBox.isChecked()
@@ -1062,6 +1065,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             self.ldelayBox,
             self.lwidthBox,
             self.mdelayBox,
+            self.moffsetBox,
             self.paramTable,
         ):
             w.setEnabled(state == BinaryState.IDLE)
@@ -1102,6 +1106,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             self.ldelayBox,
             self.lwidthBox,
             self.mdelayBox,
+            self.moffsetBox,
             self.t90pulseBox,
             self.t180pulseBox,
         )

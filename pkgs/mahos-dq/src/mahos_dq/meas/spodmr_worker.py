@@ -176,6 +176,13 @@ class BlockSeqBuilder(object):
             ch = seqs[-1].last_pulse().channels
             seqs.append(Block("eos", [(ch, self.eos_margin)]))
 
+    def _apply_unit_mw_offset(self, blk: Block, offset_ticks: int) -> Block:
+        """Apply mw_offset to one PODMR unit block (local circular shift)."""
+
+        if not offset_ticks:
+            return blk
+        return K.apply_mw_offset(Blocks([blk]), offset_ticks)[0]
+
     def build_complementary(
         self,
         blocks: list[Blocks[Block]],
@@ -185,6 +192,7 @@ class BlockSeqBuilder(object):
         laser_width: int,
         trigger_width: int,
         sync_mode: str,
+        mw_offset_ticks: int,
     ):
         seqs = []
         laser_duties = []
@@ -200,6 +208,8 @@ class BlockSeqBuilder(object):
             if sync_mode == "lockin":
                 blk0 = blk0.union(Block("sync", [("sync", blk0.total_length())]))
             blk1 = self.fix_block_base(blks[2:].collapse())  # Pi-1, readi-1 -> Pi-1
+            blk0 = self._apply_unit_mw_offset(blk0, mw_offset_ticks)
+            blk1 = self._apply_unit_mw_offset(blk1, mw_offset_ticks)
             blk0R = blk0.suffix("R")
             blk1R = blk1.suffix("R")
 
@@ -271,6 +281,7 @@ class BlockSeqBuilder(object):
         laser_width: int,
         trigger_width: int,
         sync_mode: str,
+        mw_offset_ticks: int,
     ):
         seqs = []
         laser_duties = []
@@ -283,6 +294,7 @@ class BlockSeqBuilder(object):
                 blks = blks.remove("sync")
             assert len(blks) == 2
             blk = self.fix_block_base(blks.collapse())
+            blk = self._apply_unit_mw_offset(blk, mw_offset_ticks)
             blkR = blk.suffix("R")
 
             T = blk.total_length()
@@ -330,6 +342,7 @@ class BlockSeqBuilder(object):
         laser_width: int,
         trigger_width: int,
         sync_mode: str,
+        mw_offset_ticks: int,
     ):
         seqs = []
         laser_duties = []
@@ -345,6 +358,8 @@ class BlockSeqBuilder(object):
             if sync_mode == "lockin":
                 blk0 = blk0.union(Block("sync", [("sync", blk0.total_length())]))
             blk1 = self.fix_block_base(blks[2:].collapse())  # Pi-1, readi-1 -> Pi-1
+            blk0 = self._apply_unit_mw_offset(blk0, mw_offset_ticks)
+            blk1 = self._apply_unit_mw_offset(blk1, mw_offset_ticks)
             blk0R = blk0.suffix("R")
             blk1R = blk1.suffix("R")
 
@@ -432,18 +447,33 @@ class BlockSeqBuilder(object):
         accum_window = K.offset_base_inc(
             int(round(freq * params["accum_window"])), self.block_base
         )
+        mw_offset_ticks = int(round(params.get("mw_offset", 0.0) * freq))
         trigger_width = int(round(freq * self.trigger_width))
         pd_period = int(round(freq / params["pd_rate"]))
 
         partial = params["partial"]
         if partial == -1:
             blockseq, laser_duties, markers = self.build_complementary(
-                blocks, accum_window, accum_rep, drop_rep, laser_width, trigger_width, sync_mode
+                blocks,
+                accum_window,
+                accum_rep,
+                drop_rep,
+                laser_width,
+                trigger_width,
+                sync_mode,
+                mw_offset_ticks,
             )
             oversample = (accum_window * accum_rep) // pd_period
         elif partial in (0, 1):
             blockseq, laser_duties, markers = self.build_partial(
-                blocks, accum_window, accum_rep, drop_rep, laser_width, trigger_width, sync_mode
+                blocks,
+                accum_window,
+                accum_rep,
+                drop_rep,
+                laser_width,
+                trigger_width,
+                sync_mode,
+                mw_offset_ticks,
             )
             oversample = (accum_window * accum_rep) // pd_period
         elif partial == 2:
@@ -457,6 +487,7 @@ class BlockSeqBuilder(object):
                 laser_width,
                 trigger_width,
                 sync_mode,
+                mw_offset_ticks,
             )
             oversample = (2 * accum_window * accum_rep * lockin_rep) // pd_period
         else:
@@ -876,6 +907,8 @@ class Pulser(Worker):
         d["laser_delay"] = P.FloatParam(45e-9, 0.0, 1e-4)
         d["laser_width"] = P.FloatParam(3e-6, 1e-9, 1e-4)
         d["mw_delay"] = P.FloatParam(1e-6, 0.0, 1e-4)
+        # local offset applied within each unit PODMR pulse sequence (not whole SPODMR sequence)
+        d["mw_offset"] = P.FloatParam(0.0, -1e-4, 1e-4)
         # below are unused
         # d["base_width"] = P.FloatParam(320e-9, 1e-9, 1e-4)
         # d["trigger_width"] = P.FloatParam(20e-9, 1e-9, 1e-6)
