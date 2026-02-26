@@ -84,6 +84,8 @@ class Requester(object):
         self.create_socket()
 
     def create_socket(self):
+        """Create zmq socket to send requests."""
+
         sock = self.ctx.socket(zmq.REQ)
         sock.setsockopt(zmq.LINGER, self.linger_ms)
         if self.timeout_ms is not None:
@@ -109,6 +111,8 @@ class Requester(object):
         return rep
 
     def close(self):
+        """Close this requester."""
+
         self._socket.close()
         # Don't close self.ctx because Context will do that.
 
@@ -122,6 +126,8 @@ class Publisher(object):
         self.logger = get_logger(logger)
 
     def socket(self) -> zmq.Socket:
+        """Get zmq socket this publisher uses."""
+
         return self._socket
 
     def publish(self, msg):
@@ -133,6 +139,8 @@ class Publisher(object):
             self.logger.exception("ZMQError in Publisher.publish().")
 
     def close(self):
+        """Close this publisher."""
+
         self._socket.close()
 
 

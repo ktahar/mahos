@@ -341,6 +341,8 @@ class Node(NodeBase):
             return Reply(False, msg)
 
     def handle_req(self, msg: Request) -> Reply:
+        """Handle an incoming Request and return a Reply."""
+
         return Reply(False, "Handler is not implemented.")
 
     def poll(self):

@@ -56,6 +56,8 @@ class GlobalParams(Node):
         self._params = {}
 
     def set_param(self, msg: SetParamReq) -> Reply:
+        """Handle SetParamReq: set a parameter (key-value pair)."""
+
         self._params[msg.key] = msg.value
         return Reply(True, "")
 

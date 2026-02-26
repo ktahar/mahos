@@ -317,5 +317,7 @@ class LogBroker(Node):
             self.file_logger.close()
 
     def xsub_handler(self, msg):
+        """Handle XPUB: write log to file when ``conf["file"]`` is True."""
+
         if self.file_logger is not None:
             self.file_logger.write_log(msg)
