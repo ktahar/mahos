@@ -117,6 +117,8 @@ class Ui_PODMR(object):
         self.partialBox.addItem("")
         self.partialBox.addItem("")
         self.partialBox.addItem("")
+        self.partialBox.addItem("")
+        self.partialBox.addItem("")
         self.gridLayout_2.addWidget(self.partialBox, 6, 3, 1, 1)
         self.intervalBox = QtWidgets.QSpinBox(parent=self.groupBox_2)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Preferred)
@@ -661,7 +663,8 @@ class Ui_PODMR(object):
         PODMR.setTabOrder(self.invertsweepBox, self.t90pulseBox)
         PODMR.setTabOrder(self.t90pulseBox, self.t180pulseBox)
         PODMR.setTabOrder(self.t180pulseBox, self.paramTable)
-        PODMR.setTabOrder(self.paramTable, self.plotmodeBox)
+        PODMR.setTabOrder(self.paramTable, self.plotenableBox)
+        PODMR.setTabOrder(self.plotenableBox, self.plotmodeBox)
         PODMR.setTabOrder(self.plotmodeBox, self.taumodeBox)
         PODMR.setTabOrder(self.taumodeBox, self.sigdelayBox)
         PODMR.setTabOrder(self.sigdelayBox, self.sigwidthBox)
@@ -680,7 +683,6 @@ class Ui_PODMR(object):
         PODMR.setTabOrder(self.fg_waveBox, self.fg_amplBox)
         PODMR.setTabOrder(self.fg_amplBox, self.fg_phaseBox)
         PODMR.setTabOrder(self.fg_phaseBox, self.fg_freqBox)
-        PODMR.setTabOrder(self.fg_freqBox, self.plotenableBox)
 
     def retranslateUi(self, PODMR):
         _translate = QtCore.QCoreApplication.translate
@@ -704,6 +706,8 @@ class Ui_PODMR(object):
         self.partialBox.setItemText(0, _translate("PODMR", "Complementary"))
         self.partialBox.setItemText(1, _translate("PODMR", "Pattern 0 only"))
         self.partialBox.setItemText(2, _translate("PODMR", "Pattern 1 only"))
+        self.partialBox.setItemText(3, _translate("PODMR", "Pattern 2 only"))
+        self.partialBox.setItemText(4, _translate("PODMR", "Pattern 3 only"))
         self.intervalBox.setSuffix(_translate("PODMR", " ms"))
         self.intervalBox.setPrefix(_translate("PODMR", "interval: "))
         self.powerBox.setPrefix(_translate("PODMR", "power: "))

@@ -264,6 +264,16 @@
                 <string>Pattern 1 only</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string>Pattern 2 only</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Pattern 3 only</string>
+               </property>
+              </item>
              </widget>
             </item>
             <item row="1" column="3">

@@ -477,16 +477,67 @@ class Pulser(Worker):
         data.params["num_pattern"] = num_pattern
         return num_pattern
 
+    def _plotmode_options(self, label: str, params: dict | None = None) -> tuple[str, ...]:
+        """Get plotmode choices for method `label`.
+
+        Complementary plotting is currently supported only for N=2 and N=4.
+
+        """
+
+        if label not in self.generators:
+            raise ValueError(f"unknown method '{label}'")
+
+        num_pattern = self.generators[label].num_pattern(params or {})
+        num_pattern = max(2, min(int(num_pattern), 4))
+
+        if num_pattern == 2:
+            return (
+                "data01",
+                "data0",
+                "data1",
+                "diff",
+                "average",
+                "normalize",
+                "concatenate",
+                "ref",
+            )
+        if num_pattern == 4:
+            return (
+                "data01",
+                "data23",
+                "data0",
+                "data1",
+                "data2",
+                "data3",
+                "diff",
+                "diff01-23",
+                "average",
+                "ref01",
+                "ref23",
+                "concatenate",
+            )
+        raise ValueError(f"unsupported num_pattern={num_pattern} for method '{label}'")
+
     def _validate_partial(self, data: PODMRData):
         p = data.params.get("partial", -1)
         n = self._set_num_pattern(data)
         if p != -1 and (p < 0 or p >= n):
             raise ValueError(f"partial {p} is invalid for num_pattern={n}")
 
+    def _validate_plotmode(self, data: PODMRData):
+        plotmode = data.params.get("plot", {}).get("plotmode", "data01")
+        options = self._plotmode_options(data.label, data.get_params())
+        if plotmode not in options:
+            raise ValueError(
+                f"plotmode '{plotmode}' is invalid for method '{data.label}'. "
+                f"available: {options}"
+            )
+
     def generate_blocks(self, data: PODMRData | None = None):
         if data is None:
             data = self.data
         self._validate_partial(data)
+        self._validate_plotmode(data)
         generate = self.generators[data.label].generate
         params = data.get_params()
         if not self.conf.get("divide_block", False) and params["divide_block"]:
@@ -542,6 +593,18 @@ class Pulser(Worker):
     def update_plot_params(self, params: dict) -> bool:
         if self.data.params is None:
             return False
+        if "plotmode" in params:
+            try:
+                options = self._plotmode_options(self.data.label, self.data.get_params())
+            except ValueError as e:
+                self.logger.error(f"Cannot validate plotmode for {self.data.label}: {e}")
+                return False
+            if params["plotmode"] not in options:
+                self.logger.error(
+                    f"Unknown plotmode '{params['plotmode']}' for method '{self.data.label}'. "
+                    f"available: {options}"
+                )
+                return False
         if self.op.update_plot_params(self.data, params):
             self.data.remove_fit_data()
         if not self.data.running:
@@ -569,6 +632,7 @@ class Pulser(Worker):
             self.data.update_params(params)
         try:
             self._validate_partial(self.data)
+            self._validate_plotmode(self.data)
         except ValueError as e:
             self.logger.error(f"Invalid params for {label}: {e}")
             return False
@@ -696,6 +760,9 @@ class Pulser(Worker):
         return False
 
     def _get_param_dict_pulse(self, label: str, d: dict):
+        num_pattern = self.generators[label].num_pattern({})
+        num_pattern = max(2, min(int(num_pattern), 4))
+
         ## common_pulses
         d["base_width"] = P.FloatParam(320e-9, 1e-9, 1e-4)
         d["laser_delay"] = P.FloatParam(45e-9, 0.0, 1e-4)
@@ -711,7 +778,7 @@ class Pulser(Worker):
         d["invert_sweep"] = P.BoolParam(False)
         d["enable_reduce"] = P.BoolParam(False)
         d["divide_block"] = P.BoolParam(self.conf.get("divide_block", False))
-        d["partial"] = P.IntParam(-1, -1, 3)
+        d["partial"] = P.IntParam(-1, -1, num_pattern - 1)
 
         ## sweep params (tau / N)
         if self.generators[label].is_sweepN():
@@ -809,7 +876,7 @@ class Pulser(Worker):
         d["plot"] = {
             "plotmode": P.StrChoiceParam(
                 "data01",
-                ("data01", "data0", "data1", "diff", "average", "normalize", "concatenate", "ref"),
+                self._plotmode_options(label),
             ),
             "taumode": P.StrChoiceParam("raw", taumodes),
             "logX": P.BoolParam(False),

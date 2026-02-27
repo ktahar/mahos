@@ -972,18 +972,33 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
             {k: v for k, v in self._params["pulse"].items() if k not in ("90pulse", "180pulse")}
         )
         self.paramTable.update_contents(pp)
+        self.reset_partial_modes(self._params["partial"].maximum())
+        self.reset_plot_modes(
+            self._params["plot"]["plotmode"].options(),
+            self._params["plot"]["plotmode"].default(),
+        )
         self.reset_tau_modes(self._params["plot"]["taumode"].options())
         self.plot.update_label(self.data)
 
     def switch_partial(self, index):
-        # when partial is 0 (index 1), plotmode to data0 (index 1)
-        # when partial is 1 (index 2), plotmode to data1 (index 2)
-        # when partial is 2 (index 3), plotmode to data0 (index 1)
-
-        if index in (1, 2):
-            self.plotmodeBox.setCurrentIndex(index)
+        # when partial is 0 (index 1), set plotmode to data0
+        # when partial is 1 (index 2), set plotmode to data1
+        # when partial is 2 (index 3), set plotmode to data2 if available (else data0)
+        # when partial is 3 (index 4), set plotmode to data3 if available (else data0)
+        if index == 1:
+            self.set_plot_mode("data0")
+        elif index == 2:
+            self.set_plot_mode("data1")
         elif index == 3:
-            self.plotmodeBox.setCurrentIndex(1)
+            if self.plotmodeBox.findText("data2") >= 0:
+                self.set_plot_mode("data2")
+            else:
+                self.set_plot_mode("data0")
+        elif index == 4:
+            if self.plotmodeBox.findText("data3") >= 0:
+                self.set_plot_mode("data3")
+            else:
+                self.set_plot_mode("data0")
 
     def update_save_button(self, saved):
         if saved:
@@ -1160,7 +1175,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.reduceBox.setChecked(p.get("enable_reduce", False))
         self.divideblockBox.setChecked(p.get("divide_block", False))
         partial = p.get("partial")
-        if partial in (0, 1):
+        if partial in (0, 1, 2, 3) and partial + 1 < self.partialBox.count():
             self.partialBox.setCurrentIndex(partial + 1)
         else:
             self.partialBox.setCurrentIndex(0)
@@ -1602,6 +1617,44 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.taumodeBox.addItems(modes)
         self.taumodeBox.currentIndexChanged.connect(self.update_plot_params)
         self.set_tau_mode(prev_mode)
+
+    def reset_partial_modes(self, max_partial: int):
+        """Reset partial selector entries for the current method.
+
+        Worker currently exposes max_partial for N=2 or N=4 methods.
+
+        """
+
+        partial_labels = [
+            "Complementary",
+            "Pattern 0 only",
+            "Pattern 1 only",
+            "Pattern 2 only",
+            "Pattern 3 only",
+        ]
+        max_partial = max(1, min(int(max_partial), 3))
+        new_count = max_partial + 2
+
+        prev_index = self.partialBox.currentIndex()
+        self.partialBox.currentIndexChanged.disconnect(self.switch_partial)
+        self.partialBox.clear()
+        self.partialBox.addItems(partial_labels[:new_count])
+        self.partialBox.currentIndexChanged.connect(self.switch_partial)
+
+        if 0 <= prev_index < new_count:
+            self.partialBox.setCurrentIndex(prev_index)
+        else:
+            self.partialBox.setCurrentIndex(0)
+
+    def reset_plot_modes(self, modes: list[str], default_mode: str = "data01"):
+        prev_mode = self.plotmodeBox.currentText()
+        if prev_mode not in modes:
+            prev_mode = default_mode if default_mode in modes else modes[0]
+        self.plotmodeBox.currentIndexChanged.disconnect(self.update_plot_params)
+        self.plotmodeBox.clear()
+        self.plotmodeBox.addItems(modes)
+        self.plotmodeBox.currentIndexChanged.connect(self.update_plot_params)
+        self.set_plot_mode(prev_mode)
 
     def set_ref_mode(self, mode: str):
         i = self.refmodeBox.findText(mode)

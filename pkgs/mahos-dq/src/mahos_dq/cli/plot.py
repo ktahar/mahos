@@ -527,7 +527,12 @@ def add_podmr_parser(subparsers):
         "-M",
         "--plotmode",
         type=str,
-        help="[plot] Plot mode (data01|data0|data1|diff|average|normalize|concatenate|ref)",
+        help=(
+            "[plot] Plot mode "
+            "(N=2: data01|data0|data1|diff|average|normalize|concatenate|ref; "
+            "N=4: data01|data23|data0|data1|data2|data3|diff|diff01-23|average|"
+            "ref01|ref23|concatenate)"
+        ),
     )
     p.add_argument("-T", "--taumode", type=str, help="[plot] Tau mode (raw|total|freq|index|head)")
     p.add_argument(

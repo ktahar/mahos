@@ -80,6 +80,10 @@ def set_method(method_box, method: str):
     return False
 
 
+def combo_items(combo_box):
+    return [combo_box.itemText(i) for i in range(combo_box.count())]
+
+
 @pytest.mark.timeout(40)
 def test_spectroscopy_gui_start_and_receive_data(
     server, spectroscopy, global_params, gconf, qtbot
@@ -165,6 +169,43 @@ def test_podmr_gui_start_and_receive_data(server, podmr, global_params, gconf, q
     )
 
     stop_if_active(qtbot, window.podmr.stopButton, window.podmr.cli.get_state)
+
+
+@pytest.mark.timeout(40)
+def test_podmr_gui_method_switch_updates_partial_and_plotmode(
+    server, podmr, global_params, gconf, qtbot
+):
+    podmr.wait()
+    global_params.wait()
+
+    window = PODMRMainWindow(gconf, "localhost::podmr_gui", context=None)
+    qtbot.addWidget(window)
+    window.show()
+    qtbot.waitUntil(lambda: window.podmr.isEnabled(), timeout=GUI_TIMEOUT_MS)
+
+    methods = combo_items(window.podmr.methodBox)
+    assert "dq2ramsey" in methods
+    assert "dq4ramsey" in methods
+
+    assert set_method(window.podmr.methodBox, "dq4ramsey")
+    qtbot.waitUntil(lambda: window.podmr.partialBox.count() == 5, timeout=GUI_TIMEOUT_MS)
+    qtbot.waitUntil(
+        lambda: window.podmr.plotmodeBox.findText("data3") >= 0, timeout=GUI_TIMEOUT_MS
+    )
+    assert window.podmr.plotmodeBox.findText("normalize") < 0
+
+    window.podmr.partialBox.setCurrentIndex(4)
+    qtbot.waitUntil(
+        lambda: window.podmr.plotmodeBox.currentText() == "data3", timeout=GUI_TIMEOUT_MS
+    )
+
+    assert set_method(window.podmr.methodBox, "dq2ramsey")
+    qtbot.waitUntil(lambda: window.podmr.partialBox.count() == 3, timeout=GUI_TIMEOUT_MS)
+    qtbot.waitUntil(
+        lambda: window.podmr.plotmodeBox.findText("normalize") >= 0, timeout=GUI_TIMEOUT_MS
+    )
+    assert window.podmr.plotmodeBox.findText("data3") < 0
+    assert window.podmr.partialBox.currentIndex() == 0
 
 
 @pytest.mark.timeout(60)

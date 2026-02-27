@@ -11,10 +11,12 @@ Tests for mahos_dq.meas.podmr.
 import copy
 
 import numpy as np
+import pytest
 
 from mahos_dq.meas.podmr import PODMRClient, PODMRIO
 from mahos_dq.msgs.podmr_msgs import PODMRData
 from mahos.msgs.common_msgs import BinaryState
+from mahos.msgs import param_msgs as P
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, podmr, server_conf, podmr_conf
@@ -301,3 +303,30 @@ def test_podmr(server, podmr, server_conf, podmr_conf):
         assert podmr.start(params, m)
         assert expect_podmr(podmr, params["Nnum"].value(), poll_timeout_ms)
         assert podmr.stop()
+
+
+def test_podmr_plotmode_options(server, podmr, podmr_conf):
+    podmr.wait()
+    labels = podmr.get_param_dict_labels()
+    assert "dq2ramsey" in labels
+    assert "dq4ramsey" in labels
+
+    p2 = podmr.get_param_dict("dq2ramsey")
+    p4 = podmr.get_param_dict("dq4ramsey")
+    m2 = p2["plot"]["plotmode"].options()
+    m4 = p4["plot"]["plotmode"].options()
+
+    assert "normalize" in m2
+    assert "ref" in m2
+    assert "data23" not in m2
+
+    assert "normalize" not in m4
+    assert "ref" not in m4
+    assert "data23" in m4
+    assert "diff01-23" in m4
+    assert "ref01" in m4
+    assert "ref23" in m4
+
+    raw4 = P.unwrap(p4)
+    raw4["plot"]["plotmode"] = "normalize"
+    assert not podmr.validate(raw4, "dq4ramsey")

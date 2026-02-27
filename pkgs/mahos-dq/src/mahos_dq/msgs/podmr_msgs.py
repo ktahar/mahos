@@ -340,7 +340,11 @@ class PODMRData(BasicMeasData):
 
     def _concat_xdata(self, xdata):
         if not self.is_partial() and self.params["plot"]["plotmode"] == "concatenate":
-            xdata = np.column_stack((xdata, xdata)).reshape(len(xdata) * 2)
+            N = self.num_pattern()
+            # Complementary concatenate mode currently supports only N=2 and N=4.
+            if N not in (2, 4):
+                raise ValueError(f"unsupported num_pattern {N} for concatenate")
+            xdata = np.repeat(xdata, N)
         return xdata
 
     def get_total_scale(self):
@@ -411,14 +415,7 @@ class PODMRData(BasicMeasData):
         if self.is_partial():
             return signal_head * tbin
         if self.params["plot"]["plotmode"] == "concatenate":
-            N = self.num_pattern()
-            if N <= 2:
-                return signal_head * tbin
-            # TODO
-            # "concatenate" currently represents pattern0/pattern1 only.
-            # keep xdata aligned with ydata shape for N > 2.
-            head01 = signal_head.reshape(len(xdata), N)[:, :2].reshape(len(xdata) * 2)
-            return head01 * tbin
+            return signal_head * tbin
         else:
             return signal_head[0 : len(xdata) * self.num_pattern() : self.num_pattern()] * tbin
 
@@ -501,8 +498,21 @@ class PODMRData(BasicMeasData):
             return s, None
 
     def _get_ydata_complementary(self):
-        if self.num_pattern() < 2:
-            raise ValueError(f"invalid num_pattern {self.num_pattern()}")
+        """Get complementary-mode ydata.
+
+        Current user-facing complementary plotting is intentionally limited to
+        2-pattern and 4-pattern data. Other pattern counts are rejected.
+
+        """
+
+        N = self.num_pattern()
+        if N == 2:
+            return self._get_ydata_complementary_n2()
+        if N == 4:
+            return self._get_ydata_complementary_n4()
+        raise ValueError(f"unsupported num_pattern {N} for complementary mode")
+
+    def _get_ydata_complementary_n2(self):
         s0_raw = self._get_pattern_data(0)
         s1_raw = self._get_pattern_data(1)
         r0_raw = self._get_pattern_ref(0)
@@ -553,6 +563,67 @@ class PODMRData(BasicMeasData):
             return np.column_stack((s0, s1)).reshape(len(s0) * 2), None
         elif plotmode == "ref":
             return r0_raw, r1_raw
+        else:
+            raise ValueError(f"unknown plotmode {plotmode}")
+
+    def _get_ydata_complementary_n4(self):
+        s_raw = [self._get_pattern_data(i) for i in range(4)]
+        r_raw = [self._get_pattern_ref(i) for i in range(4)]
+        if any(v is None for v in s_raw + r_raw):
+            return None, None
+
+        if self.params["plot"]["refaverage"]:
+            r_mean = np.mean(tuple(r_raw))
+            r = [r_mean, r_mean, r_mean, r_mean]
+        else:
+            r = r_raw
+
+        refmode = self.params["plot"]["refmode"]
+        if refmode == "subtract":
+            s = [si - ri for si, ri in zip(s_raw, r)]
+        elif refmode == "divide":
+            s = [si / ri for si, ri in zip(s_raw, r)]
+        elif refmode == "ignore":
+            s = list(s_raw)
+        else:
+            raise ValueError(f"unknown refmode {refmode}")
+
+        s0, s1, s2, s3 = s
+
+        plotmode = self.params["plot"]["plotmode"]
+        flip = self.params["plot"].get("flipY", False)
+        if plotmode == "data01":
+            return s0, s1
+        elif plotmode == "data23":
+            return s2, s3
+        elif plotmode == "data0":
+            return s0, None
+        elif plotmode == "data1":
+            return s1, None
+        elif plotmode == "data2":
+            return s2, None
+        elif plotmode == "data3":
+            return s3, None
+        elif plotmode == "diff":
+            y = s0 - s1 + s2 - s3
+            if flip:
+                y = -y
+            return y, None
+        elif plotmode == "diff01-23":
+            if flip:
+                return s1 - s0, s3 - s2
+            else:
+                return s0 - s1, s2 - s3
+        elif plotmode == "average":
+            return (s0 + s1 + s2 + s3) / 4, None
+        elif plotmode == "ref01":
+            return r_raw[0], r_raw[1]
+        elif plotmode == "ref23":
+            return r_raw[2], r_raw[3]
+        elif plotmode == "concatenate":
+            return np.column_stack((s0, s1, s2, s3)).reshape(len(s0) * 4), None
+        elif plotmode in ("normalize", "ref"):
+            raise ValueError(f"plotmode {plotmode} is unsupported for num_pattern=4")
         else:
             raise ValueError(f"unknown plotmode {plotmode}")
 
