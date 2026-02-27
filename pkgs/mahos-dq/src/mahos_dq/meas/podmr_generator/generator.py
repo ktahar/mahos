@@ -2189,6 +2189,162 @@ class DRabiGenerator(PatternGenerator):
         return blocks, freq, common_pulses
 
 
+class DQ2RamseyGenerator(PatternGenerator):
+    """Generate Pulse Pattern for Double Quantum 2-Ramsey measurement.
+
+    :param 90pulse: duration of 90 deg (pi) pulse at mw and mw1 channels
+    :type 90pulse: float
+
+    pattern0 => mw  (pi/2 - tau - pi/2)
+                mw1 (pi/2 - tau - pi/2)
+    pattern1 => mw  (pi/2 - tau - pi/2_inv)
+                mw1 (pi/2 - tau - pi/2)
+
+    """
+
+    def pulse_params(self) -> P.ParamDict[str, P.PDValue]:
+        pd = P.ParamDict()
+        pd["90pulse"] = P.FloatParam(
+            10e-9, 1e-9, 1e-6, unit="s", SI_prefix=True, step=1e-9, doc="90 deg (pi) pulse width."
+        )
+        return pd
+
+    def num_mw(self) -> int:
+        return 2
+
+    def _generate(
+        self,
+        xdata,
+        common_pulses: list[float],
+        pulse_params: dict,
+        partial: int,
+        reduce_start_divisor: int,
+        fix_base_width: int | None,
+    ):
+        if self.mode() not in (0, 2):
+            raise ValueError(f"Doesn't support mode1. Given mode: {self.mode()}.")
+
+        p90 = pulse_params["90pulse"]
+        read_phase0 = (mw_x, mw1_x)
+        read_phase1 = (mw_x_inv, mw1_x)
+
+        p0 = [p90]
+        p1 = [p90]
+        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+            self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
+        )
+        p0 = p0 + [read_phase0]
+        p1 = p1 + [read_phase1]
+
+        def gen(v, p90, read_phase):
+            v_f, v_l = K.split_int(v, self.split_fraction)
+            return [
+                ((mw_x, mw1_x, "mw", "mw1"), p90),
+                ((mw_x, mw1_x), v_f),
+                (read_phase, v_l),
+                (read_phase + ("mw", "mw1"), p90),
+            ]
+
+        blocks = [
+            K.generate_blocks(
+                i,
+                v,
+                common_pulses,
+                gen,
+                p0,
+                p1,
+                read_phase0=read_phase0,
+                read_phase1=read_phase1,
+                laser_phase=(mw_x, mw1_x),
+                partial=partial,
+                fix_base_width=fix_base_width,
+            )
+            for i, v in enumerate(xdata)
+        ]
+        return blocks, freq, common_pulses
+
+
+class DQ4RamseyGenerator(PatternGenerator):
+    """Generate Pulse Pattern for Double Quantum 4-Ramsey measurement.
+
+    :param 90pulse: duration of 90 deg (pi) pulse at mw and mw1 channels
+    :type 90pulse: float
+
+    pattern0 => mw  (pi/2 - tau - pi/2)
+                mw1 (pi/2 - tau - pi/2)
+    pattern1 => mw  (pi/2 - tau - pi/2_inv)
+                mw1 (pi/2 - tau - pi/2)
+    pattern2 => mw  (pi/2 - tau - pi/2_inv)
+                mw1 (pi/2 - tau - pi/2_inv)
+    pattern3 => mw  (pi/2 - tau - pi/2)
+                mw1 (pi/2 - tau - pi/2_inv)
+
+    """
+
+    def pulse_params(self) -> P.ParamDict[str, P.PDValue]:
+        pd = P.ParamDict()
+        pd["90pulse"] = P.FloatParam(
+            10e-9, 1e-9, 1e-6, unit="s", SI_prefix=True, step=1e-9, doc="90 deg (pi) pulse width."
+        )
+        return pd
+
+    def num_mw(self) -> int:
+        return 2
+
+    def num_pattern(self, params: dict) -> int:
+        """Return number of generated patterns."""
+
+        return 4
+
+    def _generate(
+        self,
+        xdata,
+        common_pulses: list[float],
+        pulse_params: dict,
+        partial: int,
+        reduce_start_divisor: int,
+        fix_base_width: int | None,
+    ):
+        if self.mode() not in (0, 2):
+            raise ValueError(f"Doesn't support mode1. Given mode: {self.mode()}.")
+
+        p90 = pulse_params["90pulse"]
+        read_phases = [(mw_x, mw1_x), (mw_x_inv, mw1_x), (mw_x_inv, mw1_x_inv), (mw_x, mw1_x_inv)]
+
+        pulses = [[p90]] * 4
+        freq, xdata, common_pulses, pulses = K.round_pulsesN(
+            self.freq, xdata, common_pulses, pulses, reduce_start_divisor, self.print_fn
+        )
+        pargs = []
+        for p, read_phase in zip(pulses, read_phases):
+            pargs.append([p[0], read_phase])
+
+        def gen(v, p90, read_phase):
+            v_f, v_l = K.split_int(v, self.split_fraction)
+            return [
+                ((mw_x, mw1_x, "mw", "mw1"), p90),
+                ((mw_x, mw1_x), v_f),
+                (read_phase, v_l),
+                (read_phase + ("mw", "mw1"), p90),
+            ]
+
+        blocks = [
+            K.generate_blocksN(
+                i,
+                v,
+                common_pulses,
+                gen,
+                pargs,
+                read_phases=read_phases,
+                laser_phase=(mw_x, mw1_x),
+                partial=partial,
+                fix_base_width=fix_base_width,
+            )
+            for i, v in enumerate(xdata)
+        ]
+        return blocks, freq, common_pulses
+
+
 def make_generators(
     freq: float = 2.0e9,
     reduce_start_divisor: int = 2,
@@ -2198,6 +2354,7 @@ def make_generators(
     mw_modes: tuple[int] = (0,),
     iq_amplitude: float = 0.0,
     channel_remap: dict | None = None,
+    max_num_pattern: int | None = None,
     print_fn=print,
 ):
     args = (
@@ -2239,14 +2396,19 @@ def make_generators(
     if len(mw_modes) > 1:
         # add sequences using multiple mw channels here
         generators["drabi"] = DRabiGenerator(*args)
-    if all([m == 1 for m in mw_modes]):
+        if all(m in (0, 2) for m in mw_modes[:2]):
+            generators["dq2ramsey"] = DQ2RamseyGenerator(*args)
+            generators["dq4ramsey"] = DQ4RamseyGenerator(*args)
+    if all(m == 1 for m in mw_modes):
         # these methods requires 4 phases (x, y, x_inv, y_inv) and unavailable in 2-phase mode.
         for key in ["xy16", "xy16N", "ddgate", "ddgateN"]:
             del generators[key]
-    if any([m == 2 for m in mw_modes]):
+    if any(m == 2 for m in mw_modes):
         # Randomized DD. no rcpmg because it is equivalent to rcp.
         generators["rcp"] = RDDGenerator(*args, method="cp")
         generators["rxy4"] = RDDGenerator(*args, method="xy4")
         generators["rxy8"] = RDDGenerator(*args, method="xy8")
         generators["rxy16"] = RDDGenerator(*args, method="xy16")
+    if max_num_pattern is not None:
+        generators = {k: g for k, g in generators.items() if g.num_pattern({}) <= max_num_pattern}
     return generators

@@ -131,6 +131,59 @@ def apply_mw_offset(blocks: Blocks[Block], offset_ticks: int) -> Blocks[Block]:
     return Blocks(new_blocks).simplify()
 
 
+def round_pulsesN(
+    freq: float,
+    xdata: list[float],
+    common_pulses: list[float],
+    pulses: list[list[float]],
+    reduce_start_divisor: int,
+    print_fn,
+) -> tuple[float, list[int], list[int], list[list[int]]]:
+    """Round the float (real time) pulse parameters according to freq to get integer parameters.
+
+    pulses[i] must have same lengths.
+
+    """
+
+    def _reduce(values, freq, divisor):
+        if any([v % divisor != 0 for v in values]):
+            return values, freq
+        else:
+            print_fn(f"reducing parameters {values} by {divisor}")
+            return _reduce([v // divisor for v in values], freq / divisor, 10)
+
+    flat_pulses = list(chain.from_iterable(pulses))
+    N_pulses = len(flat_pulses)
+    n_pulses = len(pulses[0])
+    for p in pulses:
+        if len(p) != n_pulses:
+            raise ValueError("Each element of pulses should have same lengths.")
+
+    values = list(xdata) + common_pulses + flat_pulses
+    values = [round(v * freq) for v in values]
+
+    if reduce_start_divisor:
+        print_fn("starting to reduce parameters")
+        values, freq = _reduce(values, freq, reduce_start_divisor)
+        print_fn(f"reduced to: {values} freq: {freq:.2e}")
+
+    _xdata = np.round(values[: -len(common_pulses) - N_pulses]).astype(int)
+
+    if len(flat_pulses) > 0:
+        _common_pulses = values[-len(common_pulses) - N_pulses : -N_pulses]
+        _pulses = []
+        for i in range(len(pulses)):
+            end = len(values) - n_pulses * i
+            start = end - n_pulses
+            _pulses.append(values[start:end])
+        _pulses.reverse()
+    else:
+        _common_pulses = values[-len(common_pulses) :]
+        _pulses = [[] for _ in pulses]
+
+    return freq, _xdata, _common_pulses, _pulses
+
+
 def round_pulses(
     freq: float,
     xdata: list[float],
@@ -142,38 +195,14 @@ def round_pulses(
 ) -> tuple[float, list[int], list[int], list[int], list[int]]:
     """Round the float (real time) pulse parameters according to freq to get integer parameters.
 
-    pulses0 and pulses1 should have same length.
+    pulses0 and pulses1 must have same lengths.
 
     """
 
-    def _reduce(values, freq, divisor):
-        if any([v % divisor != 0 for v in values]):
-            return values, freq
-        else:
-            print_fn(f"reducing parameters {values} by {divisor}")
-            return _reduce([v // divisor for v in values], freq / divisor, 10)
-
-    values = list(xdata) + common_pulses + pulses0 + pulses1
-    values = [round(v * freq) for v in values]
-
-    if reduce_start_divisor:
-        print_fn("starting to reduce parameters")
-        values, freq = _reduce(values, freq, reduce_start_divisor)
-        print_fn(f"reduced to: {values} freq: {freq:.2e}")
-
-    _xdata = np.round(values[: -len(common_pulses) - len(pulses0) - len(pulses1)]).astype(int)
-
-    if len(pulses0) > 0:
-        _common_pulses = values[
-            -len(common_pulses) - len(pulses0) - len(pulses1) : -len(pulses0) - len(pulses1)
-        ]
-        _pulses0 = values[-len(pulses0) - len(pulses1) : -len(pulses1)]
-        _pulses1 = values[-len(pulses1) :]
-    else:
-        _common_pulses = values[-len(common_pulses) :]
-        _pulses0, _pulses1 = [], []
-
-    return freq, _xdata, _common_pulses, _pulses0, _pulses1
+    freq, _xdata, _common_pulses, _pulses = round_pulsesN(
+        freq, xdata, common_pulses, [pulses0, pulses1], reduce_start_divisor, print_fn
+    )
+    return freq, _xdata, _common_pulses, _pulses[0], _pulses[1]
 
 
 def split_int(n, A):
