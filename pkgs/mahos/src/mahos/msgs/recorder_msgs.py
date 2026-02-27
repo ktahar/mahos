@@ -87,12 +87,16 @@ class RecorderData(BasicMeasData):
         return self.get_channels().index(ch)
 
     def roll(self, data):
+        """Roll data if the length of recorded data exceeds ``params["max_len"]``."""
+
         max_len = self.params.get("max_len", 0)
         if max_len <= 0 or len(data) <= max_len:
             return data
         return data[len(data) - max_len :]
 
     def append(self, x: float, y: dict[str, float]):
+        """Append data points at single x."""
+
         self.xdata.append(x)
         self.xdata = self.roll(self.xdata)
         for ch, value in y.items():
@@ -104,6 +108,8 @@ class RecorderData(BasicMeasData):
         return np.array(self.xdata)
 
     def get_unit(self, ch: str) -> str:
+        """Get units of channel ``ch``."""
+
         return self.units[self.index(ch)][1]
 
     def get_ydata(self, ch: str) -> np.ndarray:

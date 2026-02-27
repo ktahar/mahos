@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Message Types for Common Meas Node.
+Message Types for Common Measurement Nodes.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
@@ -20,9 +20,9 @@ from mahos.msgs.data_msgs import Data, FormatTimeMixin
 
 
 class BasicMeasData(Data, FormatTimeMixin):
-    """Base Data class for Basic Meas.
+    """Base Data class for Basic Measurements (BasicMeas).
 
-    Basic Meas Node will produce Data which is 2D-plottable (x and y).
+    A Basic Measurement Node will produce Data which is 2D-plottable (x and y).
     BasicMeasData defines common interface to get x/y data and fitting data.
 
     :ivar running: True if measurement is running. initialized with False.
@@ -33,7 +33,7 @@ class BasicMeasData(Data, FormatTimeMixin):
     """
 
     def init_attrs(self):
-        """initialize common attributes."""
+        """Initialize common attributes."""
 
         self.running: bool = False
         self.start_time: float = time.time()
@@ -45,7 +45,7 @@ class BasicMeasData(Data, FormatTimeMixin):
         self.init_axes()
 
     def finalize(self) -> float:
-        """set attributes to finalize the measurement and data.
+        """Set attributes to finalize the measurement and data.
 
         - set `running` to False
         - set `finish_time`
@@ -58,24 +58,26 @@ class BasicMeasData(Data, FormatTimeMixin):
         self.finish_time = time.time()
         return self.finish_time - self.start_time
 
-    def is_finalized(self):
+    def is_finalized(self) -> bool:
+        """Return True if the data is already finalized."""
+
         return not self.running and self.finish_time is not None
 
     def start(self):
-        """set attributes to start the measurement.
+        """Set attributes to start the measurement.
 
-        - set `running` to True
+        - set ``running`` to True
 
         """
 
         self.running = True
 
     def resume(self):
-        """set attributes to resume the measurement.
+        """Set attributes to resume the measurement.
 
-        - set `running` to True
-        - store the `paused_periods`
-        - empty `finish_time`
+        - set ``running`` to True
+        - store ``paused_periods``
+        - empty ``finish_time``
 
         """
 
@@ -89,29 +91,43 @@ class BasicMeasData(Data, FormatTimeMixin):
         self.finish_time = None
 
     def set_saved(self):
+        """Set flag whether this data is saved once."""
+
         self._saved = True
 
     def is_saved(self) -> bool:
+        """Return True if this data is saved once."""
+
         return self._saved
 
     def has_data(self) -> bool:
-        """return True if data is ready and valid data could be read out."""
+        """Return True if data is ready and valid data could be read out."""
 
         raise NotImplementedError("has_data() is not implemented")
 
     def get_xdata(self):
+        """Get X-axis data for 2D plot."""
+
         raise NotImplementedError("get_xdata() is not implemented")
 
     def get_ydata(self):
+        """Get Y-axis data for 2D plot."""
+
         raise NotImplementedError("get_xdata() is not implemented")
 
     def get_fit_xdata(self):
+        """Get X-axis data of 2D fitting result."""
+
         return self.fit_xdata
 
     def get_fit_ydata(self):
+        """Get Y-axis data of 2D fitting result."""
+
         return self.fit_data
 
     def set_fit_data(self, x, y, params, label, result):
+        """Set 2D fitting result."""
+
         self.fit_xdata = x
         self.fit_data = y
         self.fit_params = params
@@ -119,9 +135,13 @@ class BasicMeasData(Data, FormatTimeMixin):
         self.fit_result = result
 
     def remove_fit_data(self):
+        """Remove the 2D fitting result."""
+
         self.fit_xdata = self.fit_data = self.fit_params = self.fit_label = self.fit_result = None
 
     def init_axes(self):
+        """Initialize X and Y axes label, unit, and scale."""
+
         self.xlabel: str = ""
         self.xunit: str = ""
         self.ylabel: str = ""
@@ -152,21 +172,31 @@ class ImageMeasData(BasicMeasData):
     """Base Data class for image-style measurements with x/y axes and z values."""
 
     def get_image(self):
+        """Get image or heatmap (2D array) data."""
+
         raise NotImplementedError("get_image() is not implemented")
 
     # Image-style measurements do not support line fitting by default.
     # Keeping no-op interface functions for compatibility.
 
     def get_fit_xdata(self):
+        """Always return None. Kept for interface compatibility."""
+
         return None
 
     def get_fit_ydata(self):
+        """Always return None. Kept for interface compatibility."""
+
         return None
 
     def set_fit_data(self, x, y, params, label, result):
+        """No-op and return None. Kept for interface compatibility."""
+
         return None
 
     def remove_fit_data(self):
+        """No-op and return None. Kept for interface compatibility."""
+
         return None
 
     def init_axes(self):
@@ -196,18 +226,26 @@ class Buffer(Message, UserList):
     """
 
     def file_names(self) -> list[str]:
+        """Get list of available file names."""
+
         return [n for n, data in self.data]
 
     def data_list(self) -> list[BasicMeasData]:
+        """Get list of data."""
+
         return [data for n, data in self.data]
 
-    def get_file_name(self, i) -> str:
+    def get_file_name(self, i: int) -> str:
+        """Get file name at index ``i``."""
+
         try:
             return self.data[i][0]
         except IndexError:
             return ""
 
-    def get_data(self, i) -> BasicMeasData | None:
+    def get_data(self, i: int) -> BasicMeasData | None:
+        """Get data at index ``i``."""
+
         try:
             return self.data[i][1]
         except IndexError:

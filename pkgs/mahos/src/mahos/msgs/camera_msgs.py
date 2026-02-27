@@ -34,6 +34,8 @@ class Image(Data):
         self.count: int = 0
 
     def update(self, result: FrameResult):
+        """Update this data by ``FrameResult``."""
+
         self.image = result.frame
         self.time = result.time
         self.count = result.count

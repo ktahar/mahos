@@ -76,6 +76,13 @@ class SweeperData(BasicMeasData):
         return np.mean(self.data[:, -last_n:], axis=1)
 
     def get_image(self, last_n: int = 0) -> NDArray:
+        """Get 2D array history data (x-axis vs sweeps).
+
+        :param last_n: when 0 (default), return all history. when positive, take last_n history.
+            when negative, drop first -last_n history.
+
+        """
+
         return self.data[:, -last_n:]
 
 

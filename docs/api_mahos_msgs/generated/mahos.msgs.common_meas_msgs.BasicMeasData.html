@@ -449,8 +449,8 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="mahos.msgs.common_meas_msgs.BasicMeasData">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.msgs.common_meas_msgs.</span></span><span class="sig-name descname"><span class="pre">BasicMeasData</span></span><a class="headerlink" href="#mahos.msgs.common_meas_msgs.BasicMeasData" title="Link to this definition">#</a></dt>
-<dd><p>Base Data class for Basic Meas.</p>
-<p>Basic Meas Node will produce Data which is 2D-plottable (x and y).
+<dd><p>Base Data class for Basic Measurements (BasicMeas).</p>
+<p>A Basic Measurement Node will produce Data which is 2D-plottable (x and y).
 BasicMeasData defines common interface to get x/y data and fitting data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Variables<span class="colon">:</span></dt>
@@ -471,49 +471,49 @@ BasicMeasData defines common interface to get x/y data and fitting data.</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">finalize</span></code>()</p></td>
-<td><p>set attributes to finalize the measurement and data.</p></td>
+<td><p>Set attributes to finalize the measurement and data.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fit_xdata</span></code>()</p></td>
-<td><p></p></td>
+<td><p>Get X-axis data of 2D fitting result.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fit_ydata</span></code>()</p></td>
-<td><p></p></td>
+<td><p>Get Y-axis data of 2D fitting result.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_xdata</span></code>()</p></td>
-<td><p></p></td>
+<td><p>Get X-axis data for 2D plot.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_ydata</span></code>()</p></td>
-<td><p></p></td>
+<td><p>Get Y-axis data for 2D plot.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_data</span></code>()</p></td>
-<td><p>return True if data is ready and valid data could be read out.</p></td>
+<td><p>Return True if data is ready and valid data could be read out.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_attrs</span></code>()</p></td>
-<td><p>initialize common attributes.</p></td>
+<td><p>Initialize common attributes.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_axes</span></code>()</p></td>
-<td><p></p></td>
+<td><p>Initialize X and Y axes label, unit, and scale.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_finalized</span></code>()</p></td>
-<td><p></p></td>
+<td><p>Return True if the data is already finalized.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_saved</span></code>()</p></td>
-<td><p></p></td>
+<td><p>Return True if this data is saved once.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_fit_data</span></code>()</p></td>
-<td><p></p></td>
+<td><p>Remove the 2D fitting result.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">resume</span></code>()</p></td>
-<td><p>set attributes to resume the measurement.</p></td>
+<td><p>Set attributes to resume the measurement.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_fit_data</span></code>(x, y, params, label, result)</p></td>
-<td><p></p></td>
+<td><p>Set 2D fitting result.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_saved</span></code>()</p></td>
-<td><p></p></td>
+<td><p>Set flag whether this data is saved once.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">start</span></code>()</p></td>
-<td><p>set attributes to start the measurement.</p></td>
+<td><p>Set attributes to start the measurement.</p></td>
 </tr>
 </tbody>
 </table>

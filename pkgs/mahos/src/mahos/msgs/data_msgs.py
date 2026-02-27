@@ -29,19 +29,25 @@ class Data(Message):
     # Common meta data: note, version, version_h5
 
     def set_note(self, note: str):
+        """Set note string attached to this data."""
+
         self._note = note
 
     def note(self) -> str:
+        """Get note string attached to this data."""
+
         if hasattr(self, "_note"):
             return self._note
         else:
             return ""
 
     def set_version(self, version: int):
+        """Set the version of this Data."""
+
         self._version = version
 
     def version(self) -> int:
-        """The version of this data.
+        """Get the version of this data.
 
         The version should be updated when data schema is changed,
         e.g., when an attribute is added, deleted, or renamed.
@@ -54,10 +60,12 @@ class Data(Message):
             return 0
 
     def set_version_h5(self, version: int):
+        """Set the HDF5 IO (h5_writers/h5_readers) version of this Data."""
+
         self._version_h5 = version
 
     def version_h5(self) -> int:
-        """The version of HDF5 IO (h5_writers / h5_readers) for this data.
+        """Get the HDF5 IO (h5_writers/h5_readers) version for this data.
 
         The version should be updated when behavour of writer or reader is changed.
 
@@ -71,6 +79,8 @@ class Data(Message):
     # params
 
     def init_params(self, params: dict | None, label: str | None = None):
+        """Initialize this data with params optional label."""
+
         # bind label if the measurement accepts label (it provides multiple measurement modes).
         if label is not None:
             self.label = label
@@ -351,6 +361,12 @@ class ComplexDataMixin(object):
     """Mixin for Data which may have complex arrays."""
 
     def conv_complex(self, data: np.ndarray, conv: str) -> np.ndarray | None:
+        """Convert complex array to float array based on conversion method.
+
+        :param conv: conversion method. one of (real|imag|abs[olute]|angle).
+
+        """
+
         if not np.issubdtype(data.dtype, np.complexfloating):
             return data
 
@@ -368,14 +384,20 @@ class FormatTimeMixin(object):
     """
 
     def format_time(self, stamp: float, fmt: str = "%Y%m%d_%H%M%S") -> str:
+        """Format given timestamp into a string."""
+
         return time.strftime(fmt, time.localtime(stamp))
 
     def format_start_time(self, fmt: str = "%Y%m%d_%H%M%S") -> str:
+        """Get string-formatted ``start_time``."""
+
         if not hasattr(self, "start_time") or self.start_time is None:
             return ""
         return self.format_time(self.start_time, fmt)
 
     def format_finish_time(self, fmt: str = "%Y%m%d_%H%M%S") -> str:
+        """Get string-formatted ``finish_time``."""
+
         if not hasattr(self, "finish_time") or self.finish_time is None:
             return ""
         return self.format_time(self.finish_time, fmt)
