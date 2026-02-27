@@ -92,6 +92,19 @@ class PODMRDataOperator(object):
             else:
                 return self._analyze_complementary_noroi(data)
 
+    def _store_partial(self, data: PODMRData, sig: np.ndarray, ref: np.ndarray):
+        p = data.partial()
+        if p is None or p < 0 or p >= data.num_pattern():
+            raise ValueError(f"invalid partial {p} for num_pattern {data.num_pattern()}")
+        data._set_pattern_data(p, sig)
+        data._set_pattern_ref(p, ref)
+
+    def _store_complementary(self, data: PODMRData, sig: np.ndarray, ref: np.ndarray):
+        N = data.num_pattern()
+        for i in range(N):
+            data._set_pattern_data(i, sig[i::N])
+            data._set_pattern_ref(i, ref[i::N])
+
     def _analyze_partial_roi(self, data: PODMRData) -> bool:
         sig = np.zeros(len(data.xdata))
         ref = np.zeros(len(data.xdata))
@@ -110,12 +123,7 @@ class PODMRDataOperator(object):
                 print("analyze_sig (ref %d): %r" % (i, e))
 
         sweeps = data.tdc_status.sweeps
-        if data.partial() == 0:
-            data.data0 = sig / sweeps
-            data.data0ref = ref / sweeps
-        else:  # assert data.partial() == 1
-            data.data1 = sig / sweeps
-            data.data1ref = ref / sweeps
+        self._store_partial(data, sig / sweeps, ref / sweeps)
 
         return True
 
@@ -136,18 +144,14 @@ class PODMRDataOperator(object):
                 print("analyze_sig (ref %d): %r" % (i, e))
 
         sweeps = data.tdc_status.sweeps
-        if data.partial() == 0:
-            data.data0 = sig / sweeps
-            data.data0ref = ref / sweeps
-        else:  # assert data.partial() == 1
-            data.data1 = sig / sweeps
-            data.data1ref = ref / sweeps
+        self._store_partial(data, sig / sweeps, ref / sweeps)
 
         return True
 
     def _analyze_complementary_roi(self, data: PODMRData) -> bool:
-        sig = np.zeros(len(data.xdata) * 2)
-        ref = np.zeros(len(data.xdata) * 2)
+        N = data.num_pattern()
+        sig = np.zeros(len(data.xdata) * N)
+        ref = np.zeros(len(data.xdata) * N)
         sig_head, sig_tail, ref_head, ref_tail = data.marker_indices
 
         for i, d in enumerate(data.raw_data):
@@ -163,19 +167,17 @@ class PODMRDataOperator(object):
                 print("analyze_sig (ref %d): %r" % (i, e))
 
         sweeps = data.tdc_status.sweeps
-        data.data0 = sig[0::2] / sweeps
-        data.data1 = sig[1::2] / sweeps
-        data.data0ref = ref[0::2] / sweeps
-        data.data1ref = ref[1::2] / sweeps
+        self._store_complementary(data, sig / sweeps, ref / sweeps)
 
         return True
 
     def _analyze_complementary_noroi(self, data: PODMRData) -> bool:
-        sig = np.zeros(len(data.xdata) * 2)
-        ref = np.zeros(len(data.xdata) * 2)
+        N = data.num_pattern()
+        sig = np.zeros(len(data.xdata) * N)
+        ref = np.zeros(len(data.xdata) * N)
         sig_head, sig_tail, ref_head, ref_tail = data.marker_indices
 
-        for i in range(len(data.xdata) * 2):
+        for i in range(len(data.xdata) * N):
             try:
                 sig[i] = np.mean(data.raw_data[sig_head[i] : sig_tail[i] + 1])
             except IndexError as e:
@@ -187,10 +189,7 @@ class PODMRDataOperator(object):
                 print("analyze_sig (ref %d): %r" % (i, e))
 
         sweeps = data.tdc_status.sweeps
-        data.data0 = sig[0::2] / sweeps
-        data.data1 = sig[1::2] / sweeps
-        data.data0ref = ref[0::2] / sweeps
-        data.data1ref = ref[1::2] / sweeps
+        self._store_complementary(data, sig / sweeps, ref / sweeps)
 
         return True
 
@@ -471,9 +470,23 @@ class Pulser(Worker):
 
         return True
 
+    def _set_num_pattern(self, data: PODMRData) -> int:
+        params = data.get_params()
+        num_pattern = self.generators[data.label].num_pattern(params)
+        num_pattern = max(2, min(int(num_pattern), 4))
+        data.params["num_pattern"] = num_pattern
+        return num_pattern
+
+    def _validate_partial(self, data: PODMRData):
+        p = data.params.get("partial", -1)
+        n = self._set_num_pattern(data)
+        if p != -1 and (p < 0 or p >= n):
+            raise ValueError(f"partial {p} is invalid for num_pattern={n}")
+
     def generate_blocks(self, data: PODMRData | None = None):
         if data is None:
             data = self.data
+        self._validate_partial(data)
         generate = self.generators[data.label].generate
         params = data.get_params()
         if not self.conf.get("divide_block", False) and params["divide_block"]:
@@ -489,7 +502,11 @@ class Pulser(Worker):
     ) -> bool:
         params = P.unwrap(params)
         d = PODMRData(params, label)
-        blocks, freq, laser_timing = self.generate_blocks(d)
+        try:
+            blocks, freq, laser_timing = self.generate_blocks(d)
+        except ValueError as e:
+            self.logger.error(f"Invalid params for {label}: {e}")
+            return False
         offsets = self.pg.validate_blocks(blocks, freq)
         return offsets is not None
 
@@ -550,6 +567,11 @@ class Pulser(Worker):
         else:
             _last_duration = self.data.params.get("duration", 0.0)
             self.data.update_params(params)
+        try:
+            self._validate_partial(self.data)
+        except ValueError as e:
+            self.logger.error(f"Invalid params for {label}: {e}")
+            return False
 
         if not self.lock_instruments():
             return self.fail_with_release("Error acquiring instrument locks.")
@@ -689,7 +711,7 @@ class Pulser(Worker):
         d["invert_sweep"] = P.BoolParam(False)
         d["enable_reduce"] = P.BoolParam(False)
         d["divide_block"] = P.BoolParam(self.conf.get("divide_block", False))
-        d["partial"] = P.IntParam(-1, -1, 1)
+        d["partial"] = P.IntParam(-1, -1, 3)
 
         ## sweep params (tau / N)
         if self.generators[label].is_sweepN():

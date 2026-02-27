@@ -11,9 +11,10 @@ Tests for mahos_dq.meas.spodmr.
 import copy
 
 import numpy as np
+import pytest
 
 from mahos_dq.meas.spodmr import SPODMRClient, SPODMRIO
-from mahos_dq.meas.spodmr_worker import BlockSeqBuilder
+from mahos_dq.meas.spodmr_worker import BlockSeqBuilder, Pulser
 from mahos_dq.msgs.spodmr_msgs import SPODMRData
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos.msgs.common_msgs import BinaryState
@@ -121,6 +122,18 @@ def test_spodmr_mw_offset_per_unit():
             assert np.array_equal(p_ref, p_adv)
     assert mw_changed_adv
     assert mw_diff_from_offset
+
+
+def test_spodmr_reject_non_two_pattern_generator():
+    class FakeGenerator(object):
+        def num_pattern(self, params):
+            return 3
+
+    worker = Pulser.__new__(Pulser)
+    worker.generators = {"fake": FakeGenerator()}
+
+    with pytest.raises(ValueError):
+        worker._ensure_two_pattern("fake", {})
 
 
 def test_spodmr(server, spodmr, server_conf, spodmr_conf):

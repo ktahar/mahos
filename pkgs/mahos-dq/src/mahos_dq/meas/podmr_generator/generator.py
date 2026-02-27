@@ -77,6 +77,11 @@ class PatternGenerator(object):
 
         return 1
 
+    def num_pattern(self, params: dict) -> int:
+        """Return number of generated patterns."""
+
+        return 2
+
     def mode(self, ch=None) -> int:
         """Return MW mode at given ch or currently-active ch."""
 

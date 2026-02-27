@@ -101,19 +101,26 @@ class PODMRData(BasicMeasData):
     """Pulse ODMR data container with TDC-derived raw traces.
 
     :ivar tdc_status: Latest time-to-digital-converter status summary.
-    :ivar data0: Primary accumulated signal sequence.
-    :ivar data1: Secondary accumulated signal sequence.
-    :ivar data0ref: Reference data paired with ``data0``.
-    :ivar data1ref: Reference data paired with ``data1``.
+    :ivar data0: Accumulated signal data for pattern 0.
+    :ivar data1: Accumulated signal data for pattern 1.
+    :ivar data2: Accumulated signal data for pattern 2.
+    :ivar data3: Accumulated signal data for pattern 3.
+    :ivar data0ref: Reference data for pattern 0.
+    :ivar data1ref: Reference data for pattern 1.
+    :ivar data2ref: Reference data for pattern 2.
+    :ivar data3ref: Reference data for pattern 3.
     :ivar raw_data: Raw detector events or histogram data.
     :ivar raw_xdata: X-axis for ``raw_data``.
     :ivar marker_indices: Cached marker ranges for signal/reference windows.
     :ivar laser_timing: Pulse timing array used for ROI calculation.
 
+    Pattern-indexed access is provided by ``data(index)`` / ``data_ref(index)``
+    and ``set_data(index, value)`` / ``set_data_ref(index, value)``.
+
     """
 
     def __init__(self, params: dict | None = None, label: str = ""):
-        self.set_version(6)
+        self.set_version(7)
         self.init_params(params, label)
         self.init_attrs()
 
@@ -123,14 +130,63 @@ class PODMRData(BasicMeasData):
 
         self.data0 = None
         self.data1 = None
+        self.data2 = None
+        self.data3 = None
         self.data0ref = None
         self.data1ref = None
+        self.data2ref = None
+        self.data3ref = None
 
         self.raw_data = None
         self.raw_xdata = None
 
         self.marker_indices = None
         self.laser_timing = None
+
+    @staticmethod
+    def _normalize_pattern_count(num_pattern: int) -> int:
+        return max(2, min(int(num_pattern), 4))
+
+    def _get_pattern_data(self, i: int):
+        return getattr(self, f"data{i}", None)
+
+    def _set_pattern_data(self, i: int, val):
+        setattr(self, f"data{i}", val)
+
+    def _get_pattern_ref(self, i: int):
+        return getattr(self, f"data{i}ref", None)
+
+    def _set_pattern_ref(self, i: int, val):
+        setattr(self, f"data{i}ref", val)
+
+    @staticmethod
+    def _check_pattern_index(index: int):
+        if not 0 <= index < 4:
+            raise IndexError(f"index {index} out of range for pattern data")
+
+    def data(self, index: int) -> np.ndarray | None:
+        """Get analyzed signal data at ``index``."""
+
+        self._check_pattern_index(index)
+        return self._get_pattern_data(index)
+
+    def data_ref(self, index: int) -> np.ndarray | None:
+        """Get analyzed reference data at ``index``."""
+
+        self._check_pattern_index(index)
+        return self._get_pattern_ref(index)
+
+    def set_data(self, index: int, value):
+        """Set analyzed signal data at ``index``."""
+
+        self._check_pattern_index(index)
+        self._set_pattern_data(index, value)
+
+    def set_data_ref(self, index: int, value):
+        """Set analyzed reference data at ``index``."""
+
+        self._check_pattern_index(index)
+        self._set_pattern_ref(index, value)
 
     def init_xdata(self):
         if not self.has_params():
@@ -352,10 +408,19 @@ class PODMRData(BasicMeasData):
     def _get_xdata_head(self, xdata):
         signal_head = self.marker_indices[0]
         tbin = self.params["instrument"]["tbin"]
-        if self.is_partial() or self.params["plot"]["plotmode"] == "concatenate":
+        if self.is_partial():
             return signal_head * tbin
+        if self.params["plot"]["plotmode"] == "concatenate":
+            N = self.num_pattern()
+            if N <= 2:
+                return signal_head * tbin
+            # TODO
+            # "concatenate" currently represents pattern0/pattern1 only.
+            # keep xdata aligned with ydata shape for N > 2.
+            head01 = signal_head.reshape(len(xdata), N)[:, :2].reshape(len(xdata) * 2)
+            return head01 * tbin
         else:
-            return signal_head[0::2] * tbin
+            return signal_head[0 : len(xdata) * self.num_pattern() : self.num_pattern()] * tbin
 
     def get_xdata(self, fit=False, force_taumode: str = "") -> NDArray | None:
         """get analyzed xdata.
@@ -410,12 +475,14 @@ class PODMRData(BasicMeasData):
             return self._get_ydata_complementary()
 
     def _get_ydata_partial(self):
-        if self.partial() == 0:
-            data = self.data0
-            ref = self.data0ref
-        else:  # assert self.partial() == 1
-            data = self.data1
-            ref = self.data1ref
+        p = self.partial()
+        if p is None or p < 0:
+            return None, None
+        if p >= self.num_pattern():
+            raise ValueError(f"invalid partial {p} for num_pattern {self.num_pattern()}")
+
+        data = self._get_pattern_data(p)
+        ref = self._get_pattern_ref(p)
 
         refmode = self.params["plot"]["refmode"]
         if refmode == "subtract":
@@ -434,22 +501,31 @@ class PODMRData(BasicMeasData):
             return s, None
 
     def _get_ydata_complementary(self):
+        if self.num_pattern() < 2:
+            raise ValueError(f"invalid num_pattern {self.num_pattern()}")
+        s0_raw = self._get_pattern_data(0)
+        s1_raw = self._get_pattern_data(1)
+        r0_raw = self._get_pattern_ref(0)
+        r1_raw = self._get_pattern_ref(1)
+        if s0_raw is None or s1_raw is None or r0_raw is None or r1_raw is None:
+            return None, None
+
         if self.params["plot"]["refaverage"]:
-            r = np.mean((self.data0ref, self.data1ref))
-            r0, r1 = r, r
+            r01 = np.mean((r0_raw, r1_raw))
+            r0, r1 = r01, r01
         else:
-            r0, r1 = self.data0ref, self.data1ref
+            r0, r1 = r0_raw, r1_raw
 
         refmode = self.params["plot"]["refmode"]
         if refmode == "subtract":
-            s0 = self.data0 - r0
-            s1 = self.data1 - r1
+            s0 = s0_raw - r0
+            s1 = s1_raw - r1
         elif refmode == "divide":
-            s0 = self.data0 / r0
-            s1 = self.data1 / r1
+            s0 = s0_raw / r0
+            s1 = s1_raw / r1
         elif refmode == "ignore":
-            s0 = self.data0
-            s1 = self.data1
+            s0 = s0_raw
+            s1 = s1_raw
         else:
             raise ValueError(f"unknown refmode {refmode}")
 
@@ -476,14 +552,17 @@ class PODMRData(BasicMeasData):
         elif plotmode == "concatenate":
             return np.column_stack((s0, s1)).reshape(len(s0) * 2), None
         elif plotmode == "ref":
-            return self.data0ref, self.data1ref
+            return r0_raw, r1_raw
         else:
             raise ValueError(f"unknown plotmode {plotmode}")
 
     def get_sampling_rate(self):
         signal_head = self.marker_indices[0]
-        dt = (signal_head[1] - signal_head[0]) * self.params["instrument"]["tbin"]
-        total = dt * 2 * len(self.xdata)
+        N = self.num_pattern()
+        if len(signal_head) <= N:
+            return 0.0, 0.0
+        dt = (signal_head[N] - signal_head[0]) * self.params["instrument"]["tbin"]
+        total = dt * N * len(self.xdata)
         return dt, total
 
     def get_params(self) -> dict:
@@ -542,15 +621,29 @@ class PODMRData(BasicMeasData):
 
     def has_data(self) -> bool:
         partial = self.partial()
+        N = self.num_pattern()
 
-        if partial == 0:
-            return all([d is not None for d in (self.data0, self.data0ref)])
-        elif partial == 1:
-            return all([d is not None for d in (self.data1, self.data1ref)])
+        if partial is not None and 0 <= partial < N:
+            return (
+                self._get_pattern_data(partial) is not None
+                and self._get_pattern_ref(partial) is not None
+            )
         else:
             return all(
-                [d is not None for d in (self.data0, self.data1, self.data0ref, self.data1ref)]
+                [
+                    self._get_pattern_data(i) is not None and self._get_pattern_ref(i) is not None
+                    for i in range(N)
+                ]
             )
+
+    def num_pattern(self) -> int:
+        if not self.has_params():
+            cnt = 2
+            for i in range(4):
+                if self._get_pattern_data(i) is not None or self._get_pattern_ref(i) is not None:
+                    cnt = i + 1
+            return self._normalize_pattern_count(cnt)
+        return self._normalize_pattern_count(self.params.get("num_pattern", 2))
 
     def partial(self) -> int | None:
         if not self.has_params():
@@ -558,7 +651,8 @@ class PODMRData(BasicMeasData):
         return self.params.get("partial", -1)
 
     def is_partial(self) -> bool:
-        return self.has_params() and self.params.get("partial") in (0, 1)
+        p = self.partial()
+        return p is not None and 0 <= p < self.num_pattern()
 
     def is_sweepN(self):
         return self.has_params() and is_sweepN(self.label)
@@ -586,7 +680,15 @@ class PODMRData(BasicMeasData):
         p0 = self.params.copy()
         p1 = params.copy()
         for p in (p0, p1):
-            for k in ("instrument", "plot", "resume", "quick_resume", "sweeps", "duration"):
+            for k in (
+                "instrument",
+                "plot",
+                "resume",
+                "quick_resume",
+                "sweeps",
+                "duration",
+                "num_pattern",
+            ):
                 if k in p:
                     del p[k]
         # parameters contains small float values (several nano-seconds: ~ 1e-9).
@@ -676,5 +778,15 @@ def update_data(data: PODMRData):
                 data.params["pulse"][k] = data.params[k]
                 del data.params[k]
         data.set_version(6)
+
+    if data.version() <= 6:
+        # version 6 to 7
+        for n in ("data2", "data3", "data2ref", "data3ref"):
+            if not hasattr(data, n):
+                setattr(data, n, None)
+
+        if data.has_params() and "num_pattern" not in data.params:
+            data.params["num_pattern"] = 2
+        data.set_version(7)
 
     return data

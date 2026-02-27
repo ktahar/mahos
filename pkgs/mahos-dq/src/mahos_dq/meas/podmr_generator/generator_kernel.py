@@ -195,15 +195,13 @@ def offset_base_inc(duration: int, base: int) -> int:
     return duration
 
 
-def generate_blocks(
+def generate_blocksN(
     i: int,
     v: int,
     common_pulses: list[int],
     gen_single_ptn,
-    args0,
-    args1,
-    read_phase0: AnalogChannel | tuple[AnalogChannel] = mw_x,
-    read_phase1: AnalogChannel | tuple[AnalogChannel] = mw_x_inv,
+    argsN: list,
+    read_phases: list[AnalogChannel | tuple[AnalogChannel]] | None = None,
     laser_phase: AnalogChannel | tuple[AnalogChannel] = mw_x,
     partial: int = -1,
     fix_base_width: int | None = None,
@@ -224,8 +222,17 @@ def generate_blocks(
     laser_width = offset_base_inc(laser_width, base_width)
 
     # blocks
-    ptn0 = gen_single_ptn(v, *args0)
-    ptn1 = gen_single_ptn(v, *args1)
+    ptnN = [gen_single_ptn(v, *args) for args in argsN]
+    N = len(ptnN)
+    if N < 2:
+        raise ValueError("generate_blocksN() requires at least two patterns.")
+    if read_phases is None:
+        if N == 2:
+            read_phases = [mw_x, mw_x_inv]
+        else:
+            read_phases = [mw_x] * N
+    if len(read_phases) != N:
+        raise ValueError(f"read_phases length {len(read_phases)} must match pattern count {N}")
 
     if isinstance(laser_phase, AnalogChannel):
         ptn_former = [((laser_phase,), mw_delay)]
@@ -233,43 +240,55 @@ def generate_blocks(
     else:
         ptn_former = [(tuple(laser_phase), mw_delay)]
         ptn_laser = [(tuple(laser_phase) + ("laser", "sync"), laser_width)]
-    if isinstance(read_phase0, AnalogChannel):
-        ptn_latter0 = [((read_phase0,), laser_delay)]
-    else:
-        ptn_latter0 = [(tuple(read_phase0), laser_delay)]
-    if isinstance(read_phase1, AnalogChannel):
-        ptn_latter1 = [((read_phase1,), laser_delay)]
-    else:
-        ptn_latter1 = [(tuple(read_phase1), laser_delay)]
 
-    # base width offset (operation)
-    total0 = sum([s[1] for s in ptn_former + ptn0 + ptn_latter0])
-    if total0 % base_width == 0:
-        ptn_operate0 = ptn_former + ptn0 + ptn_latter0
-    else:
-        ofs0 = base_width - total0 % base_width
-        ptn_offset0 = [(ptn_laser[0][0], ofs0)]
-        ptn_operate0 = ptn_offset0 + ptn_former + ptn0 + ptn_latter0
+    blocks = []
+    for j, (ptn, read_phase) in enumerate(zip(ptnN, read_phases)):
+        if isinstance(read_phase, AnalogChannel):
+            ptn_latter = [((read_phase,), laser_delay)]
+        else:
+            ptn_latter = [(tuple(read_phase), laser_delay)]
 
-    total1 = sum([s[1] for s in ptn_former + ptn1 + ptn_latter1])
-    if total1 % base_width == 0:
-        ptn_operate1 = ptn_former + ptn1 + ptn_latter1
-    else:
-        ofs1 = base_width - total1 % base_width
-        ptn_offset1 = [(ptn_laser[0][0], ofs1)]
-        ptn_operate1 = ptn_offset1 + ptn_former + ptn1 + ptn_latter1
+        # base width offset (operation)
+        total = sum([s[1] for s in ptn_former + ptn + ptn_latter])
+        if total % base_width == 0:
+            ptn_operate = ptn_former + ptn + ptn_latter
+        else:
+            ofs = base_width - total % base_width
+            ptn_offset = [(ptn_laser[0][0], ofs)]
+            ptn_operate = ptn_offset + ptn_former + ptn + ptn_latter
 
-    blocks0 = [
-        Block(f"P{i}-0", ptn_operate0),
-        Block(f"read{i}-0", ptn_laser),
-    ]
-    blocks1 = [Block(f"P{i}-1", ptn_operate1), Block(f"read{i}-1", ptn_laser)]
-    if partial == 0:
-        return Blocks(blocks0)
-    elif partial == 1:
-        return Blocks(blocks1)
-    else:  # complementary
-        return Blocks(blocks0 + blocks1)
+        blocks.extend([Block(f"P{i}-{j}", ptn_operate), Block(f"read{i}-{j}", ptn_laser)])
+
+    if 0 <= partial < N:
+        k = 2 * partial
+        return Blocks(blocks[k : k + 2])
+    return Blocks(blocks)
+
+
+def generate_blocks(
+    i: int,
+    v: int,
+    common_pulses: list[int],
+    gen_single_ptn,
+    args0,
+    args1,
+    read_phase0: AnalogChannel | tuple[AnalogChannel] = mw_x,
+    read_phase1: AnalogChannel | tuple[AnalogChannel] = mw_x_inv,
+    laser_phase: AnalogChannel | tuple[AnalogChannel] = mw_x,
+    partial: int = -1,
+    fix_base_width: int | None = None,
+) -> Blocks[Block]:
+    return generate_blocksN(
+        i,
+        v,
+        common_pulses,
+        gen_single_ptn,
+        [args0, args1],
+        [read_phase0, read_phase1],
+        laser_phase=laser_phase,
+        partial=partial,
+        fix_base_width=fix_base_width,
+    )
 
 
 def build_blocks(

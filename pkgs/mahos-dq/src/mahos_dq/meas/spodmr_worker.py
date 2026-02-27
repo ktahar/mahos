@@ -784,13 +784,23 @@ class Pulser(Worker):
         self.logger.warn(msg)
         return params["sync_mode"]
 
+    def _ensure_two_pattern(self, label: str, params: dict):
+        num_pattern = self.generators[label].num_pattern(params)
+        if num_pattern != 2:
+            raise ValueError(
+                f"SPODMR supports only 2-pattern generators; got num_pattern={num_pattern}"
+                f" for method '{label}'."
+            )
+
     def generate_blocks(self, data: SPODMRData | None = None):
         if data is None:
             data = self.data
-        generate = self.generators[data.label].generate_raw_blocks
-        num_mw = self.generators[data.label].num_mw()
+        generator = self.generators[data.label]
+        generate = generator.generate_raw_blocks
+        num_mw = generator.num_mw()
 
         params = data.get_params()
+        self._ensure_two_pattern(data.label, params)
         # fill unused params
         params["base_width"] = params["trigger_width"] = 0.0
         params["init_delay"] = params["final_delay"] = 0.0
@@ -811,7 +821,11 @@ class Pulser(Worker):
     ) -> bool:
         params = P.unwrap(params)
         d = SPODMRData(params, label)
-        blockseq, freq, laser_duties, markers, oversample = self.generate_blocks(d)
+        try:
+            blockseq, freq, laser_duties, markers, oversample = self.generate_blocks(d)
+        except ValueError as e:
+            self.logger.error(f"Invalid params for {label}: {e}")
+            return False
         offsets = self.pg.validate_blockseq(blockseq, freq)
         return offsets is not None
 
@@ -837,6 +851,11 @@ class Pulser(Worker):
             self.op.update_axes(self.data)
         else:
             self.data.update_params(params)
+        try:
+            self._ensure_two_pattern(self.data.label, self.data.get_params())
+        except ValueError as e:
+            self.logger.error(f"Invalid params for {label}: {e}")
+            return False
 
         if not self.lock_instruments():
             return self.fail_with_release("Error acquiring instrument locks.")
