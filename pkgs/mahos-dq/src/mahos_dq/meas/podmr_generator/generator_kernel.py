@@ -320,6 +320,15 @@ def generate_blocks(
     )
 
 
+def init_final_phases(num_mw):
+    phases = []
+    for ch in range(num_mw):
+        if ch == 0:
+            ch = ""
+        phases.append(AnalogChannel(f"mw{ch}_phase", 0))
+    return tuple(phases)
+
+
 def build_blocks(
     blocks: list[Blocks[Block]],
     common_pulses,
@@ -357,12 +366,7 @@ def build_blocks(
     final_block_width = max(final_delay, minimum_block_length)
     final_block_width = offset_base_inc(final_block_width, base_width)
 
-    phases = []
-    for ch in range(num_mw):
-        if ch == 0:
-            ch = ""
-        phases.append(AnalogChannel(f"mw{ch}_phase", 0))
-    phases = tuple(phases)
+    phases = init_final_phases(num_mw)
 
     ptn_init = [
         (

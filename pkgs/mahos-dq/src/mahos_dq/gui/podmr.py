@@ -73,11 +73,14 @@ _colors = [Colors(c0, c1) for c0, c1 in colors_tab20_pair()]
 
 
 class PODMRFitWidget(FitWidget):
+    MEASUREMENT_NAME = "PODMR"
+    FILE_EXTENSION = ".podmr"
+
     def colors(self) -> list:
         return _colors
 
     def load_dialog(self, default_path: str) -> str:
-        return load_dialog(self, default_path, "PODMR", ".podmr")
+        return load_dialog(self, default_path, self.MEASUREMENT_NAME, self.FILE_EXTENSION)
 
 
 class PlotWidget(QtWidgets.QWidget):
@@ -663,6 +666,8 @@ class NMRTableWidget(QtWidgets.QWidget, Ui_NMRTable):
 
 
 class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
+    AUTOSAVE_EXTENSION = ".podmr.pkl"
+
     def __init__(self, cli, gparams_cli, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         self.setupUi(self)
@@ -699,7 +704,9 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
 
     def get_file_name(self):
         dirname = self.dirEdit.text()
-        fname = "{:s}_{:04d}.podmr.pkl".format(self.fnEdit.text(), self.suffixBox.value())
+        fname = "{:s}_{:04d}{:s}".format(
+            self.fnEdit.text(), self.suffixBox.value(), self.AUTOSAVE_EXTENSION
+        )
         return os.path.join(dirname, fname)
 
     def init_autosave(self):
@@ -747,8 +754,15 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
             self.dirEdit.setText(dn)
 
 
-class PODMRWidget(ClientWidget, Ui_PODMR):
-    """Widget for Pulse ODMR."""
+class PODMRWidgetBase(ClientWidget):
+    """Base widget for pulse-ODMR-like measurements."""
+
+    CLIENT_CLASS = QPODMRClient
+    DATA_CLASS = PODMRData
+    FIT_WIDGET_CLASS = PODMRFitWidget
+    AUTOSAVE_WIDGET_CLASS = PODMRAutoSaveWidget
+    MEASUREMENT_NAME = "PODMR"
+    FILE_EXTENSION = ".podmr"
 
     def __init__(
         self,
@@ -762,7 +776,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         parent=None,
     ):
         ClientWidget.__init__(self, parent)
-        self.setupUi(self)
+        self.setup_measurement_ui()
 
         self.conf = local_conf(gconf, name)
 
@@ -778,9 +792,9 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.alt_plot = alt_plot
         self.raw_plot = raw_plot
 
-        self.data = PODMRData()
+        self.data = self.DATA_CLASS()
 
-        self.cli = QPODMRClient(gconf, name, context=context, parent=self)
+        self.cli = self.CLIENT_CLASS(gconf, name, context=context, parent=self)
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
@@ -788,11 +802,13 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.add_clients(self.cli, self.gparams_cli)
 
         self._fiTab_layout = QtWidgets.QVBoxLayout(self.fiTab)
-        self.fit = PODMRFitWidget(self.cli, self.gparams_cli, parent=self.fiTab)
+        self.fit = self.FIT_WIDGET_CLASS(self.cli, self.gparams_cli, parent=self.fiTab)
         self._fiTab_layout.addWidget(self.fit)
 
         self._autosaveTab_layout = QtWidgets.QVBoxLayout(self.autosaveTab)
-        self.autosave = PODMRAutoSaveWidget(self.cli, self.gparams_cli, parent=self.autosaveTab)
+        self.autosave = self.AUTOSAVE_WIDGET_CLASS(
+            self.cli, self.gparams_cli, parent=self.autosaveTab
+        )
         self._autosaveTab_layout.addWidget(self.autosave)
         self.autosave.init_connection()
 
@@ -802,6 +818,14 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.table.init_connection(self.update_table)
 
         self.setEnabled(False)
+
+    def setup_measurement_ui(self):
+        raise NotImplementedError
+
+    def supports_discard(self) -> bool:
+        """When True, UI must have discardButton and enablediscardBox."""
+
+        return True
 
     def init_radiobuttons(self):
         def set_group(group, index, buttons):
@@ -853,7 +877,8 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.exportaltButton.clicked.connect(self.export_alt_data)
         self.loadButton.clicked.connect(self.load_data)
 
-        self.discardButton.clicked.connect(self.discard_data)
+        if self.supports_discard():
+            self.discardButton.clicked.connect(self.discard_data)
 
         # main tab
         for w in (self.startBox, self.stepBox, self.numBox):
@@ -969,8 +994,12 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.update_cond_widgets()
         self._apply_sg1(self._params)
         pp = P.ParamDict(
-            {k: v for k, v in self._params["pulse"].items() if k not in ("90pulse", "180pulse")}
+            pulse={
+                k: v for k, v in self._params["pulse"].items() if k not in ("90pulse", "180pulse")
+            }
         )
+        if "pd" in self._params:
+            pp["pd"] = self._params["pd"]
         self.paramTable.update_contents(pp)
         self.reset_partial_modes(self._params["partial"].maximum())
         self.reset_plot_modes(
@@ -1040,7 +1069,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
 
     def save_data(self):
         default_path = str(self.gparams_cli.get_param("work_dir"))
-        fn = save_dialog(self, default_path, "PODMR", ".podmr")
+        fn = save_dialog(self, default_path, self.MEASUREMENT_NAME, self.FILE_EXTENSION)
         if not fn:
             return
 
@@ -1059,7 +1088,9 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
             return
 
         default_path = str(self.gparams_cli.get_param("work_dir"))
-        fn = export_dialog(self, default_path, "PODMR", (".png", ".pdf", ".eps", ".txt"))
+        fn = export_dialog(
+            self, default_path, self.MEASUREMENT_NAME, (".png", ".pdf", ".eps", ".txt")
+        )
         if not fn:
             return
 
@@ -1082,7 +1113,9 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
             return
 
         default_path = str(self.gparams_cli.get_param("work_dir"))
-        fn = export_dialog(self, default_path, "PODMR", (".png", ".pdf", ".eps", ".txt"))
+        fn = export_dialog(
+            self, default_path, self.MEASUREMENT_NAME, (".png", ".pdf", ".eps", ".txt")
+        )
         if not fn:
             return
 
@@ -1104,7 +1137,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.update_save_button(True)
 
         default_path = str(self.gparams_cli.get_param("work_dir"))
-        fn = load_dialog(self, default_path, "PODMR", ".podmr")
+        fn = load_dialog(self, default_path, self.MEASUREMENT_NAME, self.FILE_EXTENSION)
         if not fn:
             return
 
@@ -1126,6 +1159,23 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         # self.update_data(data)
 
     # parameters
+
+    def apply_param_table(self):
+        p = self.data.params
+        # optional pulse params
+        pp = p["pulse"]
+        for k, v in pp.items():
+            if k not in ("90pulse", "180pulse"):
+                self.paramTable.apply_value("pulse." + k, v)
+        if "90pulse" in pp:
+            self.t90pulseBox.setValue(pp["90pulse"] * 1e9)  # sec to ns
+        if "180pulse" in pp:
+            self.t180pulseBox.setValue(pp["180pulse"] * 1e9)  # sec to ns
+        # optional pd params
+        if "pd" in p:
+            for k, v in p["pd"].items():
+                self.paramTable.apply_value("pd." + k, v)
+
     def apply_meas_widgets(self):
         p = self.data.params
 
@@ -1140,15 +1190,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         # method
         self.set_method(self.data.label)
 
-        # optional pulse params
-        pp = p["pulse"]
-        for k, v in pp.items():
-            if k not in ("90pulse", "180pulse"):
-                self.paramTable.apply_value(k, v)
-        if "90pulse" in pp:
-            self.t90pulseBox.setValue(pp["90pulse"] * 1e9)  # sec to ns
-        if "180pulse" in pp:
-            self.t180pulseBox.setValue(pp["180pulse"] * 1e9)  # sec to ns
+        self.apply_param_table()
 
         # MW
         self.freqBox.setValue(p.get("freq", 2740e6) * 1e-6)  # Hz to MHz
@@ -1238,6 +1280,16 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
 
         self.update_plot_params()
 
+    def add_param_table_params(self, params: dict):
+        pt = P.unwrap(self.paramTable.params())
+        params["pulse"] = pt["pulse"]
+        if "90pulse" in self._params["pulse"]:
+            params["pulse"]["90pulse"] = self.t90pulseBox.value() * 1e-9
+        if "180pulse" in self._params["pulse"]:
+            params["pulse"]["180pulse"] = self.t180pulseBox.value() * 1e-9
+        if "pd" in pt:
+            params["pd"] = pt["pd"]
+
     def get_params(self) -> tuple[dict, str]:
         label = self.methodBox.currentText()
         params = {}
@@ -1286,12 +1338,7 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
             params["step"] = self.stepBox.value() * 1e-9  # ns to sec
             params["log"] = self.logBox.isChecked()
 
-        params["pulse"] = P.unwrap(self.paramTable.params())
-        if "90pulse" in self._params["pulse"]:
-            params["pulse"]["90pulse"] = self.t90pulseBox.value() * 1e-9
-        if "180pulse" in self._params["pulse"]:
-            params["pulse"]["180pulse"] = self.t180pulseBox.value() * 1e-9
-
+        self.add_param_table_params(params)
         params["plot"] = self.get_plot_params()
         params["fg"] = self.get_fg_params()
 
@@ -1428,7 +1475,8 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
         self.cli.update_plot_params(self.get_plot_params())
 
     def discard_data(self):
-        self.cli.discard()
+        if self.supports_discard():
+            self.cli.discard()
 
     def refresh_plot(self):
         self.plot.refresh(self.get_plottable_data(), self.data)
@@ -1527,9 +1575,10 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
                 for w in (self.fg_waveBox, self.fg_freqBox, self.fg_amplBox, self.fg_phaseBox):
                     w.setEnabled(False)
 
-        self.discardButton.setEnabled(
-            self.enablediscardBox.isChecked() and state == BinaryState.ACTIVE
-        )
+        if self.supports_discard():
+            enable_discard = state == BinaryState.ACTIVE and self.enablediscardBox.isChecked()
+            self.discardButton.setEnabled(enable_discard)
+
         self.stopButton.setEnabled(state == BinaryState.ACTIVE)
 
         self.autosave.update_state(state, last_state)
@@ -1669,6 +1718,13 @@ class PODMRWidget(ClientWidget, Ui_PODMR):
             (self.fg_cwButton, "cw"),
             (self.fg_gateButton, "gate"),
         ]
+
+
+class PODMRWidget(PODMRWidgetBase, Ui_PODMR):
+    """Widget for Pulse ODMR."""
+
+    def setup_measurement_ui(self):
+        Ui_PODMR.setupUi(self, self)
 
 
 class PODMRMainWindow(QtWidgets.QMainWindow):

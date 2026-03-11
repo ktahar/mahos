@@ -467,8 +467,8 @@ class DigitalOut_mock(Instrument):
             return False
 
 
-class Counter_mock(Instrument):
-    """Mock counter instrument that returns normally distributed count samples.
+class PD_mock(Instrument):
+    """Mock PD instrument that returns normally distributed samples.
 
     :param source: Optional source label for debugging and test configuration.
     :type source: str
@@ -478,26 +478,50 @@ class Counter_mock(Instrument):
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         self.source = self.conf.get("source")
+        self.block_reduce_factor = 1
+        self.block_reduce_op = "mean"
+        self.reduce_factor = 1
+        self.reduce_op = "mean"
+
+    def _scale(self) -> float:
+        scale = 1.0
+        if self.block_reduce_op == "sum":
+            scale *= self.block_reduce_factor
+        if self.reduce_op == "sum":
+            scale *= self.reduce_factor
+        return scale
 
     def get_data(self):
+        scale = self._scale()
         if self.stamp:
-            return np.random.normal(size=self.samples, loc=100.0), time.time_ns()
+            return np.random.normal(size=self.samples, loc=100.0) * scale, time.time_ns()
         else:
-            return np.random.normal(size=self.samples, loc=100.0)
+            return np.random.normal(size=self.samples, loc=100.0) * scale
 
     def pop_block(self):
         time.sleep(self.period)
+        scale = self._scale()
         if self.stamp:
-            return np.random.normal(size=self.samples, loc=100.0), time.time_ns()
+            return np.random.normal(size=self.samples, loc=100.0) * scale, time.time_ns()
         else:
-            return np.random.normal(size=self.samples, loc=100.0)
+            return np.random.normal(size=self.samples, loc=100.0) * scale
 
     # Standard API
 
     def configure(self, params: dict, label: str = "") -> bool:
         self.samples = params["cb_samples"]
         self.stamp = params.get("stamp", False)
-        self.period = self.samples * params.get("oversample", 1) / params.get("rate", 1.0)
+        self.block_reduce_factor = params.get("block_reduce_factor", 1)
+        self.block_reduce_op = str(params.get("block_reduce_op", "mean")).lower()
+        self.reduce_factor = params.get("reduce_factor", 1)
+        self.reduce_op = str(params.get("reduce_op", "mean")).lower()
+        self.period = (
+            self.samples
+            * params.get("oversample", 1)
+            * self.block_reduce_factor
+            * self.reduce_factor
+            / params.get("rate", 1.0)
+        )
         self.logger.info(f"Period: {self.period*1e3:.1f} ms")
         return True
 
@@ -519,6 +543,10 @@ class Counter_mock(Instrument):
         else:
             self.logger.error(f"unknown get() key: {key}")
             return None
+
+
+# Backward-compatible alias for existing mock config files.
+Counter_mock = PD_mock
 
 
 class MCS_mock(Instrument):

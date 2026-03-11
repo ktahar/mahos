@@ -87,12 +87,12 @@ conf = { line = "/DummyDev1/Ctr0" }
 
 [localhost.server.instrument.pd0]
 module = "mock"
-class = "Counter_mock"
+class = "PD_mock"
 conf = { source = "/DummyDev1/Ctr1" }
 
 [localhost.server.instrument.pd1]
 module = "mock"
-class = "Counter_mock"
+class = "PD_mock"
 conf = { source = "/DummyDev1/Ctr2" }
 
 [localhost.server.instrument.spectrometer]
@@ -233,6 +233,26 @@ pd_trigger = "/Dummy"
 log = "localhost::log"
 tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.spodmr.target.servers]
+sg = "localhost::server"
+sg1 = "localhost::server"
+pg = "localhost::server"
+fg = "localhost::server"
+pd0 = "localhost::server"
+clock = "localhost::server"
+
+[localhost.apodmr]
+module = "mahos_dq.meas.apodmr"
+class = "APODMR"
+log_level = "DEBUG"
+rep_endpoint = "tcp://127.0.0.1:5610"
+pub_endpoint = "tcp://127.0.0.1:5611"
+[localhost.apodmr.pulser]
+mw_modes = [0, 0]
+pd_trigger = "/Dummy"
+[localhost.apodmr.target]
+log = "localhost::log"
+tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
+[localhost.apodmr.target.servers]
 sg = "localhost::server"
 sg1 = "localhost::server"
 pg = "localhost::server"
@@ -457,6 +477,13 @@ class = "SPODMRGUI"
 spodmr = "localhost::spodmr"
 gparams = "localhost::gparams"
 
+[localhost.apodmr_gui]
+module = "mahos_dq.gui.apodmr"
+class = "APODMRGUI"
+[localhost.apodmr_gui.target]
+apodmr = "localhost::apodmr"
+gparams = "localhost::gparams"
+
 [localhost.iodmr_gui]
 module = "mahos_dq.gui.iodmr"
 class = "IODMRGUI"
@@ -525,6 +552,12 @@ module = "mahos.gui.pulse_monitor"
 class = "PulseMonitor"
 [localhost.pulse_monitor_spodmr.target]
 pulse = "localhost::spodmr"
+
+[localhost.pulse_monitor_apodmr]
+module = "mahos.gui.pulse_monitor"
+class = "PulseMonitor"
+[localhost.pulse_monitor_apodmr.target]
+pulse = "localhost::apodmr"
 
 [localhost.main_monitor]
 module = "mahos.gui.main_monitor"

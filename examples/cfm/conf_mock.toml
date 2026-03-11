@@ -91,12 +91,12 @@ conf = { line = "/DummyDev1/Ctr0" }
 
 [localhost.server.instrument.pd0]
 module = "mock"
-class = "Counter_mock"
+class = "PD_mock"
 conf = { source = "/DummyDev1/Ctr1" }
 
 [localhost.server.instrument.pd1]
 module = "mock"
-class = "Counter_mock"
+class = "PD_mock"
 conf = { source = "/DummyDev1/Ctr2" }
 
 [localhost.server.instrument_overlay.scanner]

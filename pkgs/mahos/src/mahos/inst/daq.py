@@ -475,6 +475,11 @@ class AnalogInTask(D.Task):
         line_num: int,
         every: bool,
         oversample: int,
+        block_reduce_factor: int,
+        block_reduce_samples: int,
+        block_reduce_op: str,
+        reduce_factor: int,
+        reduce_op: str,
         drop_first: int,
         cb_samples: int,
         everyN_handler: Callable[[np.ndarray | list[np.ndarray]], None],
@@ -487,6 +492,11 @@ class AnalogInTask(D.Task):
         self._line_num = line_num
         self._every = every
         self._oversample = oversample
+        self._block_reduce_factor = block_reduce_factor
+        self._block_reduce_samples = block_reduce_samples
+        self._block_reduce_op = block_reduce_op
+        self._reduce_factor = reduce_factor
+        self._reduce_op = reduce_op
         self._cb_samples = cb_samples
 
         self._everyN_handler = everyN_handler
@@ -543,9 +553,21 @@ class AnalogInTask(D.Task):
             d = data[i * self._cb_samples : (i + 1) * self._cb_samples]
             # Take mean for each oversample samples.
             # Note that self._cb_samples % self._oversample is always 0.
-            ret.append(
-                d.reshape(self._cb_samples // self._oversample, self._oversample).mean(axis=1)
-            )
+            d = d.reshape(self._cb_samples // self._oversample, self._oversample).mean(axis=1)
+            if self._block_reduce_factor > 1:
+                d = d.reshape(-1, self._block_reduce_factor, self._block_reduce_samples)
+                if self._block_reduce_op == "sum":
+                    d = d.sum(axis=1)
+                else:
+                    d = d.mean(axis=1)
+                d = d.reshape(-1)
+            if self._reduce_factor > 1:
+                d = d.reshape(self._reduce_factor, len(d) // self._reduce_factor)
+                if self._reduce_op == "sum":
+                    d = d.sum(axis=0)
+                else:
+                    d = d.mean(axis=0)
+            ret.append(d)
 
         if self._line_num == 1:
             self._everyN_handler(ret[0])
@@ -606,6 +628,22 @@ class AnalogIn(ConfigurableTask):
     :param oversample: (default: 1) cb_samples, samples, and buffer_size are multiplied by
                        `oversample`, and everyN_handler is passed mean of `oversample` readings.
     :type oversample: int
+    :param block_reduce_factor: (default: 1) additional reduction stage before ``reduce_factor``.
+        cb_samples, samples, and buffer_size are multiplied by ``block_reduce_factor``.
+    :type block_reduce_factor: int
+    :param block_reduce_samples: (default: 0) block size (after oversample averaging) for
+        ``block_reduce_factor`` reduction stage. required when ``block_reduce_factor > 1``.
+    :type block_reduce_samples: int
+    :param block_reduce_op: (default: mean) reduction operation for blockwise reduction.
+        one of ``sum`` or ``mean``.
+    :type block_reduce_op: str
+    :param reduce_factor: (default: 1) cb_samples, samples, and buffer_size are multiplied by
+        `reduce_factor` after block reduction, and everyN_handler is passed reduced data for each
+        logical block.
+    :type reduce_factor: int
+    :param reduce_op: (default: mean) reduction operation for each logical block. one of
+        ``sum`` or ``mean``.
+    :type reduce_op: str
 
     Finite or Infinite mode
     -----------------------
@@ -812,10 +850,40 @@ class AnalogIn(ConfigurableTask):
         self._stamp = params.get("stamp", False)
         drop_first = params.get("drop_first", 0)
         oversample = params.get("oversample", 1)
+        block_reduce_factor = params.get("block_reduce_factor", 1)
+        block_reduce_samples = params.get("block_reduce_samples", 0)
+        block_reduce_op = str(params.get("block_reduce_op", "mean")).lower()
+        reduce_factor = params.get("reduce_factor", 1)
+        reduce_op = str(params.get("reduce_op", "mean")).lower()
 
-        cb_samples *= oversample
-        samples *= oversample
-        buffer_size *= oversample
+        if oversample < 1:
+            self.logger.error("oversample must be positive.")
+            return False
+        if block_reduce_factor < 1:
+            self.logger.error("block_reduce_factor must be positive.")
+            return False
+        if block_reduce_op not in ("sum", "mean"):
+            self.logger.error(f"block_reduce_op must be 'sum' or 'mean', got: {block_reduce_op}")
+            return False
+        if block_reduce_factor > 1 and block_reduce_samples < 1:
+            self.logger.error(
+                "block_reduce_samples must be positive when block_reduce_factor > 1."
+            )
+            return False
+        if reduce_factor < 1:
+            self.logger.error("reduce_factor must be positive.")
+            return False
+        if reduce_op not in ("sum", "mean"):
+            self.logger.error(f"reduce_op must be 'sum' or 'mean', got: {reduce_op}")
+            return False
+
+        if block_reduce_factor > 1 and cb_samples % block_reduce_samples != 0:
+            self.logger.error("cb_samples must be integer multiple of block_reduce_samples.")
+            return False
+
+        cb_samples *= oversample * block_reduce_factor * reduce_factor
+        samples *= oversample * block_reduce_factor * reduce_factor
+        buffer_size *= oversample * block_reduce_factor * reduce_factor
         if every and samples % cb_samples != 0:
             self.logger.error("samples must be integer multiple of cb_samples.")
             return False
@@ -834,6 +902,11 @@ class AnalogIn(ConfigurableTask):
             len(self.lines),
             every,
             oversample,
+            block_reduce_factor,
+            block_reduce_samples,
+            block_reduce_op,
+            reduce_factor,
+            reduce_op,
             drop_first,
             cb_samples,
             self._append_data,

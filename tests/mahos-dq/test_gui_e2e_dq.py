@@ -20,10 +20,11 @@ from mahos.gui.Qt import QtCore
 from mahos.msgs.common_msgs import BinaryState
 from mahos.node.node import local_conf
 from mahos_dq.gui.hbt import HBTMainWindow
-from mahos_dq.gui.iodmr import IODMRMainWindow
 from mahos_dq.gui.odmr import ODMRMainWindow
 from mahos_dq.gui.podmr import PODMRMainWindow
 from mahos_dq.gui.spodmr import SPODMRMainWindow
+from mahos_dq.gui.apodmr import APODMRMainWindow
+from mahos_dq.gui.iodmr import IODMRMainWindow
 from mahos_dq.gui.spectroscopy import SpectroscopyMainWindow
 from fixtures import (
     ctx,
@@ -34,6 +35,7 @@ from fixtures import (
     odmr,
     hbt,
     podmr,
+    apodmr,
     spodmr,
     iodmr,
 )
@@ -66,6 +68,10 @@ def has_valid_podmr_data(data):
 
 def has_valid_spodmr_data(data):
     return data is not None and data.data0 is not None and data.data0.shape[0] >= 2
+
+
+def has_valid_apodmr_data(data):
+    return data is not None and data.data0 is not None and len(data.data0) >= 2
 
 
 def has_valid_iodmr_data(data):
@@ -230,6 +236,34 @@ def test_spodmr_gui_start_and_receive_data(server, spodmr, global_params, gconf,
     )
 
     stop_if_active(qtbot, window.spodmr.stopButton, window.spodmr.cli.get_state)
+
+
+@pytest.mark.timeout(60)
+def test_apodmr_gui_start_and_receive_data(server, apodmr, global_params, gconf, qtbot):
+    apodmr.wait()
+    global_params.wait()
+
+    window = APODMRMainWindow(gconf, "localhost::apodmr_gui", context=None)
+    qtbot.addWidget(window)
+    window.show()
+    qtbot.waitUntil(lambda: window.apodmr.isEnabled(), timeout=GUI_TIMEOUT_MS)
+
+    set_method(window.apodmr.methodBox, "rabi")
+    window.apodmr.numBox.setValue(2)
+    window.apodmr.sweepsBox.setValue(2)
+    window.apodmr.sweepsPerRecordBox.setValue(2)
+    window.apodmr.sigdelayBox.setValue(0.0)
+    window.apodmr.sigwidthBox.setValue(1.0)
+    window.apodmr.refdelayBox.setValue(1.0)
+    window.apodmr.refwidthBox.setValue(1.0)
+
+    qtbot.mouseClick(window.apodmr.startButton, QtCore.Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(
+        lambda: has_valid_apodmr_data(window.apodmr.cli.get_data()),
+        timeout=GUI_TIMEOUT_MS,
+    )
+
+    stop_if_active(qtbot, window.apodmr.stopButton, window.apodmr.cli.get_state)
 
 
 @pytest.mark.timeout(60)
