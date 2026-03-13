@@ -17,7 +17,7 @@ from mahos.gui.gui_node import GUINode
 from mahos.gui.common_widget import ClientTopWidget
 from mahos.gui.pulse_monitor_client import QPulseClient
 
-from mahos.node.node import local_conf, join_name
+from mahos.node.node import local_conf, split_name
 from mahos.msgs.pulse_msgs import PulsePattern
 
 
@@ -31,9 +31,14 @@ class PulseMonitorWidget(ClientTopWidget):
         ClientTopWidget.__init__(self)
 
         self.conf = local_conf(gconf, name)
-        target = self.conf["target"]["pulse"]
-        self.cli = QPulseClient(gconf, target, context=context)
-        self.add_clients(self.cli)
+        targets = self.conf["target"]["pulse"]
+        if isinstance(targets, str):
+            targets = [targets]
+        if not targets:
+            raise ValueError("target.pulse must not be empty.")
+        self.targets = targets
+        self.clis = [QPulseClient(gconf, target, context=context) for target in self.targets]
+        self.add_clients(*self.clis)
         self.pulse = None
         self.markers = None
 
@@ -124,9 +129,11 @@ class PulseMonitorWidget(ClientTopWidget):
         vl.addWidget(glw)
         vl.addLayout(hl_bottom)
         self.setLayout(vl)
-        self.setWindowTitle(f"MAHOS.PulseMonitor ({join_name(target)})")
+        node_names = [split_name(target)[1] for target in self.targets]
+        self.setWindowTitle(f"MAHOS.PulseMonitor ({', '.join(node_names)})")
 
-        self.cli.pulseUpdated.connect(self.update)
+        for cli in self.clis:
+            cli.pulseUpdated.connect(self.update)
 
     def update_plot_sub(self):
         self.plot_sub.setXRange(*self.lr.getRegion(), padding=0)
@@ -318,8 +325,8 @@ class PulseMonitor(GUINode):
     The node instantiates :class:`PulseMonitorWidget`, subscribes to pulse updates,
     and renders digital/analog channels with optional marker-based regions.
 
-    :param target.pulse: Target pulse publisher node name.
-    :type target.pulse: tuple[str, str] | str
+    :param target.pulse: Target pulse publisher node name(s).
+    :type target.pulse: str | list[str]
     :param colormap: PyQtGraph colormap name used for channel traces.
     :type colormap: str
 

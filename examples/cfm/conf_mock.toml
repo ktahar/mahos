@@ -258,7 +258,7 @@ gparams = "localhost::gparams"
 module = "mahos.gui.pulse_monitor"
 class = "PulseMonitor"
 [localhost.pulse_monitor.target]
-pulse = "localhost::podmr"
+pulse = ["localhost::odmr", "localhost::podmr"]
 
 [localhost.main_monitor]
 module = "mahos.gui.main_monitor"
