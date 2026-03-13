@@ -309,6 +309,7 @@ class Pulser(Worker):
             mw_modes=self.mw_modes,
             iq_amplitude=self.conf.get("iq_amplitude", 0.0),
             channel_remap=self.conf.get("channel_remap"),
+            generators=self.conf.get("generators"),
             print_fn=self.logger.info,
         )
         self.eos_margin = self.conf.get("eos_margin", 1e-6)
@@ -760,7 +761,7 @@ class Pulser(Worker):
         return False
 
     def _get_param_dict_pulse(self, label: str, d: dict):
-        num_pattern = self.generators[label].num_pattern({})
+        num_pattern = self.generators[label].num_pattern()
         num_pattern = max(2, min(int(num_pattern), 4))
 
         ## common_pulses

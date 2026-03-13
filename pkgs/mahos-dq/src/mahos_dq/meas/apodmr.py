@@ -76,6 +76,10 @@ class APODMR(BasicMeasNode):
     :type switch_command: str
     :param pub_interval_sec: Maximum interval between periodic status/data publications.
     :type pub_interval_sec: float
+    :param pulser.generators: Optional user generator registry mapping method labels to
+        ``[module_name, class_name]``.
+        These classes are loaded at worker initialization and can add or override methods.
+    :type pulser.generators: dict[str, tuple[str, str]]
 
     """
 

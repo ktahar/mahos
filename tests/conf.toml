@@ -213,6 +213,10 @@ log = "localhost::log"
 tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.podmr.pulser]
 mw_modes = [0, 0]
+# Optional user-defined pattern generators:
+# [localhost.podmr.pulser.generators]
+# my_method = ["my_pkg.my_generators", "MyGenerator"]
+# rabi = ["my_pkg.my_generators", "CustomRabiGenerator"]  # override built-in
 [localhost.podmr.target.servers]
 tdc = "localhost::server"
 sg = "localhost::server"

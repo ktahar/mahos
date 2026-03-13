@@ -108,6 +108,10 @@ class SPODMR(BasicMeasNode):
     :type pulser.nest_blockseq: bool
     :param pulser.channel_remap: mapping to fix default channel names.
     :type pulser.channel_remap: dict[str | int, str | int]
+    :param pulser.generators: Optional user generator registry mapping method labels to
+        ``[module_name, class_name]``.
+        These classes are loaded at worker initialization and can add or override methods.
+    :type pulser.generators: dict[str, tuple[str, str]]
     :param pulser.clock_name: (default: ``"clock"``) Clock source instrument name.
     :type pulser.clock_name: str
     :param pulser.mw_channels: Optional SG channel identifiers for MW outputs.

@@ -95,6 +95,10 @@ class Qdyne(BasicMeasNode):
     :type pulser.divide_block: bool
     :param pulser.channel_remap: mapping to fix default channel names.
     :type pulser.channel_remap: dict[str | int, str | int]
+    :param pulser.generators: Optional user generator registry mapping method labels to
+        ``[module_name, class_name]``.
+        These classes are loaded at worker initialization and can add or override methods.
+    :type pulser.generators: dict[str, tuple[str, str]]
     :param switch_names: Optional switch instrument names to route signal/optical paths.
     :type switch_names: list[str]
     :param switch_command: Switch command label passed to Switch worker.

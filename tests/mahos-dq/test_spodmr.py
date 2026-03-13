@@ -126,7 +126,7 @@ def test_spodmr_mw_offset_per_unit():
 
 def test_spodmr_reject_non_two_pattern_generator():
     class FakeGenerator(object):
-        def num_pattern(self, params):
+        def num_pattern(self, params=None):
             return 3
 
     worker = Pulser.__new__(Pulser)

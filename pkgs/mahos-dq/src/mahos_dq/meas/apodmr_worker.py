@@ -315,6 +315,7 @@ class Pulser(PODMRPulser):
             mw_modes=self.mw_modes,
             iq_amplitude=self.conf.get("iq_amplitude", 0.0),
             channel_remap=self.conf.get("channel_remap"),
+            generators=self.conf.get("generators"),
             print_fn=self.logger.info,
         )
         self.builder = APODMRBlockBuilder(

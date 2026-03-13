@@ -558,6 +558,7 @@ class Pulser(Worker):
             mw_modes=self.mw_modes,
             iq_amplitude=iq_amplitude,
             channel_remap=channel_remap,
+            generators=self.conf.get("generators"),
             max_num_pattern=2,
             print_fn=self.logger.info,
         )

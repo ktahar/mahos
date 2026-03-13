@@ -9,6 +9,7 @@ Pattern generators for Pulse ODMR.
 """
 
 from __future__ import annotations
+import importlib
 import re
 
 import numpy as np
@@ -77,7 +78,7 @@ class PatternGenerator(object):
 
         return 1
 
-    def num_pattern(self, params: dict) -> int:
+    def num_pattern(self, params: dict | None = None) -> int:
         """Return number of generated patterns."""
 
         return 2
@@ -2291,7 +2292,7 @@ class DQ4RamseyGenerator(PatternGenerator):
     def num_mw(self) -> int:
         return 2
 
-    def num_pattern(self, params: dict) -> int:
+    def num_pattern(self, params: dict | None = None) -> int:
         """Return number of generated patterns."""
 
         return 4
@@ -2345,6 +2346,30 @@ class DQ4RamseyGenerator(PatternGenerator):
         return blocks, freq, common_pulses
 
 
+def _parse_generator_spec(label: str, spec) -> tuple[str, str]:
+    if not isinstance(label, str):
+        raise TypeError(f"generators keys must be strings, got {label!r}")
+    if not isinstance(spec, (list, tuple)) or len(spec) != 2:
+        raise TypeError(f"generators['{label}'] must be [module_name, class_name], got {spec!r}")
+    module_name, class_name = spec
+    if not isinstance(module_name, str) or not isinstance(class_name, str):
+        raise TypeError(
+            f"generators['{label}'] items must be strings, got ({module_name!r}, {class_name!r})"
+        )
+    return module_name, class_name
+
+
+def _load_generator_class(module_name: str, class_name: str):
+    module = importlib.import_module(module_name)
+    cls = getattr(module, class_name)
+    if not isinstance(cls, type) or not issubclass(cls, PatternGenerator):
+        raise TypeError(
+            f"{module_name}.{class_name} is not a subclass of "
+            "mahos_dq.meas.podmr_generator.generator.PatternGenerator"
+        )
+    return cls
+
+
 def make_generators(
     freq: float = 2.0e9,
     reduce_start_divisor: int = 2,
@@ -2354,9 +2379,15 @@ def make_generators(
     mw_modes: tuple[int] = (0,),
     iq_amplitude: float = 0.0,
     channel_remap: dict | None = None,
+    generators: dict | None = None,
     max_num_pattern: int | None = None,
     print_fn=print,
 ):
+    if generators is not None and not isinstance(generators, dict):
+        raise TypeError(
+            "generators must be dict[str, [module_name, class_name]], " f"got {generators!r}"
+        )
+
     args = (
         freq,
         reduce_start_divisor,
@@ -2368,6 +2399,7 @@ def make_generators(
         channel_remap,
         print_fn,
     )
+    user_generators = generators
     generators = {
         "rabi": RabiGenerator(*args),
         "t1": T1Generator(*args),
@@ -2409,6 +2441,21 @@ def make_generators(
         generators["rxy4"] = RDDGenerator(*args, method="xy4")
         generators["rxy8"] = RDDGenerator(*args, method="xy8")
         generators["rxy16"] = RDDGenerator(*args, method="xy16")
+    if user_generators:
+        for label, spec in user_generators.items():
+            module_name, class_name = _parse_generator_spec(label, spec)
+            GeneratorClass = _load_generator_class(module_name, class_name)
+            generator = GeneratorClass(*args)
+            num_pattern = generator.num_pattern()
+            if max_num_pattern is not None and num_pattern > max_num_pattern:
+                raise ValueError(
+                    f"{module_name}.{class_name} for label '{label}' has num_pattern "
+                    f"{num_pattern}, which exceeds max_num_pattern={max_num_pattern}"
+                )
+            overridden = label in generators
+            generators[label] = generator
+            action = "Overrode" if overridden else "Registered"
+            print_fn(f"{action} generator '{label}' with {module_name}.{class_name}")
     if max_num_pattern is not None:
-        generators = {k: g for k, g in generators.items() if g.num_pattern({}) <= max_num_pattern}
+        generators = {k: g for k, g in generators.items() if g.num_pattern() <= max_num_pattern}
     return generators
