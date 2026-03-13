@@ -33,6 +33,14 @@ variables, `PascalCase` for classes, and `UPPER_CASE` for constants. Generated U
 code in `pkgs/mahos/src/mahos/gui/ui` and `pkgs/mahos-dq/src/mahos_dq/gui/ui` is excluded
 from formatting and linting.
 
+## CLI Completion Performance
+
+- Keep CLI parser-building paths lightweight for `argcomplete`.
+- Do not import heavy optional/runtime libraries at module import time in CLI modules that
+  are loaded by completion parser construction (for example plotting, shell, data commands).
+- Move heavy imports into execution-time functions (`main()` or command handlers) unless they
+  are required to define parser arguments.
+
 ## Docstring Guidelines
 
 - Write all docstrings in reStructuredText (reST).

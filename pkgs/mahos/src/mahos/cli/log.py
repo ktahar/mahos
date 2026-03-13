@@ -12,18 +12,6 @@ import time
 import argparse
 from functools import partial
 
-from mahos.node.node import join_name, is_threaded
-from mahos.node.log_broker import (
-    LogClient,
-    parse_log,
-    format_log,
-    format_log_term_color,
-    should_show,
-    log_broker_is_up,
-)
-from mahos.cli.util import init_gconf_host_node, host_is_local
-from mahos.cli.launch import Launcher
-
 
 def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
@@ -46,7 +34,7 @@ def build_parser(add_help: bool = True):
         type=str,
         nargs="?",
         default="log",
-        help="node name or full name ({}) (default: log)".format(join_name(("host", "node"))),
+        help="node name or full name (host::node) (default: log)",
     )
     return parser
 
@@ -58,14 +46,25 @@ def parse_args(args):
     return args
 
 
-def _handler(level: str, fmt, msg):
-    msg = parse_log(msg)
-    if not should_show(level, msg):
-        return
-    print(fmt(msg), end="")
-
-
 def main(args=None):
+    from mahos.node.node import join_name, is_threaded
+    from mahos.node.log_broker import (
+        LogClient,
+        parse_log,
+        format_log,
+        format_log_term_color,
+        should_show,
+        log_broker_is_up,
+    )
+    from mahos.cli.util import init_gconf_host_node, host_is_local
+    from mahos.cli.launch import Launcher
+
+    def _handler(level: str, fmt, msg):
+        msg = parse_log(msg)
+        if not should_show(level, msg):
+            return
+        print(fmt(msg), end="")
+
     args = parse_args(args)
     gconf, host, node = init_gconf_host_node(args.conf, args.host, args.node)
     joined_name = join_name((host, node))

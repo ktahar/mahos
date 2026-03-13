@@ -10,9 +10,6 @@ mahos ls command.
 
 import argparse
 
-from mahos.node.node import join_name, local_conf, host_nodes, hosts, threaded_nodes
-from mahos.cli.util import check_load_gconf
-
 
 def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
@@ -35,6 +32,9 @@ def parse_args(args):
 
 
 def main(args=None):
+    from mahos.cli.util import check_load_gconf
+    from mahos.node.node import host_nodes, hosts, join_name, local_conf, threaded_nodes
+
     args = parse_args(args)
     gconf = check_load_gconf(args.conf)
     for host in hosts(gconf):

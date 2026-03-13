@@ -10,11 +10,8 @@ The mahos package
 
 import os
 
-# top level exports for frequently used functions
-from mahos.node.node import load_gconf, local_conf
-from mahos.version import get_mahos_version
-
-__version__ = get_mahos_version()
+# resolved lazily via __getattr__()
+__version__: str
 
 __all__ = [
     "cli",
@@ -37,3 +34,19 @@ for d in (CONFIG_DIR, LOG_DIR):
     if not os.path.exists(d):
         os.makedirs(d)
         print("Directory {} is created.".format(d))
+
+
+def __getattr__(name: str):
+    if name in ("load_gconf", "local_conf"):
+        from mahos.node.node import load_gconf as _load_gconf, local_conf as _local_conf
+
+        globals()["load_gconf"] = _load_gconf
+        globals()["local_conf"] = _local_conf
+        return globals()[name]
+    if name == "__version__":
+        from mahos.version import get_mahos_version
+
+        v = get_mahos_version()
+        globals()["__version__"] = v
+        return v
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

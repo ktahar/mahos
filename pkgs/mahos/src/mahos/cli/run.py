@@ -12,9 +12,6 @@ import sys
 import importlib
 import argparse
 
-from mahos.node.node import Node, join_name
-from mahos.cli.util import init_gconf_host_node
-
 
 def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
@@ -25,9 +22,7 @@ def build_parser(add_help: bool = True):
     )
     parser.add_argument("-H", "--host", type=str, default="", help="host name")
     parser.add_argument("-t", "--thread", action="store_true", help="start threaded nodes")
-    parser.add_argument(
-        "node", type=str, help="node name or full name ({})".format(join_name(("host", "node")))
-    )
+    parser.add_argument("node", type=str, help="node name or full name (host::node)")
     parser.add_argument(
         "-i",
         "--include",
@@ -69,6 +64,9 @@ def is_gui_node_class(NodeClass):
 
 
 def main(args=None):
+    from mahos.cli.util import init_gconf_host_node
+    from mahos.node.node import Node, join_name
+
     args = parse_args(args)
     gconf, host, node = init_gconf_host_node(args.conf, args.host, args.node)
 

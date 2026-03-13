@@ -10,12 +10,6 @@ mahos shell command.
 
 import argparse
 
-import IPython
-
-from mahos.node.node import join_name
-from mahos.node.client import get_client
-from mahos.cli.util import init_gconf_host_nodes
-
 
 class Clients(object):
     """Simple object for storing attributes.
@@ -79,7 +73,7 @@ def build_parser(add_help: bool = True):
         "nodes",
         type=str,
         nargs="+",
-        help="list of node name or full name ({})".format(join_name(("host", "node"))),
+        help="list of node name or full name (host::node)",
     )
     return parser
 
@@ -95,6 +89,12 @@ def main(args=None):
       https://ipython.readthedocs.io/en/stable/config/details.html#terminal-colors
 
     """
+
+    import IPython
+
+    from mahos.node.node import join_name
+    from mahos.node.client import get_client
+    from mahos.cli.util import init_gconf_host_nodes
 
     args = parse_args(args)
     gconf, host, nodes = init_gconf_host_nodes(args.conf, args.host, args.nodes)

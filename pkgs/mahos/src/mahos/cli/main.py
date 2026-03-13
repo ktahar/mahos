@@ -13,11 +13,6 @@ import os
 import argparse
 import importlib
 
-try:
-    import argcomplete
-except ImportError:
-    argcomplete = None
-
 main_usage = """usage: mahos COMMAND args
 
 COMMAND (r[un] | l[aunch] | lo[g] | ls | g[raph] | e[cho] | s[hell] | d[ata] | p[lot]) :
@@ -53,9 +48,14 @@ def build_completion_parser():
 
 
 def main():
-    if argcomplete is not None and "_ARGCOMPLETE" in os.environ:
-        parser = build_completion_parser()
-        argcomplete.autocomplete(parser)
+    if "_ARGCOMPLETE" in os.environ:
+        try:
+            import argcomplete
+        except ImportError:
+            pass
+        else:
+            parser = build_completion_parser()
+            argcomplete.autocomplete(parser)
 
     if len(sys.argv) < 2:
         print(main_usage)

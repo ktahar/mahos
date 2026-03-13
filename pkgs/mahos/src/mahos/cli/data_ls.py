@@ -8,23 +8,7 @@ mahos data ls command.
 
 """
 
-from os import path
 import argparse
-
-from mahos.util.io import list_attrs_h5
-from mahos.node.log import DummyLogger
-
-from mahos.msgs.camera_msgs import Image as CameraImage
-
-exts_to_data = {
-    ".camera.h5": CameraImage,
-}
-try:
-    from mahos_dq.cli import data as dq
-
-    exts_to_data.update(dq.exts_to_data)
-except ImportError:
-    pass
 
 
 def parse_args(args):
@@ -44,18 +28,14 @@ def build_parser(add_help: bool = True):
     return parser
 
 
-logger = DummyLogger()
-
-
-def get_ext(fn):
-    head, e0 = path.splitext(fn)
-    head, e1 = path.splitext(head)
-    return e1 + e0
-
-
 def print_attrs(fn):
+    from mahos.cli.data_common import get_ext, get_exts_to_data, get_logger
+    from mahos.util.io import list_attrs_h5
+
+    logger = get_logger()
     print(f"## {fn} ##")
     ext = get_ext(fn)
+    exts_to_data = get_exts_to_data()
     if ext not in exts_to_data:
         logger.error(f"Unknown extension {ext}")
         return

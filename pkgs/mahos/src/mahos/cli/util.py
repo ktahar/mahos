@@ -12,10 +12,10 @@ import sys
 from os import path
 import platform
 
-from mahos.node.node import load_gconf, infer_name
-
 
 def check_load_gconf(fn):
+    from mahos.node.node import load_gconf
+
     if not path.exists(fn):
         print("[ERROR] Config file doesn't exist.")
         sys.exit(1)
@@ -42,12 +42,16 @@ def init_gconf_host(gconf_fn, host):
 
 
 def init_gconf_host_node(gconf_fn, host, node):
+    from mahos.node.node import infer_name
+
     gconf, host = init_gconf_host(gconf_fn, host)
     host, node = infer_name(node, host)
     return gconf, host, node
 
 
 def init_gconf_host_nodes(gconf_fn, host, nodes):
+    from mahos.node.node import infer_name
+
     gconf, host = init_gconf_host(gconf_fn, host)
     new_nodes = []
     for node in nodes:

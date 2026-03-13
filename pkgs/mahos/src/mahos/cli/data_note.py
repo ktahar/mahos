@@ -10,10 +10,6 @@ mahos data note command.
 
 import argparse
 
-import h5py
-
-from mahos.node.log import DummyLogger
-
 
 def parse_args(args):
     parser = build_parser()
@@ -36,10 +32,9 @@ def build_parser(add_help: bool = True):
     return parser
 
 
-logger = DummyLogger()
-
-
 def print_note(fn):
+    import h5py
+
     print(f"## {fn} ##")
 
     with h5py.File(fn, "r") as f:
@@ -48,6 +43,8 @@ def print_note(fn):
 
 
 def amend_note(fn, new_note: str, verbose: bool):
+    import h5py
+
     def no_print(*args):
         pass
 

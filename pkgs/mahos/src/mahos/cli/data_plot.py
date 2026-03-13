@@ -29,9 +29,9 @@ def _main(args=None):
     print("mahos data plot only works with mahos_dq installed")
 
 
-try:
-    from mahos_dq.cli import plot as dq_plot
-
-    main = dq_plot.main
-except ImportError:
-    main = _main
+def main(args=None):
+    try:
+        from mahos_dq.cli import plot as dq_plot
+    except ImportError:
+        return _main(args)
+    return dq_plot.main(args)

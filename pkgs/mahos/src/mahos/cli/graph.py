@@ -11,13 +11,10 @@ mahos graph command.
 from __future__ import annotations
 import argparse
 import enum
+from typing import TYPE_CHECKING
 
-import networkx as nx
-import matplotlib.pyplot as plt
-
-from mahos.node.node import join_name, local_conf, hosts, host_nodes, threaded_nodes
-from mahos.util.conv import invert_mapping
-from mahos.cli.util import check_load_gconf
+if TYPE_CHECKING:
+    import networkx as nx
 
 
 def build_parser(add_help: bool = True):
@@ -79,6 +76,9 @@ def style(use_nx: bool, class_name: bool):
 
 
 def add_edge(G, joined_name, target, exclude):
+    from mahos.node.node import join_name
+    from mahos.util.conv import invert_mapping
+
     for key, value in target.items():
         if isinstance(value, str):
             if value in exclude:
@@ -98,7 +98,10 @@ def add_edge(G, joined_name, target, exclude):
                 )
 
 
-def make_graph(gconf: dict, style: LabelStyle, exclude: list[str]) -> nx.DiGraph:
+def make_graph(gconf: dict, style: LabelStyle, exclude: list[str]) -> "nx.DiGraph":
+    import networkx as nx
+    from mahos.node.node import host_nodes, join_name, local_conf
+
     G = nx.DiGraph()
     for host, node in host_nodes(gconf):
         joined_name = join_name((host, node))
@@ -126,7 +129,10 @@ def make_graph(gconf: dict, style: LabelStyle, exclude: list[str]) -> nx.DiGraph
     return G
 
 
-def draw_nx(G: nx.DiGraph, fn: str, show: bool):
+def draw_nx(G: "nx.DiGraph", fn: str, show: bool):
+    import matplotlib.pyplot as plt
+    import networkx as nx
+
     pos = nx.kamada_kawai_layout(G)
     nx.draw_networkx_nodes(G, pos)
     nx.draw_networkx_labels(G, pos, labels={n: l for n, l in G.nodes(data="label")})
@@ -139,7 +145,10 @@ def draw_nx(G: nx.DiGraph, fn: str, show: bool):
         plt.show()
 
 
-def draw_pgv(gconf: dict, G: nx.DiGraph, fn: str, show: bool):
+def draw_pgv(gconf: dict, G: "nx.DiGraph", fn: str, show: bool):
+    import networkx as nx
+    from mahos.node.node import hosts, join_name, threaded_nodes
+
     AG = nx.nx_agraph.to_agraph(G)
     for host in hosts(gconf):
         names = [join_name((host, node)) for node in gconf[host]]
@@ -161,6 +170,8 @@ def draw_pgv(gconf: dict, G: nx.DiGraph, fn: str, show: bool):
 
 
 def main(args=None):
+    from mahos.cli.util import check_load_gconf
+
     args = parse_args(args)
     gconf = check_load_gconf(args.conf)
     G = make_graph(gconf, style(args.networkx, args.class_name), args.exclude)
