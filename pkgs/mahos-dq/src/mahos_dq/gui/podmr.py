@@ -73,14 +73,11 @@ _colors = [Colors(c0, c1) for c0, c1 in colors_tab20_pair()]
 
 
 class PODMRFitWidget(FitWidget):
-    MEASUREMENT_NAME = "PODMR"
-    FILE_EXTENSION = ".podmr"
-
     def colors(self) -> list:
         return _colors
 
     def load_dialog(self, default_path: str) -> str:
-        return load_dialog(self, default_path, self.MEASUREMENT_NAME, self.FILE_EXTENSION)
+        return load_dialog(self, default_path, "PODMR", ".podmr")
 
 
 class PlotWidget(QtWidgets.QWidget):
@@ -666,7 +663,7 @@ class NMRTableWidget(QtWidgets.QWidget, Ui_NMRTable):
 
 
 class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
-    AUTOSAVE_EXTENSION = ".podmr.pkl"
+    AUTOSAVE_EXTENSION = ".podmr.h5"
 
     def __init__(self, cli, gparams_cli, parent=None):
         QtWidgets.QWidget.__init__(self, parent)

@@ -18,6 +18,7 @@ from mahos.gui.param import apply_widgets
 from mahos.msgs.common_msgs import BinaryState
 from mahos.node.node import local_conf, join_name
 from mahos.gui.gui_node import GUINode
+from mahos.gui.dialog import load_dialog
 
 from mahos_dq.gui.ui.apodmr import Ui_APODMR
 from mahos_dq.gui.apodmr_client import QAPODMRClient
@@ -35,12 +36,12 @@ Policy = QtWidgets.QSizePolicy.Policy
 
 
 class APODMRFitWidget(PODMRFitWidget):
-    MEASUREMENT_NAME = "APODMR"
-    FILE_EXTENSION = ".apodmr"
+    def load_dialog(self, default_path: str) -> str:
+        return load_dialog(self, default_path, "APODMR", ".apodmr")
 
 
 class APODMRAutoSaveWidget(PODMRAutoSaveWidget):
-    AUTOSAVE_EXTENSION = ".apodmr.pkl"
+    AUTOSAVE_EXTENSION = ".apodmr.h5"
 
 
 class APODMRRawPlotWidget(QtWidgets.QWidget):
