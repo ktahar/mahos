@@ -70,16 +70,83 @@ class APODMR(BasicMeasNode):
     :type target.tweakers: list[str]
     :param target.log: LogBroker target full name.
     :type target.log: str
+
     :param switch_names: Optional switch instrument names.
     :type switch_names: list[str]
     :param switch_command: Switch command label passed to Switch worker.
     :type switch_command: str
     :param pub_interval_sec: Maximum interval between periodic status/data publications.
     :type pub_interval_sec: float
+
+    :param pulser.quick_resume: default value of quick_resume.
+        If True, it skips instrument configurations on resume.
+    :type pulser.quick_resume: bool
+    :param pulser.mw_modes: mw phase control modes for each channel.
+        0 is 4-phase control using IQ modulation at SG and a switch.
+        1 is 2-phase control using external 90-deg splitter and two switches.
+        2 is arbitral phase control using IQ modulation at SG
+        (Analog output (AWG) is required for PG).
+    :type pulser.mw_modes: tuple[int]
+    :param pulser.iq_amplitude: (only for mw_mode 2) amplitude of analog IQ signal in V.
+    :type pulser.iq_amplitude: float
+    :param pulser.split_fraction: (default: 4) fraction factor (F) to split the free period
+        for MW phase modulation. the period (T) is split into (T // F, T - T // F) and MW phase
+        is switched at T // F. Thus, larger F results in "quicker start" of the phase
+        modulation (depending on hardware, but its response may be a bit slow).
+    :type pulser.split_fraction: int
+    :param pulser.pg_freq: (has preset) pulse generator frequency
+    :type pulser.pg_freq: float
+    :param pulser.reduce_start_divisor: (has preset) the divisor on start of reducing frequency
+        reduce is done first by this value, and then repeated by 10.
+    :type pulser.reduce_start_divisor: int
+    :param pulser.minimum_block_length: (has preset) minimum block length in generated blocks
+    :type pulser.minimum_block_length: int
+    :param pulser.block_base: (has preset) block base granularity of pulse generator.
+    :type pulser.block_base: int
+    :param pulser.divide_block: (has preset) Default value of divide_block.
+    :type pulser.divide_block: bool
+    :param pulser.sg_freq: default value of sg frequency
+    :type pulser.sg_freq: float
+    :param pulser.channel_remap: mapping to fix default channel names.
+    :type pulser.channel_remap: dict[str | int, str | int]
+    :param pulser.pd_names: (default: ["pd0"]) PD names in target.servers.
+    :type pulser.pd_names: list[str]
+    :param pulser.clock_name: (default: ``"clock"``) Clock source instrument name.
+    :type pulser.clock_name: str
+    :param pulser.pd_trigger: DAQ terminal name for PD trigger.
+    :type pulser.pd_trigger: str
+    :param pulser.pd_data_transfer: Optional DAQ transfer mode label.
+    :type pulser.pd_data_transfer: str
+    :param pulser.buffer_size_coeff: Buffer size coefficient multiplied by trace length.
+    :type pulser.buffer_size_coeff: int
+    :param pulser.mw_channels: Optional SG channel identifiers for MW outputs.
+    :type pulser.mw_channels: list[str]
     :param pulser.generators: Optional user generator registry mapping method labels to
         ``[module_name, class_name]``.
         These classes are loaded at worker initialization and can add or override methods.
     :type pulser.generators: dict[str, tuple[str, str]]
+
+    :param pulser.roi_head: (default: 20e-9) default margin at head of sampled trace
+        and trigger-to-laser offset.
+    :type pulser.roi_head: float
+    :param pulser.roi_tail: (default: 100e-9) default margin at tail of sampled trace.
+    :type pulser.roi_tail: float
+    :param pulser.sweeps_per_record: (default: 10) default number of sweeps accumulated in one
+        stored raw trace record.
+    :type pulser.sweeps_per_record: int
+    :param pulser.shots_per_point: (default: 1) default number of repeated shots per sweep point.
+    :type pulser.shots_per_point: int
+    :param pulser.pd_rate: (default: 2e6) default PD sampling rate in Hz.
+    :type pulser.pd_rate: float
+    :param pulser.pd_bounds: (default: ``(-10.0, 10.0)``) default PD voltage bounds.
+    :type pulser.pd_bounds: tuple[float, float]
+
+    :param fitter.rabi.c: default value of param "c" (base line) in RabiFitter.
+        You can set the bounds using "c_min" and "c_max" too.
+    :type fitter.rabi.c: float
+    :param fitter.rabi.A: default value of param "A" (amplitude) in RabiFitter.
+        You can set the bounds using "A_min" and "A_max" too.
+    :type fitter.rabi.A: float
 
     """
 

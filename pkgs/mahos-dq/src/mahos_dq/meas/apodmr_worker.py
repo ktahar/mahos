@@ -302,6 +302,7 @@ class Pulser(PODMRPulser):
         self.samples_per_trace = None
         self._pd_trigger = self.conf["pd_trigger"]
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
+        self._quick_resume = self.conf.get("quick_resume", True)
 
         self.check_required_conf(
             ["pd_trigger", "block_base", "pg_freq", "reduce_start_divisor", "minimum_block_length"]
@@ -531,18 +532,18 @@ class Pulser(PODMRPulser):
     ) -> bool:
         if params is not None:
             params = P.unwrap(params)
-        resume = params is not None and params.get("resume", False)
-        if resume and not self.data.can_resume(params, label):
-            self.logger.error("Resume is rejected because acquisition-shaping parameters changed.")
-            return False
-
+        resume = params is None or ("resume" in params and params["resume"])
+        if params is None:
+            quick_resume = resume and self._quick_resume
+        else:
+            quick_resume = resume and params.get("quick_resume", self._quick_resume)
         if not resume:
             self.data = APODMRData(params, label)
             self.op.update_axes(self.data)
         else:
-            self.data.update_params(params)
+            if params is not None:
+                self.data.update_params(params)
         self._analysis_warned = False
-
         try:
             self._validate_partial(self.data)
             self._validate_plotmode(self.data)
@@ -561,8 +562,11 @@ class Pulser(PODMRPulser):
         if not self.lock_instruments():
             return self.fail_with_release("Error acquiring instrument locks.")
 
-        if not self.init_inst(self.data.params):
+        if quick_resume:
+            self.logger.info("Quick resume enabled: skipping initial inst configurations.")
+        if not quick_resume and not self.init_inst(self.data.params):
             return self.fail_with_release("Error initializing instruments.")
+        # PD/clock configuration is always refreshed on each start, even with quick resume.
         if not self.init_start_pds():
             return self.fail_with_release("Error initializing or starting PDs.")
 
