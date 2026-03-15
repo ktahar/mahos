@@ -18,7 +18,7 @@ Ignore following directories when inspecting or editing:
 - `pip install -e ./pkgs/mahos-dq-ext`: install optional C extension package
   when extension features are needed.
   (`-e` option may be removed if necessary.)
-- `make test` (or `pytest --timeout=10`): run the test suite with timeouts.
+- `make test` (or `pytest --timeout=30`): run the test suite with timeouts.
 - `make lint`: run flake8 with configured excludes
   (`build`, `tests`, and generated UI code).
 - `make format`: format Python code with Black.
@@ -32,6 +32,14 @@ limit. Indentation is 4 spaces. Use PEP 8 naming: `snake_case` for functions and
 variables, `PascalCase` for classes, and `UPPER_CASE` for constants. Generated UI
 code in `pkgs/mahos/src/mahos/gui/ui` and `pkgs/mahos-dq/src/mahos_dq/gui/ui` is excluded
 from formatting and linting.
+
+## CLI Completion Performance
+
+- Keep CLI parser-building paths lightweight for `argcomplete`.
+- Do not import heavy optional/runtime libraries at module import time in CLI modules that
+  are loaded by completion parser construction (for example plotting, shell, data commands).
+- Move heavy imports into execution-time functions (`main()` or command handlers) unless they
+  are required to define parser arguments.
 
 ## Docstring Guidelines
 

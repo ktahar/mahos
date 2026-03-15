@@ -13,10 +13,6 @@ import argparse
 import sys
 import importlib
 
-from mahos.node.node import join_name
-from mahos.node.client import EchoSubscriber
-from mahos.cli.util import init_gconf_host_node
-
 
 def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
@@ -37,9 +33,7 @@ def build_parser(add_help: bool = True):
         action="store_true",
         help="print rate statistics instead of message itself.",
     )
-    parser.add_argument(
-        "node", type=str, help="node name or full name ({})".format(join_name(("host", "node")))
-    )
+    parser.add_argument("node", type=str, help="node name or full name (host::node)")
     return parser
 
 
@@ -51,6 +45,10 @@ def parse_args(args):
 
 
 def main(args=None):
+    from mahos.cli.util import init_gconf_host_node
+    from mahos.node.client import EchoSubscriber
+    from mahos.node.node import join_name
+
     args = parse_args(args)
     gconf, host, node = init_gconf_host_node(args.conf, args.host, args.node)
     joined_name = join_name((host, node))

@@ -15,18 +15,10 @@ from os import path
 import pprint
 import toml
 
-from mahos.msgs.fit_msgs import str_to_peak_type
-from mahos_dq.meas.confocal_io import ConfocalIO
-from mahos_dq.meas.odmr_io import ODMRIO
-from mahos_dq.meas.podmr_io import PODMRIO
-from mahos_dq.meas.spodmr_io import SPODMRIO
-from mahos_dq.meas.iodmr_io import IODMRIO
-from mahos_dq.meas.hbt_io import HBTIO
-from mahos_dq.meas.spectroscopy_io import SpectroscopyIO
-from mahos.util.cui import prompt
-
 
 def plot_data(args, fn, data, plot, force=False):
+    from mahos.util.cui import prompt
+
     for ext in args.exts.split(","):
         if not ext.startswith("."):
             ext = "." + ext
@@ -66,6 +58,8 @@ def make_default_params(args):
 
 
 def plot_confocal_image(args):
+    from mahos_dq.meas.confocal_io import ConfocalIO
+
     io = ConfocalIO()
     params = {
         "vmax": args.vmax,
@@ -80,11 +74,16 @@ def plot_confocal_image(args):
 
 
 def plot_confocal_trace(args):
+    from mahos_dq.meas.confocal_io import ConfocalIO
+
     io = ConfocalIO()
     plot_files(args, io.load_trace, io.export_trace)
 
 
 def plot_odmr(args):
+    from mahos.msgs.fit_msgs import str_to_peak_type
+    from mahos_dq.meas.odmr_io import ODMRIO
+
     io = ODMRIO()
 
     if args.method:
@@ -138,6 +137,8 @@ def plot_odmr(args):
 
 
 def plot_podmr(args):
+    from mahos_dq.meas.podmr_io import PODMRIO
+
     def print_params(_, data):
         pprint.pp(data.params["plot"])
 
@@ -185,6 +186,8 @@ def plot_podmr(args):
 
 
 def plot_spodmr(args):
+    from mahos_dq.meas.spodmr_io import SPODMRIO
+
     io = SPODMRIO()
 
     plot_params = {}
@@ -226,6 +229,8 @@ def plot_spodmr(args):
 
 
 def plot_iodmr(args):
+    from mahos_dq.meas.iodmr_io import IODMRIO
+
     io = IODMRIO()
     params = {
         "wslice": args.wslice,
@@ -248,6 +253,9 @@ def plot_iodmr(args):
 
 
 def fit_iodmr(args):
+    from mahos.util.cui import prompt
+    from mahos_dq.meas.iodmr_io import IODMRIO
+
     io = IODMRIO()
     label = args.method
     fit_params = {
@@ -282,6 +290,8 @@ def fit_iodmr(args):
 
 
 def plot_hbt(args):
+    from mahos_dq.meas.hbt_io import HBTIO
+
     io = HBTIO()
 
     plot_params = {}
@@ -320,6 +330,9 @@ def plot_hbt(args):
 
 
 def plot_spec(args):
+    from mahos.msgs.fit_msgs import str_to_peak_type
+    from mahos_dq.meas.spectroscopy_io import SpectroscopyIO
+
     io = SpectroscopyIO()
 
     if args.method:

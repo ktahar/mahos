@@ -14,7 +14,6 @@ from __future__ import annotations
 import typing as T
 
 import numpy as np
-from scipy import fft
 
 
 def step_to_num(start, stop, step, decimals=10):
@@ -70,6 +69,8 @@ def invert_mapping(d: T.Mapping[K, V]) -> dict[V, list[K]]:
 
 
 def real_fft(xdata, ydata, remove_dc=True):
+    from scipy import fft
+
     N = len(xdata)
     if N != len(ydata):
         raise ValueError("xdata and ydata has wrong length")
@@ -83,6 +84,8 @@ def real_fft(xdata, ydata, remove_dc=True):
 
 
 def real_fftfreq(xdata):
+    from scipy import fft
+
     N = len(xdata)
     return fft.fftfreq(len(xdata), abs(xdata[1] - xdata[0]))[: N // 2]
 

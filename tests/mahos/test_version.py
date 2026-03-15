@@ -10,8 +10,10 @@ Tests for mahos.version.
 
 from __future__ import annotations
 from importlib import metadata
+import importlib
 from pathlib import Path
 
+import mahos
 from mahos import version
 
 
@@ -142,3 +144,36 @@ def test_find_git_root(monkeypatch):
 
 def test_module_source_path():
     assert version._module_source_path().is_absolute()
+
+
+def test_package_version_is_lazy(monkeypatch):
+    pkg = importlib.reload(mahos)
+    if "__version__" in pkg.__dict__:
+        del pkg.__dict__["__version__"]
+
+    called = []
+
+    def fake_version(name: str):
+        called.append(name)
+        return "9.9.9"
+
+    monkeypatch.setattr(version.metadata, "version", fake_version)
+
+    assert "__version__" not in pkg.__dict__
+    assert pkg.__version__ == "9.9.9"
+    assert called == ["mahos"]
+    assert pkg.__version__ == "9.9.9"
+    assert called == ["mahos"]
+
+
+def test_package_load_gconf_is_lazy():
+    pkg = importlib.reload(mahos)
+    pkg.__dict__.pop("load_gconf", None)
+    pkg.__dict__.pop("local_conf", None)
+
+    assert "load_gconf" not in pkg.__dict__
+    assert "local_conf" not in pkg.__dict__
+
+    assert callable(pkg.load_gconf)
+    assert "load_gconf" in pkg.__dict__
+    assert "local_conf" in pkg.__dict__

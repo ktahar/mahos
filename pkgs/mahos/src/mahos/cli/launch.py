@@ -15,16 +15,6 @@ import importlib
 import argparse
 import multiprocessing as mp
 
-from mahos.node.node import (
-    Node,
-    join_name,
-    local_conf,
-    threaded_nodes,
-    is_threaded,
-)
-from mahos.node.log_broker import log_broker_is_up
-from mahos.cli.util import init_gconf_host
-
 
 def build_parser(add_help: bool = True):
     parser = argparse.ArgumentParser(
@@ -69,6 +59,8 @@ def is_gui_node_class(NodeClass):
 
 
 def run_node_name_proc(gconf: dict, name: str, shutdown_ev: mp.Event):
+    from mahos.node.node import Node, local_conf
+
     conf = local_conf(gconf, name)
     module = importlib.import_module(conf["module"])
     NodeClass = getattr(module, conf["class"])
@@ -98,7 +90,10 @@ def start_node_name_proc(
 
     """
 
+    from mahos.node.node import join_name
+
     shutdown_ev = mp.Event()
+
     proc = ctx.Process(
         target=run_node_name_proc,
         args=(gconf, name, shutdown_ev),
@@ -123,6 +118,10 @@ class Launcher(object):
         exclude: list[str] | None,
         shutdown_delay_sec: float = 1.0,
     ):
+        from mahos.cli.util import init_gconf_host
+        from mahos.node.log_broker import log_broker_is_up
+        from mahos.node.node import is_threaded, join_name
+
         self.gconf, self.host = init_gconf_host(gconf_fn, host)
         self.include = include or []
         self.exclude = exclude or []
@@ -150,6 +149,8 @@ class Launcher(object):
             print(f"Automatically excluding {log_name} that's already up.")
 
     def start_node(self, name: str):
+        from mahos.node.node import local_conf
+
         conf = local_conf(self.gconf, name)
 
         print(f"Starting {name}.")
@@ -165,6 +166,8 @@ class Launcher(object):
         )
 
     def start_threaded_nodes(self):
+        from mahos.node.node import threaded_nodes
+
         for name, node_names in threaded_nodes(self.gconf, self.host).items():
             if self.is_excluded(name):
                 continue
@@ -182,6 +185,8 @@ class Launcher(object):
             self._threaded_node_names.extend(node_names)
 
     def start_raw_nodes(self):
+        from mahos.node.node import join_name
+
         for node_name in self.gconf[self.host]:
             if self.is_excluded(node_name) or node_name in self._threaded_node_names:
                 continue

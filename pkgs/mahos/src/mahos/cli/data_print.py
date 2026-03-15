@@ -8,28 +8,9 @@ mahos data print command.
 
 """
 
-from os import path
 import argparse
 
 from pprint import pprint
-
-# from IPython.lib.pretty import pprint
-import numpy as np
-
-from mahos.util.io import get_attrs_h5, list_attrs_h5
-from mahos.node.log import DummyLogger
-
-from mahos.msgs.camera_msgs import Image as CameraImage
-
-exts_to_data = {
-    ".camera.h5": CameraImage,
-}
-try:
-    from mahos_dq.cli import data as dq
-
-    exts_to_data.update(dq.exts_to_data)
-except ImportError:
-    pass
 
 
 def parse_args(args):
@@ -61,15 +42,6 @@ def build_parser(add_help: bool = True):
     return parser
 
 
-logger = DummyLogger()
-
-
-def get_ext(fn):
-    head, e0 = path.splitext(fn)
-    head, e1 = path.splitext(head)
-    return e1 + e0
-
-
 def decompose_keys(keys):
     raw_keys = []
     dict_keys = []
@@ -81,8 +53,13 @@ def decompose_keys(keys):
 
 
 def print_all_attrs(fn):
+    from mahos.cli.data_common import get_ext, get_exts_to_data, get_logger
+    from mahos.util.io import get_attrs_h5, list_attrs_h5
+
+    logger = get_logger()
     print(f"## {fn} ##")
     ext = get_ext(fn)
+    exts_to_data = get_exts_to_data()
     if ext not in exts_to_data:
         logger.error(f"Unknown extension {ext}")
         return
@@ -97,8 +74,13 @@ def print_all_attrs(fn):
 
 
 def print_attrs(fn, keys):
+    from mahos.cli.data_common import get_ext, get_exts_to_data, get_logger
+    from mahos.util.io import get_attrs_h5
+
+    logger = get_logger()
     print(f"## {fn} ##")
     ext = get_ext(fn)
+    exts_to_data = get_exts_to_data()
     if ext not in exts_to_data:
         logger.error(f"Unknown extension {ext}")
         return
@@ -118,6 +100,8 @@ def print_attrs(fn, keys):
 
 
 def main(args=None):
+    import numpy as np
+
     args = parse_args(args)
     if not args.keys:
         args.keys = ["params"]
