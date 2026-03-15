@@ -630,9 +630,9 @@ class PODMRData(BasicMeasData):
     def get_sampling_rate(self):
         signal_head = self.marker_indices[0]
         N = self.num_pattern()
-        if len(signal_head) <= N:
+        if len(signal_head) <= 1:
             return 0.0, 0.0
-        dt = (signal_head[N] - signal_head[0]) * self.params["instrument"]["tbin"]
+        dt = (signal_head[1] - signal_head[0]) * self.params["instrument"]["tbin"]
         total = dt * N * len(self.xdata)
         return dt, total
 
