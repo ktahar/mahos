@@ -17,7 +17,7 @@ from mahos.gui.gui_node import GUINode
 from mahos.gui.common_widget import ClientTopWidget
 from mahos.gui.pulse_monitor_client import QPulseClient
 
-from mahos.node.node import local_conf, split_name
+from mahos.node.node import local_conf, split_name, NAME_DELIM
 from mahos.msgs.pulse_msgs import PulsePattern
 
 
@@ -34,6 +34,15 @@ class PulseMonitorWidget(ClientTopWidget):
         targets = self.conf["target"]["pulse"]
         if isinstance(targets, str):
             targets = [targets]
+        elif (
+            isinstance(targets, (list, tuple))
+            and len(targets) == 2
+            and all(isinstance(t, str) for t in targets)
+            and all(NAME_DELIM not in t for t in targets)
+        ):
+            targets = [tuple(targets)]
+        elif isinstance(targets, tuple):
+            targets = list(targets)
         if not targets:
             raise ValueError("target.pulse must not be empty.")
         self.targets = targets
@@ -326,7 +335,7 @@ class PulseMonitor(GUINode):
     and renders digital/analog channels with optional marker-based regions.
 
     :param target.pulse: Target pulse publisher node name(s).
-    :type target.pulse: str | list[str]
+    :type target.pulse: str | tuple[str, str] | list[str]
     :param colormap: PyQtGraph colormap name used for channel traces.
     :type colormap: str
 
