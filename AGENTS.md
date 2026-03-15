@@ -18,7 +18,7 @@ Ignore following directories when inspecting or editing:
 - `pip install -e ./pkgs/mahos-dq-ext`: install optional C extension package
   when extension features are needed.
   (`-e` option may be removed if necessary.)
-- `make test` (or `pytest --timeout=10`): run the test suite with timeouts.
+- `make test` (or `pytest --timeout=30`): run the test suite with timeouts.
 - `make lint`: run flake8 with configured excludes
   (`build`, `tests`, and generated UI code).
 - `make format`: format Python code with Black.

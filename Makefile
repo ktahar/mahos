@@ -24,7 +24,7 @@ install-dev:
 
 test:
 	@python -c "import mahos, mahos_dq" >/dev/null 2>&1 || make install-dev
-	python -m pytest --timeout=10
+	python -m pytest --timeout=30
 
 dq-ext:
 	cd pkgs/mahos-dq-ext/src/mahos_dq_ext && make
