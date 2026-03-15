@@ -273,6 +273,7 @@ class Pulser(Worker):
             iq_amplitude=iq_amplitude,
             channel_remap=channel_remap,
             generators=self.conf.get("generators"),
+            max_num_pattern=2,
             print_fn=self.logger.info,
         )
         self.builder = BlocksBuilder(mbl, bb, self.mw_modes, iq_amplitude, channel_remap)
@@ -375,7 +376,11 @@ class Pulser(Worker):
             self.logger.error("Error stopping PG.")
             return False
 
-        blocks, self.freq, laser_timing = self.generate_blocks()
+        try:
+            blocks, self.freq, laser_timing = self.generate_blocks()
+        except ValueError as e:
+            self.logger.error(f"Invalid params for {self.data.label}: {e}")
+            return False
         self.data.set_laser_timing(np.array(laser_timing) / self.freq)
         self.pulse_pattern = PulsePattern(blocks, self.freq, markers=laser_timing)
         pg_params = {"blocks": blocks, "freq": self.freq}
@@ -392,12 +397,14 @@ class Pulser(Worker):
     def generate_blocks(self, data: QdyneData | None = None):
         if data is None:
             data = self.data
-        generate = self.generators[data.label].generate_raw_blocks
-        num_mw = self.generators[data.label].num_mw()
+        generator = self.generators[data.label]
+        generate = generator.generate_raw_blocks
+        num_mw = generator.num_mw()
 
         # fill unused parameters
         xdata = [data.params["pulse"]["tauconst"]]
         params = data.get_params()
+        self._ensure_two_pattern(data.label, params)
         params["init_delay"] = params["final_delay"] = 0.0
         if params.get("divide_block", False) and params.get("mw_offset", 0.0) != 0.0:
             self.logger.warn(
@@ -410,12 +417,24 @@ class Pulser(Worker):
         )
         return blocks, freq, laser_timing
 
+    def _ensure_two_pattern(self, label: str, params: dict):
+        num_pattern = self.generators[label].num_pattern(params)
+        if num_pattern != 2:
+            raise ValueError(
+                f"Qdyne supports only 2-pattern generators; got num_pattern={num_pattern}"
+                f" for method '{label}'."
+            )
+
     def validate_params(
         self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
     ) -> tuple[bool, Blocks[Block], float, list[float], list[int]]:
         params = P.unwrap(params)
         d = QdyneData(params, label)
-        blocks, freq, laser_timing = self.generate_blocks(d)
+        try:
+            blocks, freq, laser_timing = self.generate_blocks(d)
+        except ValueError as e:
+            self.logger.error(f"Invalid params for {label}: {e}")
+            return False, Blocks([]), 0.0, [], []
         offsets = self.pg.validate_blocks(blocks, freq)
         self.pulse_pattern = PulsePattern(blocks, freq, markers=laser_timing)
         valid = offsets is not None

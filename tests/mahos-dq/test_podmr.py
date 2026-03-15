@@ -18,6 +18,7 @@ from mahos_dq.msgs.podmr_msgs import PODMRData
 from mahos.msgs.common_msgs import BinaryState
 from mahos.msgs import param_msgs as P
 from mahos_dq.meas.podmr_generator.generator import make_generators
+from mahos_dq.meas.podmr_worker import Pulser
 from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, podmr, server_conf, podmr_conf
 from podmr_patterns import patterns
@@ -179,6 +180,18 @@ def test_podmr_mw_offset():
             assert np.array_equal(p_adv, np.roll(p_ref, -offset_ticks))
         else:
             assert np.array_equal(p_adv, p_ref)
+
+
+def test_podmr_reject_unsupported_num_pattern():
+    class FakeGenerator(object):
+        def num_pattern(self, params=None):
+            return 5
+
+    worker = Pulser.__new__(Pulser)
+    worker.generators = {"fake": FakeGenerator()}
+
+    with pytest.raises(ValueError):
+        worker._num_pattern("fake", {})
 
 
 def test_podmr_patterns():

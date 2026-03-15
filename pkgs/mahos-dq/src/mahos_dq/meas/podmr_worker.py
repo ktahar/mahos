@@ -471,10 +471,21 @@ class Pulser(Worker):
 
         return True
 
+    def _num_pattern(self, label: str, params: dict | None = None) -> int:
+        if label not in self.generators:
+            raise ValueError(f"unknown method '{label}'")
+
+        num_pattern = self.generators[label].num_pattern(params)
+        if num_pattern not in (2, 4):
+            raise ValueError(
+                f"PODMR supports only 2- or 4-pattern generators; got num_pattern={num_pattern}"
+                f" for method '{label}'."
+            )
+        return num_pattern
+
     def _set_num_pattern(self, data: PODMRData) -> int:
         params = data.get_params()
-        num_pattern = self.generators[data.label].num_pattern(params)
-        num_pattern = max(2, min(int(num_pattern), 4))
+        num_pattern = self._num_pattern(data.label, params)
         data.params["num_pattern"] = num_pattern
         return num_pattern
 
@@ -485,11 +496,7 @@ class Pulser(Worker):
 
         """
 
-        if label not in self.generators:
-            raise ValueError(f"unknown method '{label}'")
-
-        num_pattern = self.generators[label].num_pattern(params or {})
-        num_pattern = max(2, min(int(num_pattern), 4))
+        num_pattern = self._num_pattern(label, params)
 
         if num_pattern == 2:
             return (
@@ -761,8 +768,7 @@ class Pulser(Worker):
         return False
 
     def _get_param_dict_pulse(self, label: str, d: dict):
-        num_pattern = self.generators[label].num_pattern()
-        num_pattern = max(2, min(int(num_pattern), 4))
+        num_pattern = self._num_pattern(label)
 
         ## common_pulses
         d["base_width"] = P.FloatParam(320e-9, 1e-9, 1e-4)

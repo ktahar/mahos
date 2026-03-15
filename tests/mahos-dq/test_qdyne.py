@@ -16,7 +16,7 @@ import pytest
 
 from mahos_dq.meas.qdyne import QdyneIO
 from mahos_dq.msgs.qdyne_msgs import QdyneData
-from mahos_dq.meas.qdyne_worker import QdyneAnalyzer
+from mahos_dq.meas.qdyne_worker import QdyneAnalyzer, Pulser
 from mahos.msgs.common_msgs import BinaryState
 from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, qdyne, server_conf, qdyne_conf
@@ -89,6 +89,18 @@ def test_qdyne_analyzer():
     # shorter case (N = 1).
     do_test([1, 1, 1, 5], [3])
     do_test([5], [0])
+
+
+def test_qdyne_reject_non_two_pattern_generator():
+    class FakeGenerator(object):
+        def num_pattern(self, params=None):
+            return 4
+
+    worker = Pulser.__new__(Pulser)
+    worker.generators = {"fake": FakeGenerator()}
+
+    with pytest.raises(ValueError):
+        worker._ensure_two_pattern("fake", {})
 
 
 def test_qdyne(server, qdyne, server_conf, qdyne_conf):
