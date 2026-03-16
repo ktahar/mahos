@@ -169,7 +169,7 @@ def round_pulsesN(
 
     _xdata = np.round(values[: -len(common_pulses) - N_pulses]).astype(int)
 
-    if len(flat_pulses) > 0:
+    if N_pulses > 0:
         _common_pulses = values[-len(common_pulses) - N_pulses : -N_pulses]
         _pulses = []
         for i in range(len(pulses)):
@@ -289,8 +289,7 @@ def generate_blocksN(
         blocks.extend([Block(f"P{i}-{j}", ptn_operate), Block(f"read{i}-{j}", ptn_laser)])
 
     if 0 <= partial < N:
-        k = 2 * partial
-        return Blocks(blocks[k : k + 2])
+        return Blocks(blocks[2 * partial : 2 * partial + 2])
     return Blocks(blocks)
 
 
