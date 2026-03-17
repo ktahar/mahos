@@ -637,6 +637,13 @@ class Pulser(PODMRPulser):
 
         if "timebin" in d:
             del d["timebin"]
+
+        # set defaults which won't result in marker out-of-bounds
+        d["plot"]["sigdelay"].set(200e-9)
+        d["plot"]["sigwidth"].set(300e-9)
+        d["plot"]["refdelay"].set(1000e-9)
+        d["plot"]["refwidth"].set(500e-9)
+
         d["roi_head"] = P.FloatParam(
             self.conf.get("roi_head", 20e-9),
             0.0,
