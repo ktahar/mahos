@@ -143,10 +143,6 @@ class PODMRData(BasicMeasData):
         self.marker_indices = None
         self.laser_timing = None
 
-    @staticmethod
-    def _normalize_pattern_count(num_pattern: int) -> int:
-        return max(2, min(int(num_pattern), 4))
-
     def _get_pattern_data(self, i: int):
         return getattr(self, f"data{i}", None)
 
@@ -708,7 +704,7 @@ class PODMRData(BasicMeasData):
             )
 
     def num_pattern(self) -> int:
-        return self._normalize_pattern_count(self.params.get("num_pattern", 2))
+        return self.params.get("num_pattern", 2)
 
     def partial(self) -> int | None:
         if not self.has_params():
