@@ -536,7 +536,7 @@ class Pulser(Worker):
             self.fg = FGInterface(cli, "fg")
         else:
             self.fg = None
-        self.add_instruments(self.pg, self.fg, *self.pds, *self.sgs.values())
+        self.add_instruments(self.pg, self.fg, self.clock, *self.pds, *self.sgs.values())
 
         self.length = self.offsets = self.freq = self.oversample = None
 
@@ -853,11 +853,6 @@ class Pulser(Worker):
             self.op.update_axes(self.data)
         else:
             self.data.update_params(params)
-        try:
-            self._ensure_two_pattern(self.data.label, self.data.get_params())
-        except ValueError as e:
-            self.logger.error(f"Invalid params for {label}: {e}")
-            return False
 
         if not self.lock_instruments():
             return self.fail_with_release("Error acquiring instrument locks.")
@@ -909,7 +904,7 @@ class Pulser(Worker):
 
         success = self.pg.stop() and self.pg.release() and self.stop_sg()
         success &= all([pd.stop() for pd in self.pds]) and all([pd.release() for pd in self.pds])
-        success &= self.clock.stop()
+        success &= self.clock.stop() and self.clock.release()
         if self._fg_enabled(self.data.params):
             success &= self.fg.set_output(False)
         if self.fg is not None:

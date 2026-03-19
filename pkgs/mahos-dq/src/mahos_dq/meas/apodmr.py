@@ -58,9 +58,8 @@ class APODMRClient(BasicMeasClient):
 class APODMR(BasicMeasNode):
     """Analog-PD pulse ODMR measurement node.
 
-    Default worker (``Pulser``) implements pulse ODMR using a pulse generator
-    and SGs, while the detector backend is a DAQ-based AnalogPD triggered before
-    each laser pulse.
+    Default worker (``Pulser``) implements pulse ODMR using a PG and SGs,
+    while the detector backend is a AnalogPD triggered before each laser pulse.
 
     :param target.servers: InstrumentServer targets (instrument name, server full name).
         Required keys: ``sg``, ``pg``, names in ``pulser.pd_names``, and the key
@@ -109,6 +108,13 @@ class APODMR(BasicMeasNode):
     :type pulser.sg_freq: float
     :param pulser.channel_remap: mapping to fix default channel names.
     :type pulser.channel_remap: dict[str | int, str | int]
+    :param pulser.mw_channels: Optional SG channel identifiers for MW outputs.
+    :type pulser.mw_channels: list[str]
+    :param pulser.generators: Optional user generator registry mapping method labels to
+        ``[module_name, class_name]``.
+        These classes are loaded at worker initialization and can add or override methods.
+    :type pulser.generators: dict[str, tuple[str, str]]
+
     :param pulser.pd_names: (default: ["pd0"]) PD names in target.servers.
     :type pulser.pd_names: list[str]
     :param pulser.clock_name: (default: ``"clock"``) Clock source instrument name.
@@ -119,13 +125,6 @@ class APODMR(BasicMeasNode):
     :type pulser.pd_data_transfer: str
     :param pulser.buffer_size_coeff: Buffer size coefficient multiplied by trace length.
     :type pulser.buffer_size_coeff: int
-    :param pulser.mw_channels: Optional SG channel identifiers for MW outputs.
-    :type pulser.mw_channels: list[str]
-    :param pulser.generators: Optional user generator registry mapping method labels to
-        ``[module_name, class_name]``.
-        These classes are loaded at worker initialization and can add or override methods.
-    :type pulser.generators: dict[str, tuple[str, str]]
-
     :param pulser.roi_head: (default: 20e-9) default margin at head of sampled trace
         and trigger-to-laser offset.
     :type pulser.roi_head: float

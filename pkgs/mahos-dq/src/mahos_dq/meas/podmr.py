@@ -117,6 +117,7 @@ class PODMR(BasicMeasNode):
         ``[module_name, class_name]``.
         These classes are loaded at worker initialization and can add or override methods.
     :type pulser.generators: dict[str, tuple[str, str]]
+
     :param pulser.eos_margin: (default: 1e-6) End-of-sequence timing margin in seconds.
     :type pulser.eos_margin: float
 

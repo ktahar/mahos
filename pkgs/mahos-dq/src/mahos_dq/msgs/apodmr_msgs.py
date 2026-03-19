@@ -52,6 +52,10 @@ class APODMRData(PODMRData):
     :ivar marker_indices: Marker indices with shape ``(4,)`` as
         ``(sig_head, sig_tail, ref_head, ref_tail)`` shared by all traces.
     :ivar trigger_timing: Trigger timings for each trace in sequence time.
+    :ivar laser_timing: Laser-start timings in sequence time (same semantics as
+        :class:`mahos_dq.msgs.podmr_msgs.PODMRData`), kept for compatibility;
+        APODMR analysis uses ``trace_laser_timing`` instead. When
+        ``shots_per_point > 1``, each entry marks only the first shot of a repeated point.
 
     ``data0`` .. ``data3`` and ``data0ref`` .. ``data3ref`` retain the same
     analyzed-data semantics as :class:`mahos_dq.msgs.podmr_msgs.PODMRData`.

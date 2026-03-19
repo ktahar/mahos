@@ -96,7 +96,7 @@ def test_apodmr_builder_inserts_trigger_before_each_laser():
         max(init_delay + laser_width, builder.minimum_block_length), base_width
     )
     expected_final_length = K.offset_base_inc(
-        max(final_delay + laser_width, builder.minimum_block_length), base_width
+        max(final_delay, builder.minimum_block_length), base_width
     )
 
     trigger = built.decode_digital("trigger")

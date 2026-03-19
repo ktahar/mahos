@@ -61,11 +61,7 @@ class APODMRDataOperator(PODMRDataOperator):
 
     def get_marker_indices(self, data: APODMRData):
         tbin = data.get_bin()
-        if (
-            data.params is None
-            or tbin is None
-            or getattr(data, "trace_laser_timing", None) is None
-        ):
+        if data.params is None or tbin is None or data.trace_laser_timing is None:
             return None
 
         sigdelay, sigwidth, refdelay, refwidth = [
@@ -171,10 +167,10 @@ class APODMRBlockBuilder(object):
         trigger_tail = roi_head - trigger_width
         pattern = []
         if trigger_start > 0:
-            pattern.append(((), trigger_start))
+            pattern.append((None, trigger_start))
         pattern.append((("trigger",), trigger_width))
         if trigger_tail > 0:
-            pattern.append(((), trigger_tail))
+            pattern.append((None, trigger_tail))
 
         return op_block.union(Block(op_block.name + "_trig", pattern))
 
@@ -210,7 +206,7 @@ class APODMRBlockBuilder(object):
 
         init_block_width = max(init_delay + laser_width, self.minimum_block_length)
         init_block_width = K.offset_base_inc(init_block_width, base_width)
-        final_block_width = max(final_delay + laser_width, self.minimum_block_length)
+        final_block_width = max(final_delay, self.minimum_block_length)
         final_block_width = K.offset_base_inc(final_block_width, base_width)
 
         phases = K.init_final_phases(num_mw)
@@ -270,7 +266,7 @@ class APODMRBlockBuilder(object):
 
 
 class Pulser(PODMRPulser):
-    """Worker for APODMR using PG-triggered, DAQ-read AnalogPD traces."""
+    """Worker for APODMR using PG-triggered, AnalogPD traces."""
 
     def __init__(self, cli, logger, conf: dict):
         Worker.__init__(self, cli, logger, conf)
@@ -295,18 +291,19 @@ class Pulser(PODMRPulser):
             self.fg = FGInterface(cli, "fg")
         else:
             self.fg = None
-        self.add_instruments(self.pg, self.clock, self.fg, *self.pds, *self.sgs.values())
+        self.add_instruments(self.pg, self.fg, self.clock, *self.pds, *self.sgs.values())
 
         self.length = self.offsets = self.freq = None
         self.trace_count = None
         self.samples_per_trace = None
-        self._pd_trigger = self.conf["pd_trigger"]
-        self._pd_data_transfer = self.conf.get("pd_data_transfer")
-        self._quick_resume = self.conf.get("quick_resume", True)
 
         self.check_required_conf(
             ["pd_trigger", "block_base", "pg_freq", "reduce_start_divisor", "minimum_block_length"]
         )
+        self._pd_trigger = self.conf["pd_trigger"]
+        self._pd_data_transfer = self.conf.get("pd_data_transfer")
+        self._quick_resume = self.conf.get("quick_resume", True)
+
         self.generators = make_generators(
             freq=self.conf["pg_freq"],
             reduce_start_divisor=self.conf["reduce_start_divisor"],
@@ -349,11 +346,10 @@ class Pulser(PODMRPulser):
         self._validate_plotmode(data)
 
         generator = self.generators[data.label]
-        raw_blocks, freq, common_pulses = generator.generate_raw_blocks(
-            data.xdata, data.get_params()
-        )
+        params = data.get_params()
+        raw_blocks, freq, common_pulses = generator.generate_raw_blocks(data.xdata, params)
         blocks, laser_timing, trigger_timing, trace_length_ticks = self.builder.build_blocks(
-            raw_blocks, freq, common_pulses, data.get_params(), generator.num_mw()
+            raw_blocks, freq, common_pulses, params, generator.num_mw()
         )
         return blocks, freq, laser_timing, trigger_timing, trace_length_ticks
 
@@ -486,8 +482,10 @@ class Pulser(PODMRPulser):
         for pd in self.pds:
             ls = pd.pop_block()
             if isinstance(ls, list):
+                # PD has multi channel
                 lines.extend(ls)
             else:
+                # single channel, assume ls is np.ndarray
                 lines.append(ls)
 
         line = np.sum(lines, axis=0)
@@ -541,9 +539,7 @@ class Pulser(PODMRPulser):
             self.data = APODMRData(params, label)
             self.op.update_axes(self.data)
         else:
-            if params is not None:
-                self.data.update_params(params)
-        self._analysis_warned = False
+            self.data.update_params(params)
         try:
             self._validate_partial(self.data)
             self._validate_plotmode(self.data)
@@ -551,6 +547,7 @@ class Pulser(PODMRPulser):
             self.logger.error(f"Invalid params for {label}: {e}")
             return False
 
+        self._analysis_warned = False
         sweeps_limit = self.data.params.get("sweeps", 0)
         sweeps_per_record = self._sweeps_per_record(self.data.params)
         if sweeps_limit > 0 and sweeps_limit % sweeps_per_record:
@@ -620,8 +617,8 @@ class Pulser(PODMRPulser):
         if self.fg is not None:
             success &= self.fg.release()
 
+        self.data.finalize()
         if success:
-            self.data.finalize()
             self.logger.info("Stopped pulser.")
         else:
             self.logger.error("Error stopping pulser.")
@@ -637,6 +634,8 @@ class Pulser(PODMRPulser):
 
         if "timebin" in d:
             del d["timebin"]
+        if "interval" in d:
+            del d["interval"]
 
         # set defaults which won't result in marker out-of-bounds
         d["plot"]["sigdelay"].set(200e-9)

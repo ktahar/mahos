@@ -241,7 +241,6 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             [
                 ("power", self.powerBox),
                 ("freq", self.freqBox, 1e-6),
-                ("interval", self.intervalBox, 1e3),
                 ("duration", self.durationBox),
                 ("roi_head", self.roiheadBox, 1e9),
                 ("roi_tail", self.roitailBox, 1e9),
@@ -271,7 +270,6 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
     def apply_meas_widgets(self):
         p = self.data.params
 
-        self.intervalBox.setValue(int(round(p.get("interval", 0.0) * 1e3)))
         self.sweepsBox.setValue(p.get("sweeps", 0))
         self.sweepsPerRecordBox.setValue(p.get("sweeps_per_record", 1))
         self.shotsPerPointBox.setValue(p.get("shots_per_point", 1))
@@ -325,7 +323,6 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         params["quick_resume"] = self.quickresumeBox.isChecked()
         params["freq"] = self.freqBox.value() * 1e6
         params["power"] = self.powerBox.value()
-        params["interval"] = self.intervalBox.value() * 1e-3
         params["sweeps"] = self.sweepsBox.value()
         params["sweeps_per_record"] = self.sweepsPerRecordBox.value()
         params["shots_per_point"] = self.shotsPerPointBox.value()
@@ -398,7 +395,6 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             self.nomwBox,
             self.methodBox,
             self.partialBox,
-            self.intervalBox,
             self.sweepsBox,
             self.sweepsPerRecordBox,
             self.shotsPerPointBox,
