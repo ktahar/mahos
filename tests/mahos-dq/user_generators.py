@@ -33,9 +33,9 @@ class OverrideRabiGenerator(RabiGenerator):
 
 
 class ThreePatternGenerator(AddedGenerator):
-    """Generator with unsupported pattern count for max_num_pattern tests."""
+    """Generator with unsupported pattern count for allowed_num_pattern tests."""
 
-    def num_pattern(self, params: dict | None = None) -> int:
+    def num_pattern(self) -> int:
         return 3
 
 

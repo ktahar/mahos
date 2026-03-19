@@ -310,6 +310,7 @@ class Pulser(Worker):
             iq_amplitude=self.conf.get("iq_amplitude", 0.0),
             channel_remap=self.conf.get("channel_remap"),
             generators=self.conf.get("generators"),
+            allowed_num_pattern=(2, 4),
             print_fn=self.logger.info,
         )
         self.eos_margin = self.conf.get("eos_margin", 1e-6)
@@ -471,32 +472,16 @@ class Pulser(Worker):
 
         return True
 
-    def _num_pattern(self, label: str, params: dict | None = None) -> int:
-        if label not in self.generators:
-            raise ValueError(f"unknown method '{label}'")
-
-        num_pattern = self.generators[label].num_pattern(params)
-        if num_pattern not in (2, 4):
-            raise ValueError(
-                f"PODMR supports only 2- or 4-pattern generators; got num_pattern={num_pattern}"
-                f" for method '{label}'."
-            )
-        return num_pattern
-
-    def _set_num_pattern(self, data: PODMRData) -> int:
-        params = data.get_params()
-        num_pattern = self._num_pattern(data.label, params)
-        data.params["num_pattern"] = num_pattern
-        return num_pattern
-
-    def _plotmode_options(self, label: str, params: dict | None = None) -> tuple[str, ...]:
+    def _plotmode_options(self, label: str) -> tuple[str, ...]:
         """Get plotmode choices for method `label`.
 
         Complementary plotting is currently supported only for N=2 and N=4.
 
         """
 
-        num_pattern = self._num_pattern(label, params)
+        if label not in self.generators:
+            raise ValueError(f"unknown method '{label}'")
+        num_pattern = self.generators[label].num_pattern()
 
         if num_pattern == 2:
             return (
@@ -526,26 +511,43 @@ class Pulser(Worker):
             )
         raise ValueError(f"unsupported num_pattern={num_pattern} for method '{label}'")
 
+    def _set_num_pattern(self, data: PODMRData) -> int:
+        if data.label not in self.generators:
+            raise ValueError(f"unknown method '{data.label}'")
+        num_pattern = self.generators[data.label].num_pattern()
+        data.params["num_pattern"] = num_pattern
+        return num_pattern
+
     def _validate_partial(self, data: PODMRData):
+        n = data.num_pattern()
         p = data.params.get("partial", -1)
-        n = self._set_num_pattern(data)
         if p != -1 and (p < 0 or p >= n):
             raise ValueError(f"partial {p} is invalid for num_pattern={n}")
 
     def _validate_plotmode(self, data: PODMRData):
         plotmode = data.params.get("plot", {}).get("plotmode", "data01")
-        options = self._plotmode_options(data.label, data.get_params())
+        options = self._plotmode_options(data.label)
         if plotmode not in options:
             raise ValueError(
                 f"plotmode '{plotmode}' is invalid for method '{data.label}'. "
                 f"available: {options}"
             )
 
+    def _set_num_pattern_and_validate_params(self, data: PODMRData):
+        """Set data.params["num_pattern"] and validate params in given data.
+
+        :raises ValueError: if there is any invalid parameter.
+
+        """
+
+        self._set_num_pattern(data)
+        self._validate_partial(data)
+        self._validate_plotmode(data)
+
     def generate_blocks(self, data: PODMRData | None = None):
         if data is None:
             data = self.data
-        self._validate_partial(data)
-        self._validate_plotmode(data)
+        self._set_num_pattern_and_validate_params(data)
         generate = self.generators[data.label].generate
         params = data.get_params()
         if not self.conf.get("divide_block", False) and params["divide_block"]:
@@ -603,7 +605,7 @@ class Pulser(Worker):
             return False
         if "plotmode" in params:
             try:
-                options = self._plotmode_options(self.data.label, self.data.get_params())
+                options = self._plotmode_options(self.data.label)
             except ValueError as e:
                 self.logger.error(f"Cannot validate plotmode for {self.data.label}: {e}")
                 return False
@@ -639,8 +641,7 @@ class Pulser(Worker):
             _last_duration = self.data.params.get("duration", 0.0)
             self.data.update_params(params)
         try:
-            self._validate_partial(self.data)
-            self._validate_plotmode(self.data)
+            self._set_num_pattern_and_validate_params(self.data)
         except ValueError as e:
             self.logger.error(f"Invalid params for {label}: {e}")
             return False
@@ -768,7 +769,7 @@ class Pulser(Worker):
         return False
 
     def _get_param_dict_pulse(self, label: str, d: dict):
-        num_pattern = self._num_pattern(label)
+        num_pattern = self.generators[label].num_pattern()
 
         ## common_pulses
         d["base_width"] = P.FloatParam(320e-9, 1e-9, 1e-4)

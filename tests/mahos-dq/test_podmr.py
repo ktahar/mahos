@@ -182,18 +182,6 @@ def test_podmr_mw_offset():
             assert np.array_equal(p_adv, p_ref)
 
 
-def test_podmr_reject_unsupported_num_pattern():
-    class FakeGenerator(object):
-        def num_pattern(self, params=None):
-            return 5
-
-    worker = Pulser.__new__(Pulser)
-    worker.generators = {"fake": FakeGenerator()}
-
-    with pytest.raises(ValueError):
-        worker._num_pattern("fake", {})
-
-
 def test_podmr_patterns():
     tau = np.array([100e-9, 200e-9])
     Ns = [1, 2]

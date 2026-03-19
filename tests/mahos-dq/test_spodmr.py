@@ -124,18 +124,6 @@ def test_spodmr_mw_offset_per_unit():
     assert mw_diff_from_offset
 
 
-def test_spodmr_reject_non_two_pattern_generator():
-    class FakeGenerator(object):
-        def num_pattern(self, params=None):
-            return 3
-
-    worker = Pulser.__new__(Pulser)
-    worker.generators = {"fake": FakeGenerator()}
-
-    with pytest.raises(ValueError):
-        worker._ensure_two_pattern("fake", {})
-
-
 def test_spodmr(server, spodmr, server_conf, spodmr_conf):
     poll_timeout_ms = spodmr_conf["poll_timeout_ms"]
 

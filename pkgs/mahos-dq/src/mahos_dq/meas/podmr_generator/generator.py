@@ -78,7 +78,7 @@ class PatternGenerator(object):
 
         return 1
 
-    def num_pattern(self, params: dict | None = None) -> int:
+    def num_pattern(self) -> int:
         """Return number of generated patterns."""
 
         return 2
@@ -2292,9 +2292,7 @@ class DQ4RamseyGenerator(PatternGenerator):
     def num_mw(self) -> int:
         return 2
 
-    def num_pattern(self, params: dict | None = None) -> int:
-        """Return number of generated patterns."""
-
+    def num_pattern(self) -> int:
         return 4
 
     def _generate(
@@ -2380,13 +2378,19 @@ def make_generators(
     iq_amplitude: float = 0.0,
     channel_remap: dict | None = None,
     generators: dict | None = None,
-    max_num_pattern: int | None = None,
+    allowed_num_pattern: tuple[int, ...] | None = None,
     print_fn=print,
 ):
     if generators is not None and not isinstance(generators, dict):
         raise TypeError(
             "generators must be dict[str, [module_name, class_name]], " f"got {generators!r}"
         )
+
+    allowed_num_pattern_set = None
+    if allowed_num_pattern is not None:
+        allowed_num_pattern_set = set(allowed_num_pattern)
+        if not allowed_num_pattern_set:
+            raise ValueError("allowed_num_pattern must not be empty")
 
     args = (
         freq,
@@ -2447,15 +2451,17 @@ def make_generators(
             GeneratorClass = _load_generator_class(module_name, class_name)
             generator = GeneratorClass(*args)
             num_pattern = generator.num_pattern()
-            if max_num_pattern is not None and num_pattern > max_num_pattern:
+            if allowed_num_pattern_set is not None and num_pattern not in allowed_num_pattern_set:
                 raise ValueError(
                     f"{module_name}.{class_name} for label '{label}' has num_pattern "
-                    f"{num_pattern}, which exceeds max_num_pattern={max_num_pattern}"
+                    f"{num_pattern}, which is not in allowed_num_pattern={allowed_num_pattern}"
                 )
             overridden = label in generators
             generators[label] = generator
             action = "Overrode" if overridden else "Registered"
             print_fn(f"{action} generator '{label}' with {module_name}.{class_name}")
-    if max_num_pattern is not None:
-        generators = {k: g for k, g in generators.items() if g.num_pattern() <= max_num_pattern}
+    if allowed_num_pattern_set is not None:
+        generators = {
+            k: g for k, g in generators.items() if g.num_pattern() in allowed_num_pattern_set
+        }
     return generators

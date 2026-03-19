@@ -273,9 +273,10 @@ class Pulser(Worker):
             iq_amplitude=iq_amplitude,
             channel_remap=channel_remap,
             generators=self.conf.get("generators"),
-            max_num_pattern=2,
+            allowed_num_pattern=(2,),
             print_fn=self.logger.info,
         )
+
         self.builder = BlocksBuilder(mbl, bb, self.mw_modes, iq_amplitude, channel_remap)
 
         self.data = QdyneData()
@@ -404,7 +405,6 @@ class Pulser(Worker):
         # fill unused parameters
         xdata = [data.params["pulse"]["tauconst"]]
         params = data.get_params()
-        self._ensure_two_pattern(data.label, params)
         params["init_delay"] = params["final_delay"] = 0.0
         if params.get("divide_block", False) and params.get("mw_offset", 0.0) != 0.0:
             self.logger.warn(
@@ -416,14 +416,6 @@ class Pulser(Worker):
             blocks, freq, common_pulses, params, num_mw
         )
         return blocks, freq, laser_timing
-
-    def _ensure_two_pattern(self, label: str, params: dict):
-        num_pattern = self.generators[label].num_pattern(params)
-        if num_pattern != 2:
-            raise ValueError(
-                f"Qdyne supports only 2-pattern generators; got num_pattern={num_pattern}"
-                f" for method '{label}'."
-            )
 
     def validate_params(
         self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str

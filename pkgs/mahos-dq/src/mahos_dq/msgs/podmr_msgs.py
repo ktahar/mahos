@@ -708,12 +708,6 @@ class PODMRData(BasicMeasData):
             )
 
     def num_pattern(self) -> int:
-        if not self.has_params():
-            cnt = 2
-            for i in range(4):
-                if self._get_pattern_data(i) is not None or self._get_pattern_ref(i) is not None:
-                    cnt = i + 1
-            return self._normalize_pattern_count(cnt)
         return self._normalize_pattern_count(self.params.get("num_pattern", 2))
 
     def partial(self) -> int | None:

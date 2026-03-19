@@ -559,7 +559,7 @@ class Pulser(Worker):
             iq_amplitude=iq_amplitude,
             channel_remap=channel_remap,
             generators=self.conf.get("generators"),
-            max_num_pattern=2,
+            allowed_num_pattern=(2,),
             print_fn=self.logger.info,
         )
 
@@ -786,14 +786,6 @@ class Pulser(Worker):
         self.logger.warn(msg)
         return params["sync_mode"]
 
-    def _ensure_two_pattern(self, label: str, params: dict):
-        num_pattern = self.generators[label].num_pattern(params)
-        if num_pattern != 2:
-            raise ValueError(
-                f"SPODMR supports only 2-pattern generators; got num_pattern={num_pattern}"
-                f" for method '{label}'."
-            )
-
     def generate_blocks(self, data: SPODMRData | None = None):
         if data is None:
             data = self.data
@@ -802,7 +794,6 @@ class Pulser(Worker):
         num_mw = generator.num_mw()
 
         params = data.get_params()
-        self._ensure_two_pattern(data.label, params)
         # fill unused params
         params["base_width"] = params["trigger_width"] = 0.0
         params["init_delay"] = params["final_delay"] = 0.0

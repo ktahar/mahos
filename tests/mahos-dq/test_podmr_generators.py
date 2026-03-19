@@ -35,9 +35,9 @@ def test_make_generators_rejects_non_generator_class():
         make_generators(generators={"bad": ["user_generators", "NotAGenerator"]})
 
 
-def test_make_generators_rejects_generator_exceeding_max_num_pattern():
+def test_make_generators_rejects_generator_with_disallowed_num_pattern():
     with pytest.raises(ValueError):
         make_generators(
             generators={"bad": ["user_generators", "ThreePatternGenerator"]},
-            max_num_pattern=2,
+            allowed_num_pattern=(2,),
         )

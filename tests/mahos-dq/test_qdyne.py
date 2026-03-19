@@ -91,18 +91,6 @@ def test_qdyne_analyzer():
     do_test([5], [0])
 
 
-def test_qdyne_reject_non_two_pattern_generator():
-    class FakeGenerator(object):
-        def num_pattern(self, params=None):
-            return 4
-
-    worker = Pulser.__new__(Pulser)
-    worker.generators = {"fake": FakeGenerator()}
-
-    with pytest.raises(ValueError):
-        worker._ensure_two_pattern("fake", {})
-
-
 def test_qdyne(server, qdyne, server_conf, qdyne_conf):
     poll_timeout_ms = qdyne_conf["poll_timeout_ms"]
 
