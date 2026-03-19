@@ -183,7 +183,7 @@ class Tracer(Worker):
             "every": False,
             "stamp": True,
             "clock": self.clock.get_internal_output(),
-            "time_window": self.time_window_sec,  # only for APDCounter
+            "time_window": self.time_window_sec,  # only for SinglePhotonCounter
             "clock_mode": True,  # only for AnalogIn
             "oversample": self.oversample,  # only for AnalogIn
             "bounds": self.pd_bounds,  # only for AnalogIn

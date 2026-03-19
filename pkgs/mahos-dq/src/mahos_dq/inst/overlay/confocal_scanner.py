@@ -256,7 +256,7 @@ class ConfocalScannerAnalog(InstrumentOverlay, ConfocalScannerMixin):
             "finite": True,
             "every": False,
             "clock": clock_pd,
-            "time_window": self.time_window,  # only for APDCounter
+            "time_window": self.time_window,  # only for SinglePhotonCounter
             "clock_mode": True,  # only for AnalogIn
             "oversample": self.oversample,  # only for AnalogIn
             "bounds": self.pd_bounds,  # only for AnalogIn

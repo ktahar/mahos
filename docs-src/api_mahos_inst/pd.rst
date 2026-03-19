@@ -12,7 +12,7 @@ Interfaces
    :toctree: generated
 
    PDInterface
-   APDCounterInterface
+   SinglePhotonCounterInterface
 
 Instruments
 -----------
@@ -24,7 +24,7 @@ Instruments
 .. autosummary::
    :toctree: generated
 
-   APDCounter
+   SinglePhotonCounter
    AnalogPD
    LockinAnalogPD
    LUCI10

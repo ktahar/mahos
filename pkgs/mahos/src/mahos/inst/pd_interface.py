@@ -16,7 +16,7 @@ from mahos.inst.daq_interface import BufferedReaderInterface
 
 
 class PDInterface(BufferedReaderInterface):
-    """Common interface for APDCounter and AnalogIn-based PD."""
+    """Common interface for SinglePhotonCounter and AnalogIn-based PD."""
 
     # override pop_*() methods because PD has one channel per class.
 
@@ -45,8 +45,8 @@ class PDInterface(BufferedReaderInterface):
         return self.get("all_data", False)
 
 
-class APDCounterInterface(PDInterface):
-    """Interface for APDCounter."""
+class SinglePhotonCounterInterface(PDInterface):
+    """Interface for SinglePhotonCounter."""
 
     def correct_cps(self, raw_cps: list[float]) -> np.ndarray:
         """Correct the raw values in cps according to correction factors."""
@@ -57,3 +57,7 @@ class APDCounterInterface(PDInterface):
         """Get the correction factor for given cps values."""
 
         return self.get("correction_factor", xs_cps)
+
+
+# Backward-compatible alias for existing code.
+APDCounterInterface = SinglePhotonCounterInterface

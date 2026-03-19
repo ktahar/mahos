@@ -20,8 +20,11 @@ from mahos.inst.daq import AnalogIn, BufferedEdgeCounter
 from mahos.msgs import param_msgs as P
 
 
-class APDCounter(BufferedEdgeCounter):
-    """BufferedEdgeCounter for counting APD output pulses.
+class SinglePhotonCounter(BufferedEdgeCounter):
+    """BufferedEdgeCounter for counting Single Photon Counter output pulses.
+
+    Older name of this class was APDCounter and there is a compatibility alias for it;
+    however, it is recommended to use new name SinglePhotonCounter for now configurations.
 
     :param counter: The device name for counter (like /Dev1/Ctr0).
     :type counter: str
@@ -120,6 +123,10 @@ class APDCounter(BufferedEdgeCounter):
             return "cps"
         else:
             return BufferedEdgeCounter.get(self, key, args)
+
+
+# Backward-compatible alias for existing config files.
+APDCounter = SinglePhotonCounter
 
 
 class AnalogPD(AnalogIn):

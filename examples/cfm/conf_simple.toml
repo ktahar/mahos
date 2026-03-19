@@ -43,7 +43,7 @@ offset_um = 50.0
 
 [localhost.server.instrument.pd0]
 module = "pd"
-class = "APDCounter"
+class = "SinglePhotonCounter"
 [localhost.server.instrument.pd0.conf]
 counter = "/Dev1/Ctr0"
 source = "/Dev1/PFI0"
@@ -54,7 +54,7 @@ dark_cps = 50.0
 
 [localhost.server.instrument.pd1]
 module = "pd"
-class = "APDCounter"
+class = "SinglePhotonCounter"
 [localhost.server.instrument.pd1.conf]
 counter = "/Dev1/Ctr1"
 source = "/Dev1/PFI12"

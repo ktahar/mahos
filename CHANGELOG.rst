@@ -8,17 +8,21 @@ Changelog
 Added
 ^^^^^
 
-- meas: add generic measurements Sweeper (1D) and GridSweeper (2D).
-- Confocal: add TraceNode and related trace configuration options.
-- IODMR: add ``publish_each`` conf.
-- ODMR: add ``point`` conf for per-point data update.
-- ODMR: add ``sweeper.pg_immediate`` conf for the case SG cannot trigger PG.
-- ODMR: add support for pulse ODMR sweep with AnalogPD.
+- meas
+  - add generic measurements Sweeper (1D) and GridSweeper (2D).
+  - add new measurement APODMR
+  - Confocal: add TraceNode and related trace configuration options.
+  - IODMR: add ``publish_each`` conf.
+  - ODMR: add ``point`` conf for per-point data update.
+  - ODMR: add ``sweeper.pg_immediate`` conf for the case SG cannot trigger PG.
+  - ODMR: add support for pulse ODMR sweep with AnalogPD.
+  - PODMR,SPODMR,Qdyne: add support of user-defined pattern (conf pulser.generators)
 - inst: add new instrument modules/classes for laser, lockin (SR860), SGs
   (SRS_SG390 and Windfreak_SynthHD), and PI positioner.
 - msgs.param_msgs: add ``read_only`` option for parameters.
-- version: LogBroker now prints and writes MAHOS runtime version info.
-- cli: add argcomplete-based completion support.
+- cli
+  - LogBroker now prints and writes MAHOS runtime version info.
+  - add argcomplete-based completion support.
 
 Changed
 ^^^^^^^
@@ -27,29 +31,33 @@ Changed
   The specific applications (confocal, odmr, etc.) have been moved from ``mahos`` to ``mahos_dq``.
 - Packaging: split runtime and development dependencies; moved development tools to the
   ``mahos[dev]`` extra.
-- Recorder: mode channel configuration now supports dict form
-  (``inst``, ``label``, ``key``, ``unit``), allowing configurable acquisition key and
-  optional unit override.
-- Thorlabs_Camera: extend features with software trigger, binning/ROI controls,
-  and ``infinite_wait`` configuration.
-- IV (SMU-based implementation): moved to examples.
-- inst.smu: rename parameter ``logx`` to ``log``.
-- Internal API cleanup: standardize ``filename`` to ``file_name`` in Tweaker/
-  PosTweaker save-load paths and related request message attributes.
-- DS_SG: support standard ``start()``/``stop()`` handling for point-trigger sweep;
-  IODMR worker now uses these APIs.
-- ODMR/Spectroscopy fitters: switch to ``scipy.cluster.vq.kmeans2`` for initial
-  peak-position guessing, dropping sklearn dependency.
 - Dependencies and development environment: update Python/scipy stack and pyzmq/msgpack.
   Now using NumPy 2.
+- Internal API cleanup: standardize ``filename`` to ``file_name`` in Tweaker/
+  PosTweaker save-load paths and related request message attributes.
+- meas
+  - Recorder: mode channel configuration now supports dict form
+    (``inst``, ``label``, ``key``, ``unit``), allowing configurable acquisition key and
+    optional unit override.
+  - IV (SMU-based implementation): moved to examples.
+  - ODMR/Spectroscopy fitters: switch to ``scipy.cluster.vq.kmeans2`` for initial
+    peak-position guessing, dropping sklearn dependency.
+- inst
+  - smu: rename parameter ``logx`` to ``log``.
+  - pd: changed name of APDCounter to SinglePhotonCounter;
+    but APDCounter is kept as a compatibility alias.
+  - sg.DS_SG: support standard ``start()``/``stop()`` handling for point-trigger sweep;
+    IODMR worker now uses these APIs.
+  - Thorlabs_Camera: extend features with software trigger, binning/ROI controls,
+    and ``infinite_wait`` configuration.
 
 Fixed
 ^^^^^
 
-- InstrumentServer: improve error message for module import failures.
-- qdyne_worker (Windows): when a Qt binding is already loaded, skip C-extension import
+- inst.InstrumentServer: improve error message for module import failures.
+- meas.qdyne_worker (Windows): when a Qt binding is already loaded, skip C-extension import
   to avoid Qt / extension import-order crashes.
-- GUI stability and usability improvements across camera / IODMR / ODMR / SPODMR /
+- gui: stability and usability improvements across camera / IODMR / ODMR / SPODMR /
   spectroscopy / pos_tweaker (ROI limits, empty/NaN handling, control states).
 
 [0.3.0] - 2025-01-29
