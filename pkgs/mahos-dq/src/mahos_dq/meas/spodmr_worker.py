@@ -747,7 +747,11 @@ class Pulser(Worker):
             self.logger.error("Error stopping PG.")
             return False
 
-        blockseq, self.freq, laser_duties, markers, self.oversample = self.generate_blocks()
+        try:
+            blockseq, self.freq, laser_duties, markers, self.oversample = self.generate_blocks()
+        except ValueError as e:
+            self.logger.error(f"Invalid params for {self.data.label}: {e}")
+            return False
         self.op.set_laser_duties(self.data, laser_duties)
         self.pulse_pattern = PulsePattern(blockseq, self.freq, markers=markers)
         self.logger.info(f"Initialized PG. PD oversample: {self.oversample}")

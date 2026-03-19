@@ -458,7 +458,11 @@ class Pulser(Worker):
             self.logger.error("Error stopping PG.")
             return False
 
-        blocks, self.freq, laser_timing = self.generate_blocks()
+        try:
+            blocks, self.freq, laser_timing = self.generate_blocks()
+        except ValueError as e:
+            self.logger.error(f"Invalid params for {self.data.label}: {e}")
+            return False
         self.op.set_laser_timing(self.data, np.array(laser_timing) / self.freq)
         self.pulse_pattern = PulsePattern(blocks, self.freq, markers=laser_timing)
         pg_params = {"blocks": blocks, "freq": self.freq}

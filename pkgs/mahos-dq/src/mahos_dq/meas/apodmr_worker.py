@@ -371,9 +371,13 @@ class Pulser(PODMRPulser):
             self.logger.error("Error stopping PG.")
             return False
 
-        blocks, self.freq, laser_timing, trigger_timing, trace_length_ticks = (
-            self.generate_blocks()
-        )
+        try:
+            blocks, self.freq, laser_timing, trigger_timing, trace_length_ticks = (
+                self.generate_blocks()
+            )
+        except ValueError as e:
+            self.logger.error(f"Invalid params for {self.data.label}: {e}")
+            return False
         pd_rate = self._pd_rate(params)
         sample_period = 1.0 / pd_rate
         self.samples_per_trace = max(1, int(round(trace_length_ticks / self.freq * pd_rate)))
