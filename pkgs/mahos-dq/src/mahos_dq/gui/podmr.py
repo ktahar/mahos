@@ -919,6 +919,8 @@ class PODMRWidgetBase(ClientWidget):
             [
                 ("power", self.powerBox),
                 ("freq", self.freqBox, 1e-6),
+                ("sweeps", self.sweepsBox),
+                ("duration", self.durationBox),
                 ("divide_block", self.divideblockBox),
                 ("base_width", self.basewidthBox, 1e9),
                 ("laser_delay", self.ldelayBox, 1e9),

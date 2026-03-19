@@ -819,8 +819,8 @@ class Pulser(Worker):
             quick_resume=P.BoolParam(False),
             timebin=P.FloatParam(3.2e-9, 0.1e-9, 100e-9),
             interval=P.FloatParam(1.0, 0.1, 10.0),
-            sweeps=P.IntParam(0, 0, 9999999, doc="limit number of sweeps"),
-            duration=P.FloatParam(0.0, 0.0, 9999999, unit="s", doc="limit measurement duration"),
+            sweeps=P.IntParam(0, 0, doc="limit number of sweeps"),
+            duration=P.FloatParam(0.0, 0.0, unit="s", doc="limit measurement duration"),
             ident=P.UUIDParam(optional=True, enable=False),
             roi_head=P.FloatParam(
                 -1e-9,

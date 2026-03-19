@@ -77,15 +77,27 @@ def _infer_adaptive_min_step(param: P.NumberParam) -> float | int | None:
 
 def _apply(p: P.Param, widget: QtWidgets.QWidget, coeff: float):
     if isinstance(p, P.NumberParam):
-        mn = p.minimum() * coeff
-        mx = p.maximum() * coeff
+        mn = p.minimum() * coeff if p.minimum() is not None else None
+        mx = p.maximum() * coeff if p.maximum() is not None else None
         v = p.some_value() * coeff
         if isinstance(widget, QtWidgets.QSpinBox) and isinstance(p, P.FloatParam):
-            mn = round(mn)
-            mx = round(mx)
+            mn = round(mn) if mn is not None else None
+            mx = round(mx) if mx is not None else None
             v = round(v)
-        widget.setMinimum(mn)
-        widget.setMaximum(mx)
+        if mn is not None:
+            widget.setMinimum(mn)
+        elif isinstance(widget, QtWidgets.QSpinBox):
+            # unbounded (C++ INT_MIN is the smallest lower bound)
+            widget.setMinimum(-2_147_483_648)
+        elif isinstance(widget, QtWidgets.QDoubleSpinBox):
+            widget.setMinimum(-math.inf)
+        if mx is not None:
+            widget.setMaximum(mx)
+        elif isinstance(widget, QtWidgets.QSpinBox):
+            # unbounded (C++ INT_MAX is the largest upper bound)
+            widget.setMaximum(2_147_483_647)
+        elif isinstance(widget, QtWidgets.QDoubleSpinBox):
+            widget.setMaximum(math.inf)
         widget.setValue(v)
         if isinstance(widget, SpinBox):
             opts = dict(
