@@ -704,6 +704,8 @@ class PODMRData(BasicMeasData):
             )
 
     def num_pattern(self) -> int:
+        if not self.has_params():
+            return 2
         return self.params.get("num_pattern", 2)
 
     def partial(self) -> int | None:
