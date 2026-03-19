@@ -66,7 +66,7 @@ class TweakerIO(object):
         try:
             with h5py.File(file_name, "r") as f:
                 if group:
-                    group = self.demangle_group(group)
+                    group = self.mangle_group(group)
                     if group not in f:
                         msg = f"group {group} doesn't exist in {file_name}."
                         msg += f" available groups: {self.get_groups(file_name)}"
@@ -84,7 +84,7 @@ class TweakerIO(object):
         self.logger.info(f"Loaded {file_name}.")
         return d
 
-    def get_groups(self, file_name: str) -> list[str]:
+    def get_groups(self, file_name: str, demangle: bool = False) -> list[str]:
         """Get list of available groups in file_name."""
 
         li = []
@@ -92,14 +92,23 @@ class TweakerIO(object):
             with h5py.File(file_name, "r") as f:
                 for key, val in f.items():
                     if isinstance(val, h5py.Group):
-                        li.append(key)
+                        if demangle:
+                            li.append(self.demangle_group(key))
+                        else:
+                            li.append(key)
         except Exception:
             self.logger.exception(f"Error loading {file_name}.")
             return []
         return li
 
-    def demangle_group(self, group: str):
+    def mangle_group(self, group: str):
         if group.startswith("__") and group.endswith("__"):
             return group
         else:
             return "__" + group + "__"
+
+    def demangle_group(self, group: str):
+        if group.startswith("__") and group.endswith("__"):
+            return group[2:-2]
+        else:
+            return group

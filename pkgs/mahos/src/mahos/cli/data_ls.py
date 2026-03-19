@@ -31,8 +31,10 @@ def build_parser(add_help: bool = True):
 def print_attrs(fn):
     from mahos.cli.data_common import get_ext, get_exts_to_data, get_logger
     from mahos.util.io import list_attrs_h5
+    from mahos.meas.tweaker_io import TweakerIO
 
     logger = get_logger()
+    tio = TweakerIO()
     print(f"## {fn} ##")
     ext = get_ext(fn)
     exts_to_data = get_exts_to_data()
@@ -40,8 +42,11 @@ def print_attrs(fn):
         logger.error(f"Unknown extension {ext}")
         return
 
-    for key, type_ in list_attrs_h5(fn, exts_to_data[ext], logger):
-        print(f"{key}: {type_}")
+    if exts_to_data[ext] is not None:
+        for key, type_ in list_attrs_h5(fn, exts_to_data[ext], logger):
+            print(f"{key}: {type_}")
+    for group_name in tio.get_groups(fn, demangle=True):
+        print(f"{group_name}: h5.Group")
 
 
 def main(args=None):

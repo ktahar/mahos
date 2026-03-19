@@ -29,6 +29,8 @@ def get_exts_to_data():
     if _exts_to_data is None:
         _exts_to_data = {
             ".camera.h5": CameraImage,
+            ".tweak.h5": None,
+            ".ptweak.h5": None,
         }
         try:
             from mahos_dq.cli import data as dq

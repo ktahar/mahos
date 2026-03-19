@@ -58,7 +58,7 @@ class PosTweakerIO(TweakerIO):
         try:
             with h5py.File(file_name, "r") as f:
                 if group:
-                    group = self.demangle_group(group)
+                    group = self.mangle_group(group)
                     if group not in f:
                         msg = f"group {group} doesn't exist in {file_name}."
                         msg += f" available groups: {self.get_groups(file_name)}"
