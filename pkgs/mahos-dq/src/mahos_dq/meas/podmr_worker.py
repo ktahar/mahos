@@ -375,8 +375,9 @@ class Pulser(Worker):
             self.logger.error("Error configuring TDC.")
             return False
         if params.get("sweeps", 0) and not self.tdc.set_sweeps(params["sweeps"]):
-            self.logger.error("Error setting sweeps limit for TDC.")
-            return False
+            # Even if the TDC doesn't support sweeps limit, we can auto-finish by is_finished().
+            # However, the sweeps value can be larger than the limit.
+            self.logger.warn("Error setting sweeps limit for TDC. Limit may not be strict.")
         if params.get("duration", 0.0) and not self.tdc.set_duration(params["duration"]):
             self.logger.error("Error setting duration limit for TDC.")
             return False
