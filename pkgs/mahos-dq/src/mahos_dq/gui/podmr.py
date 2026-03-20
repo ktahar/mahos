@@ -919,8 +919,12 @@ class PODMRWidgetBase(ClientWidget):
             [
                 ("power", self.powerBox),
                 ("freq", self.freqBox, 1e-6),
+                ("interval", self.intervalBox, 1e3),
+                ("timebin", self.binBox, 1e9),
                 ("sweeps", self.sweepsBox),
                 ("duration", self.durationBox),
+                ("roi_head", self.roiheadBox, 1e9),
+                ("roi_tail", self.roitailBox, 1e9),
                 ("divide_block", self.divideblockBox),
                 ("base_width", self.basewidthBox, 1e9),
                 ("laser_delay", self.ldelayBox, 1e9),
@@ -932,6 +936,14 @@ class PODMRWidgetBase(ClientWidget):
                 ("mw_offset", self.moffsetBox, 1e9),
             ],
         )
+        if "freq1" in params:
+            apply_widgets(
+                params,
+                [
+                    ("power1", self.power1Box),
+                    ("freq1", self.freq1Box, 1e-6),
+                ],
+            )
         apply_widgets(
             params["plot"],
             [

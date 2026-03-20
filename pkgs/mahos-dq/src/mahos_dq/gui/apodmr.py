@@ -241,11 +241,12 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             [
                 ("power", self.powerBox),
                 ("freq", self.freqBox, 1e-6),
+                ("sweeps_per_record", self.sweepsPerRecordBox),
+                ("shots_per_point", self.shotsPerPointBox),
+                ("sweeps", self.sweepsBox),
                 ("duration", self.durationBox),
                 ("roi_head", self.roiheadBox, 1e9),
                 ("roi_tail", self.roitailBox, 1e9),
-                ("sweeps_per_record", self.sweepsPerRecordBox),
-                ("shots_per_point", self.shotsPerPointBox),
                 ("divide_block", self.divideblockBox),
                 ("base_width", self.basewidthBox, 1e9),
                 ("laser_delay", self.ldelayBox, 1e9),
@@ -257,6 +258,14 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
                 ("mw_offset", self.moffsetBox, 1e9),
             ],
         )
+        if "freq1" in params:
+            apply_widgets(
+                params,
+                [
+                    ("power1", self.power1Box),
+                    ("freq1", self.freq1Box, 1e-6),
+                ],
+            )
         apply_widgets(
             params["plot"],
             [
