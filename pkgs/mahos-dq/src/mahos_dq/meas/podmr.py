@@ -120,6 +120,12 @@ class PODMR(BasicMeasNode):
 
     :param pulser.eos_margin: (default: 1e-6) End-of-sequence timing margin in seconds.
     :type pulser.eos_margin: float
+    :param pulser.tdc_primary_ch: (default: 0) TDC channel id for primary (mandatory) channel.
+    :type pulser.tdc_primary_ch: int
+    :param pulser.tdc_secondary_ch: (default: 1) TDC channel id for secondary (optional) channel.
+    :type pulser.tdc_secondary_ch: int
+    :param pulser.tdc_secondary_enable: (default: True) If True, secondary channel is enabled.
+    :type pulser.tdc_secondary_enable: bool
 
     :param fitter.rabi.c: default value of param "c" (base line) in RabiFitter.
         You can set the bounds using "c_min" and "c_max" too.

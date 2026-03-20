@@ -17,12 +17,14 @@ import numpy as np
 from mahos.util.timer import IntervalTimer
 from mahos_dq.msgs.podmr_msgs import PODMRData, TDCStatus, is_sweepN, is_CPlike, is_correlation
 from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.msgs.inst.tdc_msgs import ChannelStatus
 from mahos.msgs import param_msgs as P
 from mahos.inst.sg_interface import SGInterface
 from mahos.inst.pg_interface import PGInterface
 from mahos.inst.tdc_interface import TDCInterface
 from mahos.inst.fg_interface import FGInterface
 from mahos.util.conf import PresetLoader
+from mahos.util.typing import ConfTypeCheckMixin
 from mahos.meas.common_worker import Worker
 
 from mahos_dq.meas.podmr_generator.generator import make_generators
@@ -264,7 +266,7 @@ class Bounds(object):
         self._fg = fg_bounds
 
 
-class Pulser(Worker):
+class Pulser(Worker, ConfTypeCheckMixin):
     """Worker for Pulse ODMR.
 
     Function generator is an option (fg may be None).
@@ -313,8 +315,11 @@ class Pulser(Worker):
             allowed_num_pattern=(2, 4),
             print_fn=self.logger.info,
         )
-        self.eos_margin = self.conf.get("eos_margin", 1e-6)
-        self._quick_resume = self.conf.get("quick_resume", True)
+        self.eos_margin = self._conf_nonneg_num("eos_margin", 1e-6)
+        self._quick_resume = self._conf_bool("quick_resume", True)
+        self._tdc_ch0 = self._conf_nonneg_int("tdc_primary_ch", 0)
+        self._tdc_ch1 = self._conf_nonneg_int("tdc_secondary_ch", 1)
+        self._tdc_ch1_enable = self._conf_bool("tdc_secondary_enable", True)
         self._resume_raw_data = None
         self._resume_tdc_status = None
 
@@ -582,17 +587,28 @@ class Pulser(Worker):
 
         if self.data.has_roi():
             roi = self.data.get_rois()
-            data0 = self.tdc.get_data_roi(0, roi)
-            data1 = self.tdc.get_data_roi(1, roi)
+            data0 = self.tdc.get_data_roi(self._tdc_ch0, roi)
             # because length of each ROI fragments are all same,
             # we can convert list[ndarray] to 2D ndarray.
             if data0 is not None:
                 data0 = np.array(data0)
-            if data1 is not None:
-                data1 = np.array(data1)
+
+            if self._tdc_ch1_enable:
+                data1 = self.tdc.get_data_roi(self._tdc_ch1, roi)
+                if data1 is not None:
+                    data1 = np.array(data1)
+            elif data0 is not None:
+                data1 = np.zeros_like(data0)
+            else:
+                data1 = None
         else:
-            data0 = self.tdc.get_data(0)
-            data1 = self.tdc.get_data(1)
+            data0 = self.tdc.get_data(self._tdc_ch0)
+            if self._tdc_ch1_enable:
+                data1 = self.tdc.get_data(self._tdc_ch1)
+            elif data0 is not None:
+                data1 = np.zeros_like(data0)
+            else:
+                data1 = None
 
         if data0 is not None and data1 is not None:
             if self._resume_raw_data is not None:
@@ -744,8 +760,12 @@ class Pulser(Worker):
     def get_tdc_status(self) -> TDCStatus:
         """Get status from TDC."""
 
-        st0 = self.tdc.get_status(0)
-        st1 = self.tdc.get_status(1)
+        st0 = self.tdc.get_status(self._tdc_ch0)
+        if self._tdc_ch1_enable:
+            st1 = self.tdc.get_status(self._tdc_ch1)
+        else:
+            # dummy status to fill st1.total with zero
+            st1 = ChannelStatus(True, 0.0, 0, 0)
 
         if self._resume_tdc_status:
             r: TDCStatus = self._resume_tdc_status
@@ -758,7 +778,7 @@ class Pulser(Worker):
     def get_tdc_running(self) -> bool:
         """return True if TDC is running."""
 
-        st0 = self.tdc.get_status(0)
+        st0 = self.tdc.get_status(self._tdc_ch0)
         return st0.running if st0 is not None else False
 
     def wait_tdc_stop(self, timeout_sec=60.0, interval_sec=0.2) -> bool:

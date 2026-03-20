@@ -668,9 +668,9 @@ class PODMRData(BasicMeasData):
         head, tail = self.get_roi_margins()
         return head >= 0.0 and tail >= 0.0
 
-    def sweeps(self) -> float:
+    def sweeps(self) -> int:
         if self.tdc_status is None:
-            return 0.0
+            return 0
         return self.tdc_status.sweeps
 
     def measurement_time(self) -> float:
