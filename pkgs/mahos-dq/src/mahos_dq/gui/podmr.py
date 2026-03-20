@@ -668,6 +668,7 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
     def __init__(self, cli, gparams_cli, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         self.setupUi(self)
+        self.extLabel.setText(self.AUTOSAVE_EXTENSION)
 
         self.cli = cli
         self.gparams_cli = gparams_cli
@@ -704,7 +705,7 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
         fname = "{:s}_{:04d}{:s}".format(
             self.fnEdit.text(), self.suffixBox.value(), self.AUTOSAVE_EXTENSION
         )
-        return os.path.join(dirname, fname)
+        return os.path.normpath(os.path.join(dirname, fname))
 
     def init_autosave(self):
         if not self.enableBox.isChecked():
@@ -747,7 +748,7 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
     def browse_dir(self):
         current = str(self.gparams_cli.get_param("work_dir"))
         dn = QtWidgets.QFileDialog.getExistingDirectory(self, "Select autosave directory", current)
-        if dn and current != dn:
+        if dn:
             self.dirEdit.setText(dn)
 
 
