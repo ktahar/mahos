@@ -1042,11 +1042,11 @@ class PODMRWidgetBase(ClientWidget):
             else:
                 self.set_plot_mode("data0")
 
-    def update_save_button(self, saved):
-        if saved:
-            self.saveButton.setStyleSheet("")
-        else:
+    def _update_save_button(self):
+        if self.data.is_finalized() and not self.data.is_saved():
             self.saveButton.setStyleSheet("background-color: #FF0000")
+        else:
+            self.saveButton.setStyleSheet("")
 
     def _wire_plot_timing_widgets(self, connect: bool):
         for b in (self.sigdelayBox, self.sigwidthBox, self.refdelayBox, self.refwidthBox):
@@ -1089,7 +1089,6 @@ class PODMRWidgetBase(ClientWidget):
         self.gparams_cli.set_param("work_dir", os.path.split(fn)[0])
         note = self.gparams_cli.get_param("note", "")
         self.cli.save_data(fn, note=note)
-        self.update_save_button(True)
 
         n = os.path.splitext(fn)[0] + ".png"
         params = {"show_fit": self.fit.show_current_data_fit()}
@@ -1147,7 +1146,6 @@ class PODMRWidgetBase(ClientWidget):
                 self, "Sure to load?", "Current data has not been saved. Are you sure to discard?"
             ):
                 return
-        self.update_save_button(True)
 
         default_path = str(self.gparams_cli.get_param("work_dir"))
         fn = load_dialog(self, default_path, self.MEASUREMENT_NAME, self.FILE_EXTENSION)
@@ -1429,8 +1427,6 @@ class PODMRWidgetBase(ClientWidget):
 
         self.cli.start(params, label)
 
-        self.update_save_button(True)
-
     def update_data(self, data: PODMRData):
         self.data = data
         if not self.data.has_data():
@@ -1474,6 +1470,7 @@ class PODMRWidgetBase(ClientWidget):
     def update_widgets(self):
         self._update_elapsed_time()
         self._update_swept_label()
+        self._update_save_button()
         tbin = self.data.get_bin()
         trange = self.data.get_range()
 
@@ -1505,7 +1502,7 @@ class PODMRWidgetBase(ClientWidget):
         if self._finalizing:
             return
         self._finalizing = True
-        self.update_save_button(False)
+        # NOP for now
         self._finalizing = False
 
     def update_cond_widgets(self, force_disable=False):
