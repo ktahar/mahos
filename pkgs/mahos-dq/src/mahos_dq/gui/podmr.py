@@ -1456,8 +1456,10 @@ class PODMRWidgetBase(ClientWidget):
         t0 = self.data.start_time
         if self.data.finish_time is not None:
             t1 = self.data.finish_time
-        else:
+        elif self._meas_state == BinaryState.ACTIVE:
             t1 = time.time()
+        else:  # unfinalized data is loaded and not running. skip real-time update.
+            return
 
         elapsed = t1 - t0
         h, m, s = seconds_to_hms(elapsed)
