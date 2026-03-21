@@ -213,3 +213,32 @@ def test_complementary_reject_n3():
     data.params["plot"]["plotmode"] = "concatenate"
     with pytest.raises(ValueError):
         data.get_xdata()
+
+
+def test_snapshot_for_save_finalize_does_not_mutate_source():
+    data = make_data(2, "data01")
+    data.raw_data = np.arange(8.0)
+    data.start()
+
+    snap = data.snapshot_for_save(finalize=True)
+    snap.set_saved()
+
+    assert snap is not data
+    assert snap.params is not data.params
+    assert snap.raw_data is data.raw_data
+    assert snap.is_finalized()
+    assert snap.is_saved()
+    assert data.running
+    assert data.finish_time is None
+    assert not data.is_saved()
+
+
+def test_snapshot_for_save_preserves_existing_finish_time():
+    data = make_data(2, "data01")
+    data.start()
+    data.finalize()
+    finish_time = data.finish_time
+
+    snap = data.snapshot_for_save(finalize=True)
+
+    assert snap.finish_time == finish_time

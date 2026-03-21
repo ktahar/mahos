@@ -32,10 +32,7 @@ class APODMRIO(PODMRIO):
     def save_data(
         self, file_name: str, data: APODMRData, params: dict | None = None, note: str = ""
     ) -> bool:
-        if params is not None and params.get("tmp"):
-            self.logger.info("Temporary save of APODMR data")
-        else:
-            data.set_saved()
+        data.set_saved()
         return save_pickle_or_h5(file_name, data, APODMRData, self.logger, note=note)
 
     def load_data(self, file_name: str) -> APODMRData | None:

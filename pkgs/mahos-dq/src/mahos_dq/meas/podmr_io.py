@@ -37,11 +37,7 @@ class PODMRIO(object):
     ) -> bool:
         """Save data to file_name. return True on success."""
 
-        if params is not None and "tmp" in params and "tmp":
-            self.logger.info("Temporary save of PODMR data")
-        else:
-            data.set_saved()
-
+        data.set_saved()
         return save_pickle_or_h5(file_name, data, PODMRData, self.logger, note=note)
 
     def load_data(self, file_name: str) -> PODMRData | None:

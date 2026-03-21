@@ -9,6 +9,7 @@ Message Types for Pulse ODMR.
 """
 
 from __future__ import annotations
+import copy
 import typing as T
 
 import numpy as np
@@ -661,6 +662,28 @@ class PODMRData(BasicMeasData):
         if not self.has_params():
             return None
         return self.label
+
+    def snapshot_for_save(self, finalize: bool = False) -> PODMRData:
+        """Make a save-ready snapshot without mutating this instance.
+
+        The snapshot is shallow by design so large arrays (for example ``raw_data``)
+        are not duplicated.
+        This relies on save running in the node thread (non-async) where concurrent
+        mutation during serialization does not occur.
+
+        :param finalize: Finalize the snapshot when ``True`` and
+            this data has not already been finalized.
+
+        """
+
+        d = copy.copy(self)
+        if d.params is not None:
+            d.params = copy.deepcopy(d.params)
+        if d.fit_params is not None:
+            d.fit_params = copy.deepcopy(d.fit_params)
+        if finalize and not d.is_finalized():
+            d.finalize()
+        return d
 
     # helpers
 

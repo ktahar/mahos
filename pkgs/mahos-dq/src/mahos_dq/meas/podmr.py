@@ -221,7 +221,11 @@ class PODMR(BasicMeasNode):
             return Reply(True, ret=d)
 
     def save_data(self, msg: SaveDataReq) -> Reply:
-        success = self.io.save_data(msg.file_name, self.worker.data_msg(), msg.params, msg.note)
+        if msg.params is not None and (msg.params.get("tmp") or msg.params.get("temp")):
+            data = self.worker.data_msg().snapshot_for_save(finalize=True)
+        else:
+            data = self.worker.data_msg()
+        success = self.io.save_data(msg.file_name, data, msg.params, msg.note)
         if success:
             for tweaker_name, cli in self.tweaker_clis.items():
                 success &= cli.save(msg.file_name, "__" + tweaker_name + "__")
