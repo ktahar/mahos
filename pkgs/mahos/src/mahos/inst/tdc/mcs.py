@@ -337,7 +337,7 @@ class MCS(Instrument):
         _range = self.get_range()
         tbin = self.resolution_sec * self.get_binwidth()
 
-        return {"range": _range, "bin": tbin}
+        return {"range": _range * tbin, "bin": tbin}
 
     def get_timebin(self) -> float:
         """Get time bin (in sec)."""

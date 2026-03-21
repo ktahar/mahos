@@ -619,7 +619,7 @@ class MCS_mock(Instrument):
 
     def get(self, key: str, args=None, label: str = ""):
         if key == "range_bin":
-            return {"range": self._range, "bin": self._bin}
+            return {"range": self._range * self._bin, "bin": self._bin}
         elif key == "bin":
             return self._bin
         elif key == "data":

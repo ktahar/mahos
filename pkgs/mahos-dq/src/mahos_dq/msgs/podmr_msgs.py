@@ -676,10 +676,10 @@ class PODMRData(BasicMeasData):
     def measurement_time(self) -> float:
         """calculate measurement time in sec."""
 
-        trange, tbin = self.get_range(), self.get_bin()
-        if trange is None or tbin is None:
+        trange = self.get_range()
+        if trange is None:
             return 0.0
-        return self.sweeps() * trange * tbin
+        return self.sweeps() * trange
 
     def has_raw_data(self) -> bool:
         """return True if current data is valid (not empty nor all zero)."""
