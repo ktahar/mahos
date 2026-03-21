@@ -380,9 +380,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         records = int(self.data.records())
         self.sweptLabel.setText(f"{sweeps} swept / {records} records")
 
-    def update_widgets(self):
-        self._update_elapsed_time()
-        self._update_swept_label()
+    def _update_range_bin(self):
         trange = self.data.get_range()
 
         if trange is not None:
@@ -425,25 +423,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         ):
             w.setEnabled(state == BinaryState.IDLE)
 
-        if state == BinaryState.IDLE:
-            if last_state == BinaryState.ACTIVE:
-                self.update_cond_widgets()
-        else:
-            self.update_cond_widgets(force_disable=True)
-
-        if self.has_fg():
-            for w in (self.fg_disableButton, self.fg_cwButton, self.fg_gateButton):
-                w.setEnabled(state == BinaryState.IDLE)
-
-            if state == BinaryState.IDLE:
-                self.switch_fg()
-            else:
-                for w in (self.fg_waveBox, self.fg_freqBox, self.fg_amplBox, self.fg_phaseBox):
-                    w.setEnabled(False)
-
-        self.stopButton.setEnabled(state == BinaryState.ACTIVE)
-
-        self.autosave.update_state(state, last_state)
+        self._update_state_common(state, last_state)
 
 
 class APODMRMainWindow(QtWidgets.QMainWindow):

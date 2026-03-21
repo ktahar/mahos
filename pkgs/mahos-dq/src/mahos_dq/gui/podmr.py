@@ -1467,10 +1467,7 @@ class PODMRWidgetBase(ClientWidget):
         sweep_num = int(self.data.tdc_status[1])
         self.sweptLabel.setText(f"{sweep_num} swept")
 
-    def update_widgets(self):
-        self._update_elapsed_time()
-        self._update_swept_label()
-        self._update_save_button()
+    def _update_range_bin(self):
         tbin = self.data.get_bin()
         trange = self.data.get_range()
 
@@ -1481,6 +1478,12 @@ class PODMRWidgetBase(ClientWidget):
                 self.binBox.setValue(tbin * 1e9)  # sec to ns
             if trange is not None:
                 self.rangeLabel.setText("range: {:.2f} us".format(trange * 1e6))
+
+    def update_widgets(self):
+        self._update_elapsed_time()
+        self._update_swept_label()
+        self._update_save_button()
+        self._update_range_bin()
 
     def update_plot_params(self):
         if self.autoadjustBox.isChecked():
@@ -1538,6 +1541,35 @@ class PODMRWidgetBase(ClientWidget):
         else:
             set_enabled(self._params["pulse"], name_widgets)
 
+    def _update_state_common(self, state: BinaryState, last_state: BinaryState):
+        # Sweep widgets' enable/disable depends on selected method
+        if state == BinaryState.IDLE:
+            if last_state == BinaryState.ACTIVE:
+                self.update_cond_widgets()
+        else:
+            self.update_cond_widgets(force_disable=True)
+
+        if self.has_fg():
+            for w in (self.fg_disableButton, self.fg_cwButton, self.fg_gateButton):
+                w.setEnabled(state == BinaryState.IDLE)
+
+            # Widgets enable/disable of which depends on selected fg mode
+            if state == BinaryState.IDLE:
+                self.switch_fg()
+            else:
+                for w in (self.fg_waveBox, self.fg_freqBox, self.fg_amplBox, self.fg_phaseBox):
+                    w.setEnabled(False)
+
+        if self.supports_discard():
+            enable_discard = state == BinaryState.ACTIVE and self.enablediscardBox.isChecked()
+            self.discardButton.setEnabled(enable_discard)
+
+        self.stopButton.setEnabled(state == BinaryState.ACTIVE)
+
+        self.autosave.update_state(state, last_state)
+
+        self._meas_state = state
+
     def update_state(self, state: BinaryState, last_state: BinaryState):
         for w in (
             self.startButton,
@@ -1572,33 +1604,7 @@ class PODMRWidgetBase(ClientWidget):
         ):
             w.setEnabled(state == BinaryState.IDLE)
 
-        # Sweep widgets' enable/disable depends on selected method
-        if state == BinaryState.IDLE:
-            if last_state == BinaryState.ACTIVE:
-                self.update_cond_widgets()
-        else:
-            self.update_cond_widgets(force_disable=True)
-
-        if self.has_fg():
-            for w in (self.fg_disableButton, self.fg_cwButton, self.fg_gateButton):
-                w.setEnabled(state == BinaryState.IDLE)
-
-            # Widgets enable/disable of which depends on selected fg mode
-            if state == BinaryState.IDLE:
-                self.switch_fg()
-            else:
-                for w in (self.fg_waveBox, self.fg_freqBox, self.fg_amplBox, self.fg_phaseBox):
-                    w.setEnabled(False)
-
-        if self.supports_discard():
-            enable_discard = state == BinaryState.ACTIVE and self.enablediscardBox.isChecked()
-            self.discardButton.setEnabled(enable_discard)
-
-        self.stopButton.setEnabled(state == BinaryState.ACTIVE)
-
-        self.autosave.update_state(state, last_state)
-
-        self._meas_state = state
+        self._update_state_common(state, last_state)
 
     # helper functions
 

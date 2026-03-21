@@ -342,9 +342,7 @@ class Pulser(PODMRPulser):
     def generate_blocks(self, data: APODMRData | None = None):
         if data is None:
             data = self.data
-        self._validate_partial(data)
-        self._validate_plotmode(data)
-
+        self._set_num_pattern_and_validate_params(data)
         generator = self.generators[data.label]
         params = data.get_params()
         raw_blocks, freq, common_pulses = generator.generate_raw_blocks(data.xdata, params)
@@ -510,7 +508,7 @@ class Pulser(PODMRPulser):
             return False
         if "plotmode" in params:
             try:
-                options = self._plotmode_options(self.data.label, self.data.get_params())
+                options = self._plotmode_options(self.data.label)
             except ValueError as e:
                 self.logger.error(f"Cannot validate plotmode for {self.data.label}: {e}")
                 return False
@@ -545,8 +543,7 @@ class Pulser(PODMRPulser):
         else:
             self.data.update_params(params)
         try:
-            self._validate_partial(self.data)
-            self._validate_plotmode(self.data)
+            self._set_num_pattern_and_validate_params(self.data)
         except ValueError as e:
             self.logger.error(f"Invalid params for {label}: {e}")
             return False
