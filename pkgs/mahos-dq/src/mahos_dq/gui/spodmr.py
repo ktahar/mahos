@@ -987,6 +987,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             return  # measurement has not been started yet or data has not been accumulated.
 
         self.refresh_all()
+        self.update_widgets()
 
     def update_buffer(self, buffer: Buffer[tuple[str, SPODMRData]]):
         self.fit.update_buffer(buffer)
@@ -999,6 +1000,10 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
     def refresh_all(self):
         self.plot.refresh_all(self.get_plottable_data(), self.data)
         self.alt_plot.refresh_all(self.get_plottable_data(), self.data)
+
+    def update_widgets(self):
+        sweeps = self.data.sweeps()
+        self.sweptLabel.setText(f"{sweeps} swept")
 
     def finalize(self, data: SPODMRData):
         if self._finalizing:
