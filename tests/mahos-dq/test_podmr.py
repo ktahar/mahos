@@ -16,9 +16,11 @@ import pytest
 from mahos_dq.meas.podmr import PODMRClient, PODMRIO
 from mahos_dq.msgs.podmr_msgs import PODMRData
 from mahos.msgs.common_msgs import BinaryState
+from mahos.inst.tdc_core import TDCBase
+from mahos.msgs.inst.tdc_msgs import ChannelStatus
 from mahos.msgs import param_msgs as P
 from mahos_dq.meas.podmr_generator.generator import make_generators
-from mahos_dq.meas.podmr_worker import Pulser
+from mahos_dq.meas.podmr_worker import Pulser, PODMRDataOperator
 from util import get_some, expect_value, save_load_test
 from fixtures import ctx, gconf, server, podmr, server_conf, podmr_conf
 from podmr_patterns import patterns
@@ -49,6 +51,158 @@ def pattern_equivalent(pattern0, pattern1):
         and abs(freq0 - freq1) < 1e-5
         and laser_timing0 == laser_timing1
     )
+
+
+class DummyTDC(TDCBase):
+    def __init__(self, histogram: np.ndarray, sweeps: int = 5):
+        super().__init__("dummy_tdc")
+        self.histogram = np.array(histogram, dtype=np.float64)
+        self.sweeps = sweeps
+        self.get_data_calls = 0
+        self.get_data_roi_calls = 0
+
+    def get_data(self, ch: int) -> np.ndarray:
+        self.get_data_calls += 1
+        return self.histogram.copy()
+
+    def get_data_roi(self, ch: int, roi: list[tuple[int, int]]) -> list[np.ndarray] | None:
+        self.get_data_roi_calls += 1
+        return super().get_data_roi(ch, roi)
+
+    def get_status(self, ch: int) -> ChannelStatus:
+        return ChannelStatus(True, 1.0, int(np.sum(self.histogram)), self.sweeps)
+
+
+def _podmr_params_for_tdc_test(
+    partial: int,
+    enable_roi: bool,
+    sigwidth: float,
+    refwidth: float,
+    refdelay: float,
+    roi_margin: float,
+) -> dict:
+    margin = roi_margin if enable_roi else -1.0
+    return {
+        "num_pattern": 2,
+        "partial": partial,
+        "start": 1.0,
+        "num": 2,
+        "step": 1.0,
+        "log": False,
+        "invert_sweep": False,
+        "pulse": {},
+        "plot": {
+            "plotmode": "data01",
+            "taumode": "raw",
+            "refmode": "ignore",
+            "refaverage": False,
+            "flipY": False,
+            "sigdelay": 0.0,
+            "sigwidth": sigwidth,
+            "refdelay": refdelay,
+            "refwidth": refwidth,
+        },
+        "instrument": {"tbin": 1.0, "trange": 100.0},
+        "laser_width": 1.0,
+        "roi_head": margin,
+        "roi_tail": margin,
+    }
+
+
+def _run_update_with_histogram(
+    histogram: np.ndarray,
+    partial: int,
+    enable_roi: bool,
+    sigwidth: float,
+    refwidth: float,
+    refdelay: float,
+    roi_margin: float,
+):
+    params = _podmr_params_for_tdc_test(
+        partial=partial,
+        enable_roi=enable_roi,
+        sigwidth=sigwidth,
+        refwidth=refwidth,
+        refdelay=refdelay,
+        roi_margin=roi_margin,
+    )
+    data = PODMRData(params, "rabi")
+    n_laser = len(data.xdata) * data.num_pattern() if partial < 0 else len(data.xdata)
+    data.laser_timing = np.arange(n_laser, dtype=np.float64) * 10.0 + 5.0
+    data.start()
+
+    tdc = DummyTDC(histogram, sweeps=5)
+    pulser = Pulser.__new__(Pulser)
+    pulser.data = data
+    pulser.tdc = tdc
+    pulser.op = PODMRDataOperator()
+    pulser._tdc_ch0 = 0
+    pulser._tdc_ch1 = 1
+    pulser._tdc_ch1_enable = False
+    pulser._resume_raw_data = None
+    pulser._resume_tdc_status = None
+
+    assert pulser.update()
+    return data, tdc
+
+
+@pytest.mark.parametrize("partial", (-1, 0), ids=("complementary", "partial"))
+@pytest.mark.parametrize(
+    ("sigwidth", "refwidth", "refdelay", "roi_margin"),
+    (
+        (0.0, 0.0, 1.0, 1.0),
+        (2.0, 2.0, 1.0, 5.0),
+    ),
+    ids=("single_bin", "multi_bin"),
+)
+def test_podmr_roi_noroi_analysis_equivalence(partial, sigwidth, refwidth, refdelay, roi_margin):
+    histogram = np.arange(50, dtype=np.float64)
+    data_roi, tdc_roi = _run_update_with_histogram(
+        histogram,
+        partial=partial,
+        enable_roi=True,
+        sigwidth=sigwidth,
+        refwidth=refwidth,
+        refdelay=refdelay,
+        roi_margin=roi_margin,
+    )
+    data_noroi, tdc_noroi = _run_update_with_histogram(
+        histogram,
+        partial=partial,
+        enable_roi=False,
+        sigwidth=sigwidth,
+        refwidth=refwidth,
+        refdelay=refdelay,
+        roi_margin=roi_margin,
+    )
+
+    assert tdc_roi.get_data_roi_calls > 0
+    assert tdc_roi.get_data_calls == tdc_roi.get_data_roi_calls
+    assert tdc_noroi.get_data_calls > 0
+    assert tdc_noroi.get_data_roi_calls == 0
+    assert data_roi.tdc_status.sweeps == data_noroi.tdc_status.sweeps
+
+    for i in range(data_roi.num_pattern()):
+        d_roi = data_roi.data(i)
+        d_noroi = data_noroi.data(i)
+        r_roi = data_roi.data_ref(i)
+        r_noroi = data_noroi.data_ref(i)
+        if d_roi is None or d_noroi is None:
+            assert d_roi is None and d_noroi is None
+        else:
+            np.testing.assert_allclose(d_roi, d_noroi)
+        if r_roi is None or r_noroi is None:
+            assert r_roi is None and r_noroi is None
+        else:
+            np.testing.assert_allclose(r_roi, r_noroi)
+
+    y_roi = data_roi.get_ydata()
+    y_noroi = data_noroi.get_ydata()
+    for roi_part, noroi_part in zip(y_roi, y_noroi):
+        if roi_part is None or noroi_part is None:
+            assert roi_part is None and noroi_part is None
+        else:
+            np.testing.assert_allclose(roi_part, noroi_part)
 
 
 def test_podmr_pattern_divide():

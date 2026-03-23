@@ -22,10 +22,11 @@ except ImportError:
 
 from mahos.inst.instrument import Instrument
 from mahos.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
+from mahos.inst.tdc_core import TDCBase
 from mahos.util.io import save_h5
 
 
-class TimeTagger(Instrument):
+class TimeTagger(TDCBase):
     """Swabian Instruments Time Tagger.
 
     :param base_configs: Mapping from base config name to channels and levels definitions.
@@ -263,22 +264,6 @@ class TimeTagger(Instrument):
         except AttributeError:
             self.logger.error("current measurement doesn't support data_normalized.")
             return None
-
-    def get_data_roi(self, ch: int, roi: list[tuple[int, int]]) -> list[np.ndarray] | None:
-        data = self.get_data(ch)
-        if data is None:
-            return None
-        data_roi = []
-        for start, stop in roi:
-            # fill up out-of-bounds in ROI with zeros
-            if start < 0:
-                d = np.concatenate((np.zeros(abs(start), dtype=data.dtype), data[:stop]))
-            else:
-                d = data[start:stop]
-            if stop > len(data):
-                d = np.concatenate((d, np.zeros(stop - len(data), dtype=data.dtype)))
-            data_roi.append(d)
-        return data_roi
 
     def get_status(self, ch: int) -> ChannelStatus | None:
         runtime = time.time() - self._tstart

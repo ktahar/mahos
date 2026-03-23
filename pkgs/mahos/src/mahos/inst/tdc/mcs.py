@@ -18,6 +18,7 @@ import numpy as np
 
 from mahos.inst.instrument import Instrument
 from mahos.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
+from mahos.inst.tdc_core import TDCBase
 from mahos.util.io import save_h5
 
 
@@ -27,7 +28,7 @@ def c_str(s: str) -> C.c_char_p:
     return C.c_char_p(bytes(s, encoding="utf-8"))
 
 
-class MCS(Instrument):
+class MCS(TDCBase):
     """Wrapper class for DMCSX.dll for Fast ComTec MCS6/MCS8 series.
 
     :param base_configs: Mapping from base config name to actual file name.
@@ -249,22 +250,6 @@ class MCS(Instrument):
             return np.reshape(np.array(buf), (xmax.value, ymax.value)).T
         else:
             return np.array(buf)
-
-    def get_data_roi(self, nDisplay: int, roi: list[tuple[int, int]]) -> list[np.ndarray] | None:
-        data = self.get_data(nDisplay)
-        if data is None:
-            return None
-        data_roi = []
-        for start, stop in roi:
-            # fill up out-of-bounds in ROI with zeros
-            if start < 0:
-                d = np.concatenate((np.zeros(abs(start), dtype=data.dtype), data[:stop]))
-            else:
-                d = data[start:stop]
-            if stop > len(data):
-                d = np.concatenate((d, np.zeros(stop - len(data), dtype=data.dtype)))
-            data_roi.append(d)
-        return data_roi
 
     def get_count(self, nDisplay: int) -> np.ndarray | None:
         cnt = (C.c_double * self.MAXCNT)()

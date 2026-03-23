@@ -16,6 +16,7 @@ import numpy as np
 
 from mahos.inst.instrument import Instrument
 from mahos.inst.pg_dtg_core.dtg_core import DTGCoreMixin
+from mahos.inst.tdc_core import TDCBase
 from mahos.msgs.inst.piezo_msgs import Axis
 from mahos.msgs.inst.camera_msgs import FrameResult
 from mahos.msgs.inst.tdc_msgs import ChannelStatus, RawEvents
@@ -549,7 +550,7 @@ class PD_mock(Instrument):
 Counter_mock = PD_mock
 
 
-class MCS_mock(Instrument):
+class MCS_mock(TDCBase):
     """Mock TDC with synthetic histogram and status data.
 
     This mock uses internal defaults for range and timing and does not require
@@ -571,22 +572,6 @@ class MCS_mock(Instrument):
         self._mean_events += 1.0
         data = np.random.normal(self._mean_events, 1.0, size=self._range)
         return data
-
-    def get_data_roi(self, nDisplay: int, roi: list[tuple[int, int]]) -> list[np.ndarray] | None:
-        data = self.get_data(nDisplay)
-        if data is None:
-            return None
-        data_roi = []
-        for start, stop in roi:
-            # fill up out-of-bounds in ROI with zeros
-            if start < 0:
-                d = np.concatenate((np.zeros(abs(start), dtype=data.dtype), data[:stop]))
-            else:
-                d = data[start:stop]
-            if stop > len(data):
-                d = np.concatenate((d, np.zeros(stop - len(data), dtype=data.dtype)))
-            data_roi.append(d)
-        return data_roi
 
     def get_status(self, nDisplay: int) -> ChannelStatus:
         runtime = time.time() - self._tstart
