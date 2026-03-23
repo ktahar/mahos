@@ -7,7 +7,7 @@ from os import path
 
 import numpy as np
 
-from mahos.inst.pg_dtg_core import dtg_io
+from mahos.inst.pg_core import dtg_io
 from mahos.msgs.inst.pg_msgs import TriggerType, Block, Blocks, BlockSeq
 
 

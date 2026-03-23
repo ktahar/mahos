@@ -15,7 +15,7 @@ import enum
 import numpy as np
 
 from mahos.inst.instrument import Instrument
-from mahos.inst.pg_dtg_core.dtg_core import DTGCoreMixin
+from mahos.inst.pg_core import DTGCoreMixin
 from mahos.inst.tdc_core import TDCBase
 from mahos.msgs.inst.piezo_msgs import Axis
 from mahos.msgs.inst.camera_msgs import FrameResult

@@ -15,8 +15,7 @@ import time
 from mahos.inst.visa_instrument import VisaInstrument
 from mahos.msgs.inst.pg_msgs import Block, Blocks, BlockSeq
 
-from mahos.inst.pg_dtg_core import dtg_io
-from mahos.inst.pg_dtg_core.dtg_core import DTGCoreMixin
+from mahos.inst.pg_core import dtg_io, DTGCoreMixin
 
 
 class DTG5000(VisaInstrument, DTGCoreMixin):
