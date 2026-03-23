@@ -463,12 +463,16 @@ class SPODMRData(BasicMeasData, ComplexDataMixin):
     def measurement_time(self) -> float:
         """calculate measurement time in sec."""
 
+        if not self.has_params():
+            return 0.0
         try:
             freq = self.params["instrument"]["pg_freq"]
             length = self.params["instrument"]["length"]
-            return self.sweeps() * length / freq
-        except KeyError:
+        except (KeyError, TypeError, ValueError):
             return 0.0
+        if freq <= 0.0:
+            return 0.0
+        return self.sweeps() * length / freq
 
     def has_data(self) -> bool:
         partial = self.partial()

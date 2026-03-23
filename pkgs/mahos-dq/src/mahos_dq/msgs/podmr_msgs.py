@@ -265,17 +265,30 @@ class PODMRData(BasicMeasData):
 
     # getters
 
-    def get_bin(self):
+    def get_bin(self) -> float | None:
+        """Get TDC time bin in sec."""
+
         try:
             return self.params["instrument"]["tbin"]
         except (KeyError, TypeError):
             return None
 
-    def get_range(self):
+    def get_range(self) -> float | None:
+        """Get TDC sweep range in sec."""
+
         try:
             return self.params["instrument"]["trange"]
         except (KeyError, TypeError):
+            pass
+
+        # fallback to tbin * len(raw_data) (only works in no-ROI mode)
+        if self.has_roi():
             return None
+        tbin = self.get_bin()
+        data = self.raw_data
+        if tbin is None or data is None:
+            return None
+        return tbin * len(data)
 
     def get_roi_margins(self) -> tuple[float, float]:
         """ROI margins [head, tail] in sec."""
@@ -283,13 +296,13 @@ class PODMRData(BasicMeasData):
         return (self.params.get("roi_head", -1.0e-9), self.params.get("roi_tail", -1.0e-9))
 
     def get_roi_num(self) -> int:
-        """get number of points in a ROI."""
+        """Get number of points in a ROI."""
 
         margin_head, margin_tail = self.get_roi_margins()
         return round((self.params["laser_width"] + margin_head + margin_tail) / self.get_bin())
 
     def get_roi(self, index: int) -> tuple[int, int]:
-        """get ROI (start, stop) at `index` in unit of time bins."""
+        """Get ROI (start, stop) at `index` in unit of time bins."""
 
         head, _ = self.get_roi_margins()
         start = round((self.laser_timing[index] - head) / self.get_bin())
@@ -297,7 +310,7 @@ class PODMRData(BasicMeasData):
         return start, stop
 
     def get_rois(self) -> list[tuple[int, int]]:
-        """get list of ROI (start, stop) in unit of time bins for all the laser pulses."""
+        """Get list of ROI (start, stop) in unit of time bins for all the laser pulses."""
 
         head, _ = self.get_roi_margins()
         num = self.get_roi_num()
@@ -308,7 +321,7 @@ class PODMRData(BasicMeasData):
         return rois
 
     def get_raw_xdata(self) -> np.ndarray | list[np.ndarray] | None:
-        """get x (time) axis of raw data.
+        """Get x (time) axis of raw data.
 
         if roi is enabled, returns list of ndarray for each laser pulses.
         if roi is disabled, returns single ndarray.
@@ -417,7 +430,7 @@ class PODMRData(BasicMeasData):
             return signal_head[0 : len(xdata) * self.num_pattern() : self.num_pattern()] * tbin
 
     def get_xdata(self, fit=False, force_taumode: str = "") -> NDArray | None:
-        """get analyzed xdata.
+        """Get analyzed xdata.
 
         :returns: if data is not ready, None is returned.
         :raises ValueError: when taumode is unknown or method is invalid for given taumode.
@@ -451,7 +464,7 @@ class PODMRData(BasicMeasData):
         return self.fit_data
 
     def get_ydata(self) -> tuple[NDArray | None, NDArray | None]:
-        """get analyzed ydata.
+        """Get analyzed ydata.
 
         :returns: (ydata0, ydata1) if two types of data are available.
                   (ydata, None) if only one type of data is available.
@@ -624,7 +637,7 @@ class PODMRData(BasicMeasData):
         else:
             raise ValueError(f"unknown plotmode {plotmode}")
 
-    def get_sampling_rate(self):
+    def get_sampling_rate(self) -> tuple[float, float]:
         signal_head = self.marker_indices[0]
         N = self.num_pattern()
         if len(signal_head) <= 1:
@@ -696,16 +709,40 @@ class PODMRData(BasicMeasData):
             return 0
         return self.tdc_status.sweeps
 
-    def measurement_time(self) -> float:
-        """calculate measurement time in sec."""
+    def _measurement_time_pg(self) -> float:
+        if not self.has_params():
+            return 0.0
+        try:
+            freq = float(self.params["instrument"]["pg_freq"])
+            length = float(self.params["instrument"]["length"])
+        except (KeyError, TypeError, ValueError):
+            return 0.0
+        if freq <= 0.0:
+            return 0.0
+        return self.sweeps() * length / freq
 
+    def _measurement_time_tdc(self) -> float:
         trange = self.get_range()
         if trange is None:
             return 0.0
         return self.sweeps() * trange
 
+    def measurement_time(self) -> float:
+        """Calculate measurement time in sec.
+
+        PG time and TDC time will be different because of eos_margin;
+        PG time is closer to real measurement time and TDC time is a bit shorter than that.
+        So, this function first tries to return PG time and fallback to TDC time.
+
+        """
+
+        t_pg = self._measurement_time_pg()
+        if t_pg > 0.0:
+            return t_pg
+        return self._measurement_time_tdc()
+
     def has_raw_data(self) -> bool:
-        """return True if current data is valid (not empty nor all zero)."""
+        """Return True if current data is valid (not empty nor all zero)."""
 
         return self.raw_data is not None and (self.raw_data > 0).any()
 
