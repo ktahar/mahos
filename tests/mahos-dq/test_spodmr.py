@@ -49,7 +49,7 @@ def _spodmr_params() -> dict:
         "accum_rep": 2,
         "drop_rep": 1,
         "lockin_rep": 1,
-        "pd_rate": 500e3,
+        "pd": {"rate": 500e3},
         "pulse": {},
     }
 

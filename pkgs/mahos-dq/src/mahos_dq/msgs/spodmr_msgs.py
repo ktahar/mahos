@@ -94,7 +94,7 @@ class SPODMRData(BasicMeasData, ComplexDataMixin):
     """
 
     def __init__(self, params: dict | None = None, label: str = ""):
-        self.set_version(3)
+        self.set_version(4)
         self.init_params(params, label)
         self.init_attrs()
 
@@ -593,5 +593,18 @@ def update_data(data: SPODMRData):
                 data.params[k + "1"] = data.params[k + "2"]
                 del data.params[k + "2"]
         data.set_version(3)
+
+    if data.version() <= 3:
+        # version 3 to 4
+        params = data.params
+        if "pd" not in params:
+            params["pd"] = {}
+        if "pd_rate" in params:
+            params["pd"]["rate"] = params["pd_rate"]
+            del params["pd_rate"]
+        if "pd_bounds" in params:
+            params["pd"]["bounds"] = params["pd_bounds"]
+            del params["pd_bounds"]
+        data.set_version(4)
 
     return data

@@ -449,7 +449,7 @@ class BlockSeqBuilder(object):
         )
         mw_offset_ticks = int(round(params.get("mw_offset", 0.0) * freq))
         trigger_width = int(round(freq * self.trigger_width))
-        pd_period = int(round(freq / params["pd_rate"]))
+        pd_period = int(round(freq / params["pd"]["rate"]))
 
         partial = params["partial"]
         if partial == -1:
@@ -631,7 +631,7 @@ class Pulser(Worker):
 
     def init_start_pds(self) -> bool:
         params = self.data.params
-        rate = params["pd_rate"]
+        rate = params["pd"]["rate"]
 
         params_clock = {
             "freq": rate,
@@ -660,7 +660,7 @@ class Pulser(Worker):
             "every": self.conf.get("every", False),
             "clock_mode": True,
             "oversample": self.oversample,
-            "bounds": params.get("pd_bounds", (-10.0, 10.0)),
+            "bounds": params["pd"].get("bounds", (-10.0, 10.0)),
         }
         if self._pd_data_transfer:
             params_pd["data_transfer"] = self._pd_data_transfer
@@ -962,13 +962,6 @@ class Pulser(Worker):
             quick_resume=P.BoolParam(False),
             sweeps=P.IntParam(0, 0, 9999999),
             ident=P.UUIDParam(optional=True, enable=False),
-            pd_rate=P.FloatParam(
-                self.conf.get("pd_rate", 500e3), 1e3, 10000e3, doc="PD sampling rate"
-            ),
-            pd_bounds=[
-                P.FloatParam(-10.0, -10.0, +10.0, doc="PD voltage lower bound"),
-                P.FloatParam(+10.0, -10.0, +10.0, doc="PD voltage upper bound"),
-            ],
             accum_window=P.FloatParam(
                 self.conf.get("accum_window", 1e-3), 1e-5, 1.0, doc="accumulation time window"
             ),
@@ -988,6 +981,20 @@ class Pulser(Worker):
                 "default", ("default", "lockin", "laser"), doc="mode of sync channel"
             ),
         )
+        d["pd"] = P.ParamDict()
+        d["pd"]["rate"] = P.FloatParam(
+            self.conf.get("pd_rate", 500e3),
+            1e3,
+            100e6,
+            unit="Hz",
+            SI_prefix=True,
+            doc="PD sampling rate",
+        )
+        lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
+        d["pd"]["bounds"] = [
+            P.FloatParam(lb, -10.0, +10.0, doc="PD voltage lower bound"),
+            P.FloatParam(ub, -10.0, +10.0, doc="PD voltage upper bound"),
+        ]
 
         for i in range(len(self.mw_channels)):
             idx = "" if not i else i

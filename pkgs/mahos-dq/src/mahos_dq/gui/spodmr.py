@@ -569,8 +569,6 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
                 ("accum_rep", self.accumrepBox),
                 ("drop_rep", self.droprepBox),
                 ("lockin_rep", self.lockinrepBox),
-                ("pd_rate", self.pdrateBox, 1e-3),  # Hz to kHz
-                ("pd_bounds", [self.pd_lbBox, self.pd_ubBox]),
                 ("laser_delay", self.ldelayBox, 1e9),
                 ("laser_width", self.lwidthBox, 1e9),
                 ("mw_delay", self.mdelayBox, 1e9),
@@ -622,8 +620,12 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         self.update_cond_widgets()
         self._apply_sg1(self._params)
         pp = P.ParamDict(
-            {k: v for k, v in self._params["pulse"].items() if k not in ("90pulse", "180pulse")}
+            pulse={
+                k: v for k, v in self._params["pulse"].items() if k not in ("90pulse", "180pulse")
+            }
         )
+        if "pd" in self._params:
+            pp["pd"] = self._params["pd"]
         self.paramTable.update_contents(pp)
         self.reset_tau_modes(self._params["plot"]["taumode"].options())
         self.plot.update_label(self.data)
@@ -761,11 +763,6 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             self.droprepBox.setValue(p["drop_rep"])
         if "lockin_rep" in p:
             self.lockinrepBox.setValue(p["lockin_rep"])
-        self.pdrateBox.setValue(round(p.get("pd_rate", 1e5) * 1e-3))
-        if "pd_bounds" in p:
-            lb, ub = p["pd_bounds"]
-            self.pd_lbBox.setValue(lb)
-            self.pd_ubBox.setValue(ub)
 
         # method
         self.set_method(self.data.label)
@@ -774,11 +771,15 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         pp = p["pulse"]
         for k, v in pp.items():
             if k not in ("90pulse", "180pulse"):
-                self.paramTable.apply_value(k, v)
+                self.paramTable.apply_value("pulse." + k, v)
         if "90pulse" in pp:
             self.t90pulseBox.setValue(pp["90pulse"] * 1e9)  # sec to ns
         if "180pulse" in pp:
             self.t180pulseBox.setValue(pp["180pulse"] * 1e9)  # sec to ns
+        # optional pd params
+        if "pd" in p:
+            for k, v in p["pd"].items():
+                self.paramTable.apply_value("pd." + k, v)
 
         # MW
         self.freqBox.setValue(p.get("freq", 2740e6) * 1e-6)  # Hz to MHz
@@ -866,8 +867,6 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         params["power"] = self.powerBox.value()
         params["nomw"] = self.nomwBox.isChecked()
         params["sweeps"] = self.sweepsBox.value()
-        params["pd_rate"] = self.pdrateBox.value() * 1e3  # kHz to Hz
-        params["pd_bounds"] = [self.pd_lbBox.value(), self.pd_ubBox.value()]
         params["accum_window"] = self.accumwindowBox.value() * 1e-3  # ms to sec
         params["accum_rep"] = self.accumrepBox.value()
         params["drop_rep"] = self.droprepBox.value()
@@ -903,11 +902,14 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             params["step"] = self.stepBox.value() * 1e-9  # ns to sec
             params["log"] = self.logBox.isChecked()
 
-        params["pulse"] = P.unwrap(self.paramTable.params())
+        pt = P.unwrap(self.paramTable.params())
+        params["pulse"] = pt["pulse"]
         if "90pulse" in self._params["pulse"]:
             params["pulse"]["90pulse"] = self.t90pulseBox.value() * 1e-9
         if "180pulse" in self._params["pulse"]:
             params["pulse"]["180pulse"] = self.t180pulseBox.value() * 1e-9
+        if "pd" in pt:
+            params["pd"] = pt["pd"]
 
         params["plot"] = self.get_plot_params()
         params["fg"] = self.get_fg_params()
@@ -1062,9 +1064,6 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             self.accumwindowBox,
             self.accumrepBox,
             self.droprepBox,
-            self.pdrateBox,
-            self.pd_lbBox,
-            self.pd_ubBox,
             self.invertsweepBox,
             self.reduceBox,
             self.ldelayBox,
