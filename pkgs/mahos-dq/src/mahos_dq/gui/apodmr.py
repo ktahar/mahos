@@ -258,6 +258,11 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
                 ("mw_offset", self.moffsetBox, 1e9),
             ],
         )
+
+        # disable divideblockBox because backend doesn't support it now.
+        assert not self.divideblockBox.isChecked()
+        self.divideblockBox.setEnabled(False)
+
         if "freq1" in params:
             apply_widgets(
                 params,
@@ -410,7 +415,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             self.roitailBox,
             self.invertsweepBox,
             self.reduceBox,
-            self.divideblockBox,
+            # self.divideblockBox,
             self.basewidthBox,
             self.ldelayBox,
             self.lwidthBox,

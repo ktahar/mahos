@@ -187,6 +187,9 @@ class APODMRBlockBuilder(object):
             final_delay,
         ) = common_pulses
 
+        if params.get("divide_block", False):
+            raise ValueError("divide_block=True is TODO and not implemented in APODMR.")
+
         if trigger_width <= 0:
             raise ValueError("trigger_width must be positive")
 
@@ -243,6 +246,10 @@ class APODMRBlockBuilder(object):
                 t += unit.total_length() * shots_per_point
 
         out.append(Block("FINAL", [(("sync",) + phases, final_block_width)]))
+
+        # TODO: block shaping based on params["divide_block"], self.minimum_block_length,
+        # and self.block_base. But we must care about concat and repeat above;
+        # it cannot be simply copied from generator_kernel.build_blocks.
 
         if params.get("pulse", {}).get("invertY", False):
             out = K.invert_y_phase(out)
@@ -633,6 +640,10 @@ class Pulser(PODMRPulser):
             taumodes = tuple(m for m in d["plot"]["taumode"].options() if m != "head")
             d["plot"]["taumode"] = P.StrChoiceParam("raw", taumodes)
 
+        # Since divide_block is TODO and not implemented, default it to False anyway.
+        if "divide_block" in d:
+            d["divide_block"] = P.BoolParam(False)
+        # remove unused params
         if "timebin" in d:
             del d["timebin"]
         if "interval" in d:

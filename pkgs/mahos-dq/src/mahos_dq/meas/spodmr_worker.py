@@ -929,10 +929,11 @@ class Pulser(Worker):
         ## common switches
         d["invert_sweep"] = P.BoolParam(False)
         d["enable_reduce"] = P.BoolParam(False)
-        d["divide_block"] = P.BoolParam(True)
         d["partial"] = P.IntChoiceParam(
             -1, (-1, 0, 1, 2), doc="-1: complementary, 0/1: 0/1 only, 2: lockin"
         )
+        # divide block is unused
+        # d["divide_block"] = P.BoolParam(False)
 
         ## sweep params (tau / N)
         if self.generators[label].is_sweepN():
