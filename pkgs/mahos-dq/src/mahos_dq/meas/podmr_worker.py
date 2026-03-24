@@ -504,6 +504,8 @@ class Pulser(Worker, ConfTypeCheckMixin):
                 "diff",
                 "average",
                 "normalize",
+                "linear-bg0",
+                "linear-bg1",
                 "concatenate",
                 "ref",
             )

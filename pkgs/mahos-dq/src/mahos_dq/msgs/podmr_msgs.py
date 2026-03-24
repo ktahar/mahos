@@ -14,6 +14,7 @@ import typing as T
 
 import numpy as np
 from numpy.typing import NDArray
+from numpy.polynomial.polynomial import Polynomial
 import msgpack
 
 from mahos.msgs.fit_msgs import PeakType
@@ -522,6 +523,18 @@ class PODMRData(BasicMeasData):
             return self._get_ydata_complementary_n4()
         raise ValueError(f"unsupported num_pattern {N} for complementary mode")
 
+    def _linear_bg(self, y):
+        if len(y) == 1:
+            return np.zeros_like(y)
+        x = self.get_xdata()
+        try:
+            p = Polynomial.fit(x, y, 1)
+            b, a = p.convert().coef
+            return a * x + b
+        except (TypeError, ValueError, np.linalg.LinAlgError) as e:
+            print(f"error in Polynomial.fit: {e}")
+            return np.zeros_like(y)
+
     def _get_ydata_complementary_n2(self):
         s0_raw = self._get_pattern_data(0)
         s1_raw = self._get_pattern_data(1)
@@ -569,6 +582,12 @@ class PODMRData(BasicMeasData):
                 return (s1 - s0) / (s0 + s1) * 2, None
             else:
                 return (s0 - s1) / (s0 + s1) * 2, None
+        elif plotmode == "linear-bg0":
+            bg = self._linear_bg(s0)
+            return s0 - bg, s1 - bg
+        elif plotmode == "linear-bg1":
+            bg = self._linear_bg(s1)
+            return s0 - bg, s1 - bg
         elif plotmode == "concatenate":
             return np.column_stack((s0, s1)).reshape(len(s0) * 2), None
         elif plotmode == "ref":
