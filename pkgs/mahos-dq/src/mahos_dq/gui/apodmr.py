@@ -220,6 +220,9 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
     def supports_discard(self) -> bool:
         return False
 
+    def supports_find_laser_timing(self) -> bool:
+        return False
+
     def init_widgets_with_params(self):
         params = self.cli.get_param_dict("rabi")
 

@@ -44,6 +44,28 @@ class UpdatePlotParamsReq(Request):
         self.params = params
 
 
+class FindLaserTimingReq(Request):
+    """Request to find laser timing."""
+
+    def __init__(
+        self,
+        scope: tuple[float, float],
+        smooth_window: int = 5,
+        fraction: float = 0.5,
+        monotonic: bool = True,
+    ):
+        self.scope = scope
+        self.smooth_window = smooth_window
+        self.fraction = fraction
+        self.monotonic = monotonic
+
+
+class ClearLaserTimingReq(Request):
+    """Request to clear laser timing."""
+
+    pass
+
+
 class TDCStatus(T.NamedTuple):
     runtime: int
     sweeps: int
@@ -122,7 +144,7 @@ class PODMRData(BasicMeasData):
     """
 
     def __init__(self, params: dict | None = None, label: str = ""):
-        self.set_version(7)
+        self.set_version(8)
         self.init_params(params, label)
         self.init_attrs()
 
@@ -144,6 +166,7 @@ class PODMRData(BasicMeasData):
 
         self.marker_indices = None
         self.laser_timing = None
+        self.laser_timing_offset = None
 
     def _get_pattern_data(self, i: int):
         return getattr(self, f"data{i}", None)
@@ -931,4 +954,9 @@ def update_data(data: PODMRData):
             data.params["num_pattern"] = 2
         data.set_version(7)
 
+    if data.version() <= 7:
+        # version 7 to 8
+        if not hasattr(data, "laser_timing_offset"):
+            data.laser_timing_offset = None
+        data.set_version(8)
     return data

@@ -11,7 +11,13 @@ Qt signal-based clients of Pulse ODMR.
 from mahos.gui.Qt import QtCore
 
 from mahos_dq.msgs.podmr_msgs import PODMRData, PODMRStatus
-from mahos_dq.msgs.podmr_msgs import UpdatePlotParamsReq, ValidateReq, DiscardReq
+from mahos_dq.msgs.podmr_msgs import (
+    UpdatePlotParamsReq,
+    ValidateReq,
+    DiscardReq,
+    FindLaserTimingReq,
+    ClearLaserTimingReq,
+)
 from mahos.gui.client import QBasicMeasClient
 
 
@@ -32,4 +38,18 @@ class QPODMRClient(QBasicMeasClient):
 
     def discard(self) -> bool:
         rep = self.req.request(DiscardReq())
+        return rep.success
+
+    def find_laser_timing(
+        self,
+        scope: tuple[float, float],
+        smooth_window: int = 5,
+        fraction: float = 0.5,
+        monotonic: bool = True,
+    ) -> bool:
+        rep = self.req.request(FindLaserTimingReq(scope, smooth_window, fraction, monotonic))
+        return rep.success
+
+    def clear_laser_timing(self) -> bool:
+        rep = self.req.request(ClearLaserTimingReq())
         return rep.success

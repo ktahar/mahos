@@ -146,6 +146,67 @@ def _run_update_with_histogram(
     return data, tdc
 
 
+def _make_pulse_histogram(
+    length: int, edge_bins: np.ndarray, width: float, amplitude: float, noise_sigma: float
+) -> np.ndarray:
+    x = np.arange(length, dtype=np.float64)
+    y = np.full(length, 5.0, dtype=np.float64)
+    for edge in edge_bins:
+        y += amplitude / (1.0 + np.exp(-(x - edge) / 1.3))
+        y -= amplitude / (1.0 + np.exp(-(x - (edge + width)) / 1.3))
+    rng = np.random.default_rng(7)
+    y += rng.normal(0.0, noise_sigma, size=length)
+    return np.clip(y, 0.0, None)
+
+
+def _find_laser_timing_case(enable_roi: bool, monotonic: bool = True):
+    tbin = 1.0e-9
+    scope = (20.0 * tbin, 20.0 * tbin)
+    nominal_bins = np.array([60, 150, 240, 330, 420], dtype=np.float64)
+    drift_bins = np.array([0.0, 0.4, 0.9, 1.4, 2.1], dtype=np.float64)
+    edge_bins = nominal_bins + drift_bins
+
+    params = _podmr_params_for_tdc_test(
+        partial=0,
+        enable_roi=enable_roi,
+        sigwidth=2.0e-9,
+        refwidth=2.0e-9,
+        refdelay=1.0e-9,
+        roi_margin=40.0e-9,
+    )
+    params["instrument"]["tbin"] = tbin
+    params["instrument"]["trange"] = 600.0 * tbin
+    params["laser_width"] = 16.0e-9
+
+    data = PODMRData(params, "rabi")
+    data.laser_timing = nominal_bins * tbin
+
+    hist = _make_pulse_histogram(560, edge_bins, width=16.0, amplitude=120.0, noise_sigma=1.0)
+    if enable_roi:
+        rois = data.get_rois()
+        data.raw_data = np.array([hist[start:stop] for start, stop in rois], dtype=np.float64)
+    else:
+        data.raw_data = hist
+
+    op = PODMRDataOperator()
+    assert op.find_laser_timing(data, scope, smooth_window=5, monotonic=monotonic)
+
+    expected = (drift_bins - drift_bins[0]) * tbin
+    np.testing.assert_allclose(data.laser_timing_offset, expected, atol=1.0 * tbin)
+
+
+def test_find_laser_timing_noroi():
+    _find_laser_timing_case(enable_roi=False)
+
+
+def test_find_laser_timing_roi():
+    _find_laser_timing_case(enable_roi=True)
+
+
+def test_find_laser_timing_noroi_no_monotonic():
+    _find_laser_timing_case(enable_roi=False, monotonic=False)
+
+
 @pytest.mark.parametrize("partial", (-1, 0), ids=("complementary", "partial"))
 @pytest.mark.parametrize(
     ("sigwidth", "refwidth", "refdelay", "roi_margin"),

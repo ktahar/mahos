@@ -445,6 +445,7 @@ class RawPlotWidget(QtWidgets.QWidget):
     def plot_raw(self, data: PODMRData):
         # sig_head, sig_tail, ref_head, ref_tail
         BRUSHES = ((255, 0, 0), (255, 128, 0), (0, 0, 255), (0, 128, 255))
+        LASER_TIMING_PEN = pg.mkPen((0, 180, 0), width=1, style=QtCore.Qt.PenStyle.DashLine)
 
         def plot_markers_roi(rx, ry, start, stop):
             for inds, brush in zip(data.marker_indices, BRUSHES):
@@ -468,6 +469,23 @@ class RawPlotWidget(QtWidgets.QWidget):
                 y = np.array([ry[i] for i in inds[start:stop]])
                 self.raw_plot.plot(
                     x, y, pen=None, symbolPen=None, symbol="o", symbolSize=8, symbolBrush=brush
+                )
+
+        def plot_laser_timing_lines(start, stop):
+            if data.laser_timing is None or data.laser_timing_offset is None:
+                return
+            timing = np.asarray(data.laser_timing, dtype=np.float64)
+            offset = np.asarray(data.laser_timing_offset, dtype=np.float64)
+            if timing.ndim != 1 or offset.ndim != 1 or len(timing) != len(offset):
+                return
+
+            corrected = timing + offset
+            for i in range(start, stop):
+                t = corrected[i]
+                if not np.isfinite(t):
+                    continue
+                self.raw_plot.addItem(
+                    pg.InfiniteLine(angle=90, movable=False, pos=float(t), pen=LASER_TIMING_PEN)
                 )
 
         if not self.isVisible():
@@ -496,6 +514,7 @@ class RawPlotWidget(QtWidgets.QWidget):
             else:
                 self.raw_plot.plot(rx, ry)
                 plot_markers(rx, ry, 0, None)
+            plot_laser_timing_lines(0, laser_pulses)
             return
 
         lstart = self.indexBox.value()
@@ -512,6 +531,7 @@ class RawPlotWidget(QtWidgets.QWidget):
             tail = data.marker_indices[3][lstop] + margin
             self.raw_plot.plot(rx[head:tail], ry[head:tail])
             plot_markers(rx, ry, lstart, lstop + 1)
+        plot_laser_timing_lines(lstart, lstop + 1)
 
     def refresh(self, data: PODMRData):
         try:
@@ -826,6 +846,11 @@ class PODMRWidgetBase(ClientWidget):
 
         return True
 
+    def supports_find_laser_timing(self) -> bool:
+        """When True, UI must have findLaserTimingButton etc."""
+
+        return True
+
     def init_radiobuttons(self):
         def set_group(group, index, buttons):
             for b in buttons:
@@ -878,6 +903,9 @@ class PODMRWidgetBase(ClientWidget):
 
         if self.supports_discard():
             self.discardButton.clicked.connect(self.discard_data)
+        if self.supports_find_laser_timing():
+            self.findLaserTimingButton.clicked.connect(self.find_laser_timing)
+            self.clearLaserTimingButton.clicked.connect(self.clear_laser_timing)
 
         # main tab
         for w in (self.startBox, self.stepBox, self.numBox):
@@ -1495,6 +1523,20 @@ class PODMRWidgetBase(ClientWidget):
     def discard_data(self):
         if self.supports_discard():
             self.cli.discard()
+
+    def find_laser_timing(self):
+        if not self.supports_find_laser_timing():
+            return
+        scope = (self.scopeHeadBox.value() * 1e-9, self.scopeTailBox.value() * 1e-9)
+        smooth_window = self.smoothWindowBox.value()
+        fraction = self.fractionBox.value()
+        monotonic = self.monotonicBox.isChecked()
+        self.cli.find_laser_timing(scope, smooth_window, fraction, monotonic)
+
+    def clear_laser_timing(self):
+        if not self.supports_find_laser_timing():
+            return
+        self.cli.clear_laser_timing()
 
     def refresh_plot(self):
         self.plot.refresh(self.get_plottable_data(), self.data)

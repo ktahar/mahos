@@ -94,6 +94,22 @@
         </widget>
        </item>
        <item>
+        <spacer name="horizontalSpacer_7">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Minimum</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
         <widget class="QCheckBox" name="quickresumeBox">
          <property name="text">
           <string>Quick resume</string>
@@ -1378,6 +1394,138 @@
           </widget>
          </item>
          <item>
+          <widget class="QGroupBox" name="groupBox_6">
+           <property name="title">
+            <string>Find Laser Timing</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_2">
+            <item row="0" column="2">
+             <widget class="QDoubleSpinBox" name="scopeTailBox">
+              <property name="prefix">
+               <string>tail: </string>
+              </property>
+              <property name="suffix">
+               <string> ns</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>-1000000.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>1000000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>100.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>1000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QPushButton" name="findLaserTimingButton">
+              <property name="text">
+               <string>Find Now</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_16">
+              <property name="text">
+               <string>Scope</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <spacer name="horizontalSpacer_6">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="scopeHeadBox">
+              <property name="prefix">
+               <string>head: </string>
+              </property>
+              <property name="suffix">
+               <string> ns</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="minimum">
+               <double>-1000000.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>1000000.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>100.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="fractionBox">
+              <property name="prefix">
+               <string>fraction: </string>
+              </property>
+              <property name="maximum">
+               <double>1.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="value">
+               <double>0.500000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QCheckBox" name="monotonicBox">
+              <property name="text">
+               <string>monotonic</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QPushButton" name="clearLaserTimingButton">
+              <property name="text">
+               <string>Clear</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QSpinBox" name="smoothWindowBox">
+              <property name="prefix">
+               <string>smooth window: </string>
+              </property>
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="singleStep">
+               <number>2</number>
+              </property>
+              <property name="value">
+               <number>3</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <widget class="QGroupBox" name="fgGroupBox">
            <property name="enabled">
             <bool>true</bool>
@@ -1682,6 +1830,13 @@
   <tabstop>logXBox</tabstop>
   <tabstop>logYBox</tabstop>
   <tabstop>flipYBox</tabstop>
+  <tabstop>scopeHeadBox</tabstop>
+  <tabstop>scopeTailBox</tabstop>
+  <tabstop>smoothWindowBox</tabstop>
+  <tabstop>monotonicBox</tabstop>
+  <tabstop>fractionBox</tabstop>
+  <tabstop>findLaserTimingButton</tabstop>
+  <tabstop>clearLaserTimingButton</tabstop>
   <tabstop>fg_disableButton</tabstop>
   <tabstop>fg_cwButton</tabstop>
   <tabstop>fg_gateButton</tabstop>

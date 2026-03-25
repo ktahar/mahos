@@ -11,8 +11,10 @@ Worker for Pulse ODMR.
 from __future__ import annotations
 import time
 import copy
+from dataclasses import dataclass
 
 import numpy as np
+from scipy.optimize import isotonic_regression
 
 from mahos.util.timer import IntervalTimer
 from mahos_dq.msgs.podmr_msgs import PODMRData, TDCStatus, is_sweepN, is_CPlike, is_correlation
@@ -26,12 +28,258 @@ from mahos.inst.fg_interface import FGInterface
 from mahos.util.conf import PresetLoader
 from mahos.util.typing import ConfTypeCheckMixin
 from mahos.meas.common_worker import Worker
+from mahos.node.log import DummyLogger
 
 from mahos_dq.meas.podmr_generator.generator import make_generators
 
 
+@dataclass(frozen=True)
+class LaserTimingParams:
+    """Parameters for laser edge timing detection."""
+
+    scope: tuple[float, float]
+    smooth_window: int = 5
+    fraction: float = 0.5
+    monotonic: bool = True
+
+    def validate(self) -> bool:
+        """Return True if this config is valid."""
+
+        return self.smooth_window >= 1 and 0.0 < self.fraction < 1.0
+
+
+@dataclass(frozen=True)
+class LaserTimingResult:
+    """Result of laser edge timing detection."""
+
+    success: bool
+    offsets: np.ndarray | None = None
+
+
+class LaserTimingDetector(object):
+    """Detector for laser edge timing and offset fitting."""
+
+    def __init__(self, logger=None):
+        if logger is None:
+            self.logger = DummyLogger()
+        else:
+            self.logger = logger
+
+    @staticmethod
+    def _odd_window_length(length: int, smooth_window: int) -> int:
+        if length <= 1:
+            return 1
+        window = max(1, int(smooth_window))
+        window = min(window, length)
+        if window % 2 == 0:
+            window = max(1, window - 1)
+        return window
+
+    @staticmethod
+    def _moving_average(data: np.ndarray, window: int) -> np.ndarray:
+        if window <= 1:
+            return data
+        kernel = np.full(window, 1.0 / window, dtype=np.float64)
+        return np.convolve(data, kernel, mode="same")
+
+    def _estimate_edge_constant_fraction(
+        self, seg: np.ndarray, smooth_window: int, fraction: float
+    ) -> float | None:
+        """Estimate rising edge timing in seg and return edge index in float."""
+
+        seg = np.asarray(seg, dtype=np.float64)
+        if seg.ndim != 1 or len(seg) < 3:
+            return None
+
+        smooth = self._moving_average(seg, self._odd_window_length(len(seg), smooth_window))
+
+        q = max(1, len(smooth) // 4)
+        baseline = float(np.median(smooth[:q]))
+        level = float(np.median(smooth[-q:]))
+        amp = level - baseline
+        if not np.isfinite(amp) or amp <= 0.0:
+            return None
+
+        threshold = baseline + fraction * amp
+        crossings = np.flatnonzero((smooth[:-1] < threshold) & (smooth[1:] >= threshold))
+        if len(crossings):
+            i0 = int(crossings[0])
+            i1 = i0 + 1
+        else:
+            # fallback to the closest sample to threshold
+            i1 = int(np.argmin(np.abs(smooth - threshold)))
+            if i1 <= 0:
+                i0, i1 = 0, 1
+            else:
+                i0 = i1 - 1
+
+        y0, y1 = smooth[i0], smooth[i1]
+        if not np.isfinite(y0) or not np.isfinite(y1):
+            return None
+        if y1 == y0:
+            edge = float(i1)
+        else:
+            # sub-bin linear interpolation
+            frac = (threshold - y0) / (y1 - y0)
+            edge = float(i0) + float(np.clip(frac, 0.0, 1.0))
+
+        return edge
+
+    def _fit_monotonic_offsets(self, offsets: np.ndarray) -> np.ndarray:
+        """Fit monotonic drift (increasing or decreasing) by isotonic regression."""
+
+        offsets = np.asarray(offsets, dtype=np.float64)
+        inc = isotonic_regression(offsets, increasing=True).x
+        dec = isotonic_regression(offsets, increasing=False).x
+
+        err_inc = np.sum(np.square(offsets - inc))
+        err_dec = np.sum(np.square(offsets - dec))
+        return dec if err_dec < err_inc else inc
+
+    def _finalize_offsets(self, offsets: np.ndarray, monotonic: bool) -> np.ndarray | None:
+        valid = np.isfinite(offsets)
+        if not np.any(valid):
+            return None
+
+        if not np.all(valid):
+            idx = np.arange(len(offsets))
+            if np.count_nonzero(valid) == 1:
+                offsets = np.full_like(offsets, offsets[valid][0], dtype=np.float64)
+            else:
+                offsets = np.interp(idx, idx[valid], offsets[valid])
+
+        if monotonic and len(offsets) > 1:
+            offsets = self._fit_monotonic_offsets(offsets)
+        return offsets
+
+    def detect_roi(
+        self,
+        traces: np.ndarray,
+        rois: list[tuple[int, int]],
+        laser_timing: np.ndarray,
+        tbin: float,
+        config: LaserTimingParams,
+    ) -> LaserTimingResult:
+        """Detect laser timing offsets in ROI mode."""
+
+        head, tail = config.scope
+        if traces.ndim != 2 or len(traces) != len(laser_timing):
+            self.logger.error(
+                "FindLaserTiming (ROI): invalid trace shape. "
+                f"ndim={traces.ndim}, traces={len(traces)}, laser_timing={len(laser_timing)}"
+            )
+            return LaserTimingResult(False)
+
+        starts = np.round((laser_timing - head) / tbin).astype(int)
+        stops = np.round((laser_timing + tail) / tbin).astype(int)
+
+        offsets = np.full(len(laser_timing), np.nan, dtype=np.float64)
+        short_segments = 0
+        no_edge = 0
+
+        for i, (timing, start, stop, (roi_start, _), trace) in enumerate(
+            zip(laser_timing, starts, stops, rois, traces)
+        ):
+            local_start = max(0, start - roi_start)
+            local_stop = min(len(trace), stop - roi_start)
+            if local_stop - local_start < 3:
+                short_segments += 1
+                continue
+
+            edge = self._estimate_edge_constant_fraction(
+                trace[local_start:local_stop], config.smooth_window, config.fraction
+            )
+            if edge is None:
+                no_edge += 1
+                continue
+
+            offsets[i] = (roi_start + local_start + edge) * tbin - timing
+
+        valid = np.isfinite(offsets)
+        valid_num = int(np.count_nonzero(valid))
+        if valid_num == 0:
+            self.logger.error(
+                "FindLaserTiming (ROI): failed to detect any laser edge. "
+                f"short_segments={short_segments}, no_edge={no_edge}"
+            )
+            return LaserTimingResult(False)
+        if valid_num < len(offsets):
+            self.logger.warn(
+                "FindLaserTiming (ROI): partial detection, "
+                f"valid={valid_num}/{len(offsets)} (short={short_segments}, no_edge={no_edge}). "
+                "Missing offsets will be interpolated."
+            )
+
+        offsets = self._finalize_offsets(offsets, config.monotonic)
+        if offsets is None:
+            self.logger.error("FindLaserTiming (ROI): failed at final offset aggregation.")
+            return LaserTimingResult(False)
+        return LaserTimingResult(True, offsets=offsets)
+
+    def detect_noroi(
+        self, raw: np.ndarray, laser_timing: np.ndarray, tbin: float, config: LaserTimingParams
+    ) -> LaserTimingResult:
+        """Detect laser timing offsets in no-ROI mode."""
+
+        head, tail = config.scope
+        if raw.ndim != 1:
+            self.logger.error(f"FindLaserTiming (no-ROI): invalid raw_data ndim={raw.ndim}.")
+            return LaserTimingResult(False)
+
+        starts = np.round((laser_timing - head) / tbin).astype(int)
+        stops = np.round((laser_timing + tail) / tbin).astype(int)
+
+        offsets = np.full(len(laser_timing), np.nan, dtype=np.float64)
+        short_segments = 0
+        no_edge = 0
+
+        for i, (start, stop, timing) in enumerate(zip(starts, stops, laser_timing)):
+            start = max(0, start)
+            stop = min(len(raw), stop)
+            if stop - start < 3:
+                short_segments += 1
+                continue
+
+            edge = self._estimate_edge_constant_fraction(
+                raw[start:stop], config.smooth_window, config.fraction
+            )
+            if edge is None:
+                no_edge += 1
+                continue
+
+            offsets[i] = (start + edge) * tbin - timing
+
+        valid = np.isfinite(offsets)
+        valid_num = int(np.count_nonzero(valid))
+        if valid_num == 0:
+            self.logger.error(
+                "FindLaserTiming (no-ROI): failed to detect any laser edge. "
+                f"short_segments={short_segments}, no_edge={no_edge}"
+            )
+            return LaserTimingResult(False)
+        if valid_num < len(offsets):
+            self.logger.warn(
+                "FindLaserTiming (no-ROI): partial detection, "
+                f"valid={valid_num}/{len(offsets)} (short={short_segments}, no_edge={no_edge}). "
+                "Missing offsets will be interpolated."
+            )
+
+        offsets = self._finalize_offsets(offsets, config.monotonic)
+        if offsets is None:
+            self.logger.error("FindLaserTiming (no-ROI): failed at final offset aggregation.")
+            return LaserTimingResult(False)
+        return LaserTimingResult(True, offsets=offsets)
+
+
 class PODMRDataOperator(object):
     """Operations (set / get / analyze) on PODMRData."""
+
+    def __init__(self, logger=None):
+        if logger is None:
+            self.logger = DummyLogger()
+        else:
+            self.logger = logger
+        self.laser_timing_detector = LaserTimingDetector(self.logger)
 
     def set_laser_timing(self, data: PODMRData, laser_timing):
         if data.laser_timing is not None:
@@ -55,8 +303,83 @@ class PODMRDataOperator(object):
         data.raw_data = data_new
         data.tdc_status = tdc_status
 
+    def _apply_laser_timing_result(self, data: PODMRData, result: LaserTimingResult) -> bool:
+        if not result.success or result.offsets is None:
+            return False
+
+        data.laser_timing_offset = result.offsets
+        mn, mx = np.min(data.laser_timing_offset) * 1e9, np.max(data.laser_timing_offset) * 1e9
+        self.logger.info(
+            f"Set laser timing offset: min {mn:.1f}, max {mx:.1f}, delta {mx-mn:.1f} ns"
+        )
+        return True
+
+    def _find_laser_timing_roi(self, data: PODMRData, config: LaserTimingParams) -> bool:
+        tbin = data.get_bin()
+        if tbin is None:
+            return False
+
+        result = self.laser_timing_detector.detect_roi(
+            traces=np.asarray(data.raw_data),
+            rois=data.get_rois(),
+            laser_timing=np.asarray(data.laser_timing, dtype=np.float64),
+            tbin=tbin,
+            config=config,
+        )
+        return self._apply_laser_timing_result(data, result)
+
+    def _find_laser_timing_noroi(self, data: PODMRData, config: LaserTimingParams) -> bool:
+        tbin = data.get_bin()
+        if tbin is None:
+            return False
+
+        result = self.laser_timing_detector.detect_noroi(
+            raw=np.asarray(data.raw_data, dtype=np.float64),
+            laser_timing=np.asarray(data.laser_timing, dtype=np.float64),
+            tbin=tbin,
+            config=config,
+        )
+        return self._apply_laser_timing_result(data, result)
+
+    def find_laser_timing(
+        self,
+        data: PODMRData,
+        scope: tuple[float, float],
+        smooth_window: int = 5,
+        fraction: float = 0.5,
+        monotonic: bool = True,
+    ) -> bool:
+        """Find actual laser timing from raw data and store the offset in laser_timing_offset.
+
+        :param scope: (head, tail) the scope around laser_timing to look for the laser edge
+            in real time unit (sec).
+
+        :param smooth_window: smoothing window length in bins. Even values are rounded down
+            to odd so moving-average smoothing stays centered on a bin and avoids half-bin bias.
+        :param fraction: constant-fraction level for edge timing (0.0 to 1.0).
+        :param monotonic: if True, fit offsets with monotonic drift constraint.
+
+        """
+
+        config = LaserTimingParams(scope, smooth_window, fraction, monotonic)
+        if not config.validate():
+            return False
+        if not data.has_raw_data() or data.get_bin() is None or data.laser_timing is None:
+            return False
+        if data.has_roi():
+            return self._find_laser_timing_roi(data, config)
+        else:
+            return self._find_laser_timing_noroi(data, config)
+
+    def clear_laser_timing(self, data: PODMRData) -> bool:
+        if not data.has_raw_data() or data.laser_timing_offset is None:
+            return False
+        data.laser_timing_offset = None
+        self.logger.info("Cleared laser timing offset.")
+        return True
+
     def get_marker_indices(self, data: PODMRData):
-        """get marker indices, that is the analysis timings in unit of time bins."""
+        """Get marker indices, that is the analysis timings in unit of time bins."""
 
         tbin = data.get_bin()
         if data.params is None or tbin is None:
@@ -66,7 +389,15 @@ class PODMRDataOperator(object):
             data.params["plot"][k] for k in ("sigdelay", "sigwidth", "refdelay", "refwidth")
         ]
 
-        signal_head = data.laser_timing + sigdelay
+        if data.laser_timing_offset is not None:
+            # apply the offsets as relative values to the first laser timing.
+            # global offset is handled by user-tuned timing parameters below (e.g. sigdelay).
+            ofs = data.laser_timing_offset - data.laser_timing_offset[0]
+            laser_timing = data.laser_timing + ofs
+        else:
+            laser_timing = data.laser_timing
+
+        signal_head = laser_timing + sigdelay
         signal_tail = signal_head + sigwidth
         reference_head = signal_tail + refdelay
         reference_tail = reference_head + refwidth
@@ -118,12 +449,12 @@ class PODMRDataOperator(object):
             try:
                 sig[i] = np.mean(d[sig_head[i] - s : sig_tail[i] - s + 1])
             except IndexError as e:
-                print("analyze_sig (sig %d): %r" % (i, e))
+                self.logger.error("analyze_sig (sig %d): %r" % (i, e))
 
             try:
                 ref[i] = np.mean(d[ref_head[i] - s : ref_tail[i] - s + 1])
             except IndexError as e:
-                print("analyze_sig (ref %d): %r" % (i, e))
+                self.logger.error("analyze_sig (ref %d): %r" % (i, e))
 
         sweeps = data.tdc_status.sweeps
         self._store_partial(data, sig / sweeps, ref / sweeps)
@@ -139,12 +470,12 @@ class PODMRDataOperator(object):
             try:
                 sig[i] = np.mean(data.raw_data[sig_head[i] : sig_tail[i] + 1])
             except IndexError as e:
-                print("analyze_sig (sig %d): %r" % (i, e))
+                self.logger.error("analyze_sig (sig %d): %r" % (i, e))
 
             try:
                 ref[i] = np.mean(data.raw_data[ref_head[i] : ref_tail[i] + 1])
             except IndexError as e:
-                print("analyze_sig (ref %d): %r" % (i, e))
+                self.logger.error("analyze_sig (ref %d): %r" % (i, e))
 
         sweeps = data.tdc_status.sweeps
         self._store_partial(data, sig / sweeps, ref / sweeps)
@@ -162,12 +493,12 @@ class PODMRDataOperator(object):
             try:
                 sig[i] = np.mean(d[sig_head[i] - s : sig_tail[i] - s + 1])
             except IndexError as e:
-                print("analyze_sig (sig %d): %r" % (i, e))
+                self.logger.error("analyze_sig (sig %d): %r" % (i, e))
 
             try:
                 ref[i] = np.mean(d[ref_head[i] - s : ref_tail[i] - s + 1])
             except IndexError as e:
-                print("analyze_sig (ref %d): %r" % (i, e))
+                self.logger.error("analyze_sig (ref %d): %r" % (i, e))
 
         sweeps = data.tdc_status.sweeps
         self._store_complementary(data, sig / sweeps, ref / sweeps)
@@ -184,12 +515,12 @@ class PODMRDataOperator(object):
             try:
                 sig[i] = np.mean(data.raw_data[sig_head[i] : sig_tail[i] + 1])
             except IndexError as e:
-                print("analyze_sig (sig %d): %r" % (i, e))
+                self.logger.error("analyze_sig (sig %d): %r" % (i, e))
 
             try:
                 ref[i] = np.mean(data.raw_data[ref_head[i] : ref_tail[i] + 1])
             except IndexError as e:
-                print("analyze_sig (ref %d): %r" % (i, e))
+                self.logger.error("analyze_sig (ref %d): %r" % (i, e))
 
         sweeps = data.tdc_status.sweeps
         self._store_complementary(data, sig / sweeps, ref / sweeps)
@@ -325,7 +656,7 @@ class Pulser(Worker, ConfTypeCheckMixin):
         self._resume_tdc_status = None
 
         self.data = PODMRData()
-        self.op = PODMRDataOperator()
+        self.op = PODMRDataOperator(self.logger)
         self.bounds = Bounds()
         self.pulse_pattern = None
 
@@ -649,6 +980,20 @@ class Pulser(Worker, ConfTypeCheckMixin):
             self.op.get_marker_indices(self.data)
             self.op.analyze(self.data)
         return True
+
+    def find_laser_timing(self, scope, smooth_window, fraction, monotonic) -> bool:
+        success = self.op.find_laser_timing(self.data, scope, smooth_window, fraction, monotonic)
+        if success:
+            self.op.get_marker_indices(self.data)
+            self.op.analyze(self.data)
+        return success
+
+    def clear_laser_timing(self) -> bool:
+        success = self.op.clear_laser_timing(self.data)
+        if success:
+            self.op.get_marker_indices(self.data)
+            self.op.analyze(self.data)
+        return success
 
     def start(
         self, params: None | P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str

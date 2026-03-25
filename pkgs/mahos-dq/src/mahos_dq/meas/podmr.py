@@ -22,6 +22,8 @@ from mahos_dq.msgs.podmr_msgs import (
     UpdatePlotParamsReq,
     ValidateReq,
     DiscardReq,
+    FindLaserTimingReq,
+    ClearLaserTimingReq,
 )
 from mahos.util.timer import IntervalTimer
 from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
@@ -54,6 +56,20 @@ class PODMRClient(BasicMeasClient):
 
     def discard(self) -> bool:
         rep = self.req.request(DiscardReq())
+        return rep.success
+
+    def find_laser_timing(
+        self,
+        scope: tuple[float, float],
+        smooth_window: int = 5,
+        fraction: float = 0.5,
+        monotonic: bool = True,
+    ) -> bool:
+        rep = self.req.request(FindLaserTimingReq(scope, smooth_window, fraction, monotonic))
+        return rep.success
+
+    def clear_laser_timing(self) -> bool:
+        rep = self.req.request(ClearLaserTimingReq())
         return rep.success
 
 
@@ -260,6 +276,20 @@ class PODMR(BasicMeasNode):
 
         return Reply(self.worker.discard())
 
+    def find_laser_timing(self, msg: FindLaserTimingReq) -> Reply:
+        """Find laser timing of current data."""
+
+        return Reply(
+            self.worker.find_laser_timing(
+                msg.scope, msg.smooth_window, msg.fraction, msg.monotonic
+            )
+        )
+
+    def clear_laser_timing(self, msg: ClearLaserTimingReq) -> Reply:
+        """Clear laser timing offset of current data."""
+
+        return Reply(self.worker.clear_laser_timing())
+
     def handle_req(self, msg: Request) -> Reply:
         if isinstance(msg, UpdatePlotParamsReq):
             return self.update_plot_params(msg)
@@ -267,6 +297,10 @@ class PODMR(BasicMeasNode):
             return self.validate(msg)
         elif isinstance(msg, DiscardReq):
             return self.discard(msg)
+        elif isinstance(msg, FindLaserTimingReq):
+            return self.find_laser_timing(msg)
+        elif isinstance(msg, ClearLaserTimingReq):
+            return self.clear_laser_timing(msg)
         else:
             return Reply(False, "Invalid message type")
 
