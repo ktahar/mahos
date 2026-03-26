@@ -23,7 +23,6 @@ from mahos_dq.msgs.apodmr_msgs import (
     APODMRStatus,
     APODMRData,
     ValidateReq,
-    DiscardReq,
     UpdatePlotParamsReq,
 )
 from mahos_dq.meas.apodmr_worker import Pulser, APODMRDataOperator
@@ -48,10 +47,6 @@ class APODMRClient(BasicMeasClient):
 
     def validate(self, params: dict, label: str) -> bool:
         rep = self.req.request(ValidateReq(params, label))
-        return rep.success
-
-    def discard(self) -> bool:
-        rep = self.req.request(DiscardReq())
         return rep.success
 
 
@@ -262,17 +257,11 @@ class APODMR(BasicMeasNode):
     def validate(self, msg: ValidateReq) -> Reply:
         return Reply(self.worker.validate_params(msg.params, msg.label))
 
-    def discard(self, msg: DiscardReq) -> Reply:
-        self.logger.error("DiscardReq is unsupported for APODMR.")
-        return Reply(False, "Discard request is unsupported for APODMR.")
-
     def handle_req(self, msg: Request) -> Reply:
         if isinstance(msg, UpdatePlotParamsReq):
             return self.update_plot_params(msg)
         elif isinstance(msg, ValidateReq):
             return self.validate(msg)
-        elif isinstance(msg, DiscardReq):
-            return self.discard(msg)
         else:
             return Reply(False, "Invalid message type")
 

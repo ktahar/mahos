@@ -466,9 +466,9 @@ class APODMRMainWindow(QtWidgets.QMainWindow):
         self.d_alt_plot.setWidget(self.alt_plot)
         self.d_raw_plot = QtWidgets.QDockWidget("Raw Plot", parent=self)
         self.d_raw_plot.setWidget(self.raw_plot)
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self.d_alt_plot)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self.d_raw_plot)
+        self.tabifyDockWidget(self.d_raw_plot, self.d_alt_plot)
         self.tabifyDockWidget(self.d_alt_plot, self.d_plot)
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.d_raw_plot)
 
         self.view_menu = self.menuBar().addMenu("View")
         self.view_menu.addAction(self.d_plot.toggleViewAction())
