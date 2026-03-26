@@ -1070,7 +1070,7 @@
                </size>
               </property>
               <property name="prefix">
-               <string>signal width: </string>
+               <string>sig width: </string>
               </property>
               <property name="suffix">
                <string> ns</string>
@@ -1162,7 +1162,7 @@
                </size>
               </property>
               <property name="prefix">
-               <string>signal delay: </string>
+               <string>sig delay: </string>
               </property>
               <property name="suffix">
                <string> ns</string>
