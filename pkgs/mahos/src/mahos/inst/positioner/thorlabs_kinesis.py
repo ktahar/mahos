@@ -27,12 +27,14 @@ try:
 
     sys.path.append(r"C:\Program Files\Thorlabs\Kinesis")
     clr.AddReference("Thorlabs.MotionControl.KCube.DCServoCLI")
+    clr.AddReference("Thorlabs.MotionControl.KCube.BrushlessMotorCLI")
     clr.AddReference("Thorlabs.MotionControl.IntegratedStepperMotorsCLI")
     clr.AddReference("Thorlabs.MotionControl.DeviceManagerCLI")
 
     from Thorlabs.MotionControl import DeviceManagerCLI  # noqa: E402
     from Thorlabs.MotionControl.IntegratedStepperMotorsCLI import CageRotator  # noqa: E402
     from Thorlabs.MotionControl.KCube import DCServoCLI  # noqa: E402
+    from Thorlabs.MotionControl.KCube import BrushlessMotorCLI  # noqa: E402
 except ImportError:
     print("mahos.inst.positioner: failed to import pythonnet or Thorlabs Kinesis modules")
 
@@ -317,6 +319,27 @@ class Thorlabs_KCube_DCServo(_Thorlabs_Kinesis):
 
     def _create_device(self, serial):
         return DCServoCLI.KCubeDCServo.CreateKCubeDCServo(serial)
+
+
+class Thorlabs_KCube_BrushlessMotor(_Thorlabs_Kinesis):
+    """Instrument for Thorlabs KCube Brushless DC servo motor controller (KBD101).
+
+    You need to install Kinesis software.
+
+    :param serial: (default: "") Serial string to discriminate multiple devices.
+        Blank is fine if only one device is connected.
+    :type serial: str
+    :param range: (default: hardware-defined limit) travel range.
+        (lower, upper) bounds of the position.
+    :type range: tuple[float, float]
+
+    """
+
+    def _device_prefix(self):
+        return BrushlessMotorCLI.KCubeBrushlessMotor.DevicePrefix
+
+    def _create_device(self, serial):
+        return BrushlessMotorCLI.KCubeBrushlessMotor.CreateKCubeBrushlessMotor(serial)
 
 
 class Thorlabs_CageRotator(_Thorlabs_Kinesis):
