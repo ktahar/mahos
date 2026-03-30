@@ -749,7 +749,7 @@ class Pulser(Worker):
 
         try:
             blockseq, self.freq, laser_duties, markers, self.oversample = self.generate_blocks()
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {self.data.label}: {e}")
             return False
         self.op.set_laser_duties(self.data, laser_duties)
@@ -820,7 +820,7 @@ class Pulser(Worker):
         d = SPODMRData(params, label)
         try:
             blockseq, freq, laser_duties, markers, oversample = self.generate_blocks(d)
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {label}: {e}")
             return False
         offsets = self.pg.validate_blockseq(blockseq, freq)

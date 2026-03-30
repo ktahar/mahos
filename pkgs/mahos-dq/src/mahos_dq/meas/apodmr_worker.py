@@ -365,7 +365,7 @@ class Pulser(PODMRPulser):
         d = APODMRData(params, label)
         try:
             blocks, freq, _, _, _ = self.generate_blocks(d)
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {label}: {e}")
             return False
         offsets = self.pg.validate_blocks(blocks, freq)
@@ -380,7 +380,7 @@ class Pulser(PODMRPulser):
             blocks, self.freq, laser_timing, trigger_timing, trace_length_ticks = (
                 self.generate_blocks()
             )
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {self.data.label}: {e}")
             return False
         pd_rate = self._pd_rate(params)

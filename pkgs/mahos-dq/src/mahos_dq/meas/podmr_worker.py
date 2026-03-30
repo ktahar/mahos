@@ -800,7 +800,7 @@ class Pulser(Worker, ConfTypeCheckMixin):
 
         try:
             blocks, self.freq, laser_timing = self.generate_blocks()
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {self.data.label}: {e}")
             return False
         self.op.set_laser_timing(self.data, np.array(laser_timing) / self.freq)
@@ -911,7 +911,7 @@ class Pulser(Worker, ConfTypeCheckMixin):
         d = PODMRData(params, label)
         try:
             blocks, freq, laser_timing = self.generate_blocks(d)
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {label}: {e}")
             return False
         offsets = self.pg.validate_blocks(blocks, freq)

@@ -333,6 +333,16 @@ class FIDGenerator(PatternGenerator):
             step=1e-9,
             doc="90 deg (pi/2) pulse width.",
         )
+        if any(m == 1 for m in self.mw_modes):
+            pd["180pulse"] = P.FloatParam(
+                -1e-9,
+                -1e-9,
+                1e-6,
+                unit="s",
+                SI_prefix=True,
+                step=1e-9,
+                doc="180 deg (pi) pulse width for inverted readout.",
+            )
         return pd
 
     def _generate(
@@ -345,9 +355,14 @@ class FIDGenerator(PatternGenerator):
         fix_base_width: int | None,
     ):
         p90 = pulse_params["90pulse"]
-
         p0 = [p90]
         p1 = [p90]
+
+        if "180pulse" in pulse_params:
+            p180 = pulse_params["180pulse"]
+            p0.append(p180)
+            p1.append(p180)
+
         freq, xdata, common_pulses, p0, p1 = K.round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
@@ -369,7 +384,6 @@ class FIDGenerator(PatternGenerator):
                     ((mw_x,), v),
                     ((mw_x, "mw"), p90),
                 ]
-                # TODO maybe we'd better to add parameter p180
                 if mw_inverted(read_phase):
                     # 270 deg pulse
                     p.append(((mw_x, "mw"), p90 * 2))
@@ -379,6 +393,32 @@ class FIDGenerator(PatternGenerator):
                 return p
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
+
+        def gen_with_180(v, p90, p180, read_phase):
+            if self.mode() in (0, 2):
+                v_f, v_l = K.split_int(v, self.split_fraction)
+                return [
+                    ((mw_x, "mw"), p90),
+                    ((mw_x,), v_f),
+                    ((read_phase,), v_l),
+                    ((read_phase, "mw"), p90),
+                ]
+            elif self.mode() == 1:
+                p = [
+                    ((mw_x, "mw"), p90),
+                    ((mw_x,), v),
+                    ((mw_x, "mw"), p90),
+                ]
+                if mw_inverted(read_phase):
+                    # 270 deg pulse
+                    p.append(((mw_x, "mw"), p180))
+                else:
+                    # same delay time to match length of pattern0 and pattern1.
+                    p.append(((mw_x,), p180))
+                return p
+            else:
+                raise ValueError(f"Unknown MW mode: {self.mode()}")
+
 
         if self.mode() in (0, 2):
             read_phase1 = mw_x_inv
@@ -392,7 +432,7 @@ class FIDGenerator(PatternGenerator):
                 i,
                 v,
                 common_pulses,
-                gen,
+                gen_with_180 if "180pulse" in pulse_params else gen,
                 p0,
                 p1,
                 read_phase0=mw_x,
@@ -1418,6 +1458,16 @@ class SpinLockGenerator(PatternGenerator):
             doc="90 deg (pi/2) pulse width.",
         )
         pd["iq_delay"] = P.FloatParam(10e-9, 1e-9, 1000e-9, unit="s", SI_prefix=True, step=1e-9)
+        if any(m == 1 for m in self.mw_modes):
+            pd["180pulse"] = P.FloatParam(
+                -1e-9,
+                -1e-9,
+                1e-6,
+                unit="s",
+                SI_prefix=True,
+                step=1e-9,
+                doc="180 deg (pi) pulse width for inverted readout.",
+            )
         return pd
 
     def _generate(
@@ -1430,9 +1480,14 @@ class SpinLockGenerator(PatternGenerator):
         fix_base_width: int | None,
     ):
         p90, iq_delay = [pulse_params[k] for k in ["90pulse", "iq_delay"]]
-
         p0 = [p90, iq_delay]
         p1 = [p90, iq_delay]
+
+        if "180pulse" in pulse_params:
+            p180 = pulse_params["180pulse"]
+            p0.append(p180)
+            p1.append(p180)
+
         freq, xdata, common_pulses, p0, p1 = K.round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
@@ -1457,11 +1512,36 @@ class SpinLockGenerator(PatternGenerator):
                     ((mw_x,), iq_delay),
                     ((mw_x, "mw"), p90),
                 ]
-                # TODO maybe we'd better to add parameter p180
                 if mw_inverted(read_phase):
                     p.append(((mw_x, "mw"), p90 * 2))
                 else:
                     p.append(((mw_x,), p90 * 2))
+                return p
+            else:
+                raise ValueError(f"Unknown MW mode: {self.mode()}")
+
+        def gen_with_180(v, p90, iq_delay, p180, read_phase):
+            if self.mode() in (0, 2):
+                p = [
+                    ((mw_x, "mw"), p90),
+                    ((mw_y,), iq_delay),
+                    ((mw_y, "mw"), v),
+                    ((read_phase,), iq_delay),
+                    ((read_phase, "mw"), p90),
+                ]
+                return p
+            elif self.mode() == 1:
+                p = [
+                    ((mw_x, "mw"), p90),
+                    ((mw_y,), iq_delay),
+                    ((mw_y, "mw"), v),
+                    ((mw_x,), iq_delay),
+                    ((mw_x, "mw"), p90),
+                ]
+                if mw_inverted(read_phase):
+                    p.append(((mw_x, "mw"), p180))
+                else:
+                    p.append(((mw_x,), p180))
                 return p
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
@@ -1478,7 +1558,7 @@ class SpinLockGenerator(PatternGenerator):
                 i,
                 v,
                 common_pulses,
-                gen,
+                gen_with_180 if "180pulse" in pulse_params else gen,
                 p0,
                 p1,
                 read_phase0=read_phase0,

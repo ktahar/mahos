@@ -379,7 +379,7 @@ class Pulser(Worker):
 
         try:
             blocks, self.freq, laser_timing = self.generate_blocks()
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {self.data.label}: {e}")
             return False
         self.data.set_laser_timing(np.array(laser_timing) / self.freq)
@@ -424,7 +424,7 @@ class Pulser(Worker):
         d = QdyneData(params, label)
         try:
             blocks, freq, laser_timing = self.generate_blocks(d)
-        except ValueError as e:
+        except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {label}: {e}")
             return False, Blocks([]), 0.0, [], []
         offsets = self.pg.validate_blocks(blocks, freq)
