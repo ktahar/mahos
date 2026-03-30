@@ -419,7 +419,6 @@ class FIDGenerator(PatternGenerator):
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
 
-
         if self.mode() in (0, 2):
             read_phase1 = mw_x_inv
         elif self.mode() == 1:
