@@ -718,6 +718,8 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
     def request_save(self):
         fn = self.get_file_name()
         self.cli.save_data(fn, params={"tmp": True})
+        if self.exportPngBox.isChecked():
+            self.cli.export_data(os.path.splitext(fn)[0] + ".png")
         self.suffixBox.setValue(self.suffixBox.value() + 1)
 
     def get_file_name(self):
@@ -754,6 +756,7 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
             self.enableBox.setChecked(False)
 
     def update_state(self, state: BinaryState, last_state: BinaryState):
+        self.enableBox.setEnabled(state == BinaryState.IDLE)
         for w in (
             self.dirEdit,
             self.browseButton,
@@ -761,9 +764,9 @@ class PODMRAutoSaveWidget(QtWidgets.QWidget, Ui_PODMRAutoSave):
             self.suffixBox,
             self.resetBox,
             self.intervalBox,
-            self.enableBox,
+            self.exportPngBox,
         ):
-            w.setEnabled(state == BinaryState.IDLE)
+            w.setEnabled(state == BinaryState.IDLE and self.enableBox.isChecked())
 
     def browse_dir(self):
         current = str(self.gparams_cli.get_param("work_dir"))
