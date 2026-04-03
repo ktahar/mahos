@@ -621,7 +621,9 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         self._apply_sg1(self._params)
         pp = P.ParamDict(
             pulse={
-                k: v for k, v in self._params["pulse"].items() if k not in ("90pulse", "180pulse")
+                k: v
+                for k, v in self._params["pulse"].items()
+                if k not in ("90pulse", "180pulse", "270pulse")
             }
         )
         if "pd" in self._params:
@@ -770,12 +772,14 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         # optional pulse params
         pp = p["pulse"]
         for k, v in pp.items():
-            if k not in ("90pulse", "180pulse"):
+            if k not in ("90pulse", "180pulse", "270pulse"):
                 self.paramTable.apply_value("pulse." + k, v)
         if "90pulse" in pp:
             self.t90pulseBox.setValue(pp["90pulse"] * 1e9)  # sec to ns
         if "180pulse" in pp:
             self.t180pulseBox.setValue(pp["180pulse"] * 1e9)  # sec to ns
+        if "270pulse" in pp:
+            self.t270pulseBox.setValue(pp["270pulse"] * 1e9)  # sec to ns
         # optional pd params
         if "pd" in p:
             for k, v in p["pd"].items():
@@ -908,6 +912,8 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             params["pulse"]["90pulse"] = self.t90pulseBox.value() * 1e-9
         if "180pulse" in self._params["pulse"]:
             params["pulse"]["180pulse"] = self.t180pulseBox.value() * 1e-9
+        if "270pulse" in self._params["pulse"]:
+            params["pulse"]["270pulse"] = self.t270pulseBox.value() * 1e-9
         if "pd" in pt:
             params["pd"] = pt["pd"]
 
@@ -1040,6 +1046,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         name_widgets = [
             ("90pulse", self.t90pulseBox),
             ("180pulse", self.t180pulseBox),
+            ("270pulse", self.t270pulseBox),
         ]
         if force_disable:
             for _, w in name_widgets:
@@ -1113,6 +1120,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             self.moffsetBox,
             self.t90pulseBox,
             self.t180pulseBox,
+            self.t270pulseBox,
         )
 
     def update_timing_box_step(self):

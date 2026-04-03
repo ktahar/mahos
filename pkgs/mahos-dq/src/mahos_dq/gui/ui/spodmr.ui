@@ -730,6 +730,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="toolTip">
+                 <string>negative value implies 90 pulse x 2</string>
+                </property>
                 <property name="prefix">
                  <string>180 pulse: </string>
                 </property>
@@ -751,9 +754,33 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_11">
-                <property name="text">
-                 <string>negative 180 pulse indicates 90 pulse x 2</string>
+               <widget class="QDoubleSpinBox" name="t270pulseBox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>negative value implies 90 pulse x 3</string>
+                </property>
+                <property name="prefix">
+                 <string>270 pulse: </string>
+                </property>
+                <property name="suffix">
+                 <string> ns</string>
+                </property>
+                <property name="decimals">
+                 <number>1</number>
+                </property>
+                <property name="minimum">
+                 <double>-1.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>10000.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>-1.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -1272,6 +1299,7 @@
   <tabstop>invertsweepBox</tabstop>
   <tabstop>t90pulseBox</tabstop>
   <tabstop>t180pulseBox</tabstop>
+  <tabstop>t270pulseBox</tabstop>
   <tabstop>paramTable</tabstop>
   <tabstop>plotenableBox</tabstop>
   <tabstop>plotmodeBox</tabstop>

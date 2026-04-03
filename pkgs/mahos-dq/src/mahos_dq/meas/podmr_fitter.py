@@ -94,9 +94,12 @@ class RabiFitter(Fitter):
 
     def additional_msg(self, popt: P.ParamDict[str, P.FloatParam]):
         f, dt, A, c = [popt[n].value() for n in ("f", "dt", "A", "c")]
-        p90, p180 = 1 / 4 / f + dt, 1 / 2 / f + dt
+        p90, p180, p270 = 1 / 4 / f + dt, 1 / 2 / f + dt, 3 / 4 / f + dt
         p2p = 2 * abs(A)
-        return f"Peak-to-Peak: 2|A| = {p2p:.3%}, MW pulses: {p90*1E9:.1f} ns, {p180*1E9:.1f} ns"
+        return (
+            f"Peak-to-Peak: 2|A| = {p2p:.3%}, "
+            f"MW pulses: {p90*1e9:.1f}, {p180*1e9:.1f}, {p270*1e9:.1f} ns"
+        )
 
 
 def T1_exp_decay(x, A, T1, m):

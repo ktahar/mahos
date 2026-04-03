@@ -2,6 +2,7 @@
 !/.editorconfig
 .vscode
 .claude
+.codex
 *~
 
 # binaries / caches / generated data

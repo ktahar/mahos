@@ -110,6 +110,14 @@ class PatternGenerator(object):
         # Won't reach here: ch will be given for multi channel sequence.
         return self.mw_modes[0]
 
+    def _check_p270(self, p90, p270):
+        if self.mode() != 1:
+            return
+        if p270 < p90:
+            raise ValueError(
+                f"270pulse ({p270*1e9:.1f} ns) must be >= 90pulse ({p90*1e9:.1f} ns)."
+            )
+
     def get_common_pulses(self, params: dict):
         keys = [
             "base_width",
@@ -334,14 +342,14 @@ class FIDGenerator(PatternGenerator):
             doc="90 deg (pi/2) pulse width.",
         )
         if any(m == 1 for m in self.mw_modes):
-            pd["180pulse"] = P.FloatParam(
+            pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
                 1e-6,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
-                doc="180 deg (pi) pulse width for inverted readout.",
+                doc="270 deg (3/2 pi) pulse width for inverted readout.",
             )
         return pd
 
@@ -355,13 +363,11 @@ class FIDGenerator(PatternGenerator):
         fix_base_width: int | None,
     ):
         p90 = pulse_params["90pulse"]
-        p0 = [p90]
-        p1 = [p90]
+        p270 = pulse_params.get("270pulse", 0)
+        self._check_p270(p90, p270)
 
-        if "180pulse" in pulse_params:
-            p180 = pulse_params["180pulse"]
-            p0.append(p180)
-            p1.append(p180)
+        p0 = [p90, p270]
+        p1 = [p90, p270]
 
         freq, xdata, common_pulses, p0, p1 = K.round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
@@ -369,7 +375,7 @@ class FIDGenerator(PatternGenerator):
         p0 = p0 + [mw_x]
         p1 = p1 + [mw_x_inv]
 
-        def gen(v, p90, read_phase):
+        def gen(v, p90, p270, read_phase):
             if self.mode() in (0, 2):
                 v_f, v_l = K.split_int(v, self.split_fraction)
                 return [
@@ -382,39 +388,13 @@ class FIDGenerator(PatternGenerator):
                 p = [
                     ((mw_x, "mw"), p90),
                     ((mw_x,), v),
-                    ((mw_x, "mw"), p90),
                 ]
                 if mw_inverted(read_phase):
                     # 270 deg pulse
-                    p.append(((mw_x, "mw"), p90 * 2))
+                    p.append(((mw_x, "mw"), p270))
                 else:
-                    # same delay time to match length of pattern0 and pattern1.
-                    p.append(((mw_x,), p90 * 2))
-                return p
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
-
-        def gen_with_180(v, p90, p180, read_phase):
-            if self.mode() in (0, 2):
-                v_f, v_l = K.split_int(v, self.split_fraction)
-                return [
-                    ((mw_x, "mw"), p90),
-                    ((mw_x,), v_f),
-                    ((read_phase,), v_l),
-                    ((read_phase, "mw"), p90),
-                ]
-            elif self.mode() == 1:
-                p = [
-                    ((mw_x, "mw"), p90),
-                    ((mw_x,), v),
-                    ((mw_x, "mw"), p90),
-                ]
-                if mw_inverted(read_phase):
-                    # 270 deg pulse
-                    p.append(((mw_x, "mw"), p180))
-                else:
-                    # same delay time to match length of pattern0 and pattern1.
-                    p.append(((mw_x,), p180))
+                    # 90 deg pulse + delay time to match length of pattern0 and pattern1.
+                    p.extend([((mw_x, "mw"), p90), ((mw_x,), p270 - p90)])
                 return p
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
@@ -431,7 +411,7 @@ class FIDGenerator(PatternGenerator):
                 i,
                 v,
                 common_pulses,
-                gen_with_180 if "180pulse" in pulse_params else gen,
+                gen,
                 p0,
                 p1,
                 read_phase0=mw_x,
@@ -479,6 +459,16 @@ class SpinEchoGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
+        if any(m == 1 for m in self.mw_modes):
+            pd["270pulse"] = P.FloatParam(
+                -1e-9,
+                -1e-9,
+                1e-6,
+                unit="s",
+                SI_prefix=True,
+                step=1e-9,
+                doc="270 deg (3/2 pi) pulse width for inverted readout.",
+            )
         pd["readY"] = P.BoolParam(False, doc="readout (apply pi/2 pulse) with phase Y.")
         pd["invertY"] = P.BoolParam(False, doc="invert Y phase.")
         return pd
@@ -493,18 +483,21 @@ class SpinEchoGenerator(PatternGenerator):
         fix_base_width: int | None,
     ):
         p90, p180, readY = [pulse_params[k] for k in ["90pulse", "180pulse", "readY"]]
+        p270 = pulse_params.get("270pulse", 0)
+        self._check_p270(p90, p270)
 
         read_phase0 = mw_y if readY else mw_x
         read_phase1 = mw_y_inv if readY else mw_x_inv
-        p0 = [p90, p180]
-        p1 = [p90, p180]
+        p0 = [p90, p180, p270]
+        p1 = [p90, p180, p270]
+
         freq, xdata, common_pulses, p0, p1 = K.round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [read_phase0]
         p1 = p1 + [read_phase1]
 
-        def gen(v, p90, p180, read_phase):
+        def gen(v, p90, p180, p270, read_phase):
             v_f, v_l = K.split_int(v, self.split_fraction)
             if self.mode() in (0, 2):
                 return [
@@ -523,13 +516,15 @@ class SpinEchoGenerator(PatternGenerator):
                     ((mw_x, "mw"), p180),
                     ((mw_x,), v_f),
                     ((phase,), v_l),
-                    ((phase, "mw"), p90),
                 ]
                 if mw_inverted(read_phase):
-                    p.append(((phase, "mw"), p180))
+                    # 270 deg pulse
+                    p.append(((phase, "mw"), p270))
                 else:
-                    p.append(((phase,), p180))
+                    # 90 deg pulse + delay time to match length of pattern0 and pattern1.
+                    p.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
                 return p
+
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
 
@@ -596,6 +591,16 @@ class TRSEGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
+        if any(m == 1 for m in self.mw_modes):
+            pd["270pulse"] = P.FloatParam(
+                -1e-9,
+                -1e-9,
+                1e-6,
+                unit="s",
+                SI_prefix=True,
+                step=1e-9,
+                doc="270 deg (3/2 pi) pulse width for inverted readout.",
+            )
         pd["tauconst"] = P.FloatParam(
             1e-9, 1e-9, 1e-3, unit="s", SI_prefix=True, step=1e-9, doc="first inter-pulse time."
         )
@@ -611,16 +616,19 @@ class TRSEGenerator(PatternGenerator):
         fix_base_width: int | None,
     ):
         p90, p180, tauconst = [pulse_params[k] for k in ["90pulse", "180pulse", "tauconst"]]
+        p270 = pulse_params.get("270pulse", 0)
+        self._check_p270(p90, p270)
 
-        p0 = [p90, p180, tauconst]
-        p1 = [p90, p180, tauconst]
+        p0 = [p90, p180, p270, tauconst]
+        p1 = [p90, p180, p270, tauconst]
+
         freq, xdata, common_pulses, p0, p1 = K.round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [mw_x]
         p1 = p1 + [mw_x_inv]
 
-        def gen(v, p90, p180, tauconst, read_phase):
+        def gen(v, p90, p180, p270, tauconst, read_phase):
             if self.mode() in (0, 2):
                 v_f, v_l = K.split_int(v, self.split_fraction)
                 return [
@@ -637,14 +645,13 @@ class TRSEGenerator(PatternGenerator):
                     ((mw_x,), tauconst),
                     ((mw_x, "mw"), p180),
                     ((mw_x,), v),
-                    ((mw_x, "mw"), p90),
                 ]
                 if mw_inverted(read_phase):
                     # 270 deg pulse
-                    p.append(((mw_x, "mw"), p180))
+                    p.append(((mw_x, "mw"), p270))
                 else:
-                    # same delay time to match length of pattern0 and pattern1.
-                    p.append(((mw_x,), p180))
+                    # 90 deg pulse + delay time to match length of pattern0 and pattern1.
+                    p.extend([((mw_x, "mw"), p90), ((mw_x,), p270 - p90)])
                 return p
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
@@ -714,6 +721,16 @@ class DDGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
+        if any(m == 1 for m in self.mw_modes):
+            pd["270pulse"] = P.FloatParam(
+                -1e-9,
+                -1e-9,
+                1e-6,
+                unit="s",
+                SI_prefix=True,
+                step=1e-9,
+                doc="270 deg (3/2 pi) pulse width for inverted readout.",
+            )
         pd["Nconst"] = P.IntParam(4, 1, 10000, doc="Number of pulse train repetitions.")
         pd["readY"] = P.BoolParam(False, doc="readout (apply pi/2 pulse) with phase Y.")
         pd["invertY"] = P.BoolParam(False, doc="invert Y phase.")
@@ -766,10 +783,13 @@ class DDGenerator(PatternGenerator):
         p90, p180, Nconst, readY = [
             pulse_params[k] for k in ["90pulse", "180pulse", "Nconst", "readY"]
         ]
+        p270 = pulse_params.get("270pulse", 0)
+        self._check_p270(p90, p270)
+
         read_phase0 = mw_y_inv if readY else mw_x_inv
         read_phase1 = mw_y if readY else mw_x
-        p0 = [p90, p180]
-        p1 = [p90, p180]
+        p0 = [p90, p180, p270]
+        p1 = [p90, p180, p270]
 
         freq, xdata, common_pulses, p0, p1 = K.round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
@@ -777,7 +797,7 @@ class DDGenerator(PatternGenerator):
         p0 = p0 + [Nconst, read_phase0, self.method]
         p1 = p1 + [Nconst, read_phase1, self.method]
 
-        def gen(tau, p90, p180, Nconst, read_phase, method):
+        def gen(tau, p90, p180, p270, Nconst, read_phase, method):
             tau_f, tau_l = K.split_int(tau, self.split_fraction)
             tau2_f, tau2_l = K.split_int(tau * 2, self.split_fraction)
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
@@ -785,11 +805,11 @@ class DDGenerator(PatternGenerator):
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
             elif self.mode() == 1:
                 phase = mw_uninvert(read_phase)
-                read_ptn = [((phase,), tau_l), ((phase, "mw"), p90)]
+                read_ptn = [((phase,), tau_l)]
                 if mw_inverted(read_phase):
-                    read_ptn.append(((phase, "mw"), p180))
+                    read_ptn.append(((phase, "mw"), p270))
                 else:
-                    read_ptn.append(((phase,), p180))
+                    read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
 
@@ -856,10 +876,13 @@ class DDGenerator(PatternGenerator):
         p90, p180, Nconst, readY, supersample = [
             pulse_params[k] for k in ["90pulse", "180pulse", "Nconst", "readY", "supersample"]
         ]
+        p270 = pulse_params.get("270pulse", 0)
+        self._check_p270(p90, p270)
+
         read_phase0 = mw_y_inv if readY else mw_x_inv
         read_phase1 = mw_y if readY else mw_x
-        p0 = [p90, p180]
-        p1 = [p90, p180]
+        p0 = [p90, p180, p270]
+        p1 = [p90, p180, p270]
 
         self.print_fn(f"Quantum Interpolation: {supersample}")
 
@@ -906,7 +929,7 @@ class DDGenerator(PatternGenerator):
         p0 = p0 + [dt, read_phase0, pulse_num, phase_list]
         p1 = p1 + [dt, read_phase1, pulse_num, phase_list]
 
-        def gen_QI(v, p90, p180, dt, read_phase, pulse_num, phase_list):
+        def gen_QI(v, p90, p180, p270, dt, read_phase, pulse_num, phase_list):
             tau, sample = v
 
             U_0 = [tau, 2 * tau, tau]
@@ -936,12 +959,11 @@ class DDGenerator(PatternGenerator):
                 phase = mw_uninvert(read_phase)
                 read_ptn = [
                     ((phase,), K.split_int(tau_list[-1], self.split_fraction)[1]),
-                    ((phase, "mw"), p90),
                 ]
                 if mw_inverted(read_phase):
-                    read_ptn.append(((phase, "mw"), p180))
+                    read_ptn.append(((phase, "mw"), p270))
                 else:
-                    read_ptn.append(((phase,), p180))
+                    read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
 
@@ -1179,6 +1201,16 @@ class DDNGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
+        if any(m == 1 for m in self.mw_modes):
+            pd["270pulse"] = P.FloatParam(
+                -1e-9,
+                -1e-9,
+                1e-6,
+                unit="s",
+                SI_prefix=True,
+                step=1e-9,
+                doc="270 deg (3/2 pi) pulse width for inverted readout.",
+            )
         pd["tauconst"] = P.FloatParam(
             1e-9, 1e-9, 1e-3, unit="s", SI_prefix=True, step=1e-9, doc="free evolution time."
         )
@@ -1198,18 +1230,21 @@ class DDNGenerator(PatternGenerator):
         p90, p180, tauconst, readY = [
             pulse_params[k] for k in ["90pulse", "180pulse", "tauconst", "readY"]
         ]
+        p270 = pulse_params.get("270pulse", 0)
+        self._check_p270(p90, p270)
 
         read_phase0 = mw_y_inv if readY else mw_x_inv
         read_phase1 = mw_y if readY else mw_x
-        p0 = [p90, p180, tauconst]
-        p1 = [p90, p180, tauconst]
+        p0 = [p90, p180, p270, tauconst]
+        p1 = [p90, p180, p270, tauconst]
+
         freq, dummy, common_pulses, p0, p1 = K.round_pulses(
             self.freq, [0], common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [read_phase0, self.method]
         p1 = p1 + [read_phase1, self.method]
 
-        def gen(n, p90, p180, tauconst, read_phase, method):
+        def gen(n, p90, p180, p270, tauconst, read_phase, method):
             tau_f, tau_l = K.split_int(tauconst, self.split_fraction)
             tau2_f, tau2_l = K.split_int(tauconst * 2, self.split_fraction)
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
@@ -1217,11 +1252,11 @@ class DDNGenerator(PatternGenerator):
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
             elif self.mode() == 1:
                 phase = mw_uninvert(read_phase)
-                read_ptn = [((phase,), tau_l), ((phase, "mw"), p90)]
+                read_ptn = [((phase,), tau_l)]
                 if mw_inverted(read_phase):
-                    read_ptn.append(((phase, "mw"), p180))
+                    read_ptn.append(((phase, "mw"), p270))
                 else:
-                    read_ptn.append(((phase,), p180))
+                    read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
 
@@ -1458,14 +1493,14 @@ class SpinLockGenerator(PatternGenerator):
         )
         pd["iq_delay"] = P.FloatParam(10e-9, 1e-9, 1000e-9, unit="s", SI_prefix=True, step=1e-9)
         if any(m == 1 for m in self.mw_modes):
-            pd["180pulse"] = P.FloatParam(
+            pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
                 1e-6,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
-                doc="180 deg (pi) pulse width for inverted readout.",
+                doc="270 deg (3/2 pi) pulse width for inverted readout.",
             )
         return pd
 
@@ -1479,13 +1514,11 @@ class SpinLockGenerator(PatternGenerator):
         fix_base_width: int | None,
     ):
         p90, iq_delay = [pulse_params[k] for k in ["90pulse", "iq_delay"]]
-        p0 = [p90, iq_delay]
-        p1 = [p90, iq_delay]
+        p270 = pulse_params.get("270pulse", 0)
+        self._check_p270(p90, p270)
 
-        if "180pulse" in pulse_params:
-            p180 = pulse_params["180pulse"]
-            p0.append(p180)
-            p1.append(p180)
+        p0 = [p90, p270, iq_delay]
+        p1 = [p90, p270, iq_delay]
 
         freq, xdata, common_pulses, p0, p1 = K.round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
@@ -1493,7 +1526,7 @@ class SpinLockGenerator(PatternGenerator):
         p0 = p0 + [mw_x_inv]
         p1 = p1 + [mw_x]
 
-        def gen(v, p90, iq_delay, read_phase):
+        def gen(v, p90, p270, iq_delay, read_phase):
             if self.mode() in (0, 2):
                 p = [
                     ((mw_x, "mw"), p90),
@@ -1509,38 +1542,11 @@ class SpinLockGenerator(PatternGenerator):
                     ((mw_y,), iq_delay),
                     ((mw_y, "mw"), v),
                     ((mw_x,), iq_delay),
-                    ((mw_x, "mw"), p90),
                 ]
                 if mw_inverted(read_phase):
-                    p.append(((mw_x, "mw"), p90 * 2))
+                    p.append(((mw_x, "mw"), p270))
                 else:
-                    p.append(((mw_x,), p90 * 2))
-                return p
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
-
-        def gen_with_180(v, p90, iq_delay, p180, read_phase):
-            if self.mode() in (0, 2):
-                p = [
-                    ((mw_x, "mw"), p90),
-                    ((mw_y,), iq_delay),
-                    ((mw_y, "mw"), v),
-                    ((read_phase,), iq_delay),
-                    ((read_phase, "mw"), p90),
-                ]
-                return p
-            elif self.mode() == 1:
-                p = [
-                    ((mw_x, "mw"), p90),
-                    ((mw_y,), iq_delay),
-                    ((mw_y, "mw"), v),
-                    ((mw_x,), iq_delay),
-                    ((mw_x, "mw"), p90),
-                ]
-                if mw_inverted(read_phase):
-                    p.append(((mw_x, "mw"), p180))
-                else:
-                    p.append(((mw_x,), p180))
+                    p.extend([((mw_x, "mw"), p90), ((mw_x,), p270 - p90)])
                 return p
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
@@ -1557,7 +1563,7 @@ class SpinLockGenerator(PatternGenerator):
                 i,
                 v,
                 common_pulses,
-                gen_with_180 if "180pulse" in pulse_params else gen,
+                gen,
                 p0,
                 p1,
                 read_phase0=read_phase0,
@@ -1611,6 +1617,16 @@ class XY8CorrelationGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
+        if any(m == 1 for m in self.mw_modes):
+            pd["270pulse"] = P.FloatParam(
+                -1e-9,
+                -1e-9,
+                1e-6,
+                unit="s",
+                SI_prefix=True,
+                step=1e-9,
+                doc="270 deg (3/2 pi) pulse width for inverted readout.",
+            )
         pd["tauconst"] = P.FloatParam(
             1e-9, 1e-9, 1e-3, unit="s", SI_prefix=True, step=1e-9, doc="first inter-pulse time."
         )
@@ -1633,19 +1649,22 @@ class XY8CorrelationGenerator(PatternGenerator):
             pulse_params[k]
             for k in ["90pulse", "180pulse", "tauconst", "Nconst", "reinitX", "readY"]
         ]
+        p270 = pulse_params.get("270pulse", 0)
+        self._check_p270(p90, p270)
 
         read_phase0 = mw_y_inv if readY else mw_x_inv
         read_phase1 = mw_y if readY else mw_x
         reinit_phase = mw_x if reinitX else mw_y
-        p0 = [p90, p180, tauconst]
-        p1 = [p90, p180, tauconst]
+        p0 = [p90, p180, p270, tauconst]
+        p1 = [p90, p180, p270, tauconst]
+
         freq, xdata, common_pulses, p0, p1 = K.round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [Nconst, reinit_phase, read_phase0, self.method]
         p1 = p1 + [Nconst, reinit_phase, read_phase1, self.method]
 
-        def gen(tau, p90, p180, tauconst, Nconst, reinit_phase, read_phase, method):
+        def gen(tau, p90, p180, p270, tauconst, Nconst, reinit_phase, read_phase, method):
             tau_f, tau_l = K.split_int(tauconst, self.split_fraction)
             tau2_f, tau2_l = K.split_int(tauconst * 2, self.split_fraction)
 
@@ -1656,11 +1675,11 @@ class XY8CorrelationGenerator(PatternGenerator):
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
             elif self.mode() == 1:
                 phase = mw_uninvert(read_phase)
-                read_ptn = [((phase,), tau_l), ((phase, "mw"), p90)]
+                read_ptn = [((phase,), tau_l)]
                 if mw_inverted(read_phase):
-                    read_ptn.append(((phase, "mw"), p180))
+                    read_ptn.append(((phase, "mw"), p270))
                 else:
-                    read_ptn.append(((phase,), p180))
+                    read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
 
@@ -1759,6 +1778,16 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
+        if any(m == 1 for m in self.mw_modes):
+            pd["270pulse"] = P.FloatParam(
+                -1e-9,
+                -1e-9,
+                1e-6,
+                unit="s",
+                SI_prefix=True,
+                step=1e-9,
+                doc="270 deg (3/2 pi) pulse width for inverted readout.",
+            )
         pd["tauconst"] = P.FloatParam(
             1e-9, 1e-9, 1e-3, unit="s", SI_prefix=True, step=1e-9, doc="first inter-pulse time."
         )
@@ -1781,19 +1810,21 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
             pulse_params[k]
             for k in ["90pulse", "180pulse", "tauconst", "Nconst", "reinitX", "readY"]
         ]
+        p270 = pulse_params.get("270pulse", 0)
+        self._check_p270(p90, p270)
 
         read_phase0 = mw_y_inv if readY else mw_x_inv
         read_phase1 = mw_y if readY else mw_x
         reinit_phase = mw_x if reinitX else mw_y
-        p0 = [p90, p180, tauconst]
-        p1 = [p90, p180, tauconst]
+        p0 = [p90, p180, p270, tauconst]
+        p1 = [p90, p180, p270, tauconst]
         freq, dummy, common_pulses, p0, p1 = K.round_pulses(
             self.freq, [0], common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [Nconst, reinit_phase, read_phase0]
         p1 = p1 + [Nconst, reinit_phase, read_phase1]
 
-        def gen(n, p90, p180, tauconst, Nconst, reinit_phase, read_phase):
+        def gen(n, p90, p180, p270, tauconst, Nconst, reinit_phase, read_phase):
             tau_f, tau_l = K.split_int(tauconst, self.split_fraction)
             tau2_f, tau2_l = K.split_int(tauconst * 2, self.split_fraction)
 
@@ -1808,11 +1839,11 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
             elif self.mode() == 1:
                 phase = mw_uninvert(read_phase)
-                read_ptn = [((phase,), tau_l), ((phase, "mw"), p90)]
+                read_ptn = [((phase,), tau_l)]
                 if mw_inverted(read_phase):
-                    read_ptn.append(((phase, "mw"), p180))
+                    read_ptn.append(((phase, "mw"), p270))
                 else:
-                    read_ptn.append(((phase,), p180))
+                    read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
             else:
                 raise ValueError(f"Unknown MW mode: {self.mode()}")
 

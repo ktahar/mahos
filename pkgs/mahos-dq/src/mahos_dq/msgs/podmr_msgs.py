@@ -699,17 +699,23 @@ class PODMRData(BasicMeasData):
         if not self.has_params():
             return {}
         pp = self.params["pulse"]
-        if not ("90pulse" in pp and "180pulse" in pp):
+        if not ("90pulse" in pp and ("180pulse" in pp or "270pulse" in pp)):
             return pp.copy()
 
-        p90, p180 = [pp[k] for k in ("90pulse", "180pulse")]
-
-        if p180 <= 0:
-            p180 = p90 * 2
-
+        p90 = pp["90pulse"]
         p = pp.copy()
-        p["90pulse"] = p90
-        p["180pulse"] = p180
+
+        if "180pulse" in pp:
+            p180 = pp["180pulse"]
+            if p180 <= 0:
+                p180 = p90 * 2
+            p["180pulse"] = p180
+
+        if "270pulse" in pp:
+            p270 = pp["270pulse"]
+            if p270 <= 0:
+                p270 = p90 * 3
+            p["270pulse"] = p270
 
         return p
 
