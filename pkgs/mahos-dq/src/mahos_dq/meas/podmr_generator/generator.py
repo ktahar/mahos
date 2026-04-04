@@ -100,11 +100,11 @@ class PatternGenerator(object):
                 return self.mw_modes[1]
             elif not nomw and not nomw1:
                 # if any mode 1 is included, use mode 1 for multiplexing.
-                if any([m == 1 for m in self.mw_modes]):
+                if any(m == 1 for m in self.mw_modes):
                     return 1
                 else:
                     return self.mw_modes[0]
-            else:  # no nomw and nomw1 (mw0 only) || nomw and nomw1 (fall back).
+            else:  # not nomw and nomw1 (mw0 only) || nomw and nomw1 (fall back).
                 return self.mw_modes[0]
 
         # Won't reach here: ch will be given for multi channel sequence.
