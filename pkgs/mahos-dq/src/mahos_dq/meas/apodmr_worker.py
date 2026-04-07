@@ -36,7 +36,15 @@ class APODMRDataOperator(PODMRDataOperator):
         data.trigger_timing = np.array(trigger_timing, dtype=np.float64)
 
     def set_instrument_params(
-        self, data: APODMRData, samples_per_trace, sample_period, pg_freq, length, offsets, pd_rate
+        self,
+        data: APODMRData,
+        samples_per_trace,
+        sample_period,
+        pg_freq,
+        length,
+        offsets,
+        pd_rate,
+        mw_modes,
     ):
         if "instrument" in data.params:
             return
@@ -51,6 +59,7 @@ class APODMRDataOperator(PODMRDataOperator):
             data.params["instrument"]["offsets"] = []
         else:
             data.params["instrument"]["offsets"] = offsets
+        data.params["instrument"]["mw_modes"] = [MWMode.parse(m).name for m in mw_modes]
 
     def append_record(self, data: APODMRData, traces: np.ndarray):
         traces = np.array(traces, copy=True)
@@ -409,6 +418,7 @@ class Pulser(PODMRPulser):
             self.length,
             self.offsets,
             pd_rate,
+            self.mw_modes,
         )
         return True
 

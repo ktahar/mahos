@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 
 from mahos_dq.meas.podmr import PODMRClient, PODMRIO
-from mahos_dq.msgs.podmr_msgs import PODMRData
+from mahos_dq.msgs.podmr_msgs import PODMRData, MWMode
 from mahos.msgs.common_msgs import BinaryState
 from mahos.inst.tdc_core import TDCBase
 from mahos.msgs.inst.tdc_msgs import ChannelStatus
@@ -479,6 +479,7 @@ def test_podmr_patterns():
 
 def test_podmr(server, podmr, server_conf, podmr_conf):
     poll_timeout_ms = podmr_conf["poll_timeout_ms"]
+    expected_mw_modes = [MWMode.parse(m).name for m in podmr_conf["pulser"]["mw_modes"]]
 
     podmr.wait()
 
@@ -508,6 +509,7 @@ def test_podmr(server, podmr, server_conf, podmr_conf):
         assert podmr.start(params, m)
         assert expect_podmr(podmr, params["num"].value(), poll_timeout_ms)
         data = get_some(podmr.get_data, poll_timeout_ms)
+        assert data.params["instrument"]["mw_modes"] == expected_mw_modes
         assert podmr.stop()
         if m == "rabi":
             save_load_test(PODMRIO(), data)

@@ -293,7 +293,9 @@ class PODMRDataOperator(object):
             return
         data.laser_timing = np.array(laser_timing)  # unit is [sec]
 
-    def set_instrument_params(self, data: PODMRData, trange, tbin, pg_freq, length, offsets):
+    def set_instrument_params(
+        self, data: PODMRData, trange, tbin, pg_freq, length, offsets, mw_modes
+    ):
         if "instrument" in data.params:
             return
         data.params["instrument"] = {}
@@ -305,6 +307,7 @@ class PODMRDataOperator(object):
             data.params["instrument"]["offsets"] = []
         else:
             data.params["instrument"]["offsets"] = offsets
+        data.params["instrument"]["mw_modes"] = [MWMode.parse(m).name for m in mw_modes]
 
     def update(self, data: PODMRData, data_new, tdc_status):
         data.raw_data = data_new
@@ -730,7 +733,7 @@ class Pulser(Worker, ConfTypeCheckMixin):
         d = self.tdc.get_range_bin()
 
         self.op.set_instrument_params(
-            self.data, d["range"], d["bin"], self.freq, self.length, self.offsets
+            self.data, d["range"], d["bin"], self.freq, self.length, self.offsets, self.mw_modes
         )
 
         return True

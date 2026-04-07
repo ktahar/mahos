@@ -94,7 +94,7 @@ class QdyneData(BasicMeasData):
             return
         self.laser_timing = np.array(laser_timing)  # unit is [sec]
 
-    def set_instrument_params(self, tbin, pg_freq, pg_length, pg_offsets):
+    def set_instrument_params(self, tbin, pg_freq, pg_length, pg_offsets, mw_modes):
         if "instrument" in self.params:
             return
         self.params["instrument"] = {}
@@ -105,6 +105,7 @@ class QdyneData(BasicMeasData):
             self.params["instrument"]["pg_offsets"] = []
         else:
             self.params["instrument"]["pg_offsets"] = pg_offsets
+        self.params["instrument"]["mw_modes"] = [MWMode.parse(m).name for m in mw_modes]
 
     def set_status(self, tdc_status: TDCStatus):
         self.tdc_status = tdc_status

@@ -126,6 +126,7 @@ def test_spodmr_mw_offset_per_unit():
 
 def test_spodmr(server, spodmr, server_conf, spodmr_conf):
     poll_timeout_ms = spodmr_conf["poll_timeout_ms"]
+    expected_mw_modes = [MWMode.parse(m).name for m in spodmr_conf["pulser"]["mw_modes"]]
 
     spodmr.wait()
 
@@ -156,6 +157,7 @@ def test_spodmr(server, spodmr, server_conf, spodmr_conf):
         assert spodmr.start(params, m)
         assert expect_spodmr(spodmr, params["num"].value(), poll_timeout_ms)
         data = get_some(spodmr.get_data, poll_timeout_ms)
+        assert data.params["instrument"]["mw_modes"] == expected_mw_modes
         assert spodmr.stop()
         if m == "rabi":
             save_load_test(SPODMRIO(), data)

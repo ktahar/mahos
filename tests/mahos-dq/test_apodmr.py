@@ -135,6 +135,7 @@ def test_apodmr_analyze_rejects_out_of_range_markers():
 
 def test_apodmr(server, apodmr, server_conf, apodmr_conf):
     poll_timeout_ms = apodmr_conf["poll_timeout_ms"]
+    expected_mw_modes = [MWMode.parse(m).name for m in apodmr_conf["pulser"]["mw_modes"]]
 
     apodmr.wait()
 
@@ -164,6 +165,7 @@ def test_apodmr(server, apodmr, server_conf, apodmr_conf):
     assert data.get_samples_per_trace() == data.raw_data.shape[2]
     assert data.marker_indices is not None
     assert data.marker_indices.shape == (4,)
+    assert data.params["instrument"]["mw_modes"] == expected_mw_modes
     assert np.isclose(data.trace_laser_timing, params["roi_head"].value())
     assert np.isclose(data.laser_timing[0] - data.trigger_timing[0], params["roi_head"].value())
     save_load_test(APODMRIO(), data)

@@ -303,6 +303,8 @@ class = "Qdyne"
 log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5588"
 pub_endpoint = "tcp://127.0.0.1:5589"
+[localhost.qdyne.pulser]
+mw_modes = ["QPSK"]
 [localhost.qdyne.target]
 log = "localhost::log"
 tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]

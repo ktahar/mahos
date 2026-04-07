@@ -35,7 +35,7 @@ class SPODMRDataOperator(object):
             return
         data.laser_duties = np.array(laser_duties)
 
-    def set_instrument_params(self, data: SPODMRData, pg_freq, length, offsets):
+    def set_instrument_params(self, data: SPODMRData, pg_freq, length, offsets, mw_modes):
         if "instrument" in data.params:
             return
         data.params["instrument"] = {}
@@ -45,6 +45,7 @@ class SPODMRDataOperator(object):
             data.params["instrument"]["offsets"] = []
         else:
             data.params["instrument"]["offsets"] = offsets
+        data.params["instrument"]["mw_modes"] = [MWMode.parse(m).name for m in mw_modes]
 
     def _append_line_single(self, data, line):
         if data is None:
@@ -627,7 +628,9 @@ class Pulser(Worker):
             self.logger.error("Error initializing PG.")
             return False
 
-        self.op.set_instrument_params(self.data, self.freq, self.length, self.offsets)
+        self.op.set_instrument_params(
+            self.data, self.freq, self.length, self.offsets, self.mw_modes
+        )
 
         return True
 
@@ -1093,7 +1096,9 @@ class DebugPulser(Pulser):
             self.logger.error("Error initializing PG.")
             return False
 
-        self.op.set_instrument_params(self.data, self.freq, self.length, self.offsets)
+        self.op.set_instrument_params(
+            self.data, self.freq, self.length, self.offsets, self.mw_modes
+        )
 
         return True
 

@@ -334,7 +334,7 @@ class Pulser(Worker):
             return False
         tbin = self.tdc.get_timebin()
 
-        self.data.set_instrument_params(tbin, self.freq, self.length, self.offsets)
+        self.data.set_instrument_params(tbin, self.freq, self.length, self.offsets, self.mw_modes)
         self.data.set_marker_indices()
 
         return True
