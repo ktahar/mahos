@@ -11,6 +11,7 @@ Message Types for Pulse ODMR.
 from __future__ import annotations
 import copy
 import typing as T
+import enum
 
 import numpy as np
 from numpy.typing import NDArray
@@ -19,7 +20,7 @@ import msgpack
 
 from mahos.msgs.fit_msgs import PeakType
 from mahos.util.comp import dict_isclose
-from mahos.msgs.common_msgs import Request, BinaryState, Status
+from mahos.msgs.common_msgs import Message, Request, BinaryState, Status
 from mahos.msgs.common_meas_msgs import BasicMeasData
 
 
@@ -71,6 +72,31 @@ class TDCStatus(T.NamedTuple):
     sweeps: int
     stops0: int
     stops1: int
+
+
+class MWMode(Message, enum.Enum):
+    """MW Control Mode."""
+
+    QPSK = 0  # 4-phase control using SG IQ modulation from digital source (PG).
+    Ext2Phase = 1  # 2-phase control using external 90-deg splitter and two switches.
+    ArbPhase = 2  # Arbitrary phase control using SG IQ modulation from analog source (AWG).
+
+    @classmethod
+    def parse(cls, mode: MWMode | str | int) -> MWMode:
+        if isinstance(mode, cls):
+            return mode
+        if isinstance(mode, int) and not isinstance(mode, bool):
+            return cls(mode)
+        elif not isinstance(mode, str):
+            raise TypeError("mode must be MWMode, int, or str")
+        m = mode.lower().strip().replace("_", "-")
+        if m in ("qpsk", "0"):
+            return cls.QPSK
+        if m in ("ext2phase", "ext-2phase", "ext-2-phase", "1"):
+            return cls.Ext2Phase
+        if m in ("arbphase", "arb-phase", "2"):
+            return cls.ArbPhase
+        raise ValueError(f"Unrecognized mode string: {mode}")
 
 
 def is_sweepN(method: str) -> bool:

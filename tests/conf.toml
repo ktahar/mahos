@@ -212,7 +212,7 @@ pub_endpoint = "tcp://127.0.0.1:5579"
 log = "localhost::log"
 tweakers = ["localhost::tweaker", "localhost::pos_tweaker"]
 [localhost.podmr.pulser]
-mw_modes = [0, 0]
+mw_modes = ["QPSK", "QPSK"]
 # Optional user-defined pattern generators:
 # [localhost.podmr.pulser.generators]
 # my_method = ["my_pkg.my_generators", "MyGenerator"]
@@ -231,7 +231,7 @@ log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5580"
 pub_endpoint = "tcp://127.0.0.1:5581"
 [localhost.spodmr.pulser]
-mw_modes = [0, 0]
+mw_modes = ["QPSK", "QPSK"]
 pd_trigger = "/Dummy"
 [localhost.spodmr.target]
 log = "localhost::log"
@@ -251,7 +251,7 @@ log_level = "DEBUG"
 rep_endpoint = "tcp://127.0.0.1:5610"
 pub_endpoint = "tcp://127.0.0.1:5611"
 [localhost.apodmr.pulser]
-mw_modes = [0, 0]
+mw_modes = ["QPSK", "QPSK"]
 pd_trigger = "/Dummy"
 [localhost.apodmr.target]
 log = "localhost::log"

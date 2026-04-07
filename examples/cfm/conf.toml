@@ -178,7 +178,7 @@ pub_endpoint = "tcp://127.0.0.1:5781"
 [localhost.podmr.target]
 log = "localhost::log"
 [localhost.podmr.pulser]
-mw_modes = [0, 0]
+mw_modes = ["QPSK", "QPSK"]
 [localhost.podmr.target.servers]
 switch = "localhost::server"
 tdc = "localhost::server"

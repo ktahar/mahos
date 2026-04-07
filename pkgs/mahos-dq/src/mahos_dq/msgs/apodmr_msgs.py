@@ -14,9 +14,10 @@ import numpy as np
 
 from mahos.msgs.common_msgs import BinaryState, Status
 
-# just for re-export: ValidateReq, and UpdatePlotParamsReq
+# just for re-export: MWMode, ValidateReq, and UpdatePlotParamsReq
 from mahos_dq.msgs.podmr_msgs import (  # noqa: F401
     PODMRData,
+    MWMode,
     ValidateReq,
     UpdatePlotParamsReq,
 )

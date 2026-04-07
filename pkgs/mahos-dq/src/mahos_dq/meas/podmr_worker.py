@@ -17,7 +17,14 @@ import numpy as np
 from scipy.optimize import isotonic_regression
 
 from mahos.util.timer import IntervalTimer
-from mahos_dq.msgs.podmr_msgs import PODMRData, TDCStatus, is_sweepN, is_CPlike, is_correlation
+from mahos_dq.msgs.podmr_msgs import (
+    PODMRData,
+    TDCStatus,
+    is_sweepN,
+    is_CPlike,
+    is_correlation,
+    MWMode,
+)
 from mahos.msgs.pulse_msgs import PulsePattern
 from mahos.msgs.inst.tdc_msgs import ChannelStatus
 from mahos.msgs import param_msgs as P
@@ -617,7 +624,9 @@ class Pulser(Worker, ConfTypeCheckMixin):
                 self.sgs[name] = SGInterface(cli, name)
                 _default_channels.append({"sg": name})
 
-        self.mw_modes = tuple(self.conf.get("mw_modes", (0,) * len(self.sgs)))
+        self.mw_modes = tuple(
+            MWMode.parse(m) for m in self.conf.get("mw_modes", (0,) * len(self.sgs))
+        )
         self.mw_channels = self.conf.get("mw_channels", _default_channels)
 
         self.pg = PGInterface(cli, "pg")
@@ -736,11 +745,11 @@ class Pulser(Worker, ConfTypeCheckMixin):
             freq = params[f"freq{idx}"]
             power = params[f"power{idx}"]
 
-            if mode in (0, 2):
+            if mode in (MWMode.QPSK, MWMode.ArbPhase):
                 if not sg.configure_cw_iq_ext(freq, power, ch=ch, reset=reset):
                     self.logger.error(f"Error initializing SG{idx}.")
                     return False
-            else:  # mode 1
+            else:  # MWMode.Ext2Phase
                 if not sg.configure_cw(freq, power, ch=ch, reset=reset):
                     self.logger.error(f"Error initializing SG{idx}.")
                     return False

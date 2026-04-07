@@ -20,6 +20,9 @@ from mahos.msgs.common_meas_msgs import BasicMeasData
 from mahos_dq.msgs.podmr_msgs import TDCStatus
 from mahos.msgs import param_msgs as P
 
+# just for re-export
+from mahos_dq.msgs.podmr_msgs import MWMode  # noqa: F401
+
 
 class ValidateReq(Request):
     """Validate Measurement Params Request"""

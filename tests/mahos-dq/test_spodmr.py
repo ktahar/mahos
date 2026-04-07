@@ -15,7 +15,7 @@ import pytest
 
 from mahos_dq.meas.spodmr import SPODMRClient, SPODMRIO
 from mahos_dq.meas.spodmr_worker import BlockSeqBuilder, Pulser
-from mahos_dq.msgs.spodmr_msgs import SPODMRData
+from mahos_dq.msgs.spodmr_msgs import SPODMRData, MWMode
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos.msgs.common_msgs import BinaryState
 from util import get_some, expect_value, save_load_test
@@ -62,7 +62,7 @@ def _build_spodmr_blockseq(xdata: np.ndarray, params: dict):
         nest=False,
         block_base=4,
         eos_margin=0,
-        mw_modes=(0,),
+        mw_modes=(MWMode.QPSK,),
         iq_amplitude=0.0,
         channel_remap=None,
     )

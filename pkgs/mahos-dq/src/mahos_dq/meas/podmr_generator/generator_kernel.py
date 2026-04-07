@@ -16,6 +16,7 @@ import numpy as np
 from itertools import chain
 
 from mahos.msgs.inst.pg_msgs import Block, Blocks, BlockSeq, AnalogChannel, Channels
+from mahos_dq.msgs.podmr_msgs import MWMode
 
 mw_x = AnalogChannel("mw_phase", 0)
 mw_y = AnalogChannel("mw_phase", 90)
@@ -53,6 +54,10 @@ def _expand_pattern(blocks: Blocks[Block]):
         lengths.append(block.total_length())
         pattern.extend(block.total_pattern())
     return names, triggers, lengths, pattern
+
+
+def _normalize_mw_modes(mw_modes: tuple[MWMode | str | int]) -> tuple[MWMode]:
+    return tuple(MWMode.parse(m) for m in mw_modes)
 
 
 def apply_mw_offset(blocks: Blocks[Block], offset_ticks: int) -> Blocks[Block]:
@@ -337,7 +342,7 @@ def build_blocks(
     invertY=False,
     minimum_block_length: int = 1000,
     block_base: int = 4,
-    mw_modes: tuple[int] = (0,),
+    mw_modes: tuple[MWMode | str | int] = (MWMode.QPSK,),
     num_mw: int = 1,
     iq_amplitude: float = 0.0,
     mw_offset: int = 0,
@@ -425,17 +430,23 @@ def print_blocks(blocks: Blocks[Block], print_fn=print):
 
 
 def encode_mw_phase(
-    blocks: Blocks[Block] | BlockSeq, params, mw_modes, num_mw, iq_amplitude
+    blocks: Blocks[Block] | BlockSeq,
+    params: dict,
+    mw_modes: tuple[MWMode | str | int],
+    num_mw: int,
+    iq_amplitude: float,
 ) -> Blocks[Block] | BlockSeq:
     """encode mw phase from x/y(_inv) to i/q."""
 
+    mw_modes = _normalize_mw_modes(mw_modes)
+
     if num_mw == 1:
-        return encode_mw_phase_single(blocks, params, mw_modes, iq_amplitude)
+        return _encode_mw_phase_single(blocks, params, mw_modes, iq_amplitude)
     else:
-        return encode_mw_phase_multi(blocks, params, mw_modes, iq_amplitude)
+        return _encode_mw_phase_multi(blocks, params, mw_modes, iq_amplitude)
 
 
-def encode_mode1(
+def _encode_ext2phase(
     blocks: Blocks[Block] | BlockSeq, ch_from=0, ch_to=0, remove_pulse: bool = True
 ) -> Blocks[Block] | BlockSeq:
     f = "" if ch_from == 0 else str(ch_from)
@@ -476,7 +487,7 @@ def encode_mode1(
     return blocks.apply(encode)
 
 
-def encode_mode2(
+def _encode_arb_phase(
     blocks: Blocks[Block] | BlockSeq, amplitude: float, ch_from=0, ch_to=0, phase0=45.0
 ) -> Blocks[Block] | BlockSeq:
     f = "" if ch_from == 0 else str(ch_from)
@@ -502,8 +513,8 @@ def encode_mode2(
     return blocks.apply(encode)
 
 
-def encode_mw_phase_single(
-    blocks: Blocks[Block] | BlockSeq, params, mw_modes: tuple[int], iq_amplitude: float
+def _encode_mw_phase_single(
+    blocks: Blocks[Block] | BlockSeq, params, mw_modes: tuple[MWMode], iq_amplitude: float
 ) -> Blocks[Block] | BlockSeq:
     """Encode mw phase from x/y(_inv) to i/q for single channel sequence."""
 
@@ -526,7 +537,7 @@ def encode_mw_phase_single(
         }
         return blocks.replace(d)
     elif nomw1:  # mw0 only
-        if mw_modes[0] == 0:
+        if mw_modes[0] == MWMode.QPSK:
             d = {
                 mw_x: ("mw_i", "mw_q"),
                 mw_y: ("mw_q",),
@@ -534,14 +545,14 @@ def encode_mw_phase_single(
                 mw_y_inv: ("mw_i",),
             }
             return blocks.replace(d)
-        elif mw_modes[0] == 1:
-            return encode_mode1(blocks, ch_from=0, ch_to=0)
-        elif mw_modes[0] == 2:
-            return encode_mode2(blocks, iq_amplitude, ch_from=0, ch_to=0)
+        elif mw_modes[0] == MWMode.Ext2Phase:
+            return _encode_ext2phase(blocks, ch_from=0, ch_to=0)
+        elif mw_modes[0] == MWMode.ArbPhase:
+            return _encode_arb_phase(blocks, iq_amplitude, ch_from=0, ch_to=0)
         else:
             raise ValueError(f"Unknown mw_mode: {mw_modes[0]}")
     elif nomw:  # mw1 only
-        if mw_modes[1] == 0:
+        if mw_modes[1] == MWMode.QPSK:
             d = {
                 mw_x: ("mw1_i", "mw1_q"),
                 mw_y: ("mw1_q",),
@@ -549,14 +560,14 @@ def encode_mw_phase_single(
                 mw_y_inv: ("mw1_i",),
             }
             return blocks.replace(d)
-        elif mw_modes[1] == 1:
-            return encode_mode1(blocks, ch_from=0, ch_to=1)
-        elif mw_modes[1] == 2:
-            return encode_mode2(blocks, iq_amplitude, ch_from=0, ch_to=1)
+        elif mw_modes[1] == MWMode.Ext2Phase:
+            return _encode_ext2phase(blocks, ch_from=0, ch_to=1)
+        elif mw_modes[1] == MWMode.ArbPhase:
+            return _encode_arb_phase(blocks, iq_amplitude, ch_from=0, ch_to=1)
         else:
             raise ValueError(f"Unknown mw_mode: {mw_modes[0]}")
     else:  # both mw0 and mw1
-        if mw_modes == (0, 0):
+        if mw_modes == (MWMode.QPSK, MWMode.QPSK):
             d = {
                 mw_x: ("mw_i", "mw_q", "mw1_i", "mw1_q"),
                 mw_y: ("mw_q", "mw1_q"),
@@ -564,35 +575,35 @@ def encode_mw_phase_single(
                 mw_y_inv: ("mw_i", "mw1_i"),
             }
             return blocks.replace(d)
-        elif mw_modes == (1, 1):
-            return encode_mode1(blocks, ch_from=0, ch_to=(0, 1))
-        elif mw_modes == (2, 2):
-            return encode_mode2(blocks, iq_amplitude, ch_from=0, ch_to=(0, 1))
-        elif mw_modes == (0, 1):
+        elif mw_modes == (MWMode.Ext2Phase, MWMode.Ext2Phase):
+            return _encode_ext2phase(blocks, ch_from=0, ch_to=(0, 1))
+        elif mw_modes == (MWMode.ArbPhase, MWMode.ArbPhase):
+            return _encode_arb_phase(blocks, iq_amplitude, ch_from=0, ch_to=(0, 1))
+        elif mw_modes == (MWMode.QPSK, MWMode.Ext2Phase):
             d = {
                 mw_x: (mw_x, "mw_i", "mw_q"),
                 mw_y: (mw_y, "mw_q"),
             }
-            return encode_mode1(blocks.replace(d), ch_from=0, ch_to=1, remove_pulse=False)
-        elif mw_modes == (1, 0):
+            return _encode_ext2phase(blocks.replace(d), ch_from=0, ch_to=1, remove_pulse=False)
+        elif mw_modes == (MWMode.Ext2Phase, MWMode.QPSK):
             d = {
                 mw_x: (mw_x, "mw1_i", "mw1_q"),
                 mw_y: (mw_y, "mw1_q"),
             }
-            return encode_mode1(blocks.replace(d), ch_from=0, ch_to=0, remove_pulse=False)
+            return _encode_ext2phase(blocks.replace(d), ch_from=0, ch_to=0, remove_pulse=False)
         else:
             # TODO: the other combination of modes.
             raise ValueError(f"Unsupported mw_modes: {mw_modes} to multiplex")
 
 
-def encode_mw_phase_multi(
-    blocks: Blocks[Block] | BlockSeq, params, mw_modes: tuple[int], iq_amplitude: float
+def _encode_mw_phase_multi(
+    blocks: Blocks[Block] | BlockSeq, params, mw_modes: tuple[MWMode], iq_amplitude: float
 ) -> Blocks[Block] | BlockSeq:
     """encode mw phase from x/y(_inv) to i/q for multi mw channel sequence."""
 
     for ch, mode in enumerate(mw_modes):
         c = "" if ch == 0 else str(ch)
-        if mode == 0:
+        if mode == MWMode.QPSK:
             mw_x = AnalogChannel(f"mw{c}_phase", 0)
             mw_y = AnalogChannel(f"mw{c}_phase", 90)
             mw_x_inv = AnalogChannel(f"mw{c}_phase", 180)
@@ -604,10 +615,10 @@ def encode_mw_phase_multi(
                 mw_y_inv: (f"mw{c}_i",),
             }
             blocks = blocks.replace(d)
-        elif mode == 1:
-            blocks = encode_mode1(blocks, ch_from=ch, ch_to=ch)
-        elif mode == 2:
-            blocks = encode_mode2(blocks, iq_amplitude, ch_from=ch, ch_to=ch)
+        elif mode == MWMode.Ext2Phase:
+            blocks = _encode_ext2phase(blocks, ch_from=ch, ch_to=ch)
+        elif mode == MWMode.ArbPhase:
+            blocks = _encode_arb_phase(blocks, iq_amplitude, ch_from=ch, ch_to=ch)
         else:
             raise ValueError(f"Unknown mw_mode: {mode}")
 

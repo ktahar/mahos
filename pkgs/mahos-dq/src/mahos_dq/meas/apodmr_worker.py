@@ -23,7 +23,7 @@ from mahos.inst.sg_interface import SGInterface
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from mahos_dq.meas.podmr_worker import Bounds, Pulser as PODMRPulser, PODMRDataOperator
-from mahos_dq.msgs.apodmr_msgs import APODMRData
+from mahos_dq.msgs.apodmr_msgs import APODMRData, MWMode
 
 
 class APODMRDataOperator(PODMRDataOperator):
@@ -146,7 +146,7 @@ class APODMRBlockBuilder(object):
         self,
         minimum_block_length: int,
         block_base: int,
-        mw_modes: tuple[int],
+        mw_modes: tuple[MWMode],
         iq_amplitude: float,
         channel_remap: dict | None,
     ):
@@ -287,7 +287,9 @@ class Pulser(PODMRPulser):
                 self.sgs[name] = SGInterface(cli, name)
                 _default_channels.append({"sg": name})
 
-        self.mw_modes = tuple(self.conf.get("mw_modes", (0,) * len(self.sgs)))
+        self.mw_modes = tuple(
+            MWMode.parse(m) for m in self.conf.get("mw_modes", (0,) * len(self.sgs))
+        )
         self.mw_channels = self.conf.get("mw_channels", _default_channels)
 
         self.pg = PGInterface(cli, "pg")

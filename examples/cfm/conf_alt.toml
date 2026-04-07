@@ -296,7 +296,7 @@ class = "PODMR"
 rep_endpoint = "tcp://127.0.0.1:5780"
 pub_endpoint = "tcp://127.0.0.1:5781"
 [localhost.podmr.pulser]
-mw_modes = [0]
+mw_modes = ["QPSK"]
 [localhost.podmr.target]
 log = "localhost::log"
 tweakers = ["localhost::pos_tweaker"]

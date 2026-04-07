@@ -17,6 +17,7 @@ from mahos_dq.meas.podmr_generator import generator_kernel as K
 
 from mahos.msgs import param_msgs as P
 from mahos.msgs.inst.pg_msgs import Channels, AnalogChannel
+from mahos_dq.msgs.podmr_msgs import MWMode
 
 
 mw_x = K.mw_x
@@ -50,7 +51,7 @@ class PatternGenerator(object):
         split_fraction: int = 4,
         minimum_block_length: int = 1000,
         block_base: int = 4,
-        mw_modes: tuple[int] = (0,),
+        mw_modes: tuple[MWMode | str | int] = (MWMode.QPSK,),
         iq_amplitude: float = 0.0,
         channel_remap: dict | None = None,
         print_fn=print,
@@ -61,7 +62,7 @@ class PatternGenerator(object):
         self.split_fraction = split_fraction
         self.minimum_block_length = minimum_block_length
         self.block_base = block_base
-        self.mw_modes = tuple(mw_modes)
+        self.mw_modes = tuple(MWMode.parse(m) for m in mw_modes)
         self.iq_amplitude = iq_amplitude
         self.channel_remap = channel_remap
         self.print_fn = print_fn
@@ -83,7 +84,7 @@ class PatternGenerator(object):
 
         return 2
 
-    def mode(self, ch=None) -> int:
+    def mode(self, ch=None) -> MWMode:
         """Return MW mode at given ch or currently-active ch."""
 
         if ch is not None:
@@ -92,16 +93,16 @@ class PatternGenerator(object):
         if self.num_mw() == 1:
             # infer currently-active channel for single channel sequence.
             # if mw0 is disabled and mw1 is enabled, use mode of mw1.
-            # if any mode1 is included in active channels, use mode1.
+            # if any Ext2Phase is included in active channels, use Ext2Phase.
             # otherwise, default to mode of mw0.
             nomw = self._params.get("nomw", False)
             nomw1 = self._params.get("nomw1", True)
             if nomw and not nomw1:
                 return self.mw_modes[1]
             elif not nomw and not nomw1:
-                # if any mode 1 is included, use mode 1 for multiplexing.
-                if any(m == 1 for m in self.mw_modes):
-                    return 1
+                # if any Ext2Phase is included, use Ext2Phase for multiplexing.
+                if any(m == MWMode.Ext2Phase for m in self.mw_modes):
+                    return MWMode.Ext2Phase
                 else:
                     return self.mw_modes[0]
             else:  # not nomw and nomw1 (mw0 only) || nomw and nomw1 (fall back).
@@ -110,8 +111,14 @@ class PatternGenerator(object):
         # Won't reach here: ch will be given for multi channel sequence.
         return self.mw_modes[0]
 
+    def mode_has_4phase(self, ch=None) -> bool:
+        return self.mode(ch) in (MWMode.QPSK, MWMode.ArbPhase)
+
+    def _need_p270(self) -> bool:
+        return any(m == MWMode.Ext2Phase for m in self.mw_modes)
+
     def _check_p270(self, p90, p270):
-        if self.mode() != 1:
+        if self.mode_has_4phase():
             return
         if p270 < p90:
             raise ValueError(
@@ -341,7 +348,7 @@ class FIDGenerator(PatternGenerator):
             step=1e-9,
             doc="90 deg (pi/2) pulse width.",
         )
-        if any(m == 1 for m in self.mw_modes):
+        if self._need_p270():
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
@@ -376,7 +383,7 @@ class FIDGenerator(PatternGenerator):
         p1 = p1 + [mw_x_inv]
 
         def gen(v, p90, p270, read_phase):
-            if self.mode() in (0, 2):
+            if self.mode_has_4phase():
                 v_f, v_l = K.split_int(v, self.split_fraction)
                 return [
                     ((mw_x, "mw"), p90),
@@ -384,7 +391,7 @@ class FIDGenerator(PatternGenerator):
                     ((read_phase,), v_l),
                     ((read_phase, "mw"), p90),
                 ]
-            elif self.mode() == 1:
+            else:  # MWMode.Ext2Phase
                 p = [
                     ((mw_x, "mw"), p90),
                     ((mw_x,), v),
@@ -396,15 +403,11 @@ class FIDGenerator(PatternGenerator):
                     # 90 deg pulse + delay time to match length of pattern0 and pattern1.
                     p.extend([((mw_x, "mw"), p90), ((mw_x,), p270 - p90)])
                 return p
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
 
-        if self.mode() in (0, 2):
+        if self.mode_has_4phase():
             read_phase1 = mw_x_inv
-        elif self.mode() == 1:
+        else:  # MWMode.Ext2Phase
             read_phase1 = mw_x
-        else:
-            raise ValueError(f"Unknown MW mode: {self.mode()}")
 
         blocks = [
             K.generate_blocks(
@@ -459,7 +462,7 @@ class SpinEchoGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
-        if any(m == 1 for m in self.mw_modes):
+        if self._need_p270():
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
@@ -499,7 +502,7 @@ class SpinEchoGenerator(PatternGenerator):
 
         def gen(v, p90, p180, p270, read_phase):
             v_f, v_l = K.split_int(v, self.split_fraction)
-            if self.mode() in (0, 2):
+            if self.mode_has_4phase():
                 return [
                     ((mw_x, "mw"), p90),
                     ((mw_x,), v),
@@ -508,7 +511,7 @@ class SpinEchoGenerator(PatternGenerator):
                     ((read_phase,), v_l),
                     ((read_phase, "mw"), p90),
                 ]
-            elif self.mode() == 1:
+            else:  # MWMode.Ext2Phase
                 phase = mw_uninvert(read_phase)
                 p = [
                     ((mw_x, "mw"), p90),
@@ -525,17 +528,12 @@ class SpinEchoGenerator(PatternGenerator):
                     p.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
                 return p
 
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
-
-        if self.mode() in (0, 2):
+        if self.mode_has_4phase():
             phase0 = read_phase0
             phase1 = read_phase1
-        elif self.mode() == 1:
+        else:  # MWMode.Ext2Phase
             # Don't use _inv phase.
             phase0 = phase1 = read_phase0
-        else:
-            raise ValueError(f"Unknown MW mode: {self.mode()}")
 
         blocks = [
             K.generate_blocks(
@@ -591,7 +589,7 @@ class TRSEGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
-        if any(m == 1 for m in self.mw_modes):
+        if self._need_p270():
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
@@ -629,7 +627,7 @@ class TRSEGenerator(PatternGenerator):
         p1 = p1 + [mw_x_inv]
 
         def gen(v, p90, p180, p270, tauconst, read_phase):
-            if self.mode() in (0, 2):
+            if self.mode_has_4phase():
                 v_f, v_l = K.split_int(v, self.split_fraction)
                 return [
                     ((mw_x, "mw"), p90),
@@ -639,7 +637,7 @@ class TRSEGenerator(PatternGenerator):
                     ((read_phase,), v_l),
                     ((read_phase, "mw"), p90),
                 ]
-            elif self.mode() == 1:
+            else:  # MWMode.Ext2Phase
                 p = [
                     ((mw_x, "mw"), p90),
                     ((mw_x,), tauconst),
@@ -653,15 +651,11 @@ class TRSEGenerator(PatternGenerator):
                     # 90 deg pulse + delay time to match length of pattern0 and pattern1.
                     p.extend([((mw_x, "mw"), p90), ((mw_x,), p270 - p90)])
                 return p
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
 
-        if self.mode() in (0, 2):
+        if self.mode_has_4phase():
             read_phase1 = mw_x_inv
-        elif self.mode() == 1:
+        else:  # MWMode.Ext2Phase
             read_phase1 = mw_x
-        else:
-            raise ValueError(f"Unknown MW mode: {self.mode()}")
 
         blocks = [
             K.generate_blocks(
@@ -721,7 +715,7 @@ class DDGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
-        if any(m == 1 for m in self.mw_modes):
+        if self._need_p270():
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
@@ -801,17 +795,15 @@ class DDGenerator(PatternGenerator):
             tau_f, tau_l = K.split_int(tau, self.split_fraction)
             tau2_f, tau2_l = K.split_int(tau * 2, self.split_fraction)
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
-            if self.mode() in (0, 2):
+            if self.mode_has_4phase():
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
-            elif self.mode() == 1:
+            else:  # MWMode.Ext2Phase
                 phase = mw_uninvert(read_phase)
                 read_ptn = [((phase,), tau_l)]
                 if mw_inverted(read_phase):
                     read_ptn.append(((phase, "mw"), p270))
                 else:
                     read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
 
             pattern = []
             px = [((mw_x,), tau2_l), ((mw_x, "mw"), p180), ((mw_x,), tau2_f)]
@@ -840,12 +832,10 @@ class DDGenerator(PatternGenerator):
 
             return init_ptn + pattern + read_ptn
 
-        if self.mode() in (0, 2):
+        if self.mode_has_4phase():
             read_phase0_ = read_phase0
-        elif self.mode() == 1:
+        else:  # MWMode.Ext2Phase
             read_phase0_ = mw_uninvert(read_phase0)
-        else:
-            raise ValueError(f"Unknown MW mode: {self.mode()}")
 
         blocks = [
             K.generate_blocks(
@@ -950,12 +940,12 @@ class DDGenerator(PatternGenerator):
                 ((mw_x, "mw"), p90),
                 ((mw_x,), K.split_int(tau_list[0], self.split_fraction)[0]),
             ]
-            if self.mode() in (0, 2):
+            if self.mode_has_4phase():
                 read_ptn = [
                     ((read_phase,), K.split_int(tau_list[-1], self.split_fraction)[1]),
                     ((read_phase, "mw"), p90),
                 ]
-            elif self.mode() == 1:
+            else:  # MWMode.Ext2Phase
                 phase = mw_uninvert(read_phase)
                 read_ptn = [
                     ((phase,), K.split_int(tau_list[-1], self.split_fraction)[1]),
@@ -964,8 +954,6 @@ class DDGenerator(PatternGenerator):
                     read_ptn.append(((phase, "mw"), p270))
                 else:
                     read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
 
             pattern = []
 
@@ -984,12 +972,10 @@ class DDGenerator(PatternGenerator):
 
             return init_ptn + pattern + read_ptn
 
-        if self.mode() in (0, 2):
+        if self.mode_has_4phase():
             read_phase0_ = read_phase0
-        elif self.mode() == 1:
+        else:  # MWMode.Ext2Phase
             read_phase0_ = mw_uninvert(read_phase0)
-        else:
-            raise ValueError(f"Unknown MW mode: {self.mode()}")
 
         ind = np.arange(len(tau) * len(sample)).reshape((len(tau), len(sample)))
         blocks = [
@@ -1072,8 +1058,8 @@ class RDDGenerator(PatternGenerator):
         reduce_start_divisor: int,
         fix_base_width: int | None,
     ):
-        if self.mode() in (0, 1):
-            raise ValueError("MW mode must be 2.")
+        if self.mode() != MWMode.ArbPhase:
+            raise ValueError("MW mode must be ArbPhase.")
 
         p90, p180, Nconst, readY = [
             pulse_params[k] for k in ["90pulse", "180pulse", "Nconst", "readY"]
@@ -1201,7 +1187,7 @@ class DDNGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
-        if any(m == 1 for m in self.mw_modes):
+        if self._need_p270():
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
@@ -1248,17 +1234,15 @@ class DDNGenerator(PatternGenerator):
             tau_f, tau_l = K.split_int(tauconst, self.split_fraction)
             tau2_f, tau2_l = K.split_int(tauconst * 2, self.split_fraction)
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
-            if self.mode() in (0, 2):
+            if self.mode_has_4phase():
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
-            elif self.mode() == 1:
+            else:  # MWMode.Ext2Phase
                 phase = mw_uninvert(read_phase)
                 read_ptn = [((phase,), tau_l)]
                 if mw_inverted(read_phase):
                     read_ptn.append(((phase, "mw"), p270))
                 else:
                     read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
 
             pattern = []
             px = [((mw_x,), tau2_l), ((mw_x, "mw"), p180), ((mw_x,), tau2_f)]
@@ -1295,12 +1279,10 @@ class DDNGenerator(PatternGenerator):
 
             return init_ptn + pattern + read_ptn
 
-        if self.mode() in (0, 2):
+        if self.mode_has_4phase():
             read_phase0_ = read_phase0
-        elif self.mode() == 1:
+        else:  # MWMode.Ext2Phase
             read_phase0_ = mw_uninvert(read_phase0)
-        else:
-            raise ValueError(f"Unknown MW mode: {self.mode()}")
 
         blocks = [
             K.generate_blocks(
@@ -1492,7 +1474,7 @@ class SpinLockGenerator(PatternGenerator):
             doc="90 deg (pi/2) pulse width.",
         )
         pd["iq_delay"] = P.FloatParam(10e-9, 1e-9, 1000e-9, unit="s", SI_prefix=True, step=1e-9)
-        if any(m == 1 for m in self.mw_modes):
+        if self._need_p270():
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
@@ -1527,7 +1509,7 @@ class SpinLockGenerator(PatternGenerator):
         p1 = p1 + [mw_x]
 
         def gen(v, p90, p270, iq_delay, read_phase):
-            if self.mode() in (0, 2):
+            if self.mode_has_4phase():
                 p = [
                     ((mw_x, "mw"), p90),
                     ((mw_y,), iq_delay),
@@ -1536,7 +1518,7 @@ class SpinLockGenerator(PatternGenerator):
                     ((read_phase, "mw"), p90),
                 ]
                 return p
-            elif self.mode() == 1:
+            else:  # MWMode.Ext2Phase
                 p = [
                     ((mw_x, "mw"), p90),
                     ((mw_y,), iq_delay),
@@ -1548,15 +1530,11 @@ class SpinLockGenerator(PatternGenerator):
                 else:
                     p.extend([((mw_x, "mw"), p90), ((mw_x,), p270 - p90)])
                 return p
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
 
-        if self.mode() in (0, 2):
+        if self.mode_has_4phase():
             read_phase0 = mw_x_inv
-        elif self.mode() == 1:
+        else:  # MWMode.Ext2Phase
             read_phase0 = mw_x
-        else:
-            raise ValueError(f"Unknown MW mode: {self.mode()}")
 
         blocks = [
             K.generate_blocks(
@@ -1617,7 +1595,7 @@ class XY8CorrelationGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
-        if any(m == 1 for m in self.mw_modes):
+        if self._need_p270():
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
@@ -1671,17 +1649,15 @@ class XY8CorrelationGenerator(PatternGenerator):
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
             storage_ptn = [((mw_y,), tau_l), ((mw_y, "mw"), p90)]
             reinit_ptn = [((reinit_phase, "mw"), p90), ((reinit_phase,), tau_f)]
-            if self.mode() in (0, 2):
+            if self.mode_has_4phase():
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
-            elif self.mode() == 1:
+            else:  # MWMode.Ext2Phase
                 phase = mw_uninvert(read_phase)
                 read_ptn = [((phase,), tau_l)]
                 if mw_inverted(read_phase):
                     read_ptn.append(((phase, "mw"), p270))
                 else:
                     read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
 
             px = [((mw_x,), tau2_l), ((mw_x, "mw"), p180), ((mw_x,), tau2_f)]
             py = [((mw_y,), tau2_l), ((mw_y, "mw"), p180), ((mw_y,), tau2_f)]
@@ -1709,12 +1685,10 @@ class XY8CorrelationGenerator(PatternGenerator):
 
             return xy8_first + interlude + xy8_second
 
-        if self.mode() in (0, 2):
+        if self.mode_has_4phase():
             read_phase0_ = read_phase0
-        elif self.mode() == 1:
+        else:  # MWMode.Ext2Phase
             read_phase0_ = mw_uninvert(read_phase0)
-        else:
-            raise ValueError(f"Unknown MW mode: {self.mode()}")
 
         blocks = [
             K.generate_blocks(
@@ -1778,7 +1752,7 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
             step=1e-9,
             doc="180 deg (pi) pulse width. Negative value means 2 * 90pulse.",
         )
-        if any(m == 1 for m in self.mw_modes):
+        if self._need_p270():
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
@@ -1835,17 +1809,15 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
                 ((reinit_phase, "mw"), p90),
                 ((reinit_phase,), tau_f),
             ]
-            if self.mode() in (0, 2):
+            if self.mode_has_4phase():
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
-            elif self.mode() == 1:
+            else:  # MWMode.Ext2Phase
                 phase = mw_uninvert(read_phase)
                 read_ptn = [((phase,), tau_l)]
                 if mw_inverted(read_phase):
                     read_ptn.append(((phase, "mw"), p270))
                 else:
                     read_ptn.extend([((phase, "mw"), p90), ((phase,), p270 - p90)])
-            else:
-                raise ValueError(f"Unknown MW mode: {self.mode()}")
 
             px = [((mw_x,), tau2_l), ((mw_x, "mw"), p180), ((mw_x,), tau2_f)]
             py = [((mw_y,), tau2_l), ((mw_y, "mw"), p180), ((mw_y,), tau2_f)]
@@ -1862,12 +1834,10 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
 
             return xy8_first + interlude + xy8_second
 
-        if self.mode() in (0, 2):
+        if self.mode_has_4phase():
             read_phase0_ = read_phase0
-        elif self.mode() == 1:
+        else:  # MWMode.Ext2Phase
             read_phase0_ = mw_uninvert(read_phase0)
-        else:
-            raise ValueError(f"Unknown MW mode: {self.mode()}")
 
         blocks = [
             K.generate_blocks(
@@ -1917,7 +1887,7 @@ class DDGateGenerator(PatternGenerator):
         split_fraction: int = 4,
         minimum_block_length: int = 1000,
         block_base: int = 4,
-        mw_modes: tuple[int] = (0,),
+        mw_modes: tuple[MWMode] = (MWMode.QPSK,),
         iq_amplitude: float = 0.0,
         channel_remap: dict | None = None,
         print_fn=print,
@@ -2332,8 +2302,8 @@ class DQ2RamseyGenerator(PatternGenerator):
         reduce_start_divisor: int,
         fix_base_width: int | None,
     ):
-        if self.mode() not in (0, 2):
-            raise ValueError(f"Doesn't support mode1. Given mode: {self.mode()}.")
+        if not self.mode_has_4phase():
+            raise ValueError(f"Requires MW mode with at least 4 phase. Given mode: {self.mode()}.")
 
         p90 = pulse_params["90pulse"]
         read_phase0 = (mw_x, mw1_x)
@@ -2414,8 +2384,8 @@ class DQ4RamseyGenerator(PatternGenerator):
         reduce_start_divisor: int,
         fix_base_width: int | None,
     ):
-        if self.mode() not in (0, 2):
-            raise ValueError(f"Doesn't support mode1. Given mode: {self.mode()}.")
+        if not self.mode_has_4phase():
+            raise ValueError(f"Requires MW mode with at least 4 phase. Given mode: {self.mode()}.")
 
         p90 = pulse_params["90pulse"]
         read_phases = [(mw_x, mw1_x), (mw_x_inv, mw1_x), (mw_x_inv, mw1_x_inv), (mw_x, mw1_x_inv)]
@@ -2484,7 +2454,7 @@ def make_generators(
     split_fraction: int = 4,
     minimum_block_length: int = 1000,
     block_base: int = 4,
-    mw_modes: tuple[int] = (0,),
+    mw_modes: tuple[MWMode | str | int] = (MWMode.QPSK,),
     iq_amplitude: float = 0.0,
     channel_remap: dict | None = None,
     generators: dict | None = None,
@@ -2495,6 +2465,7 @@ def make_generators(
         raise TypeError(
             "generators must be dict[str, [module_name, class_name]], " f"got {generators!r}"
         )
+    mw_modes = tuple(MWMode.parse(m) for m in mw_modes)
 
     allowed_num_pattern_set = None
     if allowed_num_pattern is not None:
@@ -2542,14 +2513,14 @@ def make_generators(
     if len(mw_modes) > 1:
         # add sequences using multiple mw channels here
         generators["drabi"] = DRabiGenerator(*args)
-        if all(m in (0, 2) for m in mw_modes[:2]):
+        if all(m in (MWMode.QPSK, MWMode.ArbPhase) for m in mw_modes[:2]):
             generators["dq2ramsey"] = DQ2RamseyGenerator(*args)
             generators["dq4ramsey"] = DQ4RamseyGenerator(*args)
-    if all(m == 1 for m in mw_modes):
+    if all(m == MWMode.Ext2Phase for m in mw_modes):
         # these methods requires 4 phases (x, y, x_inv, y_inv) and unavailable in 2-phase mode.
         for key in ["xy16", "xy16N", "ddgate", "ddgateN"]:
             del generators[key]
-    if any(m == 2 for m in mw_modes):
+    if any(m == MWMode.ArbPhase for m in mw_modes):
         # Randomized DD. no rcpmg because it is equivalent to rcp.
         generators["rcp"] = RDDGenerator(*args, method="cp")
         generators["rxy4"] = RDDGenerator(*args, method="xy4")

@@ -14,7 +14,7 @@ from mahos.msgs.common_msgs import BinaryState
 from mahos_dq.meas.apodmr import APODMRClient
 from mahos_dq.meas.apodmr_io import APODMRIO
 from mahos_dq.meas.apodmr_worker import APODMRBlockBuilder, APODMRDataOperator
-from mahos_dq.msgs.apodmr_msgs import APODMRData
+from mahos_dq.msgs.apodmr_msgs import APODMRData, MWMode
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from util import expect_value, get_some, save_load_test
@@ -84,7 +84,7 @@ def test_apodmr_builder_inserts_trigger_before_each_laser():
     builder = APODMRBlockBuilder(
         minimum_block_length=1000,
         block_base=4,
-        mw_modes=(0,),
+        mw_modes=(MWMode.QPSK,),
         iq_amplitude=0.0,
         channel_remap=None,
     )

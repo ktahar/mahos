@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from mahos_dq.msgs.spodmr_msgs import SPODMRData, is_sweepN, is_CPlike, is_correlation
+from mahos_dq.msgs.spodmr_msgs import SPODMRData, MWMode, is_sweepN, is_CPlike, is_correlation
 from mahos.msgs.pulse_msgs import PulsePattern
 from mahos.msgs import param_msgs as P
 from mahos.inst.sg_interface import SGInterface
@@ -149,7 +149,7 @@ class BlockSeqBuilder(object):
         nest: bool,
         block_base: int,
         eos_margin: int,
-        mw_modes: tuple[int],
+        mw_modes: tuple[MWMode],
         iq_amplitude: float,
         channel_remap: dict | None,
     ):
@@ -525,7 +525,9 @@ class Pulser(Worker):
                 self.sgs[name] = SGInterface(cli, name)
                 _default_channels.append({"sg": name})
 
-        self.mw_modes = tuple(self.conf.get("mw_modes", (0,) * len(self.sgs)))
+        self.mw_modes = tuple(
+            MWMode.parse(m) for m in self.conf.get("mw_modes", (0,) * len(self.sgs))
+        )
         self.mw_channels = self.conf.get("mw_channels", _default_channels)
 
         self.pg = PGInterface(cli, "pg")
@@ -685,11 +687,11 @@ class Pulser(Worker):
             freq = params[f"freq{idx}"]
             power = params[f"power{idx}"]
 
-            if mode in (0, 2):
+            if mode in (MWMode.QPSK, MWMode.ArbPhase):
                 if not sg.configure_cw_iq_ext(freq, power, ch=ch, reset=reset):
                     self.logger.error(f"Error initializing SG{idx}.")
                     return False
-            else:  # mode 1
+            else:  # MWMode.Ext2Phase
                 if not sg.configure_cw(freq, power, ch=ch, reset=reset):
                     self.logger.error(f"Error initializing SG{idx}.")
                     return False

@@ -22,7 +22,7 @@ from mahos.msgs import param_msgs as P
 from mahos.msgs.pulse_msgs import PulsePattern
 from mahos.msgs.inst.pg_msgs import Block, Blocks
 from mahos.msgs.inst.tdc_msgs import RawEvents
-from mahos_dq.msgs.qdyne_msgs import QdyneData, TDCStatus
+from mahos_dq.msgs.qdyne_msgs import QdyneData, MWMode, TDCStatus
 from mahos.inst.sg_interface import SGInterface
 from mahos.inst.pg_interface import PGInterface
 from mahos.inst.tdc_interface import TDCInterface
@@ -261,7 +261,7 @@ class Pulser(Worker):
         bb = self.conf["block_base"]
         iq_amplitude = self.conf.get("iq_amplitude", 0.0)
         channel_remap = self.conf.get("channel_remap")
-        self.mw_modes = tuple(self.conf.get("mw_modes", (0,)))
+        self.mw_modes = tuple(MWMode.parse(m) for m in self.conf.get("mw_modes", (0,)))
 
         self.generators = make_generators(
             freq=self.conf["pg_freq"],
@@ -340,11 +340,11 @@ class Pulser(Worker):
         return True
 
     def init_sg(self, params: dict) -> bool:
-        if self.mw_modes[0] in (0, 2):
+        if self.mw_modes[0] in (MWMode.QPSK, MWMode.ArbPhase):
             if not self.sg.configure_cw_iq_ext(params["freq"], params["power"]):
                 self.logger.error("Error initializing SG.")
                 return False
-        else:  # mode 1
+        else:  # MWMode.Ext2Phase
             if not self.sg.configure_cw(params["freq"], params["power"]):
                 self.logger.error("Error initializing SG.")
                 return False
