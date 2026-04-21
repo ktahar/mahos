@@ -364,7 +364,7 @@ class ODMRPGMixin(object):
         final = Block(
             "FINAL",
             [
-                (["gate", "trigger"], trigger_width),
+                (("gate", "trigger"), trigger_width),
                 (None, max(0, min_len - trigger_width)),
             ],
         )
@@ -444,7 +444,7 @@ class ODMRPGMixin(object):
         final_bg = Block(
             "FINAL-BG",
             [
-                (["gate", "trigger"], trigger_width),
+                (("gate", "trigger"), trigger_width),
                 (None, max(0, min_len - trigger_width)),
             ],
         )
