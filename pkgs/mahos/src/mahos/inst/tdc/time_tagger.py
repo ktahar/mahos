@@ -44,6 +44,10 @@ class TimeTagger(TDCBase):
     :type ext_ref_clock_level: float
     :param ext_ref_clock_freq: (default: 10e6) frequency of ext_ref_clock.
     :type ext_ref_clock_freq: float
+    :param clock_out: (default: None) Enables/disables the 10 MHz clock output.
+        This option is only for Time Tagger X hardware. When running the other hardware,
+        set this to the default (None) to skip the configuration.
+    :type clock_out: bool | None
     :param remove_ttbin: (default: True) Remove raw events (.ttbin) file after load.
     :type remove_ttbin: bool
     :param serial: (default: "") Serial string to discriminate multiple TimeTaggers.
@@ -83,6 +87,7 @@ class TimeTagger(TDCBase):
         self.clock_level = self.conf.get("ext_ref_clock_level", 0.0)
         self.clock_freq = self.conf.get("ext_ref_clock_freq", 10e6)
         self.set_reference_clock(self.clock_ch, self.clock_level, self.clock_freq)
+        self.set_clock_out(self.conf.get("clock_out"))
 
     def log_from_time_tagger(self, level: int, msg: str):
         # TODO: want to log according to given level.
@@ -95,9 +100,21 @@ class TimeTagger(TDCBase):
             self.tagger.setSoftwareClock(ch, freq)
             self.logger.info(f"Software reference clock at ch={ch} freq={freq*1e-6:.1f} MHz.")
         else:
-            self.tagger.disableSoftwareClock()
+            disable_reference_clock = getattr(self.tagger, "disableReferenceClock", None)
+            if callable(disable_reference_clock):
+                disable_reference_clock()
+            else:
+                # fallback to deprecated function (when library version is old)
+                self.tagger.disableSoftwareClock()
             self.logger.info("Disabled software reference clock.")
         return True
+
+    def set_clock_out(self, enable: bool | None):
+        """Enable/disable 10 MHz clock output (Time Tagger X only). enable = None skips setting."""
+
+        if enable is not None:
+            self.tagger.xtra_setClockOut(enable)
+            self.logger.info(f"setClockOut (10 MHz): {enable}")
 
     def configure_histogram(self, base_config: str, trange: float, tbin: float) -> bool:
         """Configure histogram measurement.
