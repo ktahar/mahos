@@ -17,3 +17,4 @@ Instruments
    :toctree: generated
 
    LI5640
+   SR860

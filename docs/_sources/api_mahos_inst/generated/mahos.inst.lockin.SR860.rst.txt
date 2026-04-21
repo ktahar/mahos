@@ -1,0 +1,107 @@
+﻿mahos.inst.lockin.SR860
+=======================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.inst.lockin
+
+.. autoclass:: SR860
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SR860.__init__
+      ~SR860.configure
+      ~SR860.get
+      ~SR860.get_Rexpand
+      ~SR860.get_Roffset
+      ~SR860.get_Roffset_enable
+      ~SR860.get_Rratio_enable
+      ~SR860.get_Xexpand
+      ~SR860.get_Xoffset
+      ~SR860.get_Xoffset_enable
+      ~SR860.get_Xratio_enable
+      ~SR860.get_Yexpand
+      ~SR860.get_Yoffset
+      ~SR860.get_Yoffset_enable
+      ~SR860.get_Yratio_enable
+      ~SR860.get_adv_filter
+      ~SR860.get_amplitude
+      ~SR860.get_ch1_mode
+      ~SR860.get_ch2_mode
+      ~SR860.get_coupling
+      ~SR860.get_current_gain
+      ~SR860.get_freq
+      ~SR860.get_ground
+      ~SR860.get_harmonics
+      ~SR860.get_input_mode
+      ~SR860.get_input_range
+      ~SR860.get_input_source
+      ~SR860.get_param_dict
+      ~SR860.get_param_dict_labels
+      ~SR860.get_phase_offset
+      ~SR860.get_ref_edge
+      ~SR860.get_ref_imp
+      ~SR860.get_ref_source
+      ~SR860.get_sensitivity
+      ~SR860.get_sensitivity_float
+      ~SR860.get_slope
+      ~SR860.get_sync_filter
+      ~SR860.get_time_constant
+      ~SR860.lock_params
+      ~SR860.release_params
+      ~SR860.set
+      ~SR860.set_Rexpand
+      ~SR860.set_Roffset
+      ~SR860.set_Roffset_enable
+      ~SR860.set_Rratio_enable
+      ~SR860.set_Xexpand
+      ~SR860.set_Xoffset
+      ~SR860.set_Xoffset_enable
+      ~SR860.set_Xratio_enable
+      ~SR860.set_Yexpand
+      ~SR860.set_Yoffset
+      ~SR860.set_Yoffset_enable
+      ~SR860.set_Yratio_enable
+      ~SR860.set_adv_filter
+      ~SR860.set_amplitude
+      ~SR860.set_auto_phase_offset
+      ~SR860.set_auto_range
+      ~SR860.set_auto_scale
+      ~SR860.set_ch1_mode
+      ~SR860.set_ch2_mode
+      ~SR860.set_coupling
+      ~SR860.set_current_gain
+      ~SR860.set_freq
+      ~SR860.set_ground
+      ~SR860.set_harmonics
+      ~SR860.set_input_mode
+      ~SR860.set_input_range
+      ~SR860.set_input_source
+      ~SR860.set_phase_offset
+      ~SR860.set_ref_edge
+      ~SR860.set_ref_imp
+      ~SR860.set_ref_source
+      ~SR860.set_sensitivity
+      ~SR860.set_slope
+      ~SR860.set_sync_filter
+      ~SR860.set_time_constant
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SR860.PARAM_NAMES
+      ~SR860.Sensitivity_to_Float
+   
+   

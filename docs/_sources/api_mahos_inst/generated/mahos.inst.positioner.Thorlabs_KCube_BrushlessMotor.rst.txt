@@ -1,0 +1,24 @@
+﻿mahos.inst.positioner.Thorlabs\_KCube\_BrushlessMotor
+=====================================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.inst.positioner
+
+.. autoclass:: Thorlabs_KCube_BrushlessMotor
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+   
+   
+
+   
+   
+   
