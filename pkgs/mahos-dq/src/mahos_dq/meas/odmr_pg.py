@@ -14,6 +14,7 @@ import math
 
 from mahos.msgs.inst.pg_msgs import Block, Blocks, TriggerType
 from mahos.msgs.pulse_msgs import PulsePattern
+from mahos_dq.meas.podmr_generator import generator_kernel as K
 
 
 class ODMRPGMixin(object):
@@ -124,6 +125,8 @@ class ODMRPGMixin(object):
             round(params["timing"][k] * freq)
             for k in ("laser_delay", "laser_width", "mw_delay", "mw_width", "trigger_width")
         ]
+        mw_offset = round(freq * params["timing"].get("mw_offset", 0.0))
+
         if mw_delay < trigger_width:
             self.logger.error("mw_delay >= trigger_width must be satisfied.")
             return False
@@ -247,8 +250,13 @@ class ODMRPGMixin(object):
         blocks.append(blk_trigger)
 
         blocks = Blocks(blocks)
+
+        if mw_offset:
+            blocks = K.apply_mw_offset(blocks, mw_offset)
+
         if self._channel_remap is not None:
             blocks = blocks.replace(self._channel_remap)
+
         blocks = blocks.simplify()
         success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
         if success:
@@ -335,7 +343,15 @@ class ODMRPGMixin(object):
         return success
 
     def _make_blocks_pulse_apd_nobg(
-        self, delay, laser_delay, laser_width, mw_delay, mw_width, trigger_width, burst_num
+        self,
+        delay,
+        laser_delay,
+        laser_width,
+        mw_delay,
+        mw_width,
+        trigger_width,
+        burst_num,
+        mw_offset,
     ):
         min_len = self._minimum_block_length
 
@@ -372,9 +388,15 @@ class ODMRPGMixin(object):
         for b in (init, final):
             self._adjust_block(b, 0)
         self._adjust_block(main, -1)
+
         blocks = Blocks([init, main, final])
+
+        if mw_offset:
+            blocks = K.apply_mw_offset(blocks, mw_offset)
+
         if self._channel_remap is not None:
             blocks = blocks.replace(self._channel_remap)
+
         return blocks.simplify()
 
     def _make_blocks_pulse_apd_bg(
@@ -387,6 +409,7 @@ class ODMRPGMixin(object):
         mw_width,
         trigger_width,
         burst_num,
+        mw_offset,
     ):
         min_len = self._minimum_block_length
 
@@ -453,9 +476,15 @@ class ODMRPGMixin(object):
             self._adjust_block(b, 0)
         for b in (main, main_bg):
             self._adjust_block(b, -1)
+
         blocks = Blocks([init, main, final, init_bg, main_bg, final_bg])
+
+        if mw_offset:
+            blocks = K.apply_mw_offset(blocks, mw_offset)
+
         if self._channel_remap is not None:
             blocks = blocks.replace(self._channel_remap)
+
         return blocks.simplify()
 
     def configure_pg_pulse_apd(self, params: dict, trigger_type: TriggerType) -> bool:
@@ -467,6 +496,7 @@ class ODMRPGMixin(object):
             for k in ("laser_delay", "laser_width", "mw_delay", "mw_width", "trigger_width")
         ]
         burst_num = params["timing"]["burst_num"]
+        mw_offset = round(freq * params["timing"].get("mw_offset", 0.0))
 
         if mw_delay < trigger_width:
             self.logger.error("mw_delay >= trigger_width must be satisfied.")
@@ -482,10 +512,18 @@ class ODMRPGMixin(object):
                 mw_width,
                 trigger_width,
                 burst_num,
+                mw_offset,
             )
         else:
             blocks = self._make_blocks_pulse_apd_nobg(
-                delay, laser_delay, laser_width, mw_delay, mw_width, trigger_width, burst_num
+                delay,
+                laser_delay,
+                laser_width,
+                mw_delay,
+                mw_width,
+                trigger_width,
+                burst_num,
+                mw_offset,
             )
 
         success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)

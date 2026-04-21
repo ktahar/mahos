@@ -435,6 +435,22 @@
            </property>
           </widget>
          </item>
+         <item row="5" column="3">
+          <widget class="QDoubleSpinBox" name="mwoffsetBox">
+           <property name="prefix">
+            <string>mw offset: </string>
+           </property>
+           <property name="suffix">
+            <string> ns</string>
+           </property>
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="singleStep">
+            <double>10.000000000000000</double>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -511,6 +527,7 @@
   <tabstop>mwwidthBox</tabstop>
   <tabstop>bnumBox</tabstop>
   <tabstop>triggerwidthBox</tabstop>
+  <tabstop>mwoffsetBox</tabstop>
   <tabstop>paramTable</tabstop>
  </tabstops>
  <resources/>

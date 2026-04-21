@@ -98,6 +98,9 @@ class SweeperBase(Worker):
                     SI_prefix=True,
                     doc="width of trigger (<= mw_delay)",
                 ),
+                mw_offset=P.FloatParam(
+                    0.0, -1e-4, 1e-4, unit="s", SI_prefix=True, doc="global mw offset"
+                ),
             )
             if pd_analog:
                 timing["time_window"] = P.FloatParam(

@@ -615,6 +615,7 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
                     ("mw_delay", self.mwdelayBox, 1e9),
                     ("mw_width", self.mwwidthBox, 1e9),
                     ("trigger_width", self.triggerwidthBox, 1e9),
+                    ("mw_offset", self.mwoffsetBox, 1e9),
                 ],
             )
             self._pulse_has_time_window = "time_window" in params["timing"]
@@ -754,6 +755,7 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             self.mwdelayBox.setValue(timing["mw_delay"] * 1e9)
             self.mwwidthBox.setValue(timing["mw_width"] * 1e9)
             self.triggerwidthBox.setValue(timing["trigger_width"] * 1e9)
+            self.mwoffsetBox.setValue(timing.get("mw_offset", 0.0) * 1e9)
             if "time_window" in timing:
                 self.windowBox.setValue(timing["time_window"] * 1e3)
             if "gate_delay" in timing:
@@ -845,6 +847,7 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             t["mw_delay"] = self.mwdelayBox.value() * 1e-9
             t["mw_width"] = self.mwwidthBox.value() * 1e-9
             t["trigger_width"] = self.triggerwidthBox.value() * 1e-9
+            t["mw_offset"] = self.mwoffsetBox.value() * 1e-9
             if self._pulse_has_burst_num:
                 t["burst_num"] = self.bnumBox.value()
             if self._pulse_has_time_window:
@@ -938,6 +941,7 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             self.mwdelayBox,
             self.mwwidthBox,
             self.triggerwidthBox,
+            self.mwoffsetBox,
         ):
             w.setEnabled(is_IDLE and is_pulse)
 

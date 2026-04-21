@@ -167,6 +167,11 @@ class Ui_ODMR(object):
         self.powerBox.setProperty("value", 0.0)
         self.powerBox.setObjectName("powerBox")
         self.gridLayout_2.addWidget(self.powerBox, 0, 1, 1, 1)
+        self.mwoffsetBox = QtWidgets.QDoubleSpinBox(parent=self.measTab)
+        self.mwoffsetBox.setDecimals(1)
+        self.mwoffsetBox.setSingleStep(10.0)
+        self.mwoffsetBox.setObjectName("mwoffsetBox")
+        self.gridLayout_2.addWidget(self.mwoffsetBox, 5, 3, 1, 1)
         self.verticalLayout.addLayout(self.gridLayout_2)
         self.pulseLabel = QtWidgets.QLabel(parent=self.measTab)
         self.pulseLabel.setObjectName("pulseLabel")
@@ -218,7 +223,8 @@ class Ui_ODMR(object):
         ODMR.setTabOrder(self.mwdelayBox, self.mwwidthBox)
         ODMR.setTabOrder(self.mwwidthBox, self.bnumBox)
         ODMR.setTabOrder(self.bnumBox, self.triggerwidthBox)
-        ODMR.setTabOrder(self.triggerwidthBox, self.paramTable)
+        ODMR.setTabOrder(self.triggerwidthBox, self.mwoffsetBox)
+        ODMR.setTabOrder(self.mwoffsetBox, self.paramTable)
 
     def retranslateUi(self, ODMR):
         _translate = QtCore.QCoreApplication.translate
@@ -264,6 +270,8 @@ class Ui_ODMR(object):
         self.mwcontBox.setText(_translate("ODMR", "Continue MW irradiation after stop"))
         self.powerBox.setPrefix(_translate("ODMR", "power: "))
         self.powerBox.setSuffix(_translate("ODMR", " dBm"))
+        self.mwoffsetBox.setPrefix(_translate("ODMR", "mw offset: "))
+        self.mwoffsetBox.setSuffix(_translate("ODMR", " ns"))
         self.pulseLabel.setText(_translate("ODMR", "total window: 0.00 single window: 0.00 (rate: 0.00)"))
         self.groupBox_4.setTitle(_translate("ODMR", "Additional Parameters"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.measTab), _translate("ODMR", "Main"))

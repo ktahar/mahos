@@ -17,6 +17,7 @@ Added
   - ODMR: add ``sweeper.pg_immediate`` conf for the case SG cannot trigger PG.
   - ODMR: add support for pulse ODMR sweep with AnalogPD.
   - PODMR,SPODMR,Qdyne: add support of user-defined pattern (conf pulser.generators)
+  - ODMR,PODMR,SPODMR,Qdyne: add new param ``mw_offset`` to add global timing offset.
 - inst: add new instrument modules/classes for laser, lockin (SR860), SGs
   (SRS_SG390 and Windfreak_SynthHD), and PI positioner.
 - msgs.param_msgs: add ``read_only`` option for parameters.
