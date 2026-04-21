@@ -131,6 +131,13 @@ Threading
 ---------
 
 By default, each node runs as a process, and TCP is used for inter-process communication.
+
+.. _tcp security warning:
+
+.. warning::
+
+   Do not expose MAHOS TCP ports to the public Internet. MAHOS node communication is not designed to be Internet-facing, and exposing these ports can create a security risk. Bind to trusted interfaces only and restrict access with a firewall or a private network.
+
 When you need to reduce TCP communication overhead,
 nodes can be run as individual threads inside a single process.
 To enable this feature, you need to make slight modifications in the configuration file.

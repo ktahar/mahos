@@ -25,4 +25,5 @@ Instruments
 
    N5182B
    MG3710E
+   SRS_SG390
    DS_SG

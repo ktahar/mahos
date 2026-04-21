@@ -13,7 +13,8 @@ Data transport and serialization
 The node :class:`communication <mahos.node.comm.Context>` is currently based on the `ZeroMQ <https://zeromq.org/>`_ library.
 The transport layer is abstracted by ZeroMQ, and we can choose different transports by changing a configuration (the endpoint) only.
 We recommend using TCP as the default.
-By choosing TCP, multi-host (multi-computer) configuration is straightforward.
+By choosing TCP, multi-host (multi-computer) configuration is straightforward,
+though the :ref:`TCP ports should not be exposed to the Internet <tcp security warning>`.
 However, transport overhead can become an issue when dealing with very large data
 such as high-resolution images produced at a high rate.
 In such a case, the overhead can be reduced significantly by running the relevant nodes as threads

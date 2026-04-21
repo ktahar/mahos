@@ -18,9 +18,11 @@
    
       ~PODMR.__init__
       ~PODMR.change_state
+      ~PODMR.clear_laser_timing
       ~PODMR.close_resources
       ~PODMR.discard
       ~PODMR.export_data
+      ~PODMR.find_laser_timing
       ~PODMR.get_param_dict
       ~PODMR.get_param_dict_labels
       ~PODMR.handle_req

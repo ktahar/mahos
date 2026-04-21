@@ -478,12 +478,12 @@ Optional keys: <code class="docutils literal notranslate"><span class="pre">fg</
 <li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
 <li><p><strong>pulser.quick_resume</strong> (<em>bool</em>) – default value of quick_resume.
 If True, it skips instrument configurations on resume.</p></li>
-<li><p><strong>pulser.mw_modes</strong> (<em>tuple</em><em>[</em><em>int</em><em>]</em>) – mw phase control modes for each channel.
-0 is 4-phase control using IQ modulation at SG and a switch.
-1 is 2-phase control using external 90-deg splitter and two switches.
-2 is arbitral phase control using IQ modulation at SG
+<li><p><strong>pulser.mw_modes</strong> (<em>tuple</em><em>[</em><em>str</em><em> | </em><em>int</em><em>]</em>) – mw phase control modes for each channel.
+QPSK (0) is 4-phase control using IQ modulation at SG and a switch.
+Ext2Phase (1) is 2-phase control using external 90-deg splitter and two switches.
+ArbPhase (2) is arbitrary phase control using IQ modulation at SG
 (Analog output (AWG) is required for PG).</p></li>
-<li><p><strong>pulser.iq_amplitude</strong> (<em>float</em>) – (only for mw_mode 2) amplitude of analog IQ signal in V.</p></li>
+<li><p><strong>pulser.iq_amplitude</strong> (<em>float</em>) – (only for mw_mode ArbPhase (2)) amplitude of analog IQ signal in V.</p></li>
 <li><p><strong>pulser.split_fraction</strong> (<em>int</em>) – (default: 4) fraction factor (F) to split the free period
 for MW phase modulation. the period (T) is split into (T // F, T - T // F) and MW phase
 is switched at T // F. Thus, larger F results in “quicker start” of the phase
@@ -497,7 +497,13 @@ reduce is done first by this value, and then repeated by 10.</p></li>
 <li><p><strong>pulser.sg_freq</strong> (<em>float</em>) – default value of sg frequency</p></li>
 <li><p><strong>pulser.channel_remap</strong> (<em>dict</em><em>[</em><em>str</em><em> | </em><em>int</em><em>, </em><em>str</em><em> | </em><em>int</em><em>]</em>) – mapping to fix default channel names.</p></li>
 <li><p><strong>pulser.mw_channels</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional SG channel identifiers for MW outputs.</p></li>
+<li><p><strong>pulser.generators</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Optional user generator registry mapping method labels to
+<code class="docutils literal notranslate"><span class="pre">[module_name,</span> <span class="pre">class_name]</span></code>.
+These classes are loaded at worker initialization and can add or override methods.</p></li>
 <li><p><strong>pulser.eos_margin</strong> (<em>float</em>) – (default: 1e-6) End-of-sequence timing margin in seconds.</p></li>
+<li><p><strong>pulser.tdc_primary_ch</strong> (<em>int</em>) – (default: 0) TDC channel id for primary (mandatory) channel.</p></li>
+<li><p><strong>pulser.tdc_secondary_ch</strong> (<em>int</em>) – (default: 1) TDC channel id for secondary (optional) channel.</p></li>
+<li><p><strong>pulser.tdc_secondary_enable</strong> (<em>bool</em>) – (default: True) If True, secondary channel is enabled.</p></li>
 <li><p><strong>fitter.rabi.c</strong> (<em>float</em>) – default value of param “c” (base line) in RabiFitter.
 You can set the bounds using “c_min” and “c_max” too.</p></li>
 <li><p><strong>fitter.rabi.A</strong> (<em>float</em>) – default value of param “A” (amplitude) in RabiFitter.
@@ -519,14 +525,20 @@ You can set the bounds using “A_min” and “A_max” too.</p></li>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">change_state</span></code>(msg)</p></td>
 <td><p>Change state to msg.state.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close_resources</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_laser_timing</span></code>(msg)</p></td>
+<td><p>Clear laser timing offset of current data.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close_resources</span></code>()</p></td>
 <td><p>Close custom resources.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">discard</span></code>(msg)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">discard</span></code>(msg)</p></td>
 <td><p>Discard the data.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_data</span></code>(msg)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">export_data</span></code>(msg)</p></td>
 <td><p>Export data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_laser_timing</span></code>(msg)</p></td>
+<td><p>Find laser timing of current data.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_param_dict</span></code>(msg)</p></td>
 <td><p>Get parameter dict.</p></td>

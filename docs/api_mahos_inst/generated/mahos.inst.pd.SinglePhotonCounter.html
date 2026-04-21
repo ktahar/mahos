@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>mahos.inst.pd_interface.APDCounterInterface &#8212; MAHOS 0.4.0 documentation</title>
+    <title>mahos.inst.pd.SinglePhotonCounter &#8212; MAHOS 0.4.0 documentation</title>
   
   
   
@@ -41,11 +41,11 @@
     <script src="../../_static/documentation_options.js?v=6c02275b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_inst/generated/mahos.inst.pd_interface.APDCounterInterface';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_inst/generated/mahos.inst.pd.SinglePhotonCounter';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mahos.inst.pd.APDCounter" href="mahos.inst.pd.APDCounter.html" />
-    <link rel="prev" title="mahos.inst.pd_interface.PDInterface" href="mahos.inst.pd_interface.PDInterface.html" />
+    <link rel="next" title="mahos.inst.pd.AnalogPD" href="mahos.inst.pd.AnalogPD.html" />
+    <link rel="prev" title="mahos.inst.pd_interface.SinglePhotonCounterInterface" href="mahos.inst.pd_interface.SinglePhotonCounterInterface.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -373,8 +373,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../lockin.html">mahos.inst.lockin</a></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../pd.html">mahos.inst.pd</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="mahos.inst.pd_interface.PDInterface.html">mahos.inst.pd_interface.PDInterface</a></li>
-<li class="toctree-l3 current active"><a class="current reference internal" href="#">mahos.inst.pd_interface.APDCounterInterface</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mahos.inst.pd.APDCounter.html">mahos.inst.pd.APDCounter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mahos.inst.pd_interface.SinglePhotonCounterInterface.html">mahos.inst.pd_interface.SinglePhotonCounterInterface</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">mahos.inst.pd.SinglePhotonCounter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mahos.inst.pd.AnalogPD.html">mahos.inst.pd.AnalogPD</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mahos.inst.pd.LockinAnalogPD.html">mahos.inst.pd.LockinAnalogPD</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mahos.inst.pd.LUCI10.html">mahos.inst.pd.LUCI10</a></li>
@@ -450,7 +450,7 @@
     
     <li class="breadcrumb-item"><a href="../pd.html" class="nav-link">mahos.inst.pd</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mahos.inst.pd_interface.APDCounterInterface</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mahos.inst.pd.SinglePhotonCounter</span></li>
   </ul>
 </nav>
 </div>
@@ -467,25 +467,52 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="mahos-inst-pd-interface-apdcounterinterface">
-<h1>mahos.inst.pd_interface.APDCounterInterface<a class="headerlink" href="#mahos-inst-pd-interface-apdcounterinterface" title="Link to this heading">#</a></h1>
+  <section id="mahos-inst-pd-singlephotoncounter">
+<h1>mahos.inst.pd.SinglePhotonCounter<a class="headerlink" href="#mahos-inst-pd-singlephotoncounter" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="mahos.inst.pd_interface.APDCounterInterface">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.pd_interface.</span></span><span class="sig-name descname"><span class="pre">APDCounterInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mahos.inst.server.InstrumentClient.html#mahos.inst.server.InstrumentClient" title="mahos.inst.server.InstrumentClient"><span class="pre">InstrumentClient</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">MultiInstrumentClient</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.pd_interface.APDCounterInterface" title="Link to this definition">#</a></dt>
-<dd><p>Interface for APDCounter.</p>
+<dt class="sig sig-object py" id="mahos.inst.pd.SinglePhotonCounter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.pd.</span></span><span class="sig-name descname"><span class="pre">SinglePhotonCounter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.pd.SinglePhotonCounter" title="Link to this definition">#</a></dt>
+<dd><p>BufferedEdgeCounter for counting Single Photon Counter output pulses.</p>
+<p>Older name of this class was APDCounter and there is a compatibility alias for it;
+however, it is recommended to use new name SinglePhotonCounter for now configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>counter</strong> (<em>str</em>) – The device name for counter (like /Dev1/Ctr0).</p></li>
+<li><p><strong>source</strong> (<em>str</em>) – The pin name for counter source (like /Dev1/PFI0).</p></li>
+<li><p><strong>source_dir</strong> (<em>bool</em>) – (default: True) Source direction. True (False) for rising (falling) edge.</p></li>
+<li><p><strong>queue_size</strong> (<em>int</em>) – (default: 10000) Software buffer (queue) size.</p></li>
+<li><p><strong>corr_x_kcps</strong> (<em>np.ndarray</em>) – x-data of correction factor.</p></li>
+<li><p><strong>corr_y</strong> (<em>np.ndarray</em>) – y-data of correction factor.</p></li>
+<li><p><strong>dark_cps</strong> (<em>float</em>) – (default 0.0) Module dark count rate.</p></li>
+<li><p><strong>dead_time_ns</strong> (<em>float</em>) – (default 0.0) Module dead time in ns.
+If given, correction factor is calculated using this.
+And then corr_x_kcps and corr_y are ignored.</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="mahos.inst.pd_interface.APDCounterInterface.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mahos.inst.server.InstrumentClient.html#mahos.inst.server.InstrumentClient" title="mahos.inst.server.InstrumentClient"><span class="pre">InstrumentClient</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">MultiInstrumentClient</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inst</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.pd_interface.APDCounterInterface.__init__" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mahos.inst.pd.SinglePhotonCounter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.pd.SinglePhotonCounter.__init__" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">correct_cps</span></code>(raw_cps)</p></td>
-<td><p>Correct the raw values in cps according to correction factors.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mahos.inst.pd.SinglePhotonCounter.__init__" title="mahos.inst.pd.SinglePhotonCounter.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(name, conf[, prefix])</p></td>
+<td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_correction_factor</span></code>(xs_cps)</p></td>
-<td><p>Get the correction factor for given cps values.</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure</span></code>(params[, label])</p></td>
+<td><p>Configure the instrument settings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">correct_cps</span></code>(cps)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">correction_factor</span></code>(cps)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code>(key[, args, label])</p></td>
+<td><p>Get an instrument setting or measurement data.</p></td>
 </tr>
 </tbody>
 </table>
@@ -505,20 +532,20 @@
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="mahos.inst.pd_interface.PDInterface.html"
+       href="mahos.inst.pd_interface.SinglePhotonCounterInterface.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">mahos.inst.pd_interface.PDInterface</p>
+        <p class="prev-next-title">mahos.inst.pd_interface.SinglePhotonCounterInterface</p>
       </div>
     </a>
     <a class="right-next"
-       href="mahos.inst.pd.APDCounter.html"
+       href="mahos.inst.pd.AnalogPD.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">mahos.inst.pd.APDCounter</p>
+        <p class="prev-next-title">mahos.inst.pd.AnalogPD</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -541,8 +568,8 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.pd_interface.APDCounterInterface"><code class="docutils literal notranslate"><span class="pre">APDCounterInterface</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.pd_interface.APDCounterInterface.__init__"><code class="docutils literal notranslate"><span class="pre">APDCounterInterface.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.pd.SinglePhotonCounter"><code class="docutils literal notranslate"><span class="pre">SinglePhotonCounter</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.pd.SinglePhotonCounter.__init__"><code class="docutils literal notranslate"><span class="pre">SinglePhotonCounter.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -552,7 +579,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/api_mahos_inst/generated/mahos.inst.pd_interface.APDCounterInterface.rst.txt"
+      <li><a href="../../_sources/api_mahos_inst/generated/mahos.inst.pd.SinglePhotonCounter.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>

@@ -18,6 +18,8 @@
    
       ~PODMRData.__init__
       ~PODMRData.can_resume
+      ~PODMRData.data
+      ~PODMRData.data_ref
       ~PODMRData.get_bin
       ~PODMRData.get_fit_xdata
       ~PODMRData.get_fit_ydata
@@ -44,7 +46,11 @@
       ~PODMRData.is_supersampling
       ~PODMRData.is_sweepN
       ~PODMRData.measurement_time
+      ~PODMRData.num_pattern
       ~PODMRData.partial
+      ~PODMRData.set_data
+      ~PODMRData.set_data_ref
+      ~PODMRData.snapshot_for_save
       ~PODMRData.sweeps
    
    

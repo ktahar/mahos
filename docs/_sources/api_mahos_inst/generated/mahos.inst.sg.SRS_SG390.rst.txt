@@ -1,0 +1,57 @@
+﻿mahos.inst.sg.SRS\_SG390
+========================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.inst.sg
+
+.. autoclass:: SRS_SG390
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SRS_SG390.__init__
+      ~SRS_SG390.configure
+      ~SRS_SG390.configure_am_ext
+      ~SRS_SG390.configure_cw
+      ~SRS_SG390.configure_fm_ext
+      ~SRS_SG390.configure_iq_ext
+      ~SRS_SG390.get
+      ~SRS_SG390.get_bounds
+      ~SRS_SG390.get_freq_bounds
+      ~SRS_SG390.get_power_bounds
+      ~SRS_SG390.query_error
+      ~SRS_SG390.reset
+      ~SRS_SG390.set
+      ~SRS_SG390.set_am
+      ~SRS_SG390.set_am_depth
+      ~SRS_SG390.set_analog_ext_coupling
+      ~SRS_SG390.set_analog_mod_func
+      ~SRS_SG390.set_dm_func
+      ~SRS_SG390.set_fm
+      ~SRS_SG390.set_fm_deviation
+      ~SRS_SG390.set_freq_CW
+      ~SRS_SG390.set_modulation
+      ~SRS_SG390.set_output
+      ~SRS_SG390.set_power
+      ~SRS_SG390.set_qam
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SRS_SG390.AMOD_FUNC
+      ~SRS_SG390.DMOD_FUNC
+      ~SRS_SG390.ERROR_CODES
+   
+   

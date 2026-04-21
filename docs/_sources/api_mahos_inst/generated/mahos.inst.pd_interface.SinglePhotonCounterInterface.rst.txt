@@ -1,0 +1,26 @@
+﻿mahos.inst.pd\_interface.SinglePhotonCounterInterface
+=====================================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.inst.pd_interface
+
+.. autoclass:: SinglePhotonCounterInterface
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SinglePhotonCounterInterface.correct_cps
+      ~SinglePhotonCounterInterface.get_correction_factor
+   
+   
+
+   
+   
+   

@@ -481,12 +481,12 @@ Optional keys: <code class="docutils literal notranslate"><span class="pre">fg</
 <li><p><strong>pulser.pd_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – (default: [“pd0”]) PD names in target.servers.</p></li>
 <li><p><strong>pulser.quick_resume</strong> (<em>bool</em>) – default value of quick_resume.
 If True, it skips instrument configurations on resume.</p></li>
-<li><p><strong>pulser.mw_modes</strong> (<em>tuple</em><em>[</em><em>int</em><em>]</em>) – mw phase control modes for each channel.
-0 is 4-phase control using IQ modulation at SG and a switch.
-1 is 2-phase control using external 90-deg splitter and two switches.
-2 is arbitral phase control using IQ modulation at SG
+<li><p><strong>pulser.mw_modes</strong> (<em>tuple</em><em>[</em><em>str</em><em> | </em><em>int</em><em>]</em>) – mw phase control modes for each channel.
+QPSK (0) is 4-phase control using IQ modulation at SG and a switch.
+Ext2Phase (1) is 2-phase control using external 90-deg splitter and two switches.
+ArbPhase (2) is arbitrary phase control using IQ modulation at SG
 (Analog output (AWG) is required for PG).</p></li>
-<li><p><strong>pulser.iq_amplitude</strong> (<em>float</em>) – (only for mw_mode 2) amplitude of analog IQ signal in V.</p></li>
+<li><p><strong>pulser.iq_amplitude</strong> (<em>float</em>) – (only for mw_mode ArbPhase (2)) amplitude of analog IQ signal in V.</p></li>
 <li><p><strong>pulser.pd_trigger</strong> (<em>str</em>) – DAQ terminal name for PD trigger.</p></li>
 <li><p><strong>pulser.trigger_width</strong> (<em>float</em>) – (default: 1e-6) pulse width for PD trigger</p></li>
 <li><p><strong>pulser.split_fraction</strong> (<em>int</em>) – (default: 4) fraction factor (F) to split the free period
@@ -500,6 +500,9 @@ reduce is done first by this value, and then repeated by 10.</p></li>
 <li><p><strong>pulser.block_base</strong> (<em>int</em>) – (has preset) block base granularity of pulse generator.</p></li>
 <li><p><strong>pulser.nest_blockseq</strong> (<em>bool</em>) – (has preset, default: False) allow nested BlockSeq.</p></li>
 <li><p><strong>pulser.channel_remap</strong> (<em>dict</em><em>[</em><em>str</em><em> | </em><em>int</em><em>, </em><em>str</em><em> | </em><em>int</em><em>]</em>) – mapping to fix default channel names.</p></li>
+<li><p><strong>pulser.generators</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Optional user generator registry mapping method labels to
+<code class="docutils literal notranslate"><span class="pre">[module_name,</span> <span class="pre">class_name]</span></code>.
+These classes are loaded at worker initialization and can add or override methods.</p></li>
 <li><p><strong>pulser.clock_name</strong> (<em>str</em>) – (default: <code class="docutils literal notranslate"><span class="pre">&quot;clock&quot;</span></code>) Clock source instrument name.</p></li>
 <li><p><strong>pulser.mw_channels</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional SG channel identifiers for MW outputs.</p></li>
 <li><p><strong>pulser.pd_rate</strong> (<em>float</em>) – (default: 500e3) PD sampling rate in Hz.</p></li>

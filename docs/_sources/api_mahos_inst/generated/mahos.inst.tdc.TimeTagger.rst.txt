@@ -26,7 +26,6 @@
       ~TimeTagger.get
       ~TimeTagger.get_data
       ~TimeTagger.get_data_normalized
-      ~TimeTagger.get_data_roi
       ~TimeTagger.get_range_bin
       ~TimeTagger.get_raw_events
       ~TimeTagger.get_status
@@ -34,6 +33,7 @@
       ~TimeTagger.log_from_time_tagger
       ~TimeTagger.resume
       ~TimeTagger.set
+      ~TimeTagger.set_clock_out
       ~TimeTagger.set_duration
       ~TimeTagger.set_range_bin
       ~TimeTagger.set_reference_clock

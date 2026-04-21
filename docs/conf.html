@@ -536,8 +536,12 @@ This is also a dictionary with string keys, and values can take the following th
 </section>
 <section id="threading">
 <span id="conf-threading"></span><h2>Threading<a class="headerlink" href="#threading" title="Link to this heading">#</a></h2>
-<p>By default, each node runs as a process, and TCP is used for inter-process communication.
-When you need to reduce TCP communication overhead,
+<p>By default, each node runs as a process, and TCP is used for inter-process communication.</p>
+<div class="admonition warning" id="tcp-security-warning">
+<p class="admonition-title">Warning</p>
+<p>Do not expose MAHOS TCP ports to the public Internet. MAHOS node communication is not designed to be Internet-facing, and exposing these ports can create a security risk. Bind to trusted interfaces only and restrict access with a firewall or a private network.</p>
+</div>
+<p>When you need to reduce TCP communication overhead,
 nodes can be run as individual threads inside a single process.
 To enable this feature, you need to make slight modifications in the configuration file.
 Here, we put an example of modified configuration file for <a class="reference internal" href="tutorial_ivcurve.html"><span class="doc">Tutorial 2: Basic Measurement</span></a>.</p>

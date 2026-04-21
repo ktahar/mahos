@@ -1,0 +1,29 @@
+﻿mahos.inst.pd.SinglePhotonCounter
+=================================
+
+.. autosummary class template to exclude inherited_members
+   The other parts are same as default.
+
+.. currentmodule:: mahos.inst.pd
+
+.. autoclass:: SinglePhotonCounter
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SinglePhotonCounter.__init__
+      ~SinglePhotonCounter.configure
+      ~SinglePhotonCounter.correct_cps
+      ~SinglePhotonCounter.correction_factor
+      ~SinglePhotonCounter.get
+   
+   
+
+   
+   
+   

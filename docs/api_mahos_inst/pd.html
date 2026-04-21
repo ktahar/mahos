@@ -373,8 +373,8 @@
 <li class="toctree-l2"><a class="reference internal" href="lockin.html">mahos.inst.lockin</a></li>
 <li class="toctree-l2 current active has-children"><a class="current reference internal" href="#">mahos.inst.pd</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/mahos.inst.pd_interface.PDInterface.html">mahos.inst.pd_interface.PDInterface</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/mahos.inst.pd_interface.APDCounterInterface.html">mahos.inst.pd_interface.APDCounterInterface</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/mahos.inst.pd.APDCounter.html">mahos.inst.pd.APDCounter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mahos.inst.pd_interface.SinglePhotonCounterInterface.html">mahos.inst.pd_interface.SinglePhotonCounterInterface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/mahos.inst.pd.SinglePhotonCounter.html">mahos.inst.pd.SinglePhotonCounter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mahos.inst.pd.AnalogPD.html">mahos.inst.pd.AnalogPD</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mahos.inst.pd.LockinAnalogPD.html">mahos.inst.pd.LockinAnalogPD</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/mahos.inst.pd.LUCI10.html">mahos.inst.pd.LUCI10</a></li>
@@ -472,10 +472,10 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos.inst.pd_interface.PDInterface.html#mahos.inst.pd_interface.PDInterface" title="mahos.inst.pd_interface.PDInterface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PDInterface</span></code></a>(client, inst)</p></td>
-<td><p>Common interface for APDCounter and AnalogIn-based PD.</p></td>
+<td><p>Common interface for SinglePhotonCounter and AnalogIn-based PD.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos.inst.pd_interface.APDCounterInterface.html#mahos.inst.pd_interface.APDCounterInterface" title="mahos.inst.pd_interface.APDCounterInterface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">APDCounterInterface</span></code></a>(client, inst)</p></td>
-<td><p>Interface for APDCounter.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/mahos.inst.pd_interface.SinglePhotonCounterInterface.html#mahos.inst.pd_interface.SinglePhotonCounterInterface" title="mahos.inst.pd_interface.SinglePhotonCounterInterface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SinglePhotonCounterInterface</span></code></a>(client, inst)</p></td>
+<td><p>Interface for SinglePhotonCounter.</p></td>
 </tr>
 </tbody>
 </table>
@@ -486,8 +486,8 @@
 <p>Photo Detector module.</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos.inst.pd.APDCounter.html#mahos.inst.pd.APDCounter" title="mahos.inst.pd.APDCounter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">APDCounter</span></code></a>(name, conf[, prefix])</p></td>
-<td><p>BufferedEdgeCounter for counting APD output pulses.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/mahos.inst.pd.SinglePhotonCounter.html#mahos.inst.pd.SinglePhotonCounter" title="mahos.inst.pd.SinglePhotonCounter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SinglePhotonCounter</span></code></a>(name, conf[, prefix])</p></td>
+<td><p>BufferedEdgeCounter for counting Single Photon Counter output pulses.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/mahos.inst.pd.AnalogPD.html#mahos.inst.pd.AnalogPD" title="mahos.inst.pd.AnalogPD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AnalogPD</span></code></a>(name, conf[, prefix])</p></td>
 <td><p>Generic Photo Detector based on DAQ AnalogIn with fixed amplifier gain and unit.</p></td>

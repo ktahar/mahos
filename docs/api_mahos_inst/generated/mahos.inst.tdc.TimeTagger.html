@@ -482,6 +482,9 @@ Putting 0 disables the software clock feature.</p></li>
 <li><p><strong>ext_ref_clock_level</strong> (<em>float</em>) – (default: 0.0) threshold level in volts for
 ext_ref_clock channel.</p></li>
 <li><p><strong>ext_ref_clock_freq</strong> (<em>float</em>) – (default: 10e6) frequency of ext_ref_clock.</p></li>
+<li><p><strong>clock_out</strong> (<em>bool</em><em> | </em><em>None</em>) – (default: None) Enables/disables the 10 MHz clock output.
+This option is only for Time Tagger X hardware. When running the other hardware,
+set this to the default (None) to skip the configuration.</p></li>
 <li><p><strong>remove_ttbin</strong> (<em>bool</em>) – (default: True) Remove raw events (.ttbin) file after load.</p></li>
 <li><p><strong>serial</strong> (<em>str</em>) – (default: “”) Serial string to discriminate multiple TimeTaggers.
 Blank is fine if only one TimeTagger is connected.</p></li>
@@ -526,29 +529,29 @@ Blank is fine if only one TimeTagger is connected.</p></li>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_data_normalized</span></code>([ch])</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_data_roi</span></code>(ch, roi)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_range_bin</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_range_bin</span></code>()</p></td>
 <td><p>Get range and time bin in sec.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_events</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_raw_events</span></code>()</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_status</span></code>(ch)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_status</span></code>(ch)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_timebin</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_timebin</span></code>()</p></td>
 <td><p>Get time bin in sec.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_from_time_tagger</span></code>(level, msg)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_from_time_tagger</span></code>(level, msg)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">resume</span></code>([label])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">resume</span></code>([label])</p></td>
 <td><p>Resume measurement.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(key[, value, label])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(key[, value, label])</p></td>
 <td><p>Set an instrument setting or commanding value.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_clock_out</span></code>(enable)</p></td>
+<td><p>Enable/disable 10 MHz clock output (Time Tagger X only).</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_duration</span></code>(duration)</p></td>
 <td><p></p></td>

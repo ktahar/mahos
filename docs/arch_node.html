@@ -435,7 +435,8 @@ The core functionalities of node systems are implemented in the <a class="refere
 <p>The node <a class="reference internal" href="api_mahos_node/generated/mahos.node.comm.Context.html#mahos.node.comm.Context" title="mahos.node.comm.Context"><code class="xref py py-class docutils literal notranslate"><span class="pre">communication</span></code></a> is currently based on the <a class="reference external" href="https://zeromq.org/">ZeroMQ</a> library.
 The transport layer is abstracted by ZeroMQ, and we can choose different transports by changing a configuration (the endpoint) only.
 We recommend using TCP as the default.
-By choosing TCP, multi-host (multi-computer) configuration is straightforward.
+By choosing TCP, multi-host (multi-computer) configuration is straightforward,
+though the <a class="reference internal" href="conf.html#tcp-security-warning"><span class="std std-ref">TCP ports should not be exposed to the Internet</span></a>.
 However, transport overhead can become an issue when dealing with very large data
 such as high-resolution images produced at a high rate.
 In such a case, the overhead can be reduced significantly by running the relevant nodes as threads
