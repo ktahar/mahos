@@ -26,6 +26,22 @@ def get_some(get, poll_timeout_ms, trials=500):
         return None
 
 
+def get_final_data(get_data, poll_timeout_ms, trials=500):
+    """Try to get finalized data from asyncronous data update.
+
+    Note that the data file should have is_finalized() method.
+
+    """
+
+    for i in range(trials):
+        d = get_data()
+        if d is not None and d.is_finalized():
+            return d
+        time.sleep(1e-3 * poll_timeout_ms)
+    else:
+        return None
+
+
 def expect_value(get, value, poll_timeout_ms, trials=500, verbose=False):
     """Repeatedly expect value from asyncronous status update."""
 

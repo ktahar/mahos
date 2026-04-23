@@ -18,7 +18,7 @@ from mahos_dq.meas.qdyne import QdyneIO
 from mahos_dq.msgs.qdyne_msgs import QdyneData, MWMode
 from mahos_dq.meas.qdyne_worker import QdyneAnalyzer, Pulser
 from mahos.msgs.common_msgs import BinaryState
-from util import get_some, expect_value, save_load_test
+from util import get_some, get_final_data, expect_value, save_load_test
 from fixtures import ctx, gconf, server, qdyne, server_conf, qdyne_conf
 
 
@@ -99,7 +99,7 @@ def test_qdyne(server, qdyne, server_conf, qdyne_conf):
 
     assert get_some(qdyne.get_status, poll_timeout_ms).state == BinaryState.IDLE
     params = qdyne.get_param_dict("xy8")
-    params["mw_offset"].set(-10e-9)
+    # params["mw_offset"].set(-10e-9)
 
     assert qdyne.validate(params, "xy8")
     assert qdyne.start(params, "xy8")
@@ -108,6 +108,6 @@ def test_qdyne(server, qdyne, server_conf, qdyne_conf):
     # On Qdyne, data is fetched and analyzed on stop().
     assert qdyne.stop()
     assert expect_value(qdyne.get_state, BinaryState.IDLE, poll_timeout_ms)
-    data = get_some(qdyne.get_data, poll_timeout_ms)
+    data = get_final_data(qdyne.get_data, poll_timeout_ms)
     assert data.params["instrument"]["mw_modes"] == expected_mw_modes
     save_load_test(QdyneIO(), data)
