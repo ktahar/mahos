@@ -61,6 +61,13 @@ class Qdyne(BasicMeasNode):
     :param target.log: The LogBroker target (broker full name).
     :type target.log: str
 
+    :param switch_names: Optional switch instrument names to route signal/optical paths.
+    :type switch_names: list[str]
+    :param switch_command: Switch command label passed to Switch worker.
+    :type switch_command: str
+    :param pub_interval_sec: Maximum interval between periodic status/data publications.
+    :type pub_interval_sec: float
+
     :param pulser.start_delay: (sec.) delay time before starting PG output. (default: 0.0)
     :type pulser.start_delay: float
 
@@ -99,12 +106,13 @@ class Qdyne(BasicMeasNode):
         ``[module_name, class_name]``.
         These classes are loaded at worker initialization and can add or override methods.
     :type pulser.generators: dict[str, tuple[str, str]]
-    :param switch_names: Optional switch instrument names to route signal/optical paths.
-    :type switch_names: list[str]
-    :param switch_command: Switch command label passed to Switch worker.
-    :type switch_command: str
-    :param pub_interval_sec: Maximum interval between periodic status/data publications.
-    :type pub_interval_sec: float
+
+    :param pulser.tdc_primary_ch: (default: 0) TDC channel id for primary (mandatory) channel.
+    :type pulser.tdc_primary_ch: int
+    :param pulser.tdc_secondary_ch: (default: 1) TDC channel id for secondary (optional) channel.
+    :type pulser.tdc_secondary_ch: int
+    :param pulser.tdc_secondary_enable: (default: True) If True, secondary channel is enabled.
+    :type pulser.tdc_secondary_enable: bool
 
     """
 

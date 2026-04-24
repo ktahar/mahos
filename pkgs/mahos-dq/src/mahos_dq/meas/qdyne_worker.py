@@ -21,13 +21,14 @@ from mahos.util.io import load_h5
 from mahos.msgs import param_msgs as P
 from mahos.msgs.pulse_msgs import PulsePattern
 from mahos.msgs.inst.pg_msgs import Block, Blocks
-from mahos.msgs.inst.tdc_msgs import RawEvents
+from mahos.msgs.inst.tdc_msgs import RawEvents, ChannelStatus
 from mahos_dq.msgs.qdyne_msgs import QdyneData, MWMode, TDCStatus
 from mahos.inst.sg_interface import SGInterface
 from mahos.inst.pg_interface import PGInterface
 from mahos.inst.tdc_interface import TDCInterface
 from mahos.inst.fg_interface import FGInterface
 from mahos.util.conf import PresetLoader
+from mahos.util.typing import ConfTypeCheckMixin
 from mahos.meas.common_worker import Worker
 
 from mahos_dq.meas.podmr_generator import generator_kernel as K
@@ -227,7 +228,7 @@ class QdyneAnalyzer(object):
             return self._analyze_ext(data)
 
 
-class Pulser(Worker):
+class Pulser(Worker, ConfTypeCheckMixin):
     def __init__(self, cli, logger, conf: dict):
         """Worker for Qdyne.
 
@@ -254,8 +255,11 @@ class Pulser(Worker):
             ["block_base", "pg_freq", "reduce_start_divisor", "minimum_block_length"]
         )
         self._raw_events_dir = self.conf.get("raw_events_dir", "")
-        self._remove_raw_events = self.conf.get("remove_raw_events", True)
-        self._start_delay = self.conf.get("start_delay", 0.0)
+        self._remove_raw_events = self._conf_bool("remove_raw_events", True)
+        self._start_delay = self._conf_nonneg_num("start_delay", 0.0)
+        self._tdc_ch0 = self._conf_nonneg_int("tdc_primary_ch", 0)
+        self._tdc_ch1 = self._conf_nonneg_int("tdc_secondary_ch", 1)
+        self._tdc_ch1_enable = self._conf_bool("tdc_secondary_enable", True)
 
         mbl = self.conf["minimum_block_length"]
         bb = self.conf["block_base"]
@@ -557,15 +561,19 @@ class Pulser(Worker):
     def get_tdc_status(self) -> TDCStatus:
         """Get status from TDC."""
 
-        st0 = self.tdc.get_status(0)
-        st1 = self.tdc.get_status(1)
+        st0 = self.tdc.get_status(self._tdc_ch0)
+        if self._tdc_ch1_enable:
+            st1 = self.tdc.get_status(self._tdc_ch1)
+        else:
+            # dummy status to fill st1.total with zero
+            st1 = ChannelStatus(True, 0.0, 0, 0)
 
         return TDCStatus(round(st0.runtime), st0.starts, st0.total, st1.total)
 
     def get_tdc_running(self) -> bool:
         """return True if TDC is running."""
 
-        st0 = self.tdc.get_status(0)
+        st0 = self.tdc.get_status(self._tdc_ch0)
         return st0.running if st0 is not None else False
 
     def wait_tdc_stop(self, timeout_sec=10.0, interval_sec=0.2) -> bool:
