@@ -437,11 +437,10 @@ Skip this section if you prefer one of the following alternatives.</p>
 <li><p>You could use <code class="docutils literal notranslate"><span class="pre">virtualenv</span></code>, <code class="docutils literal notranslate"><span class="pre">conda</span></code> or other virtual environment management tools too.</p></li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">venv</span></code> comes with Python; you do not have to install additional tools.</p>
-<p>For some packages that are not straightforward to install via pip (OpenCV, etc.),
-we recommend enabling system site packages (remove <code class="docutils literal notranslate"><span class="pre">--system-site-packages</span></code> if you do not want this).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>mahos<span class="w"> </span>--system-site-packages
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>mahos
 </pre></div>
 </div>
+<p>If you want to use packages installed on system Python outside virtual environment, add <code class="docutils literal notranslate"><span class="pre">--system-site-packages</span></code> option.</p>
 <p>Small notes on venv usage:</p>
 <ul class="simple">
 <li><p>activate: <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">&lt;mahos</span> <span class="pre">env</span> <span class="pre">directory&gt;/bin/activate</span></code> or <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">&lt;mahos</span> <span class="pre">env</span> <span class="pre">directory&gt;/Scripts/activate</span></code></p></li>
@@ -499,7 +498,7 @@ and then <code class="docutils literal notranslate"><span class="pre">pip</span>
 There are several methods to install this, and the easiest are the following.</p>
 <ul class="simple">
 <li><p>Windows: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">opencv-python</span></code> to install CPU-only binary</p></li>
-<li><p>Linux: the pre-compiled package (e.g. <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">python3-opencv</span></code> for Ubuntu/Debian)</p></li>
+<li><p>Linux: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">opencv-python</span></code>, or the pre-compiled package by OS when <code class="docutils literal notranslate"><span class="pre">--system-site-packages</span></code> option is enabled for virtual environment. (e.g. <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">python3-opencv</span></code> for Ubuntu/Debian)</p></li>
 </ul>
 </section>
 </section>
@@ -549,7 +548,8 @@ This includes <code class="docutils literal notranslate"><span class="pre">argco
 <h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">#</a></h2>
 <section id="pyqt6">
 <h3>PyQt6<a class="headerlink" href="#pyqt6" title="Link to this heading">#</a></h3>
-<p>PyQt6 can fail if you have the <cite>PyQt6</cite> package inside the virtual environment, but dependencies (<cite>PyQt6-sip</cite> and <cite>PyQt6-Qt6</cite>) outside.
+<p>This note applies only if <code class="docutils literal notranslate"><span class="pre">--system-site-packages</span></code> option is enabled for the virtual environment.
+PyQt6 can fail if you have the <cite>PyQt6</cite> package inside the virtual environment, but dependencies (<cite>PyQt6-sip</cite> and <cite>PyQt6-Qt6</cite>) outside.
 Check the locations of these three packages if PyQt6 is not working correctly.
 To resolve the situation, try one of the following.</p>
 <p>To install things <cite>outside</cite> the virtual environment:</p>
@@ -570,7 +570,7 @@ pip<span class="w"> </span>install<span class="w"> </span>PyQt6
 </section>
 <section id="qt-tools-on-ubuntu">
 <h3>Qt tools on Ubuntu<a class="headerlink" href="#qt-tools-on-ubuntu" title="Link to this heading">#</a></h3>
-<p>Install Qt6 tools for development on Ubuntu 22.04.</p>
+<p>Install Qt6 tools for development on Ubuntu 24.04.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">qt6</span><span class="o">-</span><span class="n">tools</span><span class="o">-</span><span class="n">dev</span> <span class="n">assistant</span><span class="o">-</span><span class="n">qt6</span> <span class="n">designer</span><span class="o">-</span><span class="n">qt6</span>
 </pre></div>
 </div>

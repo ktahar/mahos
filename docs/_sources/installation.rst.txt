@@ -25,12 +25,11 @@ Skip this section if you prefer one of the following alternatives.
 
 ``venv`` comes with Python; you do not have to install additional tools.
 
-For some packages that are not straightforward to install via pip (OpenCV, etc.),
-we recommend enabling system site packages (remove ``--system-site-packages`` if you do not want this).
-
 .. code-block:: bash
 
-  python -m venv mahos --system-site-packages
+  python -m venv mahos
+
+If you want to use packages installed on system Python outside virtual environment, add ``--system-site-packages`` option.
 
 Small notes on venv usage:
 
@@ -99,7 +98,7 @@ To use the full features of image analysis modules, install OpenCV (>= 3.0.0) wi
 There are several methods to install this, and the easiest are the following.
 
 - Windows: ``pip install opencv-python`` to install CPU-only binary
-- Linux: the pre-compiled package (e.g. ``sudo apt install python3-opencv`` for Ubuntu/Debian)
+- Linux: ``pip install opencv-python``, or the pre-compiled package by OS when ``--system-site-packages`` option is enabled for virtual environment. (e.g. ``sudo apt install python3-opencv`` for Ubuntu/Debian)
 
 The mahos packages
 ------------------
@@ -157,6 +156,7 @@ Notes
 PyQt6
 ^^^^^
 
+This note applies only if ``--system-site-packages`` option is enabled for the virtual environment.
 PyQt6 can fail if you have the `PyQt6` package inside the virtual environment, but dependencies (`PyQt6-sip` and `PyQt6-Qt6`) outside.
 Check the locations of these three packages if PyQt6 is not working correctly.
 To resolve the situation, try one of the following.
@@ -183,7 +183,7 @@ To install things `inside` the virtual environment:
 Qt tools on Ubuntu
 ^^^^^^^^^^^^^^^^^^
 
-Install Qt6 tools for development on Ubuntu 22.04. ::
+Install Qt6 tools for development on Ubuntu 24.04. ::
 
    sudo apt install qt6-tools-dev assistant-qt6 designer-qt6
 
