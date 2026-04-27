@@ -394,6 +394,24 @@ class RawPlotWidget(QtWidgets.QWidget):
         self.raw_plot.setLabel("bottom", "Time", "s")
         self.raw_plot.setLabel("left", "Events")
 
+        # sig_head, sig_tail, ref_head, ref_tail
+        marker_brushes = ((255, 0, 0), (255, 128, 0), (0, 0, 255), (0, 128, 255))
+        laser_timing_pen = pg.mkPen((0, 180, 0), width=1, style=QtCore.Qt.PenStyle.DashLine)
+        self._raw_item = self.raw_plot.plot([], [])
+        self._marker_items = [
+            self.raw_plot.plot(
+                [],
+                [],
+                pen=None,
+                symbolPen=None,
+                symbol="o",
+                symbolSize=8,
+                symbolBrush=brush,
+            )
+            for brush in marker_brushes
+        ]
+        self._laser_timing_item = self.raw_plot.plot([], [], pen=laser_timing_pen)
+
         self.showBox = QtWidgets.QCheckBox("Show")
         self.showBox.setChecked(True)
 
@@ -442,64 +460,92 @@ class RawPlotWidget(QtWidgets.QWidget):
         vl.addWidget(glw)
         self.setLayout(vl)
 
-    def plot_raw(self, data: PODMRData):
-        # sig_head, sig_tail, ref_head, ref_tail
-        BRUSHES = ((255, 0, 0), (255, 128, 0), (0, 0, 255), (0, 128, 255))
-        LASER_TIMING_PEN = pg.mkPen((0, 180, 0), width=1, style=QtCore.Qt.PenStyle.DashLine)
+    def _show_empty(self):
+        self._raw_item.setData([0, 1], [0, 0])
+        for item in self._marker_items:
+            item.setData([], [])
+        self._laser_timing_item.setData([], [])
 
-        def plot_markers_roi(rx, ry, start, stop):
-            for inds, brush in zip(data.marker_indices, BRUSHES):
-                x = []
-                y = []
+    def _marker_data_roi(self, data: PODMRData, rx, ry, start, stop) -> list[tuple[list, list]]:
+        marker_data = []
+        rois = data.get_rois()
+        for inds in data.marker_indices:
+            x = []
+            y = []
+            for i, ((roi_start, _), idx) in enumerate(zip(rois[start:stop], inds[start:stop])):
                 try:
-                    for i, ((roi_start, _), idx) in enumerate(
-                        zip(data.get_rois()[start:stop], inds[start:stop])
-                    ):
-                        x.append(rx[start + i][idx - roi_start])
-                        y.append(ry[start + i][idx - roi_start])
+                    px = rx[start + i][idx - roi_start]
+                    py = ry[start + i][idx - roi_start]
                 except IndexError:
                     continue
-                self.raw_plot.plot(
-                    x, y, pen=None, symbolPen=None, symbol="o", symbolSize=8, symbolBrush=brush
-                )
+                else:
+                    x.append(px)
+                    y.append(py)
+            marker_data.append((x, y))
+        return marker_data
 
-        def plot_markers(rx, ry, start, stop):
-            for inds, brush in zip(data.marker_indices, BRUSHES):
-                x = np.array([rx[i] for i in inds[start:stop]])
-                y = np.array([ry[i] for i in inds[start:stop]])
-                self.raw_plot.plot(
-                    x, y, pen=None, symbolPen=None, symbol="o", symbolSize=8, symbolBrush=brush
-                )
+    def _marker_data_noroi(
+        self, data: PODMRData, rx, ry, start, stop
+    ) -> list[tuple[np.ndarray, np.ndarray]]:
+        marker_data = []
+        for inds in data.marker_indices:
+            x = np.array([rx[i] for i in inds[start:stop]])
+            y = np.array([ry[i] for i in inds[start:stop]])
+            marker_data.append((x, y))
+        return marker_data
 
-        def plot_laser_timing_lines(start, stop):
-            if data.laser_timing is None or data.laser_timing_offset is None:
-                return
-            timing = np.asarray(data.laser_timing, dtype=np.float64)
-            offset = np.asarray(data.laser_timing_offset, dtype=np.float64)
-            if timing.ndim != 1 or offset.ndim != 1 or len(timing) != len(offset):
-                return
+    def _set_marker_data(self, marker_data):
+        for item, (x, y) in zip(self._marker_items, marker_data):
+            item.setData(x, y)
 
-            corrected = timing + offset
-            for i in range(start, stop):
-                t = corrected[i]
-                if not np.isfinite(t):
-                    continue
-                self.raw_plot.addItem(
-                    pg.InfiniteLine(angle=90, movable=False, pos=float(t), pen=LASER_TIMING_PEN)
-                )
+    def _set_laser_timing_data(self, data: PODMRData, start, stop, plotted_y):
+        if data.laser_timing is None or data.laser_timing_offset is None:
+            self._laser_timing_item.setData([], [])
+            return
 
+        timing = np.asarray(data.laser_timing, dtype=np.float64)
+        offset = np.asarray(data.laser_timing_offset, dtype=np.float64)
+        if timing.ndim != 1 or offset.ndim != 1 or len(timing) != len(offset):
+            self._laser_timing_item.setData([], [])
+            return
+
+        corrected = timing + offset
+        corrected = corrected[start:stop]
+        corrected = corrected[np.isfinite(corrected)]
+        if len(corrected) == 0:
+            self._laser_timing_item.setData([], [])
+            return
+
+        plotted_y = np.asarray(plotted_y)
+        if plotted_y.size:
+            ymax = float(np.nanmax(plotted_y))
+        else:
+            ymax = 1.0
+        if not np.isfinite(ymax) or ymax <= 0.0:
+            ymax = 1.0
+
+        x = np.empty(len(corrected) * 3, dtype=np.float64)
+        y = np.empty(len(corrected) * 3, dtype=np.float64)
+        x[0::3] = corrected
+        x[1::3] = corrected
+        x[2::3] = np.nan
+        y[0::3] = 0.0
+        y[1::3] = ymax
+        y[2::3] = np.nan
+        self._laser_timing_item.setData(x, y)
+
+    def plot_raw(self, data: PODMRData):
         if not self.isVisible():
             return
 
-        self.raw_plot.clear()
-
         if not data.has_raw_data() or not self.showBox.isChecked():
-            self.raw_plot.plot([0, 1], [0, 0])
+            self._show_empty()
             return
 
         rx = data.get_raw_xdata()
         ry = data.raw_data
         if rx is None or ry is None:
+            self._show_empty()
             return
 
         laser_pulses = len(data.marker_indices[0])
@@ -509,29 +555,33 @@ class RawPlotWidget(QtWidgets.QWidget):
         if self.allBox.isChecked():
             # show whole raw data
             if data.has_roi():
-                self.raw_plot.plot(np.concatenate(rx), np.concatenate(ry))
-                plot_markers_roi(rx, ry, 0, None)
+                x = np.concatenate(rx)
+                y = np.concatenate(ry)
+                self._set_marker_data(self._marker_data_roi(data, rx, ry, 0, None))
             else:
-                self.raw_plot.plot(rx, ry)
-                plot_markers(rx, ry, 0, None)
-            plot_laser_timing_lines(0, laser_pulses)
+                x = rx
+                y = ry
+                self._set_marker_data(self._marker_data_noroi(data, rx, ry, 0, None))
+            self._raw_item.setData(x, y)
+            self._set_laser_timing_data(data, 0, laser_pulses, y)
             return
 
         lstart = self.indexBox.value()
         lstop = min(lstart + self.numBox.value() - 1, laser_pulses - 1)
 
         if data.has_roi():
-            self.raw_plot.plot(
-                np.concatenate(rx[lstart : lstop + 1]), np.concatenate(ry[lstart : lstop + 1])
-            )
-            plot_markers_roi(rx, ry, lstart, lstop + 1)
+            x = np.concatenate(rx[lstart : lstop + 1])
+            y = np.concatenate(ry[lstart : lstop + 1])
+            self._set_marker_data(self._marker_data_roi(data, rx, ry, lstart, lstop + 1))
         else:
             margin = self.marginBox.value()
             head = data.marker_indices[0][lstart] - margin
             tail = data.marker_indices[3][lstop] + margin
-            self.raw_plot.plot(rx[head:tail], ry[head:tail])
-            plot_markers(rx, ry, lstart, lstop + 1)
-        plot_laser_timing_lines(lstart, lstop + 1)
+            x = rx[head:tail]
+            y = ry[head:tail]
+            self._set_marker_data(self._marker_data_noroi(data, rx, ry, lstart, lstop + 1))
+        self._raw_item.setData(x, y)
+        self._set_laser_timing_data(data, lstart, lstop + 1, y)
 
     def refresh(self, data: PODMRData):
         try:
