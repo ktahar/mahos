@@ -473,6 +473,9 @@ Optional keys: <code class="docutils literal notranslate"><span class="pre">fg</
 <code class="docutils literal notranslate"><span class="pre">sg1</span></code>), and switch keys listed in <code class="docutils literal notranslate"><span class="pre">switch_names</span></code>.</p></li>
 <li><p><strong>target.tweakers</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The Tweaker targets (list of tweaker full name).</p></li>
 <li><p><strong>target.log</strong> (<em>str</em>) – The LogBroker target (broker full name).</p></li>
+<li><p><strong>switch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional switch instrument names to route signal/optical paths.</p></li>
+<li><p><strong>switch_command</strong> (<em>str</em>) – Switch command label passed to Switch worker.</p></li>
+<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
 <li><p><strong>pulser.start_delay</strong> (<em>float</em>) – (sec.) delay time before starting PG output. (default: 0.0)</p></li>
 <li><p><strong>pulser.raw_events_dir</strong> (<em>str</em>) – (default: “”) The directory to load RawEvents file.</p></li>
 <li><p><strong>pulser.remove_raw_events</strong> (<em>bool</em>) – (default: True) Remove RawEvents file after loading it.</p></li>
@@ -496,9 +499,9 @@ reduce is done first by this value, and then repeated by 10.</p></li>
 <li><p><strong>pulser.generators</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Optional user generator registry mapping method labels to
 <code class="docutils literal notranslate"><span class="pre">[module_name,</span> <span class="pre">class_name]</span></code>.
 These classes are loaded at worker initialization and can add or override methods.</p></li>
-<li><p><strong>switch_names</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Optional switch instrument names to route signal/optical paths.</p></li>
-<li><p><strong>switch_command</strong> (<em>str</em>) – Switch command label passed to Switch worker.</p></li>
-<li><p><strong>pub_interval_sec</strong> (<em>float</em>) – Maximum interval between periodic status/data publications.</p></li>
+<li><p><strong>pulser.tdc_primary_ch</strong> (<em>int</em>) – (default: 0) TDC channel id for primary (mandatory) channel.</p></li>
+<li><p><strong>pulser.tdc_secondary_ch</strong> (<em>int</em>) – (default: 1) TDC channel id for secondary (optional) channel.</p></li>
+<li><p><strong>pulser.tdc_secondary_enable</strong> (<em>bool</em>) – (default: True) If True, secondary channel is enabled.</p></li>
 </ul>
 </dd>
 </dl>
