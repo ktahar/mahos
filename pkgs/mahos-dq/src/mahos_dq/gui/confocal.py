@@ -13,6 +13,7 @@ import os
 from functools import partial
 import uuid
 import enum
+from dataclasses import dataclass
 
 from mahos.gui import Qt
 from mahos.gui.Qt import QtCore, QtGui, QtWidgets
@@ -2145,16 +2146,28 @@ class ConfocalWidget(ClientWidget, Ui_Confocal):
             si.set_auto_levels(enable)
 
 
+@dataclass
+class _TraceChannel:
+    name: str
+    color: str
+    label: QtWidgets.QLabel
+    check: QtWidgets.QCheckBox
+    curve: pg.PlotDataItem
+    sma_curve: pg.PlotDataItem
+
+
 class traceView(ClientWidget, Ui_traceView):
     """Widget for Confocal trace view."""
 
-    def __init__(self, gconf: dict, name, gparams_name, context, cli=None, parent=None):
+    MAX_CHANNELS = 9
+
+    def __init__(self, gconf: dict, name, gparams_name, labels, context, cli=None, parent=None):
         ClientWidget.__init__(self, parent)
         self.setupUi(self)
 
-        self._single_channel = None
-
         self.conf = local_conf(gconf, name)
+        self._channel: list[_TraceChannel] = []
+        self._labels = labels
 
         self.pi = pg.PlotItem()
         self.graphicsView.setCentralItem(self.pi)
@@ -2181,25 +2194,13 @@ class traceView(ClientWidget, Ui_traceView):
             size = DEFAULT_TRACER_SIZE
 
         colors = colors_tab20_pair()
-        sma_width = 3
-        self._c0 = colors[0][0]
-        self._c1 = colors[1][0]
-        self._ctotal = colors[2][0]
-        self.curve0 = self.pi.plot(np.zeros(size), pen=colors[0][1])
-        self.curve1 = self.pi.plot(np.zeros(size), pen=colors[1][1])
-        self.curve_total = self.pi.plot(np.zeros(size), pen=colors[2][1])
-        self.curve0_sma = self.pi.plot(
-            np.zeros(size),
-            pen=mkPen(self._c0, width=sma_width),
-        )
-        self.curve1_sma = self.pi.plot(
-            np.zeros(size),
-            pen=mkPen(self._c1, width=sma_width),
-        )
-        self.curve_total_sma = self.pi.plot(
-            np.zeros(size),
-            pen=mkPen(self._ctotal, width=sma_width),
-        )
+        # Pick C2 as color for total
+        ctotal = colors.pop(2)
+        self._trace_size = size
+        self._plot_colors = colors
+        self._ctotal = ctotal[0]
+        self.curve_total = self.pi.plot(np.zeros(size), pen=ctotal[1])
+        self.curve_total_sma = self.pi.plot(np.zeros(size), pen=mkPen(ctotal[0], width=3))
 
         self.pi.showGrid(x=True, y=True)
         self.pi.setLabel("bottom", "Data point")
@@ -2215,8 +2216,6 @@ class traceView(ClientWidget, Ui_traceView):
         self.cli.paused.connect(self.update_buttons)
 
         self.showtotalBox.toggled.connect(self.toggle_total)
-        self.show0Box.toggled.connect(self.toggle0)
-        self.show1Box.toggled.connect(self.toggle1)
         self.showrawBox.toggled.connect(self.toggle_raw)
         self.fontsizeBox.editingFinished.connect(self.update_fontsize)
         self.timestampBox.toggled.connect(self.update_xaxis)
@@ -2234,135 +2233,137 @@ class traceView(ClientWidget, Ui_traceView):
     def update_fontsize(self):
         fs = self.fontsizeBox.value()
         self.labeltotal.setStyleSheet(f"QLabel {{font: bold {fs}px; background: {self._ctotal};}}")
-        self.label0.setStyleSheet(f"QLabel {{font: bold {fs}px; background: {self._c0};}}")
-        self.label1.setStyleSheet(f"QLabel {{font: bold {fs}px; background: {self._c1};}}")
+        for ch in self._channel:
+            ch.label.setStyleSheet(f"QLabel {{font: bold {fs}px; background: {ch.color};}}")
 
     def update_buttons(self, is_paused: bool):
         self.pauseButton.setEnabled(not is_paused)
         self.resumeButton.setEnabled(is_paused)
 
-    def _sum_traces(self, trace: Trace) -> tuple[np.ndarray, np.ndarray]:
-        df0, df1 = trace.as_dataframes()
-        rdf1 = df1.reindex(df0.index, method="nearest")
-        cdf = pd.concat([df0, rdf1])
+    def _sum_traces_by_timestamp(
+        self, trace: Trace, complex_conv: str = "real"
+    ) -> tuple[np.ndarray, np.ndarray]:
+        dfs = []
+        for ch in range(trace.channels()):
+            s, t = trace.valid_trace(ch, complex_conv=complex_conv)
+            dfs.append(pd.DataFrame(t, index=pd.DatetimeIndex(s)))
+        base_index = dfs[0].index
+        # Align channels to PD0 timestamps for total trace.
+        cdf = pd.concat([dfs[0]] + [df.reindex(base_index, method="nearest") for df in dfs[1:]])
         sdf = cdf.groupby(cdf.index).sum()
         return sdf.index.values, sdf[0].values
+
+    def _channel_display_names(self, channels: int) -> list[str]:
+        labels = self._labels
+        if not isinstance(labels, (list, tuple)):
+            labels = []
+        return [
+            labels[ch] if ch < len(labels) and labels[ch] else f"PD{ch}" for ch in range(channels)
+        ]
 
     def init_with_first_data(self, trace: Trace):
         self.pi.setLabel("left", "Intensity", trace.yunit)
 
         chs = trace.channels()
-        if chs == 1:
-            self._single_channel = True
-            for b in (self.show1Box, self.showtotalBox):
-                b.setChecked(False)
-                b.setEnabled(False)
-            self.show0Box.setChecked(True)
-            self.show0Box.setEnabled(False)
-            for l in (self.label1, self.labeltotal):
-                l.setVisible(False)
-        elif chs == 2:
-            self._single_channel = False
-        else:
-            raise ValueError(f"Unexpected number of channels: {chs}")
+        if not 1 <= chs <= self.MAX_CHANNELS:
+            raise ValueError(
+                f"Unsupported number of channels: {chs} (expected 1-{self.MAX_CHANNELS})"
+            )
+        self.init_channel_widgets(self._channel_display_names(chs))
+
+    def init_channel_widgets(self, names: list[str]):
+        label_index = self.topHLayout.indexOf(self.labeltotal)
+        check_index = self.bottomHLayout.indexOf(self.showtotalBox)
+
+        for ch, name in enumerate(names):
+            c0, c1 = self._plot_colors[ch]
+            curve = self.pi.plot(np.zeros(self._trace_size), pen=c1)
+            sma_curve = self.pi.plot(np.zeros(self._trace_size), pen=mkPen(c0, width=3))
+
+            label = QtWidgets.QLabel(parent=self)
+            label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+            label.setText(f"{name}: 0.0")
+            self.topHLayout.insertWidget(label_index + ch, label)
+
+            check = QtWidgets.QCheckBox(parent=self)
+            check.setText(name)
+            check.setChecked(True)
+            check.toggled.connect(partial(self.toggle_channel, ch))
+            self.bottomHLayout.insertWidget(check_index + ch, check)
+
+            self._channel.append(_TraceChannel(name, c0, label, check, curve, sma_curve))
+
+        if len(names) == 1:
+            self.showtotalBox.setChecked(False)
+            self.showtotalBox.setEnabled(False)
+            self.showtotalBox.hide()
+            self.labeltotal.hide()
+
+        self.update_fontsize()
 
     def update(self, trace: Trace):
-        if self._single_channel is None:
+        if not self._channel:
             self.init_with_first_data(trace)
-        if self._single_channel:
-            self.update_single(trace)
-        else:
-            self.update_dual(trace)
+        elif trace.channels() != len(self._channel):
+            raise ValueError(
+                f"Number of channels changed from {len(self._channel)} to {trace.channels()}"
+            )
+        self.update_trace(trace)
 
-    def update_single(self, trace: Trace):
+    def update_trace(self, trace: Trace):
         N = self.smaBox.value()
         raw = self.showrawBox.isChecked()
+        means = []
         if self.timestampBox.isChecked():
-            s0, t0 = trace.valid_trace(0, complex_conv=self.complexBox.currentText())
-            s0 = s0.astype(np.float64) * 1e-9
-            tsma0 = simple_moving_average(t0, N)
-            mean0 = tsma0[-1] if len(tsma0) else 0.0
-            if raw:
-                self.curve0.setData(x=s0, y=t0)
-            self.curve0_sma.setData(x=simple_moving_average(s0, N), y=tsma0)
-        else:
-            tr = trace.get_trace(0, complex_conv=self.complexBox.currentText())
-            tsma0 = simple_moving_average(tr, N)
-            mean0 = tsma0[-1] if len(tsma0) else 0.0
-            if raw:
-                self.curve0.setData(tr)
-            self.curve0_sma.setData(tsma0)
-
-        u = trace.yunit or ""
-        if self.SIprefixBox.isChecked():
-            scale, prefix = SI_scale(mean0)
-            self.label0.setText("PD0: {:6.2f} {}{}".format(mean0 * scale, prefix, u))
-        else:
-            self.label0.setText("PD0: {:.2e} {}".format(mean0, u))
-        self.fpsLabel.setText("{:.1f} fps".format(self.fps_counter.tick()))
-
-    def update_dual(self, trace: Trace):
-        N = self.smaBox.value()
-        raw = self.showrawBox.isChecked()
-        if self.timestampBox.isChecked():
-            s0, t0 = trace.valid_trace(0, complex_conv=self.complexBox.currentText())
-            s0 = s0.astype(np.float64) * 1e-9
-            tsma0 = simple_moving_average(t0, N)
-            mean0 = tsma0[-1] if len(tsma0) else 0.0
-            s1, t1 = trace.valid_trace(1, complex_conv=self.complexBox.currentText())
-            s1 = s1.astype(np.float64) * 1e-9
-            tsma1 = simple_moving_average(t1, N)
-            mean1 = tsma1[-1] if len(tsma1) else 0.0
-            if self.showtotalBox.isChecked():
-                s, t = self._sum_traces(trace)
+            for ch, channel in enumerate(self._channel):
+                s, t = trace.valid_trace(ch, complex_conv=self.complexBox.currentText())
+                s = s.astype(np.float64) * 1e-9
+                tsma = simple_moving_average(t, N)
+                means.append(tsma[-1] if len(tsma) else 0.0)
+                if channel.check.isChecked():
+                    if raw:
+                        channel.curve.setData(x=s, y=t)
+                    channel.sma_curve.setData(x=simple_moving_average(s, N), y=tsma)
+            if len(self._channel) > 1 and self.showtotalBox.isChecked():
+                s, t = self._sum_traces_by_timestamp(trace, self.complexBox.currentText())
                 s = s.astype(np.float64) * 1e-9
                 if raw:
                     self.curve_total.setData(x=s, y=t)
                 self.curve_total_sma.setData(
                     x=simple_moving_average(s, N), y=simple_moving_average(t, N)
                 )
-            if self.show0Box.isChecked():
-                if raw:
-                    self.curve0.setData(x=s0, y=t0)
-                self.curve0_sma.setData(x=simple_moving_average(s0, N), y=tsma0)
-            if self.show1Box.isChecked():
-                if raw:
-                    self.curve1.setData(x=s1, y=t1)
-                self.curve1_sma.setData(x=simple_moving_average(s1, N), y=tsma1)
         else:
-            tr0 = trace.get_trace(0, complex_conv=self.complexBox.currentText())
-            tr1 = trace.get_trace(1, complex_conv=self.complexBox.currentText())
-            tsma0 = simple_moving_average(tr0, N)
-            mean0 = tsma0[-1] if len(tsma0) else 0.0
-            tsma1 = simple_moving_average(tr1, N)
-            mean1 = tsma1[-1] if len(tsma1) else 0.0
-            if self.showtotalBox.isChecked():
-                t = tr0 + tr1
+            traces = [
+                trace.get_trace(ch, complex_conv=self.complexBox.currentText())
+                for ch in range(len(self._channel))
+            ]
+            for channel, tr in zip(self._channel, traces):
+                tsma = simple_moving_average(tr, N)
+                means.append(tsma[-1] if len(tsma) else 0.0)
+                if channel.check.isChecked():
+                    if raw:
+                        channel.curve.setData(tr)
+                    channel.sma_curve.setData(tsma)
+            if len(self._channel) > 1 and self.showtotalBox.isChecked():
+                t = sum(traces)
                 if raw:
                     self.curve_total.setData(t)
                 self.curve_total_sma.setData(simple_moving_average(t, N))
-            if self.show0Box.isChecked():
-                if raw:
-                    self.curve0.setData(tr0)
-                self.curve0_sma.setData(tsma0)
-            if self.show1Box.isChecked():
-                if raw:
-                    self.curve1.setData(tr1)
-                self.curve1_sma.setData(tsma1)
 
         u = trace.yunit or ""
+        total = sum(means)
         if self.SIprefixBox.isChecked():
-            total = mean0 + mean1
             scale, prefix = SI_scale(total)
             self.labeltotal.setText("Total: {:6.2f} {}{}".format(total * scale, prefix, u))
-            scale, prefix = SI_scale(mean0)
-            self.label0.setText("PD0: {:6.2f} {}{}".format(mean0 * scale, prefix, u))
-            scale, prefix = SI_scale(mean1)
-            self.label1.setText("PD1: {:6.2f} {}{}".format(mean1 * scale, prefix, u))
+            for channel, mean in zip(self._channel, means):
+                scale, prefix = SI_scale(mean)
+                channel.label.setText(
+                    "{}: {:6.2f} {}{}".format(channel.name, mean * scale, prefix, u)
+                )
         else:
-            self.labeltotal.setText("Total: {:.2e} {}".format(mean0 + mean1, u))
-            self.label0.setText("PD0: {:.2e} {}".format(mean0, u))
-            self.label1.setText("PD1: {:.2e} {}".format(mean1, u))
+            self.labeltotal.setText("Total: {:.2e} {}".format(total, u))
+            for channel, mean in zip(self._channel, means):
+                channel.label.setText("{}: {:.2e} {}".format(channel.name, mean, u))
         self.fpsLabel.setText("{:.1f} fps".format(self.fps_counter.tick()))
 
     def toggle_total(self, show: bool):
@@ -2370,19 +2371,14 @@ class traceView(ClientWidget, Ui_traceView):
             self.curve_total.clear()
             self.curve_total_sma.clear()
 
-    def toggle0(self, show: bool):
+    def toggle_channel(self, ch: int, show: bool):
         if not show:
-            self.curve0.clear()
-            self.curve0_sma.clear()
-
-    def toggle1(self, show: bool):
-        if not show:
-            self.curve1.clear()
-            self.curve1_sma.clear()
+            self._channel[ch].curve.clear()
+            self._channel[ch].sma_curve.clear()
 
     def toggle_raw(self, show: bool):
         if not show:
-            for c in (self.curve_total, self.curve0, self.curve1):
+            for c in [self.curve_total] + [ch.curve for ch in self._channel]:
                 c.clear()
 
     def clear(self):
@@ -2424,6 +2420,7 @@ class ConfocalMainWindow(QtWidgets.QMainWindow):
             lconf.get("key_move_step_coarse", 0.10),
         )
         move_interval_ms = lconf.get("move_interval_ms", 10)
+        labels = lconf.get("labels", [])
 
         self.confocal = ConfocalWidget(
             gconf,
@@ -2438,7 +2435,7 @@ class ConfocalMainWindow(QtWidgets.QMainWindow):
             parent=self,
         )
         self.traceView = traceView(
-            gconf, target["confocal"], target["gparams"], context, parent=self
+            gconf, target["confocal"], target["gparams"], labels, context, parent=self
         )
 
         self.setWindowTitle(f"MAHOS.ConfocalGUI ({join_name(target['confocal'])})")
@@ -2486,10 +2483,11 @@ class TraceWidget(QtWidgets.QWidget):
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
+        labels = lconf.get("labels", [])
         self.cli = QTraceNodeClient(gconf, target["trace"], context=context, parent=self)
 
         self.traceView = traceView(
-            gconf, target["trace"], target["gparams"], context, cli=self.cli, parent=self
+            gconf, target["trace"], target["gparams"], labels, context, cli=self.cli, parent=self
         )
 
         self.setWindowTitle(f"MAHOS.TraceGUI ({join_name(target['trace'])})")
@@ -2547,6 +2545,8 @@ class ConfocalGUI(GUINode):
     :param move_interval_ms: (default: 10) Minimum move update interval in milliseconds.
         If zero, target position updates are sent immediately.
     :type move_interval_ms: int
+    :param labels: PD channel labels for trace display.
+    :type labels: list[str]
 
     """
 
@@ -2561,6 +2561,8 @@ class TraceGUI(GUINode):
     :type target.trace: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
     :type target.gparams: tuple[str, str] | str
+    :param labels: PD channel labels for trace display.
+    :type labels: list[str]
 
     """
 

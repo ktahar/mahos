@@ -36,39 +36,7 @@
     <number>0</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="label0">
-       <property name="mouseTracking">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>PD0: 0.0</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::AutoText</enum>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label1">
-       <property name="mouseTracking">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>PD1: 0.0</string>
-       </property>
-       <property name="textFormat">
-        <enum>Qt::AutoText</enum>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
+    <layout class="QHBoxLayout" name="topHLayout">
      <item>
       <widget class="QLabel" name="labeltotal">
        <property name="text">
@@ -85,7 +53,7 @@
     <widget class="GraphicsView" name="graphicsView"/>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="bottomHLayout">
      <item>
       <widget class="QPushButton" name="pauseButton">
        <property name="text">
@@ -125,26 +93,6 @@
       <widget class="QCheckBox" name="showtotalBox">
        <property name="text">
         <string>Total</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="show0Box">
-       <property name="text">
-        <string>PD0</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="show1Box">
-       <property name="text">
-        <string>PD1</string>
        </property>
        <property name="checked">
         <bool>true</bool>
@@ -287,10 +235,9 @@
   <tabstop>pauseButton</tabstop>
   <tabstop>resumeButton</tabstop>
   <tabstop>saveButton</tabstop>
+  <tabstop>SIprefixBox</tabstop>
   <tabstop>timestampBox</tabstop>
   <tabstop>showtotalBox</tabstop>
-  <tabstop>show0Box</tabstop>
-  <tabstop>show1Box</tabstop>
   <tabstop>showrawBox</tabstop>
   <tabstop>smaBox</tabstop>
   <tabstop>fontsizeBox</tabstop>
