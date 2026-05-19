@@ -47,19 +47,25 @@ class = "Positioner_mock"
 [localhost.tweaker]
 module = "mahos.meas.tweaker"
 class = "Tweaker"
-target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5561"
 pub_endpoint = "tcp://127.0.0.1:5562"
 param_dicts = ["source::ch1", "source::ch2"]
+
+[localhost.tweaker.target]
+log = "localhost::log"
+
 [localhost.tweaker.target.servers]
 source = "localhost::server"
 
 [localhost.pos_tweaker]
 module = "mahos.meas.pos_tweaker"
 class = "PosTweaker"
-target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5563"
 pub_endpoint = "tcp://127.0.0.1:5564"
+
+[localhost.pos_tweaker.target]
+log = "localhost::log"
+
 [localhost.pos_tweaker.target.servers]
 pos_x = "localhost::server"
 pos_y = "localhost::server"

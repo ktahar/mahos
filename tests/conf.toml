@@ -334,10 +334,13 @@ prepare_scan = { "localhost::odmr" = "IDLE" , "localhost::hbt" = "IDLE", "localh
 [localhost.tweaker]
 module = "mahos.meas.tweaker"
 class = "Tweaker"
-target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5592"
 pub_endpoint = "tcp://127.0.0.1:5593"
 param_dicts = ["dmm0::ch1_dcv", "paramX::labelA", "paramY::labelB"]
+
+[localhost.tweaker.target]
+log = "localhost::log"
+
 [localhost.tweaker.target.servers]
 dmm0 = "localhost::server"
 paramX = "localhost::server"
@@ -346,9 +349,12 @@ paramY = "localhost::server"
 [localhost.pos_tweaker]
 module = "mahos.meas.pos_tweaker"
 class = "PosTweaker"
-target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5596"
 pub_endpoint = "tcp://127.0.0.1:5597"
+
+[localhost.pos_tweaker.target]
+log = "localhost::log"
+
 [localhost.pos_tweaker.target.servers]
 pos_x = "localhost::server"
 pos_y = "localhost::server"

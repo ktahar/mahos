@@ -13,7 +13,12 @@ import argparse
 from argparse import BooleanOptionalAction
 from os import path
 import pprint
-import toml
+import tomllib
+
+
+def load_toml(fn):
+    with open(fn, "rb") as f:
+        return tomllib.load(f)
 
 
 def plot_data(args, fn, data, plot, force=False):
@@ -88,7 +93,7 @@ def plot_odmr(args):
 
     if args.method:
         if args.fit_params:
-            fit_params = toml.load(args.fit_params)
+            fit_params = load_toml(args.fit_params)
             fit_params["peak_type"] = str_to_peak_type(fit_params.get("peak_type", args.peak_type))
             if args.method == "multi" and "n_peaks" not in fit_params:
                 fit_params["n_peaks"] = args.n_peaks
@@ -157,7 +162,7 @@ def plot_podmr(args):
         if value is not None:
             plot_params[key] = value
     if args.method and args.fit_params:
-        fit_params = toml.load(args.fit_params)
+        fit_params = load_toml(args.fit_params)
     else:
         fit_params = {}
 
@@ -199,7 +204,7 @@ def plot_spodmr(args):
     if args.norm_offset is not None:
         plot_params["offset"] = args.norm_offset
     if args.method and args.fit_params:
-        fit_params = toml.load(args.fit_params)
+        fit_params = load_toml(args.fit_params)
     else:
         fit_params = {}
 
@@ -303,7 +308,7 @@ def plot_hbt(args):
         plot_params["bg_ratio"] = args.bg_ratio * 0.01
 
     if args.method and args.fit_params:
-        fit_params = toml.load(args.fit_params)
+        fit_params = load_toml(args.fit_params)
     else:
         fit_params = {}
 
@@ -337,7 +342,7 @@ def plot_spec(args):
 
     if args.method:
         if args.fit_params:
-            fit_params = toml.load(args.fit_params)
+            fit_params = load_toml(args.fit_params)
             fit_params["peak_type"] = str_to_peak_type(fit_params.get("peak_type", args.peak_type))
             if args.method == "multi" and "n_peaks" not in fit_params:
                 fit_params["n_peaks"] = args.n_peaks

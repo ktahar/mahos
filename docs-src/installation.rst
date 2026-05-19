@@ -12,7 +12,7 @@ Steps to install mahos:
 System requirements
 -------------------
 
-You need Python (>= 3.10, < 3.13) on Windows or Linux.
+You need Python (>= 3.11, < 3.14) on Windows or Linux.
 
 Create virtual environment
 --------------------------

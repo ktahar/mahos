@@ -36,9 +36,12 @@ volt_bounds = [-10, 10]
 [localhost.iv]
 module = "iv"
 class = "IV"
-target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5780"
 pub_endpoint = "tcp://127.0.0.1:5781"
+
+[localhost.iv.target]
+log = "localhost::log"
+
 [localhost.iv.target.servers]
 smu = "localhost::server"
 

@@ -79,10 +79,13 @@ unit = "A"                # display unit
 [localhost.tweaker]
 module = "mahos.meas.tweaker"
 class = "Tweaker"
-target = { log = "localhost::log" }
 rep_endpoint = "tcp://127.0.0.1:5563"
 pub_endpoint = "tcp://127.0.0.1:5564"
 param_dicts = ["source::ch1", "meter::current"]
+
+[localhost.tweaker.target]
+log = "localhost::log"
+
 [localhost.tweaker.target.servers]
 source = "localhost::server"
 meter = "localhost::server"

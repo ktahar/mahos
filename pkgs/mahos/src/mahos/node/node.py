@@ -15,7 +15,7 @@ import multiprocessing as mp
 import threading as mt
 import logging
 
-import toml
+import tomllib
 
 from mahos.node.comm import Context, Publisher, Request
 from mahos.node.log import DummyLogger
@@ -67,13 +67,6 @@ def infer_name(name_or_nodename: str, default_host="localhost") -> tuple[str, st
 # config
 
 
-class PickleableTomlDecoder(toml.TomlDecoder):
-    """TomlDecoder workaround for a toml issue. https://github.com/uiri/toml/issues/362"""
-
-    def get_empty_inline_table(self):
-        return self.get_empty_table()
-
-
 def load_gconf(file_name: str) -> dict:
     """load (global) configuration dict from `file_name`.
 
@@ -82,7 +75,8 @@ def load_gconf(file_name: str) -> dict:
 
     """
 
-    return toml.load(os.path.expanduser(file_name), decoder=PickleableTomlDecoder())
+    with open(os.path.expanduser(file_name), "rb") as f:
+        return tomllib.load(f)
 
 
 def local_conf(gconf: dict, name: NodeName) -> dict:
