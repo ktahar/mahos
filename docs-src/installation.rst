@@ -9,6 +9,8 @@ Steps to install mahos:
 #. Install `Optional requirements`_.
 #. Install `The mahos packages`_ (and requirements).
 
+If you are upgrading from MAHOS 0.3.x, see :doc:`migration`.
+
 System requirements
 -------------------
 

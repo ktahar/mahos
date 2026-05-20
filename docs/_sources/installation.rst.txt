@@ -9,10 +9,12 @@ Steps to install mahos:
 #. Install `Optional requirements`_.
 #. Install `The mahos packages`_ (and requirements).
 
+If you are upgrading from MAHOS 0.3.x, see :doc:`migration`.
+
 System requirements
 -------------------
 
-You need Python (>= 3.10, < 3.13) on Windows or Linux.
+You need Python (>= 3.11, < 3.14) on Windows or Linux.
 
 Create virtual environment
 --------------------------

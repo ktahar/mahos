@@ -20,6 +20,7 @@ This package currently includes the following.
 
    overview
    installation
+   migration
    tutorial
    arch
    conf

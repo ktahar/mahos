@@ -28,10 +28,12 @@ Added
 Changed
 ^^^^^^^
 
+- Python version: drop support of 3.10, and add support of 3.13.
 - Introduced application packages: ``mahos_dq`` and ``mahos_dq_ext``.
   The specific applications (confocal, odmr, etc.) have been moved from ``mahos`` to ``mahos_dq``.
 - Packaging: split runtime and development dependencies; moved development tools to the
   ``mahos[dev]`` extra.
+- Config file is loaded using ``tomllib`` instead of ``toml``.
 - Dependencies and development environment: update Python/scipy stack and pyzmq/msgpack.
   Now using NumPy 2.
 - Internal API cleanup: standardize ``filename`` to ``file_name`` in Tweaker/
