@@ -103,7 +103,10 @@ def test_apodmr_complementary_n4_concatenate():
 def test_apodmr_save_load_roundtrip():
     data = make_data(2, "data01")
     data.raw_data = np.arange(24, dtype=np.float64).reshape(1, 4, 6)
-    assert data.records() == 1
+    data.raw_data_sum = data.raw_data[0].copy()
+    data.records = 1
+    assert data.records == 1
+    assert data.retained_records() == 1
     assert data.sweeps() == 2
     assert np.isclose(data.measurement_time(), 100e-9)
     set_pattern_data(

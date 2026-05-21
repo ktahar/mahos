@@ -505,6 +505,16 @@
               </property>
              </widget>
             </item>
+            <item row="1" column="3">
+             <widget class="QSpinBox" name="maxRecordsBox">
+              <property name="suffix">
+               <string> (0 to inf)</string>
+              </property>
+              <property name="prefix">
+               <string>max records: </string>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -1614,6 +1624,7 @@
   <tabstop>durationBox</tabstop>
   <tabstop>shotsPerPointBox</tabstop>
   <tabstop>sweepsPerRecordBox</tabstop>
+  <tabstop>maxRecordsBox</tabstop>
   <tabstop>roiheadBox</tabstop>
   <tabstop>roitailBox</tabstop>
   <tabstop>freqBox</tabstop>

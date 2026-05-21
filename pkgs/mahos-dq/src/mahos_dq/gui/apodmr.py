@@ -166,8 +166,9 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
             return
 
         self._empty_item.setVisible(False)
-        records, trace_count, _ = traces.shape
-        self.recordBox.setMaximum(records - 1)
+        retained_records, trace_count, _ = traces.shape
+        self.recordBox.setMaximum(retained_records - 1)
+        self.recordBox.setMinimum(-retained_records)
         self.indexBox.setMaximum(trace_count - 1)
         self.numBox.setMaximum(trace_count)
 
@@ -177,14 +178,17 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
             return
 
         if self.meanBox.isChecked():
-            plot_traces = np.mean(traces, axis=0, keepdims=True)
+            if not data.has_raw_data_sum() or data.records < 1:
+                self._show_empty()
+                return
+            plot_traces = data.raw_data_sum / data.records
         else:
-            record = min(self.recordBox.value(), records - 1)
-            plot_traces = traces[record : record + 1]
+            record = max(min(self.recordBox.value(), retained_records - 1), -retained_records)
+            plot_traces = traces[record]
 
         tnum = tstop - tstart
         for i, trace_idx in enumerate(range(tstart, tstop)):
-            y = plot_traces[0, trace_idx]
+            y = plot_traces[trace_idx]
             pen = self.cmap.map(i / (tnum - 1)) if tnum > 1 else self.cmap.map(0.5)
             self._trace_items.append(self.raw_plot.plot(x, y, pen=pen, name=f"t{trace_idx:d}"))
 
@@ -246,6 +250,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
                 ("freq", self.freqBox, 1e-6),
                 ("sweeps_per_record", self.sweepsPerRecordBox),
                 ("shots_per_point", self.shotsPerPointBox),
+                ("max_records", self.maxRecordsBox),
                 ("sweeps", self.sweepsBox),
                 ("duration", self.durationBox),
                 ("roi_head", self.roiheadBox, 1e9),
@@ -290,6 +295,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         self.sweepsBox.setValue(p.get("sweeps", 0))
         self.sweepsPerRecordBox.setValue(p.get("sweeps_per_record", 1))
         self.shotsPerPointBox.setValue(p.get("shots_per_point", 1))
+        self.maxRecordsBox.setValue(p.get("max_records", 0))
         self.durationBox.setValue(p.get("duration", 0.0))
         self.roiheadBox.setValue(p.get("roi_head", 0.0) * 1e9)
         self.roitailBox.setValue(p.get("roi_tail", 0.0) * 1e9)
@@ -343,6 +349,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         params["sweeps"] = self.sweepsBox.value()
         params["sweeps_per_record"] = self.sweepsPerRecordBox.value()
         params["shots_per_point"] = self.shotsPerPointBox.value()
+        params["max_records"] = self.maxRecordsBox.value()
         params["duration"] = self.durationBox.value()
         params["roi_head"] = self.roiheadBox.value() * 1e-9
         params["roi_tail"] = self.roitailBox.value() * 1e-9
@@ -385,7 +392,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
 
     def _update_swept_label(self):
         sweeps = int(self.data.sweeps())
-        records = int(self.data.records())
+        records = int(self.data.records)
         self.sweptLabel.setText(f"{sweeps} swept / {records} records")
 
     def _update_range_bin(self):
@@ -413,6 +420,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             self.sweepsBox,
             self.sweepsPerRecordBox,
             self.shotsPerPointBox,
+            self.maxRecordsBox,
             self.durationBox,
             self.roiheadBox,
             self.roitailBox,

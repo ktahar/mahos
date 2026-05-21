@@ -62,11 +62,23 @@ class APODMRDataOperator(PODMRDataOperator):
         data.params["instrument"]["mw_modes"] = [MWMode.parse(m).name for m in mw_modes]
 
     def append_record(self, data: APODMRData, traces: np.ndarray):
-        traces = np.array(traces, copy=True)
+        traces = np.array(traces, dtype=np.float64, copy=True)
+        data.records += 1
+        if data.raw_data_sum is None:
+            data.raw_data_sum = traces
+        else:
+            data.raw_data_sum += traces
+
         if data.raw_data is None:
-            data.raw_data = traces[np.newaxis, :, :]
+            data.raw_data = traces[np.newaxis, :, :].copy()
         else:
             data.raw_data = np.concatenate((data.raw_data, traces[np.newaxis, :, :]), axis=0)
+        try:
+            max_records = int(data.params.get("max_records", 0))
+        except (AttributeError, TypeError, ValueError):
+            max_records = 0
+        if max_records > 0 and data.raw_data.shape[0] > max_records:
+            data.raw_data = data.raw_data[-max_records:].copy()
 
     def get_marker_indices(self, data: APODMRData):
         tbin = data.get_bin()
@@ -99,8 +111,8 @@ class APODMRDataOperator(PODMRDataOperator):
         return np.asarray(sig, dtype=np.float64), np.asarray(ref, dtype=np.float64)
 
     def _analysis_error(self, data: APODMRData) -> str | None:
-        if not data.has_raw_data():
-            return "raw data is unavailable"
+        if not data.has_raw_data_sum() or data.records < 1:
+            return "aggregated raw data is unavailable"
         if data.marker_indices is None:
             return "marker indices are unavailable"
 
@@ -127,7 +139,7 @@ class APODMRDataOperator(PODMRDataOperator):
             return error
 
         N = data.num_pattern()
-        traces = np.mean(data.raw_data, axis=0)
+        traces = data.raw_data_sum / data.records
         sig_avg, ref_avg = self._analyze_record(traces, data.marker_indices)
 
         for i in range(4):
@@ -686,6 +698,12 @@ class Pulser(PODMRPulser):
             1,
             1000000,
             doc="number of sweeps accumulated in one stored raw trace record",
+        )
+        d["max_records"] = P.IntParam(
+            self.conf.get("max_records", 0),
+            0,
+            100000000,
+            doc="maximum number of raw trace records to retain (0 for unlimited)",
         )
         d["shots_per_point"] = P.IntParam(
             self.conf.get("shots_per_point", 1),

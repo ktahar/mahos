@@ -45,9 +45,10 @@ class APODMRStatus(Status):
 class APODMRData(PODMRData):
     """Analog-PD pulse ODMR data container.
 
-    :ivar raw_data: Aggregated raw traces with shape
-        ``(record, trace, sample)``.
+    :ivar raw_data: Retained raw trace records with shape ``(record, trace, sample)``.
+    :ivar raw_data_sum: Sum of all captured raw trace records with shape ``(trace, sample)``.
     :ivar raw_xdata: Trace-local time axis for a single aggregated trace.
+    :ivar records: Number of raw trace records captured so far.
     :ivar trace_laser_timing: Laser-start timing in trace-local time, measured from trigger.
     :ivar marker_indices: Marker indices with shape ``(4,)`` as
         ``(sig_head, sig_tail, ref_head, ref_tail)`` shared by all traces.
@@ -67,6 +68,8 @@ class APODMRData(PODMRData):
         self.set_version(0)
 
         self.tdc_status = None
+        self.raw_data_sum = None
+        self.records = 0
         self.trace_laser_timing = None
         self.trigger_timing = None
 
@@ -94,7 +97,7 @@ class APODMRData(PODMRData):
         self.raw_xdata = np.arange(samples_per_trace) * sample_period
         return self.raw_xdata
 
-    def records(self) -> int:
+    def retained_records(self) -> int:
         if self.raw_data is None:
             return 0
         return int(self.raw_data.shape[0])
@@ -126,7 +129,7 @@ class APODMRData(PODMRData):
             return 1
 
     def sweeps(self) -> int:
-        return self.records() * self.get_sweeps_per_record()
+        return self.records * self.get_sweeps_per_record()
 
     def measurement_time(self) -> float:
         if not self.has_params():
@@ -142,6 +145,9 @@ class APODMRData(PODMRData):
 
     def has_raw_data(self) -> bool:
         return self.raw_data is not None and np.size(self.raw_data) > 0
+
+    def has_raw_data_sum(self) -> bool:
+        return self.raw_data_sum is not None and np.size(self.raw_data_sum) > 0
 
     def _get_xdata_head(self, xdata):
         raise ValueError("taumode 'head' is unsupported for APODMR")

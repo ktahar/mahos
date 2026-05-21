@@ -52,6 +52,7 @@ def _apodmr_params() -> dict:
         "roi_tail": 50e-9,
         "pd_rate": 500e3,
         "sweeps_per_record": 2,
+        "max_records": 0,
         "shots_per_point": 1,
         "pulse": {},
         "plot": {
@@ -124,13 +125,59 @@ def test_apodmr_builder_inserts_trigger_before_each_laser():
 
 def test_apodmr_analyze_rejects_out_of_range_markers():
     data = APODMRData(_apodmr_params(), "rabi")
-    data.raw_data = np.zeros((1, 4, 6), dtype=np.float64)
+    data.raw_data_sum = np.zeros((4, 6), dtype=np.float64)
+    data.records = 1
     data.marker_indices = np.array([0, 2, 3, 10], dtype=np.int64)
     op = APODMRDataOperator()
 
     assert op._analysis_error(data) is not None
     assert op.analyze_with_error(data) is not None
     assert op.analyze(data) is False
+
+
+def test_apodmr_append_record_limits_retained_records():
+    data = APODMRData(_apodmr_params(), "rabi")
+    data.params["max_records"] = 2
+    op = APODMRDataOperator()
+    records = [np.full((4, 6), i, dtype=np.float64) for i in range(3)]
+
+    for record in records:
+        op.append_record(data, record)
+
+    assert data.records == 3
+    assert data.retained_records() == 2
+    assert np.array_equal(data.raw_data, np.stack(records[1:]))
+    assert np.array_equal(data.raw_data_sum, np.sum(records, axis=0))
+    assert data.sweeps() == 6
+
+
+def test_apodmr_analyze_uses_all_captured_records_with_limited_retention():
+    data = APODMRData(_apodmr_params(), "rabi")
+    data.params["num_pattern"] = 2
+    data.params["max_records"] = 2
+    data.marker_indices = np.array([0, 0, 1, 1], dtype=np.int64)
+    op = APODMRDataOperator()
+
+    op.append_record(
+        data,
+        np.array(
+            [
+                [1.0, 10.0, 0.0],
+                [2.0, 20.0, 0.0],
+                [3.0, 30.0, 0.0],
+                [4.0, 40.0, 0.0],
+            ]
+        ),
+    )
+    op.append_record(data, np.zeros((4, 3), dtype=np.float64))
+    op.append_record(data, np.zeros((4, 3), dtype=np.float64))
+
+    assert data.retained_records() == 2
+    assert op.analyze(data)
+    assert np.allclose(data.data0, np.array([1.0, 3.0]) / 3.0)
+    assert np.allclose(data.data1, np.array([2.0, 4.0]) / 3.0)
+    assert np.allclose(data.data0ref, np.array([10.0, 30.0]) / 3.0)
+    assert np.allclose(data.data1ref, np.array([20.0, 40.0]) / 3.0)
 
 
 def test_apodmr(server, apodmr, server_conf, apodmr_conf):
@@ -146,6 +193,7 @@ def test_apodmr(server, apodmr, server_conf, apodmr_conf):
     params["num"].set(2)
     params["sweeps"].set(4)
     params["sweeps_per_record"].set(2)
+    params["max_records"].set(1)
     params["shots_per_point"].set(2)
     params["plot"]["sigdelay"].set(0.0)
     params["plot"]["sigwidth"].set(1e-9)
@@ -159,9 +207,13 @@ def test_apodmr(server, apodmr, server_conf, apodmr_conf):
     data = get_some(apodmr.get_data, poll_timeout_ms)
     assert data is not None
     assert data.raw_data is not None
-    assert data.raw_data.shape[0] == 2
+    assert data.raw_data.shape[0] == 1
+    assert data.retained_records() == 1
+    assert data.records == 2
     assert int(data.sweeps()) == 4
-    assert int(data.raw_data.shape[0] * data.get_sweeps_per_record()) == 4
+    assert int(data.records * data.get_sweeps_per_record()) == 4
+    assert data.raw_data_sum is not None
+    assert data.raw_data_sum.shape == data.raw_data.shape[1:]
     assert data.get_samples_per_trace() == data.raw_data.shape[2]
     assert data.marker_indices is not None
     assert data.marker_indices.shape == (4,)
