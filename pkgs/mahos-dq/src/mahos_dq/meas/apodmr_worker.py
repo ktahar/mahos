@@ -177,24 +177,6 @@ class APODMRBlockBuilder(object):
         self.iq_amplitude = iq_amplitude
         self.channel_remap = channel_remap
 
-    def _inject_trigger(self, op_block: Block, roi_head: int, trigger_width: int) -> Block:
-        if roi_head < trigger_width:
-            raise ValueError("roi_head must be equal to or longer than trigger_width")
-        total_length = op_block.total_length()
-        if roi_head > total_length:
-            raise ValueError("roi_head must fit in the operation block before each laser pulse")
-
-        trigger_start = total_length - roi_head
-        trigger_tail = roi_head - trigger_width
-        pattern = []
-        if trigger_start > 0:
-            pattern.append((None, trigger_start))
-        pattern.append((("trigger",), trigger_width))
-        if trigger_tail > 0:
-            pattern.append((None, trigger_tail))
-
-        return op_block.union(Block(op_block.name + "_trig", pattern))
-
     def build_blocks(
         self, blocks: list[Blocks[Block]], freq: float, common_pulses, params: dict, num_mw: int
     ) -> tuple[Blocks[Block], list[int], list[int], int]:
@@ -254,7 +236,7 @@ class APODMRBlockBuilder(object):
 
         for blks in blocks:
             for i in range(0, len(blks), 2):
-                op = self._inject_trigger(blks[i], roi_head, trigger_width)
+                op = K.inject_trigger(blks[i], roi_head, trigger_width)
                 rd = blks[i + 1]
                 unit = op.concatenate(rd)
                 trigger_offset = op.total_length() - roi_head

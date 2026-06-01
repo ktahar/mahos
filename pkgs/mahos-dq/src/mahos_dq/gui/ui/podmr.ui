@@ -251,6 +251,9 @@
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="roiheadBox">
+              <property name="toolTip">
+               <string>Negative value disables ROI</string>
+              </property>
               <property name="prefix">
                <string>head: </string>
               </property>
@@ -490,6 +493,9 @@
             </item>
             <item row="2" column="2">
              <widget class="QDoubleSpinBox" name="roitailBox">
+              <property name="toolTip">
+               <string>Negative value disables ROI</string>
+              </property>
               <property name="prefix">
                <string>tail: </string>
               </property>
@@ -507,13 +513,6 @@
               </property>
               <property name="value">
                <double>-1.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="3">
-             <widget class="QLabel" name="label_11">
-              <property name="text">
-               <string>a negative value disables ROI</string>
               </property>
              </widget>
             </item>
@@ -566,6 +565,13 @@
               </property>
               <property name="value">
                <double>3.200000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QCheckBox" name="multiHistoBox">
+              <property name="text">
+               <string>multi histogram</string>
               </property>
              </widget>
             </item>
@@ -1801,6 +1807,7 @@
   <tabstop>intervalBox</tabstop>
   <tabstop>roiheadBox</tabstop>
   <tabstop>roitailBox</tabstop>
+  <tabstop>multiHistoBox</tabstop>
   <tabstop>freqBox</tabstop>
   <tabstop>powerBox</tabstop>
   <tabstop>nomwBox</tabstop>

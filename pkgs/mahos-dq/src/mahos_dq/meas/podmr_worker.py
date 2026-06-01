@@ -641,7 +641,7 @@ class Pulser(Worker, ConfTypeCheckMixin):
         self.add_instruments(self.pg, self.tdc, self.fg, *self.sgs.values())
 
         self.timer = None
-        self.length = self.offsets = self.freq = self.laser_timing = None
+        self.length = self.offsets = self.freq = None
 
         self.check_required_conf(
             ["block_base", "pg_freq", "reduce_start_divisor", "minimum_block_length"]
@@ -719,10 +719,18 @@ class Pulser(Worker, ConfTypeCheckMixin):
             return False
 
         # Detector
-        trange = self.length / self.freq - self.eos_margin
-        if not self.tdc.configure_histogram("podmr", trange, params["timebin"]):
-            self.logger.error("Error configuring TDC.")
-            return False
+        if params.get("multi_histogram", False):
+            trange = params["roi_head"] + params["laser_width"] + params["roi_tail"]
+            if not self.tdc.configure_multi_histogram(
+                "podmr", trange, params["timebin"], len(self.data.laser_timing)
+            ):
+                self.logger.error("Error configuring TDC.")
+                return False
+        else:
+            trange = self.length / self.freq - self.eos_margin
+            if not self.tdc.configure_histogram("podmr", trange, params["timebin"]):
+                self.logger.error("Error configuring TDC.")
+                return False
         if params.get("sweeps", 0) and not self.tdc.set_sweeps(params["sweeps"]):
             # Even if the TDC doesn't support sweeps limit, we can auto-finish by is_finished().
             # However, the sweeps value can be larger than the limit.
@@ -933,7 +941,7 @@ class Pulser(Worker, ConfTypeCheckMixin):
         if not self.data.running:
             return False
 
-        if self.data.has_roi():
+        if self.data.has_roi() and not self.data.is_multi_histogram():
             roi = self.data.get_rois()
             data0 = self.tdc.get_data_roi(self._tdc_ch0, roi)
             # because length of each ROI fragments are all same,
@@ -1219,6 +1227,7 @@ class Pulser(Worker, ConfTypeCheckMixin):
                 unit="s",
                 doc="margin at tail of ROI. negative value disables ROI.",
             ),
+            multi_histogram=P.BoolParam(False, doc="use TDC multi histogram mode to realize ROI."),
         )
 
         for i in range(len(self.mw_channels)):

@@ -778,6 +778,9 @@ class PODMRData(BasicMeasData):
         head, tail = self.get_roi_margins()
         return head >= 0.0 and tail >= 0.0
 
+    def is_multi_histogram(self) -> bool:
+        return self.params.get("multi_histogram", False)
+
     def sweeps(self) -> int:
         if self.tdc_status is None:
             return 0

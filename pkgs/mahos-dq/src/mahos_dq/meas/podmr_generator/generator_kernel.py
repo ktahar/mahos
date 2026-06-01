@@ -333,11 +333,30 @@ def init_final_phases(num_mw):
     return tuple(phases)
 
 
+def inject_trigger(op_block: Block, roi_head: int, trigger_width: int) -> Block:
+    if roi_head < trigger_width:
+        raise ValueError("roi_head must be equal to or longer than trigger_width")
+    total_length = op_block.total_length()
+    if roi_head > total_length:
+        raise ValueError("roi_head must fit in the operation block before each laser pulse")
+
+    trigger_start = total_length - roi_head
+    trigger_tail = roi_head - trigger_width
+    pattern = []
+    if trigger_start > 0:
+        pattern.append((None, trigger_start))
+    pattern.append((("trigger",), trigger_width))
+    if trigger_tail > 0:
+        pattern.append((None, trigger_tail))
+
+    return op_block.union(Block(op_block.name + "_trig", pattern))
+
+
 def build_blocks(
     blocks: list[Blocks[Block]],
+    freq: float,
     common_pulses,
     params: dict,
-    divide=False,
     merge=True,
     invertY=False,
     minimum_block_length: int = 1000,
@@ -365,6 +384,9 @@ def build_blocks(
         final_delay,
     ) = common_pulses
 
+    divide = params.get("divide_block", False)
+    multi_histogram = params.get("multi_histogram", False)
+
     init_block_width = max(trigger_width + init_delay + laser_width, minimum_block_length)
     init_block_width = offset_base_inc(init_block_width, base_width)
     final_block_width = max(final_delay, minimum_block_length)
@@ -372,15 +394,17 @@ def build_blocks(
 
     phases = init_final_phases(num_mw)
 
+    if multi_histogram:
+        roi_head = int(round(params["roi_head"] * freq))
+        roi_tail = int(round(params["roi_tail"] * freq))
+        if roi_head < 0 or roi_tail < 0:
+            raise ValueError("roi_head and roi_tail must be non-negative")
+        _trig_ch = ("sync",)
+    else:
+        _trig_ch = ("trigger", "sync")
+
     ptn_init = [
-        (
-            (
-                "trigger",
-                "sync",
-            )
-            + phases,
-            trigger_width,
-        ),
+        (_trig_ch + phases, trigger_width),
         (("sync",) + phases, init_delay),
         (
             (
@@ -392,6 +416,13 @@ def build_blocks(
         ),
     ]
     ptn_final = [(("sync",) + phases, final_block_width)]
+
+    if multi_histogram:
+        for blks in blocks:
+            for i in range(0, len(blks), 2):
+                blks[i] = inject_trigger(blks[i], roi_head, trigger_width)
+                if blks[i].total_length() < roi_head + roi_tail:
+                    raise ValueError("ROI overlaps; reduce ROI margins or laser rate")
 
     # flatten list[Blocks[Block]] to Blocks[Block]
     blocks = Blocks(chain.from_iterable(blocks))

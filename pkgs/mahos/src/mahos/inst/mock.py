@@ -550,7 +550,7 @@ class PD_mock(Instrument):
 Counter_mock = PD_mock
 
 
-class MCS_mock(TDCBase):
+class TDC_mock(TDCBase):
     """Mock TDC with synthetic histogram and status data.
 
     This mock uses internal defaults for range and timing and does not require
@@ -567,13 +567,18 @@ class MCS_mock(TDCBase):
         self._mean_events = 0.0
         self._tstart = time.time()
         self._running = False
+        self._num_histo = 1
 
-    def get_data(self, nDisplay: int):
+    def get_data(self, ch: int):
         self._mean_events += 1.0
-        data = np.random.normal(self._mean_events, 1.0, size=self._range)
+        if self._num_histo == 1:
+            shape = self._range
+        else:
+            shape = (self._num_histo, self._range)
+        data = np.random.normal(self._mean_events, 1.0, size=shape)
         return data
 
-    def get_status(self, nDisplay: int) -> ChannelStatus:
+    def get_status(self, ch: int) -> ChannelStatus:
         runtime = time.time() - self._tstart
         # dummy status
         total = 0
@@ -586,11 +591,15 @@ class MCS_mock(TDCBase):
     # Standard API
 
     def configure(self, params: dict, label: str = "") -> bool:
-        self.logger.info(f"Dummy conf for MCS: {params}")
+        self.logger.info(f"Dummy conf for TDC: {params}")
         if "range" in params and "bin" in params:
             tbin = params["bin"] or self.resolution_sec
             self._range = int(round(params["range"] / tbin))
             self._bin = tbin
+        if label == "multi_histogram":
+            self._num_histo = params["num"]
+        else:
+            self._num_histo = 1
         return True
 
     def set(self, key: str, value=None, label: str = "") -> bool:
@@ -624,7 +633,7 @@ class MCS_mock(TDCBase):
             return None
 
     def start(self, label: str = "") -> bool:
-        self.logger.info("Started dummy MCS.")
+        self.logger.info("Started dummy TDC.")
         self._running = True
         self._starts = 0
         self._mean_events = 0.0
@@ -632,14 +641,18 @@ class MCS_mock(TDCBase):
         return True
 
     def resume(self, label: str = "") -> bool:
-        self.logger.info("Resumed dummy MCS.")
+        self.logger.info("Resumed dummy TDC.")
         self._running = True
         return True
 
     def stop(self, label: str = "") -> bool:
-        self.logger.info("Stopped dummy MCS.")
+        self.logger.info("Stopped dummy TDC.")
         self._running = False
         return True
+
+
+# Backward-compatible alias for existing mock config files.
+MCS_mock = TDC_mock
 
 
 class Spectrometer_mock(Instrument):

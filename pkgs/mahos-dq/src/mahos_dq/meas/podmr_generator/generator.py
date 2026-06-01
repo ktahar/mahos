@@ -19,7 +19,6 @@ from mahos.msgs import param_msgs as P
 from mahos.msgs.inst.pg_msgs import Channels, AnalogChannel
 from mahos_dq.msgs.podmr_msgs import MWMode
 
-
 mw_x = K.mw_x
 mw_y = K.mw_y
 mw_x_inv = K.mw_x_inv
@@ -167,9 +166,9 @@ class PatternGenerator(object):
 
         blocks, laser_timing = K.build_blocks(
             blocks,
+            freq,
             common_pulses,
             params,
-            divide=params.get("divide_block", False),
             invertY=pulse_params.get("invertY", False),
             minimum_block_length=self.minimum_block_length,
             block_base=self.block_base,

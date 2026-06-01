@@ -78,7 +78,7 @@ class = "Piezo_mock"
 
 [localhost.server.instrument.tdc]
 module = "mock"
-class = "MCS_mock"
+class = "TDC_mock"
 
 [localhost.server.instrument.clock]
 module = "mock"

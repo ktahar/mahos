@@ -1008,6 +1008,7 @@ class PODMRWidgetBase(ClientWidget):
                 ("duration", self.durationBox),
                 ("roi_head", self.roiheadBox, 1e9),
                 ("roi_tail", self.roitailBox, 1e9),
+                ("multi_histogram", self.multiHistoBox),
                 ("divide_block", self.divideblockBox),
                 ("base_width", self.basewidthBox, 1e9),
                 ("laser_delay", self.ldelayBox, 1e9),
@@ -1282,6 +1283,7 @@ class PODMRWidgetBase(ClientWidget):
         self.durationBox.setValue(p.get("duration", 0.0))
         self.roiheadBox.setValue(p.get("roi_head", -1e-9) * 1e9)  # sec to ns
         self.roitailBox.setValue(p.get("roi_tail", -1e-9) * 1e9)  # sec to ns
+        self.multiHistoBox.setChecked(p.get("multi_histogram", False))
 
         # method
         self.set_method(self.data.label)
@@ -1401,6 +1403,7 @@ class PODMRWidgetBase(ClientWidget):
         params["duration"] = self.durationBox.value()
         params["roi_head"] = self.roiheadBox.value() * 1e-9  # ns to sec
         params["roi_tail"] = self.roitailBox.value() * 1e-9  # ns to sec
+        params["multi_histogram"] = self.multiHistoBox.isChecked()
 
         if "freq1" in self._params:
             params["freq1"] = self.freq1Box.value() * 1e6  # MHz to Hz
@@ -1691,6 +1694,7 @@ class PODMRWidgetBase(ClientWidget):
             self.durationBox,
             self.roiheadBox,
             self.roitailBox,
+            self.multiHistoBox,
             self.invertsweepBox,
             self.reduceBox,
             self.divideblockBox,

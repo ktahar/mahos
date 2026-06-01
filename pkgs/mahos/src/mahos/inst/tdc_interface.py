@@ -48,6 +48,19 @@ class TDCInterface(InstrumentInterface):
         params = {"base_config": base_config, "range": trange, "bin": tbin}
         return self.configure(params, label="histogram")
 
+    def configure_multi_histogram(
+        self, base_config: str, trange: float, tbin: float, num: int
+    ) -> bool:
+        """Configure for multi histogram measurement.
+
+        Note that actual timebin maybe rounded.
+        Set tbin to 0.0 for minimum bin.
+
+        """
+
+        params = {"base_config": base_config, "range": trange, "bin": tbin, "num": num}
+        return self.configure(params, label="multi_histogram")
+
     def configure_correlation(self, base_config: str, trange: float, tbin: float) -> bool:
         """Configure for correlation measurement.
 

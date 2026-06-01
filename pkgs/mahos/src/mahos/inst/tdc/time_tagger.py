@@ -153,6 +153,47 @@ class TimeTagger(TDCBase):
         self._duration_ps = 0
         return True
 
+    def configure_multi_histogram(
+        self, base_config: str, trange: float, tbin: float, num: int
+    ) -> bool:
+        """Configure multi histogram measurement.
+
+        If channels is more than 2, the first channel is considered common start/next,
+        and the other channels are considered stops.
+
+        """
+
+        if base_config not in self._base_configs:
+            return self.fail_with("Unknown base config name")
+
+        conf = self._base_configs[base_config]
+        if not all(key in conf for key in ("channels", "levels")):
+            return self.fail_with(
+                f"'channels' / 'levels' is not defined in base_configs['{base_config}']"
+            )
+
+        for channel, level in zip(conf["channels"], conf["levels"]):
+            self.tagger.setTriggerLevel(channel, level)
+
+        tbin_ps, n_bins = self.set_range_bin(trange, tbin)
+        self.sync = tt.SynchronizedMeasurements(self.tagger)
+        self.meas = []
+        for ch in conf["channels"][1:]:
+            self.meas.append(
+                tt.TimeDifferences(
+                    self.sync.getTagger(),
+                    ch,
+                    start_channel=conf["channels"][0],
+                    next_channel=conf["channels"][0],
+                    binwidth=tbin_ps,
+                    n_bins=n_bins,
+                    n_histograms=num,
+                )
+            )
+        self.counter = tt.Counter(self.sync.getTagger(), conf["channels"])
+        self._duration_ps = 0
+        return True
+
     def configure_correlation(self, base_config: str, trange: float, tbin: float) -> bool:
         if base_config not in self._base_configs:
             return self.fail_with("Unknown base config name")
@@ -247,6 +288,16 @@ class TimeTagger(TDCBase):
         self.sync.clear()
         return True
 
+    def set_sweeps(self, sweeps: int) -> bool:
+        if sweeps == 0:
+            return True
+        if isinstance(self.meas, list) and isinstance(self.meas[0], tt.TimeDifferences):
+            for m in self.meas:
+                m.setMaxRollovers(sweeps)
+            return True
+        else:
+            return self.fail_with("Can set sweep only in multi_histogram mode")
+
     def set_duration(self, duration: float) -> bool:
         self._duration_ps = round(duration * 1e12)
         if self._duration_ps:
@@ -288,8 +339,14 @@ class TimeTagger(TDCBase):
         running = self.sync.isRunning()
         if isinstance(self.meas, list):
             # Histogram measurement
-            starts = counts[0]
             try:
+                if isinstance(self.meas[0], tt.Histogram):
+                    starts = counts[0]
+                elif isinstance(self.meas[0], tt.TimeDifferences):
+                    starts = self.meas[ch].getCounts()
+                else:
+                    self.logger.error(f"Unexpected TT meas: {type(self.meas[0])}")
+                    return None
                 total = counts[1 + ch]
             except IndexError:
                 self.logger.error(f"ch {ch} is out of bounds.")
@@ -410,6 +467,11 @@ class TimeTagger(TDCBase):
                 return self.configure_histogram(
                     params["base_config"], params["range"], params["bin"]
                 )
+        elif label == "multi_histogram":
+            if all([k in params for k in ("base_config", "range", "bin", "num")]):
+                return self.configure_multi_histogram(
+                    params["base_config"], params["range"], params["bin"], params["num"]
+                )
         elif label == "correlation":
             if all([k in params for k in ("base_config", "range", "bin")]):
                 return self.configure_correlation(
@@ -427,10 +489,7 @@ class TimeTagger(TDCBase):
         if key == "clear":
             return self.clear()
         elif key == "sweeps":
-            if value == 0:
-                return True
-            else:
-                return self.fail_with("Cannot set sweeps limit")
+            return self.set_sweeps(value)
         elif key == "duration":
             return self.set_duration(value)
         else:
