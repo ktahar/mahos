@@ -68,7 +68,7 @@ class Qdyne(BasicMeasNode):
     :param pub_interval_sec: Maximum interval between periodic status/data publications.
     :type pub_interval_sec: float
 
-    :param pulser.start_delay: (sec.) delay time before starting PG output. (default: 0.0)
+    :param pulser.start_delay: (sec.) delay before starting PG output. (default: 0.0)
     :type pulser.start_delay: float
 
     :param pulser.raw_events_dir: (default: "") The directory to load RawEvents file.

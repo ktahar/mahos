@@ -661,6 +661,7 @@ class Pulser(Worker, ConfTypeCheckMixin):
         )
         self.eos_margin = self._conf_nonneg_num("eos_margin", 1e-6)
         self._quick_resume = self._conf_bool("quick_resume", True)
+        self._start_delay = self._conf_nonneg_num("start_delay", 0.5)
         self._tdc_ch0 = self._conf_nonneg_int("tdc_primary_ch", 0)
         self._tdc_ch1 = self._conf_nonneg_int("tdc_secondary_ch", 1)
         self._tdc_ch1_enable = self._conf_bool("tdc_secondary_enable", True)
@@ -1066,7 +1067,11 @@ class Pulser(Worker, ConfTypeCheckMixin):
         success &= self.start_sg(self.data.params)
         if self._fg_enabled(self.data.params):
             success &= self.fg.set_output(True)
-        # time.sleep(1)
+
+        # A non-zero delay here can be important in multi_histogram mode
+        # to prevent the TDC from dropping the first trigger.
+        time.sleep(self._start_delay)
+
         success &= self.pg.start()
 
         if not success:

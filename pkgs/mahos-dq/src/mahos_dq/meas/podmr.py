@@ -96,6 +96,9 @@ class PODMR(BasicMeasNode):
     :param pub_interval_sec: Maximum interval between periodic status/data publications.
     :type pub_interval_sec: float
 
+    :param pulser.start_delay: (sec.) delay before starting PG output. (default: 0.5)
+        A non-zero value is recommended when multi_histogram mode is used.
+    :type pulser.start_delay: float
     :param pulser.quick_resume: default value of quick_resume.
         If True, it skips instrument configurations on resume.
     :type pulser.quick_resume: bool
