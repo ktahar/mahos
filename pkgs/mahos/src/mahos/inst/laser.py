@@ -486,8 +486,10 @@ class Coherent_OBIS(VisaInstrument):
 class Thorlabs_LD(VisaInstrument):
     """Thorlabs Laser Diode Drivers. This class implements ParamDict interface for Tweaker.
 
+    Supported models are ITC4000 and CLD1000 series integrated LD drivers.
+
     NOTE: This class currently assumes the device is running in constant current
-    (not in constant power) and in DC (not in pulse) modes. Also, temperature is read-only
+    (not in constant power). Also, temperature is read-only
     (setting command is omitted) for safety reasons.
 
     """
@@ -502,8 +504,6 @@ class Thorlabs_LD(VisaInstrument):
 
         if self.get_control_mode():
             raise ValueError("This class assumes constant current mode.")
-        if self.get_source_shape():
-            raise ValueError("This class assumes DC mode (not pulse).")
 
     def get_control_mode(self) -> bool:
         """Get control mode. True (False) means constant power (current) mode."""
@@ -512,17 +512,6 @@ class Thorlabs_LD(VisaInstrument):
         if ans in ("POW", "POWER"):
             return True
         elif ans in ("CURR", "CURRENT"):
-            return False
-        self.logger.error(f"Unexpected reply: {ans}")
-        return True
-
-    def get_source_shape(self) -> bool:
-        """Get source shape. True (False) means pulse (DC) mode."""
-
-        ans = self.inst.query("SOUR:FUNC:SHAP?").strip().upper()
-        if ans in ("PULS", "PULSE"):
-            return True
-        elif ans == "DC":
             return False
         self.logger.error(f"Unexpected reply: {ans}")
         return True
@@ -556,12 +545,13 @@ class Thorlabs_LD(VisaInstrument):
     def set_current(self, current_A: float) -> bool:
         """Set power set point in A."""
 
-        return self.inst.write(f"SOUR:CURR {current_A:.6e}")
+        self.inst.write(f"SOUR:CURR {current_A:.6e}")
+        return True
 
     def get_temperature(self) -> float:
         """Get TEC temperature set point in degC."""
 
-        ans = self.inst.query("SOUR:TEMP?")
+        ans = self.inst.query("SOUR2:TEMP?")
         try:
             return float(ans)
         except ValueError:
