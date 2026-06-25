@@ -25,6 +25,7 @@ from mahos.meas.common_worker import Worker
 
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos_dq.meas.podmr_generator import generator_kernel as K
+from mahos_dq.util.spectrum import round_duration_for_spectrum_segment
 
 
 class SPODMRDataOperator(object):
@@ -153,6 +154,7 @@ class BlockSeqBuilder(object):
         mw_modes: tuple[MWMode],
         iq_amplitude: float,
         channel_remap: dict | None,
+        pd_spectrum: bool = False,
     ):
         self.trigger_width = trigger_width
         self.nest = nest
@@ -161,6 +163,7 @@ class BlockSeqBuilder(object):
         self.mw_modes = mw_modes
         self.iq_amplitude = iq_amplitude
         self.channel_remap = channel_remap
+        self.pd_spectrum = pd_spectrum
 
     def fix_block_base(self, blk: Block, idx: int = 0) -> Block:
         res = blk.total_length() % self.block_base
@@ -183,6 +186,15 @@ class BlockSeqBuilder(object):
         if not offset_ticks:
             return blk
         return K.apply_mw_offset(Blocks([blk]), offset_ticks)[0]
+
+    def _adjust_accum_window(
+        self, accum_window: int, sample_factor: int, pd_period: int
+    ) -> tuple[int, int]:
+        if self.pd_spectrum:
+            return round_duration_for_spectrum_segment(
+                accum_window, self.block_base, sample_factor, pd_period
+            )
+        return accum_window, accum_window * sample_factor // pd_period
 
     def build_complementary(
         self,
@@ -454,6 +466,9 @@ class BlockSeqBuilder(object):
 
         partial = params["partial"]
         if partial == -1:
+            accum_window, oversample = self._adjust_accum_window(
+                accum_window, accum_rep, pd_period
+            )
             blockseq, laser_duties, markers = self.build_complementary(
                 blocks,
                 accum_window,
@@ -464,8 +479,10 @@ class BlockSeqBuilder(object):
                 sync_mode,
                 mw_offset_ticks,
             )
-            oversample = (accum_window * accum_rep) // pd_period
         elif partial in (0, 1):
+            accum_window, oversample = self._adjust_accum_window(
+                accum_window, accum_rep, pd_period
+            )
             blockseq, laser_duties, markers = self.build_partial(
                 blocks,
                 accum_window,
@@ -476,9 +493,11 @@ class BlockSeqBuilder(object):
                 sync_mode,
                 mw_offset_ticks,
             )
-            oversample = (accum_window * accum_rep) // pd_period
         elif partial == 2:
             lockin_rep = params["lockin_rep"]
+            accum_window, oversample = self._adjust_accum_window(
+                accum_window, 2 * accum_rep * lockin_rep, pd_period
+            )
             blockseq, laser_duties, markers = self.build_lockin(
                 blocks,
                 accum_window,
@@ -490,7 +509,6 @@ class BlockSeqBuilder(object):
                 sync_mode,
                 mw_offset_ticks,
             )
-            oversample = (2 * accum_window * accum_rep * lockin_rep) // pd_period
         else:
             raise ValueError(f"Invalid partial {partial}")
 
@@ -578,6 +596,7 @@ class Pulser(Worker):
             self.mw_modes,
             iq_amplitude,
             channel_remap,
+            pd_spectrum=self._pd_spectrum,
         )
 
         self.data = SPODMRData()

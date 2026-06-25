@@ -517,7 +517,9 @@ class SpectrumAnalogIn(Instrument):
             segment_samples=self._segment_samples, num_segments=buffer_segments
         )
         self._transfer.notify_samples(notify_samples)
-        self._transfer.post_trigger(self._segment_samples)
+        # set maximum post_trigger given segment_samples. as min of pre_trigger is 16 samples,
+        # maximum post_trigger is segment_samples - 16.
+        self._transfer.post_trigger(self._segment_samples - 16)
 
         self.queue = LockedQueue(self.queue_size)
         self._pending = [[] for _ in range(self._line_num)]

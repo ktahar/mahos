@@ -19,6 +19,7 @@ from mahos.msgs.inst.pg_msgs import TriggerType
 from mahos.util.locked_queue import LockedQueue
 from mahos.util.conf import PresetLoader
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
+from mahos_dq.util.spectrum import round_spectrum_segment_samples
 
 
 class ODMRSweeperCommandBase(InstrumentOverlay):
@@ -495,6 +496,11 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
     def configure_analog_pd(self, params: dict, label: str) -> bool:
         rate = params["pd"]["rate"]
         oversamp = round(params["timing"]["time_window"] * rate)
+        if self._pd_spectrum:
+            adjusted = round_spectrum_segment_samples(oversamp)
+            if adjusted != oversamp:
+                self.logger.info(f"Spectrum PD oversample adjusted: {oversamp} -> {adjusted}")
+            oversamp = adjusted
 
         self.logger.info(f"Analog PD oversample: {oversamp}")
 

@@ -24,6 +24,7 @@ from mahos.inst.daq_interface import ClockSourceInterface
 from mahos_dq.inst.overlay.odmr_sweeper_interface import ODMRSweeperInterface
 from mahos.util.conf import PresetLoader
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
+from mahos_dq.util.spectrum import round_spectrum_segment_samples
 from mahos.meas.common_worker import Worker
 
 
@@ -652,6 +653,11 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     def start_analog_pd(self, params: dict, label: str) -> bool:
         rate = params["pd"]["rate"]
         oversamp = round(params["timing"]["time_window"] * rate)
+        if self._pd_spectrum:
+            adjusted = round_spectrum_segment_samples(oversamp)
+            if adjusted != oversamp:
+                self.logger.info(f"Spectrum PD oversample adjusted: {oversamp} -> {adjusted}")
+            oversamp = adjusted
 
         self.logger.info(f"Analog PD oversample: {oversamp}")
 
