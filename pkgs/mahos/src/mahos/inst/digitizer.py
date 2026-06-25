@@ -45,6 +45,9 @@ class SpectrumAnalogIn(Instrument):
     :type gain: float
     :param timeout_sec: (default: 5.0) card timeout in seconds.
     :type timeout_sec: float
+    :param notify_alignment_bytes: (default: 4096) required byte alignment for FIFO
+        notify sizes. Set to ``1`` to disable alignment.
+    :type notify_alignment_bytes: int
 
     """
 
@@ -87,6 +90,7 @@ class SpectrumAnalogIn(Instrument):
         self._averages = 1
         self._record_samples = 0
         self._drop_records_left = 0
+        self._tracer_samples = 0
         self._pending: list[list[np.ndarray]] = []
 
     def _import_spcm(self):
@@ -226,6 +230,55 @@ class SpectrumAnalogIn(Instrument):
     def _start_transfer(self, *commands):
         self._transfer.start_buffer_transfer(*commands)
 
+    def _notify_alignment_bytes(self) -> int:
+        return max(1, int(self.conf.get("notify_alignment_bytes", 4096)))
+
+    def _samples_to_bytes(self, samples: int) -> int:
+        return int(self._transfer.samples_to_bytes(int(samples)))
+
+    def _ceil_to_multiple(self, value: int, step: int) -> int:
+        value = max(1, int(value))
+        step = max(1, int(step))
+        return ((value + step - 1) // step) * step
+
+    def _align_notify_samples(self, min_samples: int, step_samples: int = 1) -> int:
+        alignment = self._notify_alignment_bytes()
+        samples = self._ceil_to_multiple(min_samples, step_samples)
+        if alignment <= 1:
+            return samples
+
+        max_trials = int(self.conf.get("notify_alignment_trials", alignment))
+        for _ in range(max_trials):
+            if self._samples_to_bytes(samples) % alignment == 0:
+                return samples
+            samples += max(1, int(step_samples))
+        raise ValueError(
+            f"could not align notify_samples to {alignment} bytes "
+            f"from {min_samples} samples with step {step_samples}"
+        )
+
+    def _align_buffer_samples(self, min_samples: int, notify_samples: int) -> int:
+        return self._ceil_to_multiple(max(min_samples, notify_samples), notify_samples)
+
+    def _log_fifo_sizes(
+        self,
+        mode: str,
+        requested_notify: int,
+        notify_samples: int,
+        buffer_samples: int,
+    ):
+        self.logger.debug(
+            "%s FIFO notify_samples: requested=%d (%d B), aligned=%d (%d B); "
+            "buffer_samples=%d (%d B)",
+            mode,
+            requested_notify,
+            self._samples_to_bytes(requested_notify),
+            notify_samples,
+            self._samples_to_bytes(notify_samples),
+            buffer_samples,
+            self._samples_to_bytes(buffer_samples),
+        )
+
     def _append_data(self, data: np.ndarray | list[np.ndarray]):
         data = self._convert_gain(data)
         if (
@@ -261,12 +314,15 @@ class SpectrumAnalogIn(Instrument):
             raw = block[i, :] if block.ndim > 1 else block
             data = ch.convert_data(raw, spcm.units.V, averages=self._averages)
             data = self._as_float_array(data)
-            if self._oversample > 1:
-                if len(data) % self._oversample:
-                    raise ValueError("block length must be divisible by oversample")
-                data = data.reshape(-1, self._oversample).mean(axis=1)
             out.append(data)
         return out
+
+    def _reduce_tracer(self, data: np.ndarray) -> np.ndarray:
+        if self._oversample > 1:
+            if len(data) % self._oversample:
+                raise ValueError("tracer block length must be divisible by oversample")
+            data = data.reshape(-1, self._oversample).mean(axis=1)
+        return data
 
     def _reduce_record(self, data: np.ndarray) -> np.ndarray:
         if self._oversample > 1:
@@ -309,6 +365,24 @@ class SpectrumAnalogIn(Instrument):
                 continue
             self._append_data(record[0] if len(record) == 1 else record)
 
+    def _append_tracer_samples(self, samples: list[np.ndarray]):
+        for ch_pending, data in zip(self._pending, samples):
+            ch_pending.append(data)
+
+        while all(
+            sum(len(a) for a in ch_pending) >= self._tracer_samples for ch_pending in self._pending
+        ):
+            block = []
+            for ch_pending in self._pending:
+                data = np.concatenate(ch_pending)
+                current = data[: self._tracer_samples]
+                rest = data[self._tracer_samples :]
+                ch_pending.clear()
+                if len(rest):
+                    ch_pending.append(rest)
+                block.append(self._reduce_tracer(current))
+            self._append_data(block[0] if len(block) == 1 else block)
+
     def _reader_loop(self):
         try:
             if self._mode == self.Mode.TRIGGERED:
@@ -322,7 +396,7 @@ class SpectrumAnalogIn(Instrument):
                     if self._stop_ev.is_set():
                         break
                     converted = self._convert_fifo_block(block)
-                    self._append_data(converted[0] if len(converted) == 1 else converted)
+                    self._append_tracer_samples(converted)
         except Exception:
             if not self._stop_ev.is_set():
                 self.logger.exception("Spectrum FIFO reader stopped with an exception.")
@@ -373,6 +447,10 @@ class SpectrumAnalogIn(Instrument):
         card = self._open_card()
         self._stamp = params.get("stamp", False)
         self._segment_samples = int(params["segment_samples"])
+        if self._segment_samples < 32 or self._segment_samples % 16:
+            return self.fail_with(
+                "segment_samples must be an integer multiple of 16 and at least 32."
+            )
         self._drop_records_left = abs(int(params.get("drop_first", 0)))
         self._hardware_average = (
             bool(params.get("hardware_average", True)) and self._block_reduce_factor > 1
@@ -391,13 +469,9 @@ class SpectrumAnalogIn(Instrument):
         timeout_sec = float(params.get("timeout_sec", self.conf.get("timeout_sec", 5.0)))
         if self._hardware_average:
             card.card_mode(spcm.SPC_REC_FIFO_AVERAGE)
-            card.timeout(timeout_sec * spcm.units.s)
-            self._transfer = spcm.BlockAverage(card)
-            self._transfer.averages(self._block_reduce_factor)
         else:
             card.card_mode(spcm.SPC_REC_FIFO_MULTI)
-            card.timeout(timeout_sec * spcm.units.s)
-            self._transfer = spcm.Multi(card)
+        card.timeout(timeout_sec * spcm.units.s)
         card.loops(0)
 
         if not self._setup_trigger(params):
@@ -410,23 +484,39 @@ class SpectrumAnalogIn(Instrument):
         if not self._setup_clock(params):
             return False
 
+        if self._hardware_average:
+            self._transfer = spcm.BlockAverage(card)
+            self._transfer.averages(self._block_reduce_factor)
+        else:
+            self._transfer = spcm.Multi(card)
+
         segments_per_record = self._record_samples // self._segment_samples
+        requested_notify_samples = segments_per_record * self._segment_samples
+        try:
+            notify_samples = self._align_notify_samples(
+                requested_notify_samples, step_samples=self._segment_samples
+            )
+        except ValueError as e:
+            return self.fail_with(str(e))
 
         if params.get("buffer_segments"):
-            buffer_segments = int(params["buffer_segments"])
+            requested_buffer_samples = int(params["buffer_segments"]) * self._segment_samples
         else:
             buffer_samples = int(params.get("buffer_size", params["samples"]))
             buffer_samples *= self._oversample * self._reduce_factor
             if not self._hardware_average:
                 buffer_samples *= self._block_reduce_factor
             buffer_records = max(1, buffer_samples // self._record_samples)
-            buffer_segments = buffer_records * segments_per_record
-        buffer_segments = max(segments_per_record, buffer_segments)
+            requested_buffer_samples = buffer_records * self._record_samples
+
+        requested_buffer_samples = max(requested_notify_samples, requested_buffer_samples)
+        buffer_samples = self._align_buffer_samples(requested_buffer_samples, notify_samples)
+        buffer_segments = buffer_samples // self._segment_samples
+        self._log_fifo_sizes("triggered", requested_notify_samples, notify_samples, buffer_samples)
         self._transfer.allocate_buffer(
             segment_samples=self._segment_samples, num_segments=buffer_segments
         )
-
-        self._transfer.notify_samples(segments_per_record * self._segment_samples)
+        self._transfer.notify_samples(notify_samples)
         self._transfer.post_trigger(self._segment_samples)
 
         self.queue = LockedQueue(self.queue_size)
@@ -459,16 +549,25 @@ class SpectrumAnalogIn(Instrument):
         if not self._setup_clock(params):
             return False
 
-        notify_samples = int(params["cb_samples"]) * self._oversample
-        buffer_size = max(
-            notify_samples, int(params.get("buffer_size", params["samples"])) * self._oversample
-        )
         self._transfer = spcm.DataTransfer(card)
+        self._tracer_samples = int(params["cb_samples"]) * self._oversample
+        try:
+            notify_samples = self._align_notify_samples(self._tracer_samples)
+        except ValueError as e:
+            return self.fail_with(str(e))
+        requested_buffer_samples = max(
+            self._tracer_samples,
+            int(params.get("buffer_size", params["samples"])) * self._oversample,
+        )
+        buffer_size = self._align_buffer_samples(requested_buffer_samples, notify_samples)
+        self._log_fifo_sizes("tracer", self._tracer_samples, notify_samples, buffer_size)
         self._transfer.allocate_buffer(buffer_size)
         self._transfer.notify_samples(notify_samples)
-        self._transfer.pre_trigger(int(params.get("pre_trigger", self.conf.get("pre_trigger", 16))))
+        pre_trigger = int(params.get("pre_trigger", self.conf.get("pre_trigger", 16)))
+        self._transfer.pre_trigger(pre_trigger)
 
         self.queue = LockedQueue(self.queue_size)
+        self._pending = [[] for _ in range(self._line_num)]
         self._mode = self.Mode.TRACER
         self.logger.debug("Configured Spectrum tracer FIFO mode.")
         return True
