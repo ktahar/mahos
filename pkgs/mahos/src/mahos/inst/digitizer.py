@@ -31,9 +31,9 @@ class SpectrumAnalogIn(Instrument):
     :type lines: list[int | str]
     :param channel_mask: explicit Spectrum channel bit mask. Takes precedence over ``lines``.
     :type channel_mask: int
-    :param card_path: card identifier such as ``/dev/spcm0``.
-    :type card_path: str
-    :param serial_number: Spectrum card serial number.
+    :param resource: card resource such as ``/dev/spcm0`` or ``TCPIP::192.168.1.10::inst0::INSTR``.
+    :type resource: str
+    :param serial_number: card serial number.
     :type serial_number: int
     :param queue_size: (default: 10000) software buffer size.
     :type queue_size: int
@@ -105,10 +105,8 @@ class SpectrumAnalogIn(Instrument):
         if self.conf.get("serial_number") is not None:
             kwargs["serial_number"] = self.conf["serial_number"]
             self._card = spcm.Card(**kwargs)
-        elif self.conf.get("card_path"):
-            self._card = spcm.Card(self.conf["card_path"], **kwargs)
-        elif self.conf.get("card_identifier"):
-            self._card = spcm.Card(self.conf["card_identifier"], **kwargs)
+        elif self.conf.get("resource"):
+            self._card = spcm.Card(self.conf["resource"], **kwargs)
         else:
             self._card = spcm.Card(card_type=spcm.SPCM_TYPE_AI, **kwargs)
         return self._card
