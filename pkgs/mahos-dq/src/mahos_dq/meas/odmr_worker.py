@@ -504,8 +504,9 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         self.pg = PGInterface(cli, "pg")
         self.pd_names = self.conf.get("pd_names", ["pd0", "pd1"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
-        self._pd_analog = self.conf.get("pd_analog", False)
-        if self._pd_analog:
+        self._pd_spectrum = self.conf.get("pd_spectrum", False)
+        self._pd_analog = self.conf.get("pd_analog", False) or self._pd_spectrum
+        if self._pd_analog and not self._pd_spectrum:
             self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
         else:
             self.clock = None
@@ -572,8 +573,10 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         loader.load_preset(self.conf, cli.class_name("sg"))
 
     def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
-        d = self._make_param_dict(label, self.sg.get_bounds(), self._pd_analog)
-        if self._pd_analog:
+        d = self._make_param_dict(
+            label, self.sg.get_bounds(), self._pd_analog or self._pd_spectrum
+        )
+        if self._pd_analog or self._pd_spectrum:
             d["pd"] = P.ParamDict()
             d["pd"]["rate"] = P.FloatParam(
                 self.conf.get("pd_rate", 400e3), 1e3, 10000e3, doc="PD sampling rate"
@@ -660,9 +663,12 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             "trigger_dir": True,
             "retriggerable": True,
         }
-        if not self.clock.configure(params_clock):
-            return self.fail_with("failed to configure clock.")
-        clock_pd = self.clock.get_internal_output()
+        if self._pd_spectrum:
+            clock_pd = self._pd_clock
+        else:
+            if not self.clock.configure(params_clock):
+                return self.fail_with("failed to configure clock.")
+            clock_pd = self.clock.get_internal_output()
 
         num = params["num"]
         if params.get("background", False):
@@ -673,27 +679,28 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
         #  SG is unknown state at the first point of the first line)
         drop_first = 1 if self._sg_first or self._pg_immediate else 0
-        params_pd = {
-            "clock": clock_pd,
-            "cb_samples": num,
-            "samples": buffer_size,
-            "buffer_size": buffer_size,
-            "rate": rate,
-            "finite": False,
-            "every": False,
-            "drop_first": drop_first,
-            "clock_mode": True,
-            "oversample": oversamp,
-            "bounds": params["pd"].get("bounds", (-10.0, 10.0)),
-        }
-        if self._pd_data_transfer:
-            params_pd["data_transfer"] = self._pd_data_transfer
-
-        success = (
-            all([pd.configure(params_pd) for pd in self.pds])
-            and self.clock.start()
-            and all([pd.start() for pd in self.pds])
+        success = all(
+            [
+                pd.configure_triggered(
+                    clock_pd,
+                    num,
+                    buffer_size,
+                    rate,
+                    segment_samples=oversamp if self._pd_spectrum else None,
+                    buffer_size=buffer_size,
+                    finite=False,
+                    every=False,
+                    drop_first=drop_first,
+                    oversample=oversamp,
+                    bounds=params["pd"].get("bounds", (-10.0, 10.0)),
+                    data_transfer=self._pd_data_transfer,
+                )
+                for pd in self.pds
+            ]
         )
+        if not self._pd_spectrum:
+            success = success and self.clock.start()
+        success = success and all([pd.start() for pd in self.pds])
         return success
 
     def start(
@@ -825,7 +832,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             success &= self.sg.set_output(False)
 
         success &= all([pd.stop() for pd in self.pds])
-        if self._pd_analog:
+        if self._pd_analog and not self._pd_spectrum:
             success &= self.clock.stop()
         success &= self.pg.stop()
         success &= self.release_instruments()

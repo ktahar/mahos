@@ -44,6 +44,101 @@ class PDInterface(BufferedReaderInterface):
 
         return self.get("all_data", False)
 
+    def configure_triggered(
+        self,
+        trigger_source: str,
+        cb_samples: int,
+        samples: int,
+        rate: float,
+        *,
+        segment_samples: int | None = None,
+        buffer_size: int = 0,
+        bounds=(-10.0, 10.0),
+        finite: bool = False,
+        every: bool = False,
+        drop_first: int = 0,
+        oversample: int = 1,
+        block_reduce_factor: int = 1,
+        block_reduce_samples: int = 0,
+        block_reduce_op: str = "mean",
+        reduce_factor: int = 1,
+        reduce_op: str = "mean",
+        data_transfer: str | None = None,
+        trigger_dir: bool = True,
+        hardware_average: bool = True,
+    ) -> bool:
+        """Configure triggered fixed-length acquisition.
+
+        ``trigger_source`` is the DAQ sample clock for conventional AnalogIn and the hardware
+        trigger input for Spectrum digitizers.
+
+        """
+
+        params = {
+            "mode": "triggered",
+            "trigger_source": trigger_source,
+            "trigger_dir": trigger_dir,
+            "clock": trigger_source,
+            "cb_samples": cb_samples,
+            "samples": samples,
+            "buffer_size": buffer_size,
+            "rate": rate,
+            "finite": finite,
+            "every": every,
+            "drop_first": drop_first,
+            "clock_mode": True,
+            "oversample": oversample,
+            "block_reduce_factor": block_reduce_factor,
+            "block_reduce_samples": block_reduce_samples,
+            "block_reduce_op": block_reduce_op,
+            "reduce_factor": reduce_factor,
+            "reduce_op": reduce_op,
+            "bounds": bounds,
+            "hardware_average": hardware_average,
+        }
+        if segment_samples is not None:
+            params["segment_samples"] = segment_samples
+        if data_transfer:
+            params["data_transfer"] = data_transfer
+        return self.configure(params)
+
+    def configure_tracer(
+        self,
+        clock: str,
+        cb_samples: int,
+        samples: int,
+        rate: float,
+        time_window: float,
+        *,
+        buffer_size: int = 0,
+        bounds=(-10.0, 10.0),
+        finite: bool = False,
+        every: bool = False,
+        stamp: bool = True,
+        oversample: int = 1,
+        data_transfer: str | None = None,
+    ) -> bool:
+        """Configure continuous tracer acquisition."""
+
+        params = {
+            "mode": "tracer",
+            "cb_samples": cb_samples,
+            "samples": samples,
+            "buffer_size": buffer_size,
+            "rate": rate,
+            "finite": finite,
+            "every": every,
+            "stamp": stamp,
+            "clock": clock,
+            "time_window": time_window,
+            "clock_mode": True,
+            "oversample": oversample,
+            "bounds": bounds,
+        }
+        if data_transfer:
+            params["data_transfer"] = data_transfer
+        return self.configure(params)
+
 
 class SinglePhotonCounterInterface(PDInterface):
     """Interface for SinglePhotonCounter."""

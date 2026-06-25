@@ -534,7 +534,11 @@ class Pulser(Worker):
         self.pg = PGInterface(cli, "pg")
         self.pd_names = self.conf.get("pd_names", ["pd0"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
-        self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
+        self._pd_spectrum = self.conf.get("pd_spectrum", False)
+        if self._pd_spectrum:
+            self.clock = None
+        else:
+            self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
         if "fg" in cli:
             self.fg = FGInterface(cli, "fg")
         else:
@@ -646,33 +650,38 @@ class Pulser(Worker):
             "trigger_dir": True,
             "retriggerable": True,
         }
-        if not self.clock.configure(params_clock):
-            self.logger.error("failed to configure clock.")
-            return False
-        clock_pd = self.clock.get_internal_output()
+        if self._pd_spectrum:
+            clock_pd = self._pd_trigger
+        else:
+            if not self.clock.configure(params_clock):
+                self.logger.error("failed to configure clock.")
+                return False
+            clock_pd = self.clock.get_internal_output()
 
         num = self.data.get_num()
         if params["partial"] == -1:
             num *= 2
         buffer_size = num * self.conf.get("buffer_size_coeff", 20)
-        params_pd = {
-            "clock": clock_pd,
-            "cb_samples": num,
-            "samples": buffer_size,
-            "buffer_size": buffer_size,
-            "rate": rate,
-            "finite": False,
-            "every": self.conf.get("every", False),
-            "clock_mode": True,
-            "oversample": self.oversample,
-            "bounds": params["pd"].get("bounds", (-10.0, 10.0)),
-        }
-        if self._pd_data_transfer:
-            params_pd["data_transfer"] = self._pd_data_transfer
-
         if not (
-            all([pd.configure(params_pd) for pd in self.pds])
-            and self.clock.start()
+            all(
+                [
+                    pd.configure_triggered(
+                        clock_pd,
+                        num,
+                        buffer_size,
+                        rate,
+                        segment_samples=self.oversample if self._pd_spectrum else None,
+                        buffer_size=buffer_size,
+                        finite=False,
+                        every=self.conf.get("every", False),
+                        oversample=self.oversample,
+                        bounds=params["pd"].get("bounds", (-10.0, 10.0)),
+                        data_transfer=self._pd_data_transfer,
+                    )
+                    for pd in self.pds
+                ]
+            )
+            and (self._pd_spectrum or self.clock.start())
             and all([pd.start() for pd in self.pds])
         ):
             self.logger.error("Error starting PDs.")
@@ -879,7 +888,8 @@ class Pulser(Worker):
             self.stop_sg()
             for pd in self.pds:
                 pd.stop()
-            self.clock.stop()
+            if self.clock is not None:
+                self.clock.stop()
             return self.fail_with_release("Error starting pulser.")
 
         if resume:
@@ -904,7 +914,8 @@ class Pulser(Worker):
 
         success = self.pg.stop() and self.pg.release() and self.stop_sg()
         success &= all([pd.stop() for pd in self.pds]) and all([pd.release() for pd in self.pds])
-        success &= self.clock.stop() and self.clock.release()
+        if self.clock is not None:
+            success &= self.clock.stop() and self.clock.release()
         if self._fg_enabled(self.data.params):
             success &= self.fg.set_output(False)
         if self.fg is not None:

@@ -248,8 +248,9 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         self.pg = self.conf.get("pg")
         self.pd_names = self.conf.get("pd_names", ["pd0", "pd1"])
         self.pds = [self.conf.get(n) for n in self.pd_names]
-        self._pd_analog = self.conf.get("pd_analog", False)
-        if self._pd_analog:
+        self._pd_spectrum = self.conf.get("pd_spectrum", False)
+        self._pd_analog = self.conf.get("pd_analog", False) or self._pd_spectrum
+        if self._pd_analog and not self._pd_spectrum:
             self.clock = self.conf.get("clock")
         else:
             self.clock = None
@@ -409,7 +410,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         else:
             success = self.sg.set_output(False)
         success &= all([pd.stop() for pd in self.pds])
-        if self._pd_analog:
+        if self._pd_analog and not self._pd_spectrum:
             success &= self.clock.stop()
         success &= self.pg.stop()
 
@@ -454,7 +455,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             return self.configure_apd(params, label)
 
     def start_pd(self):
-        if self._pd_analog:
+        if self._pd_analog and not self._pd_spectrum:
             return self.clock.start() and all([pd.start() for pd in self.pds])
         else:
             return all([pd.start() for pd in self.pds])
@@ -505,15 +506,20 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             "trigger_dir": True,
             "retriggerable": True,
         }
-        if not self.clock.configure(params_clock):
-            return self.fail_with("failed to configure clock.")
-        clock_pd = self.clock.get_internal_output()
+        if self._pd_spectrum:
+            clock_pd = self._pd_clock
+        else:
+            if not self.clock.configure(params_clock):
+                return self.fail_with("failed to configure clock.")
+            clock_pd = self.clock.get_internal_output()
 
         num = 1
         if params.get("background", False):
             num *= 2
         buffer_size = num * self.conf.get("buffer_size_coeff", 20)
         params_pd = {
+            "mode": "triggered",
+            "trigger_source": clock_pd,
             "clock": clock_pd,
             "cb_samples": num,
             "samples": buffer_size,
@@ -526,6 +532,8 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             "oversample": oversamp,
             "bounds": params["pd"].get("bounds", (-10.0, 10.0)),
         }
+        if self._pd_spectrum:
+            params_pd["segment_samples"] = oversamp
         if self._pd_data_transfer:
             params_pd["data_transfer"] = self._pd_data_transfer
 

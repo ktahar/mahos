@@ -144,7 +144,8 @@ class Tracer(Worker):
 
     def __init__(self, cli, logger, conf: dict):
         Worker.__init__(self, cli, logger, conf)
-        self.clock = ClockSourceInterface(cli, "clock")
+        self._pd_spectrum = self.conf.get("pd_spectrum", False)
+        self.clock = None if self._pd_spectrum else ClockSourceInterface(cli, "clock")
         self.pd_names = conf.get("pd_names", ["pd0", "pd1"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
         self.add_instruments(self.clock, *self.pds)
@@ -174,28 +175,34 @@ class Tracer(Worker):
         freq = 1.0 / self.time_window_sec * self.oversample
         buffer_size = self.cb_samples * self.conf.get("buffer_size_coeff", 200)
         params_clock = {"freq": freq, "samples": buffer_size, "finite": False}
-        params_pd = {
-            "cb_samples": self.cb_samples,
-            "samples": buffer_size,
-            "buffer_size": buffer_size,
-            "rate": freq,
-            "finite": False,
-            "every": False,
-            "stamp": True,
-            "clock": self.clock.get_internal_output(),
-            "time_window": self.time_window_sec,  # only for SinglePhotonCounter
-            "clock_mode": True,  # only for AnalogIn
-            "oversample": self.oversample,  # only for AnalogIn
-            "bounds": self.pd_bounds,  # only for AnalogIn
-        }
-        if self._pd_data_transfer:
-            params_pd["data_transfer"] = self._pd_data_transfer
-        success = (
-            self.clock.configure(params_clock)
-            and all([pd.configure(params_pd) for pd in self.pds])
-            and all([pd.start() for pd in self.pds])
-            and self.clock.start()
+        success = True
+        if not self._pd_spectrum:
+            success &= self.clock.configure(params_clock)
+            clock_pd = self.clock.get_internal_output()
+        else:
+            clock_pd = ""
+        success &= all(
+            [
+                pd.configure_tracer(
+                    clock_pd,
+                    self.cb_samples,
+                    buffer_size,
+                    freq,
+                    self.time_window_sec,
+                    buffer_size=buffer_size,
+                    finite=False,
+                    every=False,
+                    stamp=True,
+                    oversample=self.oversample,
+                    bounds=self.pd_bounds,
+                    data_transfer=self._pd_data_transfer,
+                )
+                for pd in self.pds
+            ]
         )
+        success &= all([pd.start() for pd in self.pds])
+        if not self._pd_spectrum:
+            success &= self.clock.start()
 
         if not success:
             return self.fail_with_release("Error starting tracer.")
@@ -212,12 +219,9 @@ class Tracer(Worker):
         if not self.running:
             return False
 
-        success = (
-            self.clock.stop()
-            and all([pd.stop() for pd in self.pds])
-            and self.clock.release()
-            and all([pd.release() for pd in self.pds])
-        )
+        success = all([pd.stop() for pd in self.pds]) and all([pd.release() for pd in self.pds])
+        if not self._pd_spectrum:
+            success &= self.clock.stop() and self.clock.release()
         if success:
             self.timer = None
             self.running = False

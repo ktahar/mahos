@@ -296,7 +296,11 @@ class Pulser(PODMRPulser):
         self.mw_channels = self.conf.get("mw_channels", _default_channels)
 
         self.pg = PGInterface(cli, "pg")
-        self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
+        self._pd_spectrum = self.conf.get("pd_spectrum", False)
+        if self._pd_spectrum:
+            self.clock = None
+        else:
+            self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
         self.pd_names = self.conf.get("pd_names", ["pd0"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
         if "fg" in cli:
@@ -430,35 +434,40 @@ class Pulser(PODMRPulser):
             "trigger_dir": True,
             "retriggerable": True,
         }
-        if not self.clock.configure(params_clock):
-            self.logger.error("failed to configure clock.")
-            return False
-        clock_pd = self.clock.get_internal_output()
+        if self._pd_spectrum:
+            clock_pd = self._pd_trigger
+        else:
+            if not self.clock.configure(params_clock):
+                self.logger.error("failed to configure clock.")
+                return False
+            clock_pd = self.clock.get_internal_output()
 
         cb_samples = self.trace_count * self.samples_per_trace
         buffer_size = cb_samples * self.conf.get("buffer_size_coeff", 20)
-        params_pd = {
-            "clock": clock_pd,
-            "cb_samples": cb_samples,
-            "samples": buffer_size,
-            "buffer_size": buffer_size,
-            "rate": rate,
-            "finite": False,
-            "clock_mode": True,
-            "oversample": 1,
-            "block_reduce_factor": shots_per_point,
-            "block_reduce_samples": self.samples_per_trace,
-            "block_reduce_op": "mean",
-            "reduce_factor": sweeps_per_record,
-            "reduce_op": "mean",
-            "bounds": params["pd"].get("bounds", (-10.0, 10.0)),
-        }
-        if self._pd_data_transfer:
-            params_pd["data_transfer"] = self._pd_data_transfer
-
         if not (
-            all([pd.configure(params_pd) for pd in self.pds])
-            and self.clock.start()
+            all(
+                [
+                    pd.configure_triggered(
+                        clock_pd,
+                        cb_samples,
+                        buffer_size,
+                        rate,
+                        segment_samples=self.samples_per_trace if self._pd_spectrum else None,
+                        buffer_size=buffer_size,
+                        finite=False,
+                        oversample=1,
+                        block_reduce_factor=shots_per_point,
+                        block_reduce_samples=self.samples_per_trace,
+                        block_reduce_op="mean",
+                        reduce_factor=sweeps_per_record,
+                        reduce_op="mean",
+                        bounds=params["pd"].get("bounds", (-10.0, 10.0)),
+                        data_transfer=self._pd_data_transfer,
+                    )
+                    for pd in self.pds
+                ]
+            )
+            and (self._pd_spectrum or self.clock.start())
             and all([pd.start() for pd in self.pds])
         ):
             self.logger.error("Error starting PDs.")
@@ -593,7 +602,8 @@ class Pulser(PODMRPulser):
             self.stop_sg()
             for pd in self.pds:
                 pd.stop()
-            self.clock.stop()
+            if self.clock is not None:
+                self.clock.stop()
             return self.fail_with_release("Error starting pulser.")
 
         if resume:
@@ -625,7 +635,8 @@ class Pulser(PODMRPulser):
 
         success = self.pg.stop() and self.pg.release() and self.stop_sg()
         success &= all([pd.stop() for pd in self.pds]) and all([pd.release() for pd in self.pds])
-        success &= self.clock.stop() and self.clock.release()
+        if self.clock is not None:
+            success &= self.clock.stop() and self.clock.release()
         if self._fg_enabled(self.data.params):
             success &= self.fg.set_output(False)
         if self.fg is not None:
