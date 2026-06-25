@@ -479,6 +479,12 @@ class PD_mock(Instrument):
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
         self.source = self.conf.get("source")
+        if isinstance(self.source, int):
+            self.channels = self.source
+        elif isinstance(self.source, (list, tuple)):
+            self.channels = len(self.source)
+        else:
+            self.channels = 1
         self.block_reduce_factor = 1
         self.block_reduce_op = "mean"
         self.reduce_factor = 1
@@ -492,20 +498,29 @@ class PD_mock(Instrument):
             scale *= self.reduce_factor
         return scale
 
-    def get_data(self):
-        scale = self._scale()
-        if self.stamp:
-            return np.random.normal(size=self.samples, loc=100.0) * scale, time.time_ns()
+    def _make_dummy_data(self, scale):
+        if self.channels > 1:
+            return [
+                np.random.normal(size=self.samples, loc=100.0) * scale
+                for _ in range(self.channels)
+            ]
         else:
             return np.random.normal(size=self.samples, loc=100.0) * scale
 
+    def get_data(self):
+        data = self._make_dummy_data(self._scale())
+        if self.stamp:
+            return data, time.time_ns()
+        else:
+            return data
+
     def pop_block(self):
         time.sleep(self.period)
-        scale = self._scale()
+        data = self._make_dummy_data(self._scale())
         if self.stamp:
-            return np.random.normal(size=self.samples, loc=100.0) * scale, time.time_ns()
+            return data, time.time_ns()
         else:
-            return np.random.normal(size=self.samples, loc=100.0) * scale
+            return data
 
     # Standard API
 

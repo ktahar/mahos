@@ -148,6 +148,15 @@ class Tracer(Worker):
         self.clock = None if self._pd_spectrum else ClockSourceInterface(cli, "clock")
         self.pd_names = conf.get("pd_names", ["pd0", "pd1"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
+        self.pd_channels = conf.get("pd_channels", [1] * len(self.pds))
+        if isinstance(self.pd_channels, int):
+            if len(self.pds) != 1:
+                raise ValueError("pd_channels as int is only valid when len(pd_names) == 1.")
+            self.pd_channels = [self.pd_channels]
+        if len(self.pd_channels) != len(self.pds):
+            raise ValueError("len(pd_channels) must match len(pd_names).")
+        if any(ch < 1 for ch in self.pd_channels):
+            raise ValueError("all pd_channels values must be positive.")
         self.add_instruments(self.clock, *self.pds)
 
         self.interval_sec = self.conf.get("interval_sec", 0.5)
@@ -159,7 +168,7 @@ class Tracer(Worker):
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
 
         self.trace = Trace(
-            size=self.size, channels=len(self.pds), _complex=conf.get("complex", False)
+            size=self.size, channels=sum(self.pd_channels), _complex=conf.get("complex", False)
         )
         self.paused_trace: Trace | None = None
 
@@ -261,22 +270,50 @@ class Tracer(Worker):
             ]
         )
 
+    def _split_pd_data(self, data) -> list[np.ndarray]:
+        """Split one PD queue item payload into trace-channel arrays."""
+
+        if isinstance(data, list):
+            return data
+        else:
+            return [data]
+
+    def _append_trace_data(self, ch: int, new_data: np.ndarray, new_stamps: np.ndarray):
+        if len(new_data) > self.size:
+            new_data = new_data[: self.size]
+            new_stamps = new_stamps[: self.size]
+        # shift data. see pyqtgraph/examples/scrollingPlots.py
+        s = len(new_data)
+        self.trace.traces[ch][:-s] = self.trace.traces[ch][s:]
+        self.trace.traces[ch][-s:] = new_data
+        self.trace.stamps[ch][:-s] = self.trace.stamps[ch][s:]
+        self.trace.stamps[ch][-s:] = new_stamps
+
     def get_data(self):
+        trace_ch = 0
         for i, pd in enumerate(self.pds):
             data = pd.pop_all_opt()
             if data is not None:
-                d, t = zip(*data)
-                new_data = np.hstack(d)
-                new_stamps = self._interp_stamps(t, self.trace.stamps[i][-1].view(np.int64))
-                if len(new_data) > self.size:
-                    new_data = new_data[: self.size]
-                    new_stamps = new_stamps[: self.size]
-                # shift data. see pyqtgraph/examples/scrollingPlots.py
-                s = len(new_data)
-                self.trace.traces[i][:-s] = self.trace.traces[i][s:]
-                self.trace.traces[i][-s:] = new_data
-                self.trace.stamps[i][:-s] = self.trace.stamps[i][s:]
-                self.trace.stamps[i][-s:] = new_stamps
+                chunks, stamps = zip(*data)
+                split_chunks = [self._split_pd_data(chunk) for chunk in chunks]
+                channels = len(split_chunks[0])
+                if channels != self.pd_channels[i]:
+                    self.logger.error(
+                        f"PD {self.pd_names[i]} returned {channels} channels, "
+                        f"expected {self.pd_channels[i]}."
+                    )
+                    trace_ch += self.pd_channels[i]
+                    continue
+                if any(len(chunk) != channels for chunk in split_chunks):
+                    self.logger.error(f"PD {self.pd_names[i]} returned inconsistent channels.")
+                    trace_ch += self.pd_channels[i]
+                    continue
+                for j in range(channels):
+                    new_data = np.hstack([chunk[j] for chunk in split_chunks])
+                    last_stamp = self.trace.stamps[trace_ch + j][-1].view(np.int64)
+                    new_stamps = self._interp_stamps(stamps, last_stamp)
+                    self._append_trace_data(trace_ch + j, new_data, new_stamps)
+            trace_ch += self.pd_channels[i]
 
     def is_paused(self):
         return self.paused_trace is not None

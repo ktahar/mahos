@@ -18,32 +18,6 @@ from mahos.inst.daq_interface import BufferedReaderInterface
 class PDInterface(BufferedReaderInterface):
     """Common interface for SinglePhotonCounter and AnalogIn-based PD."""
 
-    # override pop_*() methods because PD has one channel per class.
-
-    def pop_block(self) -> np.ndarray:
-        """Get data from buffer. If buffer is empty, this function blocks until data is ready."""
-
-        return self.get("data", True)
-
-    def pop_all_block(self) -> list[np.ndarray]:
-        """Get all data from buffer as list.
-
-        If buffer is empty, this function blocks until data is ready.
-
-        """
-
-        return self.get("all_data", True)
-
-    def pop_opt(self) -> np.ndarray | None:
-        """Get data from buffer. If buffer is empty, returns None."""
-
-        return self.get("data", False)
-
-    def pop_all_opt(self) -> list[np.ndarray] | None:
-        """Get all data from buffer as list. If buffer is empty, returns None."""
-
-        return self.get("all_data", False)
-
     def configure_triggered(
         self,
         trigger_source: str,
