@@ -541,7 +541,7 @@ class SpectrumAnalogIn(Instrument):
         card.card_mode(spcm.SPC_REC_FIFO_SINGLE)
         timeout_sec = float(params.get("timeout_sec", self.conf.get("timeout_sec", 5.0)))
         card.timeout(timeout_sec * spcm.units.s)
-        if not self._setup_trigger({"trigger_source": "none"}):
+        if not self._setup_trigger({"trigger_source": "software"}):
             return False
         bounds = self._get_bounds(params)
         if not self._setup_channels(bounds, params):
