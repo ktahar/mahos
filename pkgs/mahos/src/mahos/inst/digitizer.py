@@ -109,6 +109,7 @@ class SpectrumAnalogIn(Instrument):
             self._card = spcm.Card(self.conf["resource"], **kwargs)
         else:
             self._card = spcm.Card(card_type=spcm.SPCM_TYPE_AI, **kwargs)
+        self._card.open()
         return self._card
 
     def _channel_index(self, line) -> int:
@@ -465,7 +466,7 @@ class SpectrumAnalogIn(Instrument):
         self._transfer = spcm.DataTransfer(card)
         self._transfer.allocate_buffer(buffer_size)
         self._transfer.notify_samples(notify_samples)
-        self._transfer.pre_trigger(int(params.get("pre_trigger", self.conf.get("pre_trigger", 0))))
+        self._transfer.pre_trigger(int(params.get("pre_trigger", self.conf.get("pre_trigger", 16))))
 
         self.queue = LockedQueue(self.queue_size)
         self._mode = self.Mode.TRACER
