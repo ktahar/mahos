@@ -580,7 +580,13 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         if self._pd_analog or self._pd_spectrum:
             d["pd"] = P.ParamDict()
             d["pd"]["rate"] = P.FloatParam(
-                self.conf.get("pd_rate", 400e3), 1e3, 10000e3, doc="PD sampling rate"
+                self.conf.get("pd_rate", 400e3),
+                1e3,
+                1e9,
+                unit="Hz",
+                SI_prefix=True,
+                digit=9,
+                doc="PD sampling rate",
             )
             lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
             d["pd"]["bounds"] = [

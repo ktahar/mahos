@@ -307,6 +307,11 @@ class PulseStreamer(Instrument):
             self.logger.error(msg)
             return False
 
+    def get_finished(self) -> bool:
+        """Get if PG has finished sequence and ready for next trigger."""
+
+        return self.ps.hasFinished()
+
     def clear(self) -> bool:
         # For API compatibility
         return True
@@ -362,6 +367,8 @@ class PulseStreamer(Instrument):
             return self.offsets  # offsets of last configure
         elif key == "opc":  # for API compatibility
             return True
+        elif key == "finished":
+            return self.ps.hasFinished()
         elif key == "validate":
             if "blocks" in args and "freq" in args:
                 return self.validate_blocks(args["blocks"], args["freq"])

@@ -136,6 +136,23 @@ class SpectrumAnalogIn(Instrument):
             mask |= int(getattr(spcm, f"CHANNEL{idx}", 1 << idx))
         return mask
 
+    def _get_amp_mV(self, termination: int, amp_V: float) -> int:
+        amps = {1_000_000: [200, 500, 1000, 2000, 5000, 10000], 50: [500, 1000, 2500, 5000]}[
+            termination
+        ]
+        target_mV = round(amp_V * 1e3)
+        for a in amps:
+            if target_mV <= a:
+                return a
+        else:
+            raise ValueError(f"requested amplitude is invalid: {amp_V}")
+
+    def _get_offset_percent(self, amp_V: float, offset_V: float) -> int:
+        ofs = int(round(offset_V / amp_V * 100))
+        if ofs > 100:
+            raise ValueError(f"requested offset is too large: {ofs:d}% > 100%")
+        return ofs
+
     def _setup_channels(self, bounds, params) -> bool:
         spcm = self._import_spcm()
         card = self._open_card()
@@ -164,11 +181,13 @@ class SpectrumAnalogIn(Instrument):
             if len(bnds) == 2 and isinstance(bnds[0], (float, int, np.integer, np.floating)):
                 lb, ub = bnds
                 # amp is zero-to-peak amplitude
-                amp = float(ub - lb) / 2.0
-                offset = float(ub + lb) / 2.0
-                amp_set = ch.amp(amp * spcm.units.V, return_unit=spcm.units.V)
-                ofs_set = ch.offset(offset * spcm.units.V, return_unit=spcm.units.V)
-                self.logger.info(f"{ch} range: Amp = {amp_set}, Offset = {ofs_set}")
+                amp_V = float(ub - lb) / 2.0
+                offset_V = float(ub + lb) / 2.0
+                amp = self._get_amp_mV(termination, amp_V)
+                offset = self._get_offset_percent(amp_V, offset_V)
+                amp_set = ch.amp(amp * spcm.units.mV, return_unit=spcm.units.mV)
+                ofs_set = ch.offset(offset * spcm.units.percent, return_unit=spcm.units.V)
+                self.logger.debug(f"{ch} range: Amp = {amp_set}, Offset = {ofs_set}")
             else:
                 return self.fail_with(f"invalid bounds: {bnds}")
 
@@ -184,9 +203,11 @@ class SpectrumAnalogIn(Instrument):
             clock.mode(spcm.SPC_CM_INTPLL)
         else:
             return self.fail_with(f"unsupported Spectrum clock mode: {mode}")
-        rate_req = float(params["rate"]) * spcm.units.Hz
+        rate_req = int(round(params["rate"])) * spcm.units.Hz
         rate_ret = clock.sample_rate(rate_req, return_unit=spcm.units.Hz)
-        self.logger.debug(f"Sampling rate: requested = {rate_req}, actual = {rate_ret}")
+        msg = f"Sampling rate: requested = {rate_req.magnitude:_d} Hz, "
+        msg += f"actual = {rate_ret.magnitude:_d} Hz"
+        self.logger.debug(msg)
         return True
 
     def _setup_trigger(self, params):
@@ -270,6 +291,7 @@ class SpectrumAnalogIn(Instrument):
         requested_notify: int,
         notify_samples: int,
         buffer_samples: int,
+        segment_samples: int | None = None,
     ):
         msg = "{:s} FIFO notify_samples: requested = {:_d} ({:_d} B), ".format(
             mode,
@@ -285,6 +307,12 @@ class SpectrumAnalogIn(Instrument):
             self._samples_to_bytes(buffer_samples),
             buffer_samples / notify_samples,
         )
+        if segment_samples is not None:
+            msg += "; segment_samples = {:_d}, ".format(segment_samples)
+            msg += "notify_segment: requested = {:.1f}, aligned = {:.1f}".format(
+                requested_notify / segment_samples,
+                notify_samples / segment_samples,
+            )
         self.logger.debug(msg)
 
     def _append_data(self, data: np.ndarray | list[np.ndarray]):
@@ -520,7 +548,13 @@ class SpectrumAnalogIn(Instrument):
         requested_buffer_samples = max(requested_notify_samples, requested_buffer_samples)
         buffer_samples = self._align_buffer_samples(requested_buffer_samples, notify_samples)
         buffer_segments = buffer_samples // self._segment_samples
-        self._log_fifo_sizes("triggered", requested_notify_samples, notify_samples, buffer_samples)
+        self._log_fifo_sizes(
+            "triggered",
+            requested_notify_samples,
+            notify_samples,
+            buffer_samples,
+            self._segment_samples,
+        )
         self._transfer.allocate_buffer(
             segment_samples=self._segment_samples, num_segments=buffer_segments
         )

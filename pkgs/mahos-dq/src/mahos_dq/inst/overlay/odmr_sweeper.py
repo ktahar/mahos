@@ -303,14 +303,28 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         self._continue_mw = params.get("continue_mw", False)
 
     def get_point(self):
-        return self._queue.pop_block()
+        if self._pd_spectrum:
+            return self.get_pd_data()
+        else:
+            return self._queue.pop_block()
+
+    def _wait_pg(self):
+        for _ in range(10_000):
+            time.sleep(0.001)
+            if self.pg.get_finished():
+                return
+        else:
+            raise RuntimeError("PG hasn't finished operation.")
 
     def sweep_loop(self, ev: threading.Event):
         while True:
             for f in self.freqs:
                 self.sg.set_freq_CW(f)
                 self.pg.trigger()
-                self._queue.append(self.get_pd_data())
+                if self._pd_spectrum:
+                    self._wait_pg()
+                else:
+                    self._queue.append(self.get_pd_data())
                 if ev.is_set():
                     self.logger.info("Quitting sweep loop.")
                     return
@@ -440,7 +454,13 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             return None
         d = P.ParamDict()
         d["rate"] = P.FloatParam(
-            self.conf.get("pd_rate", 400e3), 1e3, 10000e3, doc="PD sampling rate"
+            self.conf.get("pd_rate", 400e3),
+            1e3,
+            1e9,
+            unit="Hz",
+            SI_prefix=True,
+            digit=9,
+            doc="PD sampling rate",
         )
         lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
         d["bounds"] = [
