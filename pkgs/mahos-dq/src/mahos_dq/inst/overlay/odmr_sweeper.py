@@ -10,6 +10,7 @@ InstrumentOverlay for sweeping ODMR.
 
 import time
 import threading
+import math
 
 import numpy as np
 
@@ -251,11 +252,16 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         self.pds = [self.conf.get(n) for n in self.pd_names]
         self._pd_spectrum = self.conf.get("pd_spectrum", False)
         self._pd_analog = self.conf.get("pd_analog", False) or self._pd_spectrum
+        self._pd_async = self.conf.get("pd_async", False)
+        self._max_inflight_coeff = self.conf.get("max_inflight_coeff", 4)
+        self._max_inflight = 1
+        self._inflight = 0
+        self._inflight_cond = threading.Condition()
         if self._pd_analog and not self._pd_spectrum:
             self.clock = self.conf.get("clock")
         else:
             self.clock = None
-        self.add_instruments(self.sg, self.pg, *self.pds)
+        self.add_instruments(self.sg, self.pg, self.clock, *self.pds)
 
         self.load_pg_conf_preset()
 
@@ -303,28 +309,59 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         self._continue_mw = params.get("continue_mw", False)
 
     def get_point(self):
-        if self._pd_spectrum:
-            return self.get_pd_data()
+        if self._pd_async:
+            try:
+                return self.get_pd_data()
+            finally:
+                with self._inflight_cond:
+                    if self._inflight > 0:
+                        self._inflight -= 1
+                    self._inflight_cond.notify()
         else:
             return self._queue.pop_block()
+
+    def _wait_inflight(self, ev: threading.Event) -> bool:
+        with self._inflight_cond:
+            if ev.is_set():
+                return False
+            while self._inflight >= self._max_inflight:
+                if ev.is_set():
+                    return False
+                self._inflight_cond.wait(0.01)
+            return True
+
+    def _increment_inflight(self):
+        with self._inflight_cond:
+            self._inflight += 1
 
     def _wait_pg(self):
         for _ in range(10_000):
             time.sleep(0.001)
             if self.pg.get_finished():
-                return
+                break
         else:
             raise RuntimeError("PG hasn't finished operation.")
 
-    def sweep_loop(self, ev: threading.Event):
+    def sweep_loop_async(self, ev: threading.Event):
+        while True:
+            for f in self.freqs:
+                if not self._wait_inflight(ev):
+                    self.logger.info("Quitting sweep loop.")
+                    return
+                self.sg.set_freq_CW(f)
+                self.pg.trigger()
+                self._increment_inflight()
+                self._wait_pg()
+                if ev.is_set():
+                    self.logger.info("Quitting sweep loop.")
+                    return
+
+    def sweep_loop_sync(self, ev: threading.Event):
         while True:
             for f in self.freqs:
                 self.sg.set_freq_CW(f)
                 self.pg.trigger()
-                if self._pd_spectrum:
-                    self._wait_pg()
-                else:
-                    self._queue.append(self.get_pd_data())
+                self._queue.append(self.get_pd_data())
                 if ev.is_set():
                     self.logger.info("Quitting sweep loop.")
                     return
@@ -385,6 +422,23 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         if not self.configure_pd(params, label):
             return self.fail_with("failed to configure PD.")
 
+        if self._pd_async:
+            if self._pd_spectrum:
+                status = self.pds[0].get_fifo_status()
+                segments_per_trigger = 2 if params.get("background", False) else 1
+                notify_segments = status["notify_samples"] // status["segment_samples"]
+                required_inflight = math.ceil(notify_segments / segments_per_trigger)
+                max_inflight = self._max_inflight_coeff * required_inflight
+                self.logger.debug(
+                    f"max inflight: {max_inflight}; notify/segments: {notify_segments}"
+                )
+            else:
+                # for DAQ required_inflight would be always 1.
+                max_inflight = self._max_inflight_coeff
+            with self._inflight_cond:
+                self._inflight = 0
+                self._max_inflight = max_inflight
+
         return True
 
     def start(self, label: str = "") -> bool:
@@ -402,7 +456,10 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         time.sleep(self._start_delay)
 
         self._stop_ev = threading.Event()
-        self._thread = threading.Thread(target=self.sweep_loop, args=(self._stop_ev,))
+        if self._pd_async:
+            self._thread = threading.Thread(target=self.sweep_loop_async, args=(self._stop_ev,))
+        else:
+            self._thread = threading.Thread(target=self.sweep_loop_sync, args=(self._stop_ev,))
         self._thread.start()
 
         self.running = True
@@ -417,6 +474,8 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         self.logger.info("Stopping sweeper.")
 
         self._stop_ev.set()
+        with self._inflight_cond:
+            self._inflight_cond.notify_all()
         self._thread.join()
 
         if self._continue_mw:

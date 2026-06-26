@@ -79,7 +79,6 @@ class SpectrumAnalogIn(Instrument):
         self._mode = self.Mode.UNCONFIGURED
         self._stamp = False
         self._line_num = 0
-        self._segment_samples = 0
         self._oversample = 1
         self._block_reduce_factor = 1
         self._block_reduce_samples = 0
@@ -88,9 +87,12 @@ class SpectrumAnalogIn(Instrument):
         self._reduce_op = "mean"
         self._hardware_average = False
         self._averages = 1
-        self._record_samples = 0
         self._drop_records_left = 0
+        self._segment_samples = 0
+        self._record_samples = 0
         self._tracer_samples = 0
+        self._notify_samples = 0
+        self._buffer_samples = 0
         self._pending: list[list[np.ndarray]] = []
 
     def _import_spcm(self):
@@ -309,7 +311,7 @@ class SpectrumAnalogIn(Instrument):
         )
         if segment_samples is not None:
             msg += "; segment_samples = {:_d}, ".format(segment_samples)
-            msg += "notify_segment: requested = {:.1f}, aligned = {:.1f}".format(
+            msg += "notify/segment: requested = {:.1f}, aligned = {:.1f}".format(
                 requested_notify / segment_samples,
                 notify_samples / segment_samples,
             )
@@ -529,7 +531,7 @@ class SpectrumAnalogIn(Instrument):
         segments_per_record = self._record_samples // self._segment_samples
         requested_notify_samples = segments_per_record * self._segment_samples
         try:
-            notify_samples = self._align_notify_samples(
+            self._notify_samples = self._align_notify_samples(
                 requested_notify_samples, step_samples=self._segment_samples
             )
         except ValueError as e:
@@ -546,19 +548,21 @@ class SpectrumAnalogIn(Instrument):
             requested_buffer_samples = buffer_records * self._record_samples
 
         requested_buffer_samples = max(requested_notify_samples, requested_buffer_samples)
-        buffer_samples = self._align_buffer_samples(requested_buffer_samples, notify_samples)
-        buffer_segments = buffer_samples // self._segment_samples
+        self._buffer_samples = self._align_buffer_samples(
+            requested_buffer_samples, self._notify_samples
+        )
+        buffer_segments = self._buffer_samples // self._segment_samples
         self._log_fifo_sizes(
             "triggered",
             requested_notify_samples,
-            notify_samples,
-            buffer_samples,
+            self._notify_samples,
+            self._buffer_samples,
             self._segment_samples,
         )
         self._transfer.allocate_buffer(
             segment_samples=self._segment_samples, num_segments=buffer_segments
         )
-        self._transfer.notify_samples(notify_samples)
+        self._transfer.notify_samples(self._notify_samples)
         # set maximum post_trigger given segment_samples. as min of pre_trigger is 16 samples,
         # maximum post_trigger is segment_samples - 16.
         self._transfer.post_trigger(self._segment_samples - 16)
@@ -596,17 +600,21 @@ class SpectrumAnalogIn(Instrument):
         self._transfer = spcm.DataTransfer(card)
         self._tracer_samples = int(params["cb_samples"]) * self._oversample
         try:
-            notify_samples = self._align_notify_samples(self._tracer_samples)
+            self._notify_samples = self._align_notify_samples(self._tracer_samples)
         except ValueError as e:
             return self.fail_with(str(e))
         requested_buffer_samples = max(
             self._tracer_samples,
             int(params.get("buffer_size", params["samples"])) * self._oversample,
         )
-        buffer_size = self._align_buffer_samples(requested_buffer_samples, notify_samples)
-        self._log_fifo_sizes("tracer", self._tracer_samples, notify_samples, buffer_size)
-        self._transfer.allocate_buffer(buffer_size)
-        self._transfer.notify_samples(notify_samples)
+        self._buffer_samples = self._align_buffer_samples(
+            requested_buffer_samples, self._notify_samples
+        )
+        self._log_fifo_sizes(
+            "tracer", self._tracer_samples, self._notify_samples, self._buffer_samples
+        )
+        self._transfer.allocate_buffer(self._buffer_samples)
+        self._transfer.notify_samples(self._notify_samples)
         pre_trigger = int(params.get("pre_trigger", self.conf.get("pre_trigger", 16)))
         self._transfer.pre_trigger(pre_trigger)
 
@@ -615,6 +623,24 @@ class SpectrumAnalogIn(Instrument):
         self._mode = self.Mode.TRACER
         self.logger.debug("Configured Spectrum tracer FIFO mode.")
         return True
+
+    def get_fifo_status(self) -> dict:
+        if self._mode == self.Mode.TRIGGERED:
+            return {
+                "segment_samples": self._segment_samples,
+                "record_samples": self._record_samples,
+                "notify_samples": self._notify_samples,
+                "buffer_samples": self._buffer_samples,
+            }
+        elif self._mode == self.Mode.TRACER:
+            return {
+                "tracer_samples": self._tracer_samples,
+                "notify_samples": self._notify_samples,
+                "buffer_samples": self._buffer_samples,
+            }
+        else:
+            self.logger.error("fifo status is requested but not configured.")
+            return {}
 
     # Standard API
 
@@ -701,6 +727,8 @@ class SpectrumAnalogIn(Instrument):
             return self.pop_block() if args else self.pop_opt()
         elif key == "all_data":
             return self.pop_all_block() if args else self.pop_all_opt()
+        elif key == "fifo_status":
+            return self.get_fifo_status()
         elif key == "unit":
             return self.unit
         else:
