@@ -162,10 +162,19 @@ class Tracer(Worker):
         self.interval_sec = self.conf.get("interval_sec", 0.5)
         self.size = self.conf.get("size", DEFAULT_TRACER_SIZE)
         self.cb_samples = self.conf.get("samples", 5)
-        self.oversample = self.conf.get("oversample", 1)
         self.time_window_sec = self.conf.get("time_window_sec", 0.01)
         self.pd_bounds = self.conf.get("pd_bounds", (-10.0, 10.0))
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
+
+        if "pd_rate" in self.conf:
+            self.pd_rate = self.conf["pd_rate"]
+            if "oversample" in self.conf:
+                msg = "pd_rate and oversample are both defined in conf. oversample is disregarded."
+                self.logger.warn(msg)
+            self.oversample = None
+        else:
+            self.pd_rate = None
+            self.oversample = self.conf.get("oversample", 1)
 
         self.trace = Trace(
             size=self.size, channels=sum(self.pd_channels), _complex=conf.get("complex", False)
@@ -181,7 +190,12 @@ class Tracer(Worker):
 
         self.trace.yunit = self.pds[0].get_unit()
 
-        freq = 1.0 / self.time_window_sec * self.oversample
+        if self.pd_rate is not None:
+            freq = self.pd_rate
+            oversample = int(round(freq * self.time_window_sec))
+        else:
+            freq = 1.0 / self.time_window_sec * self.oversample
+            oversample = self.oversample
         buffer_size = self.cb_samples * self.conf.get("buffer_size_coeff", 200)
         params_clock = {"freq": freq, "samples": buffer_size, "finite": False}
         success = True
@@ -202,7 +216,7 @@ class Tracer(Worker):
                     finite=False,
                     every=False,
                     stamp=True,
-                    oversample=self.oversample,
+                    oversample=oversample,
                     bounds=self.pd_bounds,
                     data_transfer=self._pd_data_transfer,
                 )
