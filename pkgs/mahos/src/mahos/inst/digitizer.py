@@ -184,7 +184,7 @@ class SpectrumAnalogIn(Instrument):
             return self.fail_with(f"unsupported Spectrum clock mode: {mode}")
         rate_req = float(params["rate"]) * spcm.units.Hz
         rate_ret = clock.sample_rate(rate_req, return_unit=spcm.units.Hz)
-        self.logger.info(f"Sampling rate: req = {rate_req} ret = {rate_ret}")
+        self.logger.debug(f"Sampling rate: requested = {rate_req}, actual = {rate_ret}")
         return True
 
     def _setup_trigger(self, params):
@@ -267,17 +267,21 @@ class SpectrumAnalogIn(Instrument):
         notify_samples: int,
         buffer_samples: int,
     ):
-        self.logger.debug(
-            "%s FIFO notify_samples: requested=%d (%d B), aligned=%d (%d B); "
-            "buffer_samples=%d (%d B)",
+        msg = "{:s} FIFO notify_samples: requested = {:_d} ({:_d} B), ".format(
             mode,
             requested_notify,
             self._samples_to_bytes(requested_notify),
+        )
+        msg += "aligned = {:_d} ({:_d} B); ".format(
             notify_samples,
             self._samples_to_bytes(notify_samples),
+        )
+        msg += "buffer_samples = {:_d} ({:_d} B), buffer/notify = {:.1f}".format(
             buffer_samples,
             self._samples_to_bytes(buffer_samples),
+            buffer_samples / notify_samples,
         )
+        self.logger.debug(msg)
 
     def _append_data(self, data: np.ndarray | list[np.ndarray]):
         data = self._convert_gain(data)
