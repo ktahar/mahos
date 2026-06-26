@@ -146,8 +146,10 @@ class SpectrumAnalogIn(Instrument):
         termination = int(params.get("termination", self.conf.get("termination", 1_000_000)))
         if termination == 1_000_000:
             self._channels.termination(0)
+            self.logger.debug("input termination: HighZ (1 M)")
         elif termination == 50:
             self._channels.termination(1)
+            self.logger.debug("input termination: 50 Ohm")
         else:
             return self.fail_with(f"invalid termination: {termination} (must be 50 or 1 M)")
 
@@ -207,8 +209,10 @@ class SpectrumAnalogIn(Instrument):
                 )
             if termination == 1_000_000:
                 trigger.termination(0)
+                self.logger.debug("trigger ext0 termination: HighZ (1 M)")
             elif termination == 50:
                 trigger.termination(1)
+                self.logger.debug("trigger ext0 termination: 50 Ohm")
             else:
                 return self.fail_with(f"invalid termination: {termination} (must be 50 or 1 M)")
             trigger.ext0_coupling(spcm.COUPLING_DC)
@@ -216,7 +220,7 @@ class SpectrumAnalogIn(Instrument):
                 float(params.get("trigger_level", self.conf.get("trigger_level", 0.25)))
                 * spcm.units.V
             )
-            # trigger.and_mask(spcm.SPC_TMASK_NONE)
+            trigger.and_mask(spcm.SPC_TMASK_NONE)
         elif source in ("software", "soft"):
             trigger.or_mask(spcm.SPC_TMASK_SOFTWARE)
             trigger.and_mask(spcm.SPC_TMASK_NONE)
