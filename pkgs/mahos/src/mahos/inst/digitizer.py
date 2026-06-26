@@ -13,6 +13,7 @@ from __future__ import annotations
 import threading
 import time
 import enum
+import math
 
 import numpy as np
 
@@ -48,6 +49,9 @@ class SpectrumAnalogIn(Instrument):
     :param notify_alignment_bytes: (default: 4096) required byte alignment for FIFO
         notify sizes. Set to ``1`` to disable alignment.
     :type notify_alignment_bytes: int
+    :param minimal_trigger_notify: (default: False) align triggered FIFO notify sizes
+        with Spectrum's 16-sample granularity instead of requiring a segment-size multiple.
+    :type minimal_trigger_notify: bool
 
     """
 
@@ -282,8 +286,11 @@ class SpectrumAnalogIn(Instrument):
             f"from {min_samples} samples with step {step_samples}"
         )
 
-    def _align_buffer_samples(self, min_samples: int, notify_samples: int) -> int:
-        return self._ceil_to_multiple(max(min_samples, notify_samples), notify_samples)
+    def _align_buffer_samples(
+        self, min_samples: int, notify_samples: int, step_samples: int = 1
+    ) -> int:
+        step = math.lcm(max(1, int(notify_samples)), max(1, int(step_samples)))
+        return self._ceil_to_multiple(max(min_samples, notify_samples), step)
 
     def _log_fifo_sizes(
         self,
@@ -528,9 +535,13 @@ class SpectrumAnalogIn(Instrument):
 
         segments_per_record = self._record_samples // self._segment_samples
         requested_notify_samples = segments_per_record * self._segment_samples
+        if self.conf.get("minimal_trigger_notify", False):
+            notify_step_samples = 16
+        else:
+            notify_step_samples = self._segment_samples
         try:
             notify_samples = self._align_notify_samples(
-                requested_notify_samples, step_samples=self._segment_samples
+                requested_notify_samples, step_samples=notify_step_samples
             )
         except ValueError as e:
             return self.fail_with(str(e))
@@ -546,7 +557,9 @@ class SpectrumAnalogIn(Instrument):
             requested_buffer_samples = buffer_records * self._record_samples
 
         requested_buffer_samples = max(requested_notify_samples, requested_buffer_samples)
-        buffer_samples = self._align_buffer_samples(requested_buffer_samples, notify_samples)
+        buffer_samples = self._align_buffer_samples(
+            requested_buffer_samples, notify_samples, step_samples=self._segment_samples
+        )
         buffer_segments = buffer_samples // self._segment_samples
         self._log_fifo_sizes(
             "triggered",

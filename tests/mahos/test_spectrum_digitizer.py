@@ -55,6 +55,16 @@ def test_align_buffer_samples_is_notify_multiple():
     assert inst._align_buffer_samples(5000, 2048) == 6144
 
 
+def test_align_buffer_samples_can_preserve_segment_boundary():
+    inst = make_inst()
+
+    samples = inst._align_buffer_samples(2048, 2048, step_samples=48)
+
+    assert samples == 6144
+    assert samples % 2048 == 0
+    assert samples % 48 == 0
+
+
 def test_append_tracer_samples_reblocks_aligned_notifications():
     inst = make_inst()
     inst.queue = LockedQueue(100)
