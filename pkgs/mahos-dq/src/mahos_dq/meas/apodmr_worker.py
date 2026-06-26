@@ -24,7 +24,7 @@ from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from mahos_dq.meas.podmr_worker import Bounds, Pulser as PODMRPulser, PODMRDataOperator
 from mahos_dq.msgs.apodmr_msgs import APODMRData, MWMode
-from mahos_dq.util.spectrum import round_spectrum_segment_samples
+from mahos_dq.util.segments import round_segment_samples_up
 
 
 class APODMRDataOperator(PODMRDataOperator):
@@ -397,18 +397,25 @@ class Pulser(PODMRPulser):
         sample_period = 1.0 / pd_rate
         self.samples_per_trace = max(1, int(round(trace_length_ticks / self.freq * pd_rate)))
         if self._pd_spectrum:
-            adjusted = round_spectrum_segment_samples(self.samples_per_trace)
+            granularity = self.conf.get("pd_segment_granularity", 16)
+            try:
+                adjusted = round_segment_samples_up(
+                    self.samples_per_trace, granularity=granularity
+                )
+            except ValueError as e:
+                self.logger.error(str(e))
+                return False
             if adjusted != self.samples_per_trace:
                 self.logger.info(
-                    "Spectrum PD samples_per_trace adjusted: "
-                    f"{self.samples_per_trace} -> {adjusted}"
+                    "PD samples_per_trace adjusted: "
+                    f"{self.samples_per_trace} -> {adjusted} (granularity={granularity})"
                 )
             self.samples_per_trace = adjusted
             trace_length_ticks = int(np.ceil(self.samples_per_trace * self.freq / pd_rate))
             for t0, t1 in zip(trigger_timing, trigger_timing[1:]):
                 if t1 - t0 < trace_length_ticks:
                     self.logger.error(
-                        "Spectrum-compatible trace window overlaps the next trigger; "
+                        "Compatible trace window overlaps the next trigger; "
                         "reduce margins or pulse rate."
                     )
                     return False

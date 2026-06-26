@@ -24,7 +24,7 @@ from mahos.inst.daq_interface import ClockSourceInterface
 from mahos_dq.inst.overlay.odmr_sweeper_interface import ODMRSweeperInterface
 from mahos.util.conf import PresetLoader
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
-from mahos_dq.util.spectrum import round_spectrum_segment_samples
+from mahos_dq.util.segments import round_segment_samples_down
 from mahos.meas.common_worker import Worker
 
 
@@ -660,9 +660,16 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         rate = params["pd"]["rate"]
         oversamp = round(params["timing"]["time_window"] * rate)
         if self._pd_spectrum:
-            adjusted = round_spectrum_segment_samples(oversamp)
+            granularity = self.conf.get("pd_segment_granularity", 16)
+            try:
+                adjusted = round_segment_samples_down(oversamp, granularity=granularity)
+            except ValueError as e:
+                return self.fail_with(str(e))
             if adjusted != oversamp:
-                self.logger.info(f"Spectrum PD oversample adjusted: {oversamp} -> {adjusted}")
+                self.logger.info(
+                    "PD oversample adjusted down: "
+                    f"{oversamp} -> {adjusted} (granularity={granularity})"
+                )
             oversamp = adjusted
 
         self.logger.info(f"Analog PD oversample: {oversamp}")
