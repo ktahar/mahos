@@ -45,64 +45,44 @@ class ODMRPGMixin(object):
         unit = round(freq * 1.0e-6)
         window = round(freq * params["timing"]["time_window"])
         gate_delay = round(freq * params["timing"].get("gate_delay", 0.0))
+        post_gate_delay = round(freq * params["timing"].get("post_gate_delay", 0.0))
         delay = round(freq * params.get("delay", 0.0))
         bg_delay = round(freq * params.get("background_delay", 0.0))
-        background = params.get("background", False)
-        if background and gate_delay:
+        final_delay = round(freq * params.get("final_delay", 0.0))
+
+        if params.get("background", False):
             b = Block(
                 "CW-ODMR",
                 [
                     (None, max(unit, delay)),
                     (("laser", "mw"), gate_delay),
                     (("laser", "mw", "gate"), unit),
-                    # As measurement window is defined by DAQ sampling side,
+                    # As measurement window is defined by AnalogIn sampling side,
                     # here we give long enough laser / mw pulse width (no "window - unit" below).
-                    (("laser", "mw"), window),
+                    (("laser", "mw"), window + post_gate_delay),
                     (None, max(unit, bg_delay)),
                     ("laser", gate_delay),
                     (("laser", "gate"), unit),
-                    ("laser", window),
+                    ("laser", window + post_gate_delay),
+                    (None, final_delay),
                     ("trigger", unit),
                 ],
                 trigger=True,
             )
-        elif background:  # no gate_delay
-            b = Block(
-                "CW-ODMR",
-                [
-                    (None, max(unit, delay)),
-                    ("gate", unit),
-                    (("laser", "mw"), window),
-                    (None, max(unit, bg_delay)),
-                    ("gate", unit),
-                    ("laser", window),
-                    ("trigger", unit),
-                ],
-                trigger=True,
-            )
-        elif gate_delay:  # no background
+        else:  # no background
             b = Block(
                 "CW-ODMR",
                 [
                     (None, max(unit, delay)),
                     (("laser", "mw"), gate_delay),
                     (("laser", "mw", "gate"), unit),
-                    (("laser", "mw"), window),
+                    (("laser", "mw"), window + post_gate_delay),
+                    (None, final_delay),
                     ("trigger", unit),
                 ],
                 trigger=True,
             )
-        else:  # no gate_delay, no background
-            b = Block(
-                "CW-ODMR",
-                [
-                    (None, max(unit, delay)),
-                    ("gate", unit),
-                    (("laser", "mw"), window),
-                    ("trigger", unit),
-                ],
-                trigger=True,
-            )
+
         self._adjust_block(b, 0)
         blocks = Blocks([b])
         if self._channel_remap is not None:
@@ -119,6 +99,7 @@ class ODMRPGMixin(object):
         # gate / trigger pulse width
         delay = round(freq * params.get("delay", 0.0))
         bg_delay = round(freq * params.get("background_delay", 0.0))
+        final_delay = round(freq * params.get("final_delay", 0.0))
         background = params.get("background", False)
 
         laser_delay, laser_width, mw_delay, mw_width, trigger_width = [
@@ -136,11 +117,17 @@ class ODMRPGMixin(object):
         )
 
         # convert time_window and gate_delay to number of sequence repetitions
-        # round-up because total sequence a bit shorter than time_window can be a problem,
+        # round-up here because total sequence a bit shorter than time_window can be a problem,
         # but a bit longer sequence is not.
+        # post_gate_delay is just added to burst_num, but this is not included in PD's
+        # integration window. So this can be used to ensure the main pulse sequence is
+        # longer than integration window.
         burst_num = math.ceil(params["timing"]["time_window"] / seq_length)
         gate_delay_num = math.ceil(params["timing"].get("gate_delay", 0.0) / seq_length)
-        self.logger.info(f"Burst Num: {burst_num} Gate Delay Num: {gate_delay_num}")
+        post_gate_delay_num = math.ceil(params["timing"].get("post_gate_delay", 0.0) / seq_length)
+        self.logger.info(
+            f"Burst Num: {burst_num} + {post_gate_delay_num} Gate Delay Num: {gate_delay_num}"
+        )
 
         blocks = []
         if delay:
@@ -189,7 +176,7 @@ class ODMRPGMixin(object):
                 ("laser", laser_width),
                 (None, mw_delay),
             ],
-            Nrep=burst_num,
+            Nrep=burst_num + post_gate_delay_num,
         )
         self._adjust_block(blk_main, 0)
         blocks.append(blk_main)
@@ -235,7 +222,7 @@ class ODMRPGMixin(object):
                     ("laser", laser_width),
                     (None, mw_delay),
                 ],
-                Nrep=burst_num,
+                Nrep=burst_num + post_gate_delay_num,
             )
             self._adjust_block(blk_bg_main, 0)
             blocks.append(blk_bg_main)
@@ -243,7 +230,8 @@ class ODMRPGMixin(object):
         blk_trigger = Block(
             "Trigger",
             [
-                ("trigger", max(trigger_width, min_len)),
+                (None, final_delay),
+                ("trigger", max(trigger_width, min_len - final_delay)),
             ],
         )
         self._adjust_block(blk_trigger, 0)
@@ -269,10 +257,12 @@ class ODMRPGMixin(object):
         unit = round(freq * 1.0e-6)
         window = round(freq * params["timing"]["time_window"])
         gate_delay = round(freq * params["timing"].get("gate_delay", 0.0))
+        post_gate_delay = round(freq * params["timing"].get("post_gate_delay", 0.0))
         delay = round(freq * params.get("delay", 0.0))
         bg_delay = round(freq * params.get("background_delay", 0.0))
-        background = params.get("background", False)
-        if background and gate_delay:
+        final_delay = round(freq * params.get("final_delay", 0.0))
+
+        if params.get("background", False):
             b = Block(
                 "CW-ODMR",
                 [
@@ -282,33 +272,19 @@ class ODMRPGMixin(object):
                     (("laser", "mw", "gate"), unit),
                     (("laser", "mw"), window - unit),
                     (("laser", "mw", "gate"), unit),
+                    (("laser", "mw"), post_gate_delay),
                     (None, max(unit, bg_delay)),
                     ("laser", gate_delay),
                     (("laser", "gate"), unit),
                     ("laser", window - unit),
                     (("laser", "gate"), unit),
+                    ("laser", post_gate_delay),
+                    (None, final_delay),
                     ("trigger", unit),
                 ],
                 trigger=True,
             )
-        elif background:  # no gate_delay
-            b = Block(
-                "CW-ODMR",
-                [
-                    (None, max(unit, delay)),
-                    ("gate", unit),
-                    # here we define measurement window using laser / mw pulse width
-                    # (no "window - unit" below)
-                    (("laser", "mw"), window),
-                    ("gate", unit),
-                    (None, max(unit, bg_delay)),
-                    ("gate", unit),
-                    ("laser", window),
-                    (("gate", "trigger"), unit),
-                ],
-                trigger=True,
-            )
-        elif gate_delay:  # no background
+        else:  # no background
             b = Block(
                 "CW-ODMR",
                 [
@@ -317,21 +293,13 @@ class ODMRPGMixin(object):
                     (("laser", "mw", "gate"), unit),
                     (("laser", "mw"), window - unit),
                     (("laser", "mw", "gate"), unit),
+                    (("laser", "mw"), post_gate_delay),
+                    (None, final_delay),
                     ("trigger", unit),
                 ],
                 trigger=True,
             )
-        else:  # no gate_delay, no background
-            b = Block(
-                "CW-ODMR",
-                [
-                    (None, max(unit, delay)),
-                    ("gate", unit),
-                    (("laser", "mw"), window),
-                    (("gate", "trigger"), unit),
-                ],
-                trigger=True,
-            )
+
         self._adjust_block(b, 0)
         blocks = Blocks([b])
         if self._channel_remap is not None:
@@ -345,6 +313,7 @@ class ODMRPGMixin(object):
     def _make_blocks_pulse_apd_nobg(
         self,
         delay,
+        final_delay,
         laser_delay,
         laser_width,
         mw_delay,
@@ -380,8 +349,9 @@ class ODMRPGMixin(object):
         final = Block(
             "FINAL",
             [
-                (("gate", "trigger"), trigger_width),
-                (None, max(0, min_len - trigger_width)),
+                ("gate", trigger_width),
+                (None, max(final_delay, min_len - 2 * trigger_width)),
+                ("trigger", trigger_width),
             ],
         )
 
@@ -403,6 +373,7 @@ class ODMRPGMixin(object):
         self,
         delay,
         bg_delay,
+        final_delay,
         laser_delay,
         laser_width,
         mw_delay,
@@ -467,8 +438,9 @@ class ODMRPGMixin(object):
         final_bg = Block(
             "FINAL-BG",
             [
-                (("gate", "trigger"), trigger_width),
-                (None, max(0, min_len - trigger_width)),
+                ("gate", trigger_width),
+                (None, max(final_delay, min_len - 2 * trigger_width)),
+                ("trigger", trigger_width),
             ],
         )
 
@@ -491,6 +463,7 @@ class ODMRPGMixin(object):
         freq = self.conf["pg_freq_pulse"]
         delay = round(freq * params.get("delay", 0.0))
         bg_delay = round(freq * params.get("background_delay", 0.0))
+        final_delay = round(freq * params.get("final_delay", 0.0))
         laser_delay, laser_width, mw_delay, mw_width, trigger_width = [
             round(params["timing"][k] * freq)
             for k in ("laser_delay", "laser_width", "mw_delay", "mw_width", "trigger_width")
@@ -506,6 +479,7 @@ class ODMRPGMixin(object):
             blocks = self._make_blocks_pulse_apd_bg(
                 delay,
                 bg_delay,
+                final_delay,
                 laser_delay,
                 laser_width,
                 mw_delay,
@@ -517,6 +491,7 @@ class ODMRPGMixin(object):
         else:
             blocks = self._make_blocks_pulse_apd_nobg(
                 delay,
+                final_delay,
                 laser_delay,
                 laser_width,
                 mw_delay,

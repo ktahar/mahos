@@ -70,6 +70,9 @@ class SweeperBase(Worker):
                 gate_delay=P.FloatParam(
                     self.conf.get("gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
                 ),
+                post_gate_delay=P.FloatParam(
+                    self.conf.get("post_gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
+                ),
             )
         elif label == "pulse":
             timing = P.ParamDict(
@@ -108,6 +111,9 @@ class SweeperBase(Worker):
                 )
                 timing["gate_delay"] = P.FloatParam(
                     self.conf.get("gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
+                )
+                timing["post_gate_delay"] = P.FloatParam(
+                    self.conf.get("post_gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
                 )
             else:
                 timing["burst_num"] = P.IntParam(
@@ -148,6 +154,14 @@ class SweeperBase(Worker):
                 unit="s",
                 SI_prefix=True,
                 doc="delay between normal and background (reference) measurements",
+            ),
+            final_delay=P.FloatParam(
+                0.0,
+                0.0,
+                10.0,
+                unit="s",
+                SI_prefix=True,
+                doc="delay after measurement before triggering next frequency",
             ),
             resume=P.BoolParam(False),
             continue_mw=P.BoolParam(False),
@@ -209,6 +223,8 @@ class SweeperOverlay(SweeperBase):
     :type sweeper.time_window: float
     :param sweeper.gate_delay: (default param) gate delay before counting.
     :type sweeper.gate_delay: float
+    :param sweeper.post_gate_delay: (default param) extra excitation after measurement window.
+    :type sweeper.post_gate_delay: float
 
     :param sweeper.am_depth: (default param) depth of AM modulation.
     :type sweeper.am_depth: float
@@ -481,6 +497,8 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :type sweeper.time_window: float
     :param sweeper.gate_delay: (default param) gate delay before counting.
     :type sweeper.gate_delay: float
+    :param sweeper.post_gate_delay: (default param) extra excitation after measurement window.
+    :type sweeper.post_gate_delay: float
 
     :param sweeper.am_depth: (default param) depth of AM modulation.
     :type sweeper.am_depth: float
