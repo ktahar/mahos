@@ -703,6 +703,8 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
     def update_pulse_label_apd(self):
         """For APD (SPCM) measurement, burst num is specified and windows are derived."""
 
+        if self.methodBox.currentText() != "pulse":
+            return
         window = self.get_pulse_window()
         if not window:
             return  # avoid zero div
@@ -715,6 +717,8 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
     def update_pulse_label_analog(self):
         """For Analog PD measurement, time windows are specified and burst nums are derived."""
 
+        if self.methodBox.currentText() != "pulse":
+            return
         window = self.get_pulse_window()
         if not window:
             return  # avoid zero div
@@ -729,7 +733,7 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             label += f" + {post_gate_delay_num}"
         if self._pulse_has_gate_delay:
             gate_delay_num = math.ceil(gate_delay / window)
-            label += f" Gate Delay Num: {gate_delay_num}"
+            label += f" Gate delay num: {gate_delay_num}"
         self.pulseLabel.setText(label)
 
     def get_pulse_window(self):

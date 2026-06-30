@@ -487,6 +487,7 @@ class Pulser(PODMRPulser):
                         reduce_op="mean",
                         bounds=params["pd"].get("bounds", (-10.0, 10.0)),
                         data_transfer=self._pd_data_transfer,
+                        hardware_average=params["pd"].get("hardware_average", True),
                     )
                     for pd in self.pds
                 ]
@@ -742,6 +743,8 @@ class Pulser(PODMRPulser):
             P.FloatParam(lb, -10.0, +10.0, doc="PD voltage lower bound"),
             P.FloatParam(ub, -10.0, +10.0, doc="PD voltage upper bound"),
         ]
+        if self._pd_spectrum:
+            d["pd"]["hardware_average"] = P.BoolParam(True, doc="use hardware block averaging")
         return d
 
     def work(self):

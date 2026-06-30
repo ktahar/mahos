@@ -126,7 +126,7 @@ class ODMRPGMixin(object):
         gate_delay_num = math.ceil(params["timing"].get("gate_delay", 0.0) / seq_length)
         post_gate_delay_num = math.ceil(params["timing"].get("post_gate_delay", 0.0) / seq_length)
         self.logger.info(
-            f"Burst Num: {burst_num} + {post_gate_delay_num} Gate Delay Num: {gate_delay_num}"
+            f"Burst num: {burst_num} + {post_gate_delay_num} Gate delay num: {gate_delay_num}"
         )
 
         blocks = []
