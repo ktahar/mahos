@@ -512,8 +512,10 @@ class SpectrumAnalogIn(Instrument):
         timeout_sec = float(params.get("timeout_sec", self.conf.get("timeout_sec", 5.0)))
         if self._hardware_average:
             card.card_mode(spcm.SPC_REC_FIFO_AVERAGE)
+            self.logger.debug("Card mode: SPC_REC_FIFO_AVERAGE")
         else:
             card.card_mode(spcm.SPC_REC_FIFO_MULTI)
+            self.logger.debug("Card mode: SPC_REC_FIFO_MULTI")
         card.timeout(timeout_sec * spcm.units.s)
         card.loops(0)
 
@@ -591,6 +593,7 @@ class SpectrumAnalogIn(Instrument):
         self._averages = 1
 
         card.card_mode(spcm.SPC_REC_FIFO_SINGLE)
+        self.logger.debug("Card mode: SPC_REC_FIFO_SINGLE")
         timeout_sec = float(params.get("timeout_sec", self.conf.get("timeout_sec", 5.0)))
         card.timeout(timeout_sec * spcm.units.s)
         if not self._setup_trigger({"trigger_source": "software"}):

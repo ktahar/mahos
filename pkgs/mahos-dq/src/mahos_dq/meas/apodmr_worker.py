@@ -177,6 +177,7 @@ class APODMRBlockBuilder(object):
         self.mw_modes = mw_modes
         self.iq_amplitude = iq_amplitude
         self.channel_remap = channel_remap
+        self.all_trigger_timing = []
 
     def build_blocks(
         self, blocks: list[Blocks[Block]], freq: float, common_pulses, params: dict, num_mw: int
@@ -208,7 +209,7 @@ class APODMRBlockBuilder(object):
         out = Blocks()
         laser_timing = []
         trigger_timing = []
-        all_trigger_timing = []
+        self.all_trigger_timing = []
         t = 0
 
         init_block_width = max(init_delay + laser_width, self.minimum_block_length)
@@ -245,7 +246,7 @@ class APODMRBlockBuilder(object):
                 trigger_timing.append(t + trigger_offset)
                 laser_timing.append(t + laser_offset)
                 for j in range(shots_per_point):
-                    all_trigger_timing.append(t + trigger_offset + j * unit.total_length())
+                    self.all_trigger_timing.append(t + trigger_offset + j * unit.total_length())
                 out.append(unit.repeat(shots_per_point))
                 t += unit.total_length() * shots_per_point
 
@@ -266,14 +267,22 @@ class APODMRBlockBuilder(object):
         if self.channel_remap is not None:
             out = out.replace(self.channel_remap)
 
-        sample_duration = roi_head + laser_width + roi_tail
-        for t0, t1 in zip(all_trigger_timing, all_trigger_timing[1:]):
-            if (t1 - t0) < sample_duration:
-                raise ValueError(
-                    "trace window overlaps the next trigger; reduce margins or pulse rate"
-                )
+        trace_length_ticks = roi_head + laser_width + roi_tail
+        if not self.check_sample_duration(trace_length_ticks):
+            raise ValueError(
+                "trace window overlaps the next trigger; reduce margins or pulse rate"
+            )
 
-        return out.simplify(), laser_timing, trigger_timing, laser_width + roi_head + roi_tail
+        return out.simplify(), laser_timing, trigger_timing, trace_length_ticks
+
+    def check_sample_duration(self, trace_length_ticks) -> bool:
+        if not self.all_trigger_timing:
+            raise ValueError("check_sample_duration is called but all_trigger_timing is not set.")
+
+        for t0, t1 in zip(self.all_trigger_timing, self.all_trigger_timing[1:]):
+            if (t1 - t0) < trace_length_ticks:
+                return False
+        return True
 
 
 class Pulser(PODMRPulser):
@@ -412,13 +421,11 @@ class Pulser(PODMRPulser):
                 )
             self.samples_per_trace = adjusted
             trace_length_ticks = int(np.ceil(self.samples_per_trace * self.freq / pd_rate))
-            for t0, t1 in zip(trigger_timing, trigger_timing[1:]):
-                if t1 - t0 < trace_length_ticks:
-                    self.logger.error(
-                        "Compatible trace window overlaps the next trigger; "
-                        "reduce margins or pulse rate."
-                    )
-                    return False
+            if not self.builder.check_sample_duration(trace_length_ticks):
+                self.logger.error(
+                    "trace window overlaps the next trigger; reduce margins or pulse rate"
+                )
+                return False
         self.trace_count = len(laser_timing)
 
         self.op.set_laser_timing(self.data, np.array(laser_timing) / self.freq)
@@ -467,7 +474,9 @@ class Pulser(PODMRPulser):
             clock_pd = self.clock.get_internal_output()
 
         cb_samples = self.trace_count * self.samples_per_trace
-        buffer_size = cb_samples * self.conf.get("buffer_size_coeff", 20)
+        buffer_size = cb_samples * params["pd"].get(
+            "buffer_size_coeff", self.conf.get("buffer_size_coeff", 20)
+        )
         if not (
             all(
                 [
@@ -739,6 +748,12 @@ class Pulser(PODMRPulser):
             doc="PD sampling rate",
         )
         lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
+        d["pd"]["buffer_size_coeff"] = P.IntParam(
+            self.conf.get("buffer_size_coeff", 20),
+            1,
+            10_000,
+            doc="ratio of requested buffer size to record data size",
+        )
         d["pd"]["bounds"] = [
             P.FloatParam(lb, -10.0, +10.0, doc="PD voltage lower bound"),
             P.FloatParam(ub, -10.0, +10.0, doc="PD voltage upper bound"),
