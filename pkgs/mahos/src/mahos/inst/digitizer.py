@@ -95,6 +95,10 @@ class SpectrumAnalogIn(Instrument):
         self._buffer_samples = 0
         self._pending: list[list[np.ndarray]] = []
 
+        if not self.conf.get("mock", False):
+            self._import_spcm()
+            self._open_card()
+
     def _import_spcm(self):
         if self._spcm is None:
             import spcm
@@ -155,7 +159,7 @@ class SpectrumAnalogIn(Instrument):
             raise ValueError(f"requested offset is too large: {ofs:d}% > 100%")
         return ofs
 
-    def _setup_channels(self, bounds, params) -> bool:
+    def _setup_channels(self, params) -> bool:
         spcm = self._import_spcm()
         card = self._open_card()
         self._channels = spcm.Channels(card, card_enable=self._channel_mask())
@@ -179,6 +183,7 @@ class SpectrumAnalogIn(Instrument):
             else:
                 self._channels.coupling(spcm.COUPLING_AC)
 
+        bounds = self._get_bounds(params)
         for ch, bnds in zip(self._channels, bounds):
             if len(bnds) == 2 and isinstance(bnds[0], (float, int, np.integer, np.floating)):
                 lb, ub = bnds
@@ -442,7 +447,7 @@ class SpectrumAnalogIn(Instrument):
     def _get_bounds(self, params):
         bounds = params.get("bounds", self.conf.get("bounds", (-10.0, 10.0)))
         if len(bounds) == 2 and isinstance(bounds[0], (float, int, np.integer, np.floating)):
-            return [tuple(bounds)] * len(self.lines)
+            return [tuple(bounds)] * self._line_num
         return bounds
 
     def _validate_reduce_params(self, params) -> bool:
@@ -515,8 +520,7 @@ class SpectrumAnalogIn(Instrument):
         if not self._setup_trigger(params):
             return False
 
-        bounds = self._get_bounds(params)
-        if not self._setup_channels(bounds, params):
+        if not self._setup_channels(params):
             return False
 
         if not self._setup_clock(params):
@@ -591,8 +595,7 @@ class SpectrumAnalogIn(Instrument):
         card.timeout(timeout_sec * spcm.units.s)
         if not self._setup_trigger({"trigger_source": "software"}):
             return False
-        bounds = self._get_bounds(params)
-        if not self._setup_channels(bounds, params):
+        if not self._setup_channels(params):
             return False
         if not self._setup_clock(params):
             return False

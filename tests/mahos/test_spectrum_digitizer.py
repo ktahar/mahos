@@ -24,7 +24,7 @@ class DummyTransfer:
 
 
 def make_inst(conf=None):
-    return SpectrumAnalogIn("digitizer", {"lines": [0], **(conf or {})})
+    return SpectrumAnalogIn("digitizer", {"mock": True, "lines": [0], **(conf or {})})
 
 
 def test_align_notify_samples_uses_transfer_byte_size():
