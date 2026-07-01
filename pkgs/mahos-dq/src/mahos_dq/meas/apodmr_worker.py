@@ -488,6 +488,7 @@ class Pulser(PODMRPulser):
                         segment_samples=self.samples_per_trace if self._pd_spectrum else None,
                         buffer_size=buffer_size,
                         finite=False,
+                        drop_first=params["pd"].get("drop_first", 0),
                         oversample=1,
                         block_reduce_factor=shots_per_point,
                         block_reduce_samples=self.samples_per_trace,
@@ -758,6 +759,7 @@ class Pulser(PODMRPulser):
             P.FloatParam(lb, -10.0, +10.0, doc="PD voltage lower bound"),
             P.FloatParam(ub, -10.0, +10.0, doc="PD voltage upper bound"),
         ]
+        d["pd"]["drop_first"] = P.IntParam(0, 0, 100, doc="drop first N records to stabilize")
         if self._pd_spectrum:
             d["pd"]["hardware_average"] = P.BoolParam(True, doc="use hardware block averaging")
         return d
