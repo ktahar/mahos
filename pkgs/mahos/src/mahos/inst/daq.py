@@ -17,7 +17,7 @@ from typing import Callable, Optional
 import numpy as np
 import PyDAQmx as D
 
-from mahos.util.locked_queue import LockedQueue
+from mahos.util.queue import RollingQueue
 from mahos.util.conf import PresetLoader
 from mahos.inst.instrument import Instrument
 from mahos.inst.exceptions import InstError
@@ -675,7 +675,7 @@ class AnalogIn(ConfigurableTask):
         self.lines = conf["lines"]
 
         self.queue_size = self.conf.get("queue_size", 10000)
-        self.queue = LockedQueue(self.queue_size)
+        self.queue = RollingQueue(self.queue_size)
         self._silent = self.conf.get("silent", False)
         self._stamp = False
         self.clock_mode = False
@@ -893,7 +893,7 @@ class AnalogIn(ConfigurableTask):
             return False
         self.logger.debug(f"Input voltage bounds: {bounds}")
 
-        self.queue = LockedQueue(self.queue_size)
+        self.queue = RollingQueue(self.queue_size)
 
         every1_handler = params.get("every1_handler", self._null_every1_handler)
         done_handler = params.get("done_handler", self._null_done_handler)
@@ -1185,7 +1185,7 @@ class BufferedEdgeCounter(ConfigurableTask):
         self.source_dir = _edge_polarity(conf.get("source_dir", True))
 
         self.queue_size = self.conf.get("queue_size", 10000)
-        self.queue = LockedQueue(self.queue_size)
+        self.queue = RollingQueue(self.queue_size)
         self._stamp = False
 
     def _null_every1_handler(self):
@@ -1270,7 +1270,7 @@ class BufferedEdgeCounter(ConfigurableTask):
             self.logger.error("samples must be greater than 1 in diff mode.")
             return False
 
-        self.queue = LockedQueue(self.queue_size)
+        self.queue = RollingQueue(self.queue_size)
 
         every1_handler = params.get("every1_handler", self._null_every1_handler)
         done_handler = params.get("done_handler", self._null_done_handler)

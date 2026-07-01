@@ -11,7 +11,7 @@ Tests for Spectrum digitizer internals.
 import numpy as np
 
 from mahos.inst.digitizer import SpectrumAnalogIn
-from mahos.util.locked_queue import LockedQueue
+from mahos.util.queue import RollingQueue
 
 
 class DummyTransfer:
@@ -57,7 +57,7 @@ def test_align_buffer_samples_is_notify_multiple():
 
 def test_append_tracer_samples_reblocks_aligned_notifications():
     inst = make_inst()
-    inst.queue = LockedQueue(100)
+    inst.queue = RollingQueue(100)
     inst._line_num = 1
     inst._stamp = False
     inst._oversample = 2
@@ -74,7 +74,7 @@ def test_append_tracer_samples_reblocks_aligned_notifications():
 
 def test_append_tracer_samples_handles_multi_channel_blocks():
     inst = make_inst({"lines": [0, 1]})
-    inst.queue = LockedQueue(100)
+    inst.queue = RollingQueue(100)
     inst._line_num = 2
     inst._stamp = False
     inst._oversample = 1

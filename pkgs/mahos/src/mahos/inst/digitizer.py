@@ -17,7 +17,7 @@ import enum
 import numpy as np
 
 from mahos.inst.instrument import Instrument
-from mahos.util.locked_queue import LockedQueue
+from mahos.util.queue import RollingQueue
 
 
 class SpectrumAnalogIn(Instrument):
@@ -63,7 +63,7 @@ class SpectrumAnalogIn(Instrument):
             self.check_required_conf(("lines",))
         self.lines = self.conf.get("lines", [0])
         self.queue_size = self.conf.get("queue_size", 10000)
-        self.queue = LockedQueue(self.queue_size)
+        self.queue = RollingQueue(self.queue_size)
         self._silent = self.conf.get("silent", False)
         self.unit = self.conf.get("unit", "V")
         self.gain = float(self.conf.get("gain", 1.0))
@@ -573,7 +573,7 @@ class SpectrumAnalogIn(Instrument):
         # maximum post_trigger is segment_samples - 16.
         self._transfer.post_trigger(self._segment_samples - 16)
 
-        self.queue = LockedQueue(self.queue_size)
+        self.queue = RollingQueue(self.queue_size)
         self._pending = [[] for _ in range(self._line_num)]
         self._mode = self.Mode.TRIGGERED
         self.logger.debug("Configured Spectrum triggered FIFO mode.")
@@ -624,7 +624,7 @@ class SpectrumAnalogIn(Instrument):
         pre_trigger = int(params.get("pre_trigger", self.conf.get("pre_trigger", 16)))
         self._transfer.pre_trigger(pre_trigger)
 
-        self.queue = LockedQueue(self.queue_size)
+        self.queue = RollingQueue(self.queue_size)
         self._pending = [[] for _ in range(self._line_num)]
         self._mode = self.Mode.TRACER
         self.logger.debug("Configured Spectrum tracer FIFO mode.")

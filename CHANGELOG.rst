@@ -2,6 +2,20 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+Added
+^^^^^
+
+Changed
+^^^^^^^
+
+- rename ``mahos.util.locked_queue`` to ``mahos.util.queue.RollingQueue``.
+
+Fixed
+^^^^^
+
 [0.4.0] - 2026-05-20
 --------------------
 

@@ -17,7 +17,7 @@ import numpy as np
 from mahos.inst.overlay.overlay import InstrumentOverlay
 from mahos.msgs import param_msgs as P
 from mahos.msgs.inst.pg_msgs import TriggerType
-from mahos.util.locked_queue import LockedQueue
+from mahos.util.queue import RollingQueue
 from mahos.util.conf import PresetLoader
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
 from mahos_dq.util.segments import round_segment_samples_down
@@ -44,7 +44,7 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
         self._pd_analog = self.conf.get("pd_analog", False)
 
         self._queue_size = self.conf.get("queue_size", 8)
-        self._queue = LockedQueue(self._queue_size)
+        self._queue = RollingQueue(self._queue_size)
         self._stop_ev = self._thread = None
         self.running = False
         self.pulse_pattern = None
@@ -111,7 +111,7 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
 
         self._set_attrs(params)
         self.params = params
-        self._queue = LockedQueue(self._queue_size)
+        self._queue = RollingQueue(self._queue_size)
 
         if not self.configure_pd():
             return self.fail_with("failed to configure PD.")
@@ -266,7 +266,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         self.load_pg_conf_preset()
 
         self._queue_size = self.conf.get("queue_size", 8)
-        self._queue = LockedQueue(self._queue_size)
+        self._queue = RollingQueue(self._queue_size)
         self._stop_ev = self._thread = None
         self.running = False
 
@@ -413,7 +413,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
 
         self._set_attrs(params)
         self.params = params
-        self._queue = LockedQueue(self._queue_size)
+        self._queue = RollingQueue(self._queue_size)
 
         if not self.configure_sg(params, label):
             return self.fail_with("failed to configure SG.")
