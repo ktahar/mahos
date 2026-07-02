@@ -184,6 +184,10 @@ class SpectrumAnalogIn(Instrument):
                 self._channels.coupling(spcm.COUPLING_AC)
 
         bounds = self._get_bounds(params)
+        if len(bounds) != len(self._channels):
+            return self.fail_with(
+                f"len(bounds) is invalid: {len(bounds)} != {len(self._channels)}."
+            )
         for ch, bnds in zip(self._channels, bounds):
             if len(bnds) == 2 and isinstance(bnds[0], (float, int, np.integer, np.floating)):
                 lb, ub = bnds
