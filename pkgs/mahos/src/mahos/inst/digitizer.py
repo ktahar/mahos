@@ -504,6 +504,12 @@ class SpectrumAnalogIn(Instrument):
             return self.fail_with(
                 "Spectrum hardware averaging supports block_reduce_op='mean' only."
             )
+        if (
+            self._block_reduce_factor > 1
+            and not self._hardware_average
+            and int(params["cb_samples"]) % self._block_reduce_samples != 0
+        ):
+            return self.fail_with("cb_samples must be integer multiple of block_reduce_samples.")
         self._averages = self._block_reduce_factor if self._hardware_average else 1
         self._record_samples = int(params["cb_samples"]) * self._oversample * self._reduce_factor
         if not self._hardware_average:

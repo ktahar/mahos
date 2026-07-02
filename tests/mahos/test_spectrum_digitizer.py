@@ -91,3 +91,25 @@ def test_append_stream_samples_handles_multi_channel_blocks():
     np.testing.assert_allclose(data[1], np.array([10.0, 20.0, 30.0]))
     np.testing.assert_allclose(inst._pending[0][0], np.array([4.0]))
     np.testing.assert_allclose(inst._pending[1][0], np.array([40.0]))
+
+
+def test_configure_triggered_rejects_nondivisible_software_block_reduce(monkeypatch):
+    inst = make_inst()
+    errors = []
+    params = {
+        "trigger_source": "software",
+        "cb_samples": 24,
+        "samples": 24,
+        "rate": 1.0e6,
+        "segment_samples": 48,
+        "block_reduce_factor": 2,
+        "block_reduce_samples": 10,
+        "hardware_average": False,
+    }
+
+    monkeypatch.setattr(inst, "_import_spcm", lambda: object())
+    monkeypatch.setattr(inst, "_open_card", lambda: object())
+    monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
+
+    assert not inst.configure_triggered(params)
+    assert errors == ["cb_samples must be integer multiple of block_reduce_samples."]

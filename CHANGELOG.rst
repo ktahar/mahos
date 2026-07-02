@@ -8,6 +8,8 @@ Unreleased
 Added
 ^^^^^
 
+- inst: ``digitizer`` module and ``SpectrumAnalogIn`` Instrument.
+
 Changed
 ^^^^^^^
 
