@@ -676,7 +676,7 @@ class Pulser(Worker):
             "trigger_dir": True,
             "retriggerable": True,
         }
-        if self._pd_spectrum:
+        if self.clock is None:
             clock_pd = self._pd_trigger
         else:
             if not self.clock.configure(params_clock):
@@ -707,7 +707,7 @@ class Pulser(Worker):
                     for pd in self.pds
                 ]
             )
-            and (self._pd_spectrum or self.clock.start())
+            and (self.clock is None or self.clock.start())
             and all([pd.start() for pd in self.pds])
         ):
             self.logger.error("Error starting PDs.")

@@ -489,7 +489,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         else:
             success = self.sg.set_output(False)
         success &= all([pd.stop() for pd in self.pds])
-        if self._pd_analog and not self._pd_spectrum:
+        if self.clock is not None:
             success &= self.clock.stop()
         success &= self.pg.stop()
 
@@ -540,7 +540,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             return self.configure_apd(params, label)
 
     def start_pd(self):
-        if self._pd_analog and not self._pd_spectrum:
+        if self.clock is not None:
             return self.clock.start() and all([pd.start() for pd in self.pds])
         else:
             return all([pd.start() for pd in self.pds])
@@ -603,7 +603,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             "trigger_dir": True,
             "retriggerable": True,
         }
-        if self._pd_spectrum:
+        if self.clock is None:
             clock_pd = self._pd_clock
         else:
             if not self.clock.configure(params_clock):

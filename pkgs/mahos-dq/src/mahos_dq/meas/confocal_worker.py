@@ -199,7 +199,7 @@ class Tracer(Worker):
         buffer_size = self.cb_samples * self.conf.get("buffer_size_coeff", 200)
         params_clock = {"freq": freq, "samples": buffer_size, "finite": False}
         success = True
-        if not self._pd_spectrum:
+        if self.clock is not None:
             success &= self.clock.configure(params_clock)
             clock_pd = self.clock.get_internal_output()
         else:
@@ -221,7 +221,7 @@ class Tracer(Worker):
             ]
         )
         success &= all([pd.start() for pd in self.pds])
-        if not self._pd_spectrum:
+        if self.clock is not None:
             success &= self.clock.start()
 
         if not success:
@@ -240,7 +240,7 @@ class Tracer(Worker):
             return False
 
         success = all([pd.stop() for pd in self.pds]) and all([pd.release() for pd in self.pds])
-        if not self._pd_spectrum:
+        if self.clock is not None:
             success &= self.clock.stop() and self.clock.release()
         if success:
             self.timer = None

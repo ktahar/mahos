@@ -592,10 +592,8 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         loader.load_preset(self.conf, cli.class_name("sg"))
 
     def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
-        d = self._make_param_dict(
-            label, self.sg.get_bounds(), self._pd_analog or self._pd_spectrum
-        )
-        if self._pd_analog or self._pd_spectrum:
+        d = self._make_param_dict(label, self.sg.get_bounds(), self._pd_analog)
+        if self._pd_analog:
             d["pd"] = P.ParamDict()
             d["pd"]["rate"] = P.FloatParam(
                 self.conf.get("pd_rate", 400e3),
@@ -700,7 +698,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             "trigger_dir": True,
             "retriggerable": True,
         }
-        if self._pd_spectrum:
+        if self.clock is None:
             clock_pd = self._pd_clock
         else:
             if not self.clock.configure(params_clock):
@@ -735,7 +733,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
                 for pd in self.pds
             ]
         )
-        if not self._pd_spectrum:
+        if self.clock is not None:
             success = success and self.clock.start()
         success = success and all([pd.start() for pd in self.pds])
         return success
@@ -869,7 +867,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             success &= self.sg.set_output(False)
 
         success &= all([pd.stop() for pd in self.pds])
-        if self._pd_analog and not self._pd_spectrum:
+        if self.clock is not None:
             success &= self.clock.stop()
         success &= self.pg.stop()
         success &= self.release_instruments()
