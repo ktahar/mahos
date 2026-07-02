@@ -313,14 +313,11 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             try:
                 return self.get_pd_data()
             finally:
-                with self._inflight_cond:
-                    if self._inflight > 0:
-                        self._inflight -= 1
-                    self._inflight_cond.notify()
+                self._decrement_inflight()
         else:
             return self._queue.pop_block()
 
-    def _wait_inflight(self, ev: threading.Event) -> bool:
+    def _reserve_inflight(self, ev: threading.Event) -> bool:
         with self._inflight_cond:
             if ev.is_set():
                 return False
@@ -328,11 +325,16 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
                 if ev.is_set():
                     return False
                 self._inflight_cond.wait(0.01)
+            self._inflight += 1
             return True
 
-    def _increment_inflight(self):
+    def _decrement_inflight(self):
         with self._inflight_cond:
-            self._inflight += 1
+            if self._inflight > 0:
+                self._inflight -= 1
+            else:
+                self.logger.warn("get_point() completed with no inflight acquisition.")
+            self._inflight_cond.notify()
 
     def _wait_pg(self):
         for _ in range(10_000):
@@ -345,12 +347,15 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
     def sweep_loop_async(self, ev: threading.Event):
         while True:
             for f in self.freqs:
-                if not self._wait_inflight(ev):
+                if not self._reserve_inflight(ev):
                     self.logger.info("Quitting sweep loop.")
                     return
-                self.sg.set_freq_CW(f)
-                self.pg.trigger()
-                self._increment_inflight()
+                try:
+                    self.sg.set_freq_CW(f)
+                    self.pg.trigger()
+                except Exception:
+                    self._decrement_inflight()
+                    raise
                 self._wait_pg()
                 if ev.is_set():
                     self.logger.info("Quitting sweep loop.")
