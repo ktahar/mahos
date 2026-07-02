@@ -529,7 +529,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
         else:
             self.clock = None
-        self.add_instruments(self.sg, self.pg, *self.pds)
+        self.add_instruments(self.sg, self.pg, self.clock, *self.pds)
 
         self.check_required_conf(["pd_clock", "block_base", "minimum_block_length"])
         self._pd_clock = self.conf["pd_clock"]

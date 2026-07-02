@@ -33,6 +33,7 @@ class AnalogPDMM(InstrumentOverlay):
 
         self.dmm = self.conf["dmm"]
         self.dmm_label = self.conf.get("dmm_label", "dcv")
+        self.add_instruments(self.dmm)
 
         self.gain = self.conf.get("gain", 1.0)
         self.unit = self.conf.get("unit", "V")
@@ -99,6 +100,7 @@ class LockinAnalogPDMM(InstrumentOverlay):
         self.dmm = self.conf["dmm"]
         self.dmm_labelX = self.conf.get("dmm_labelX", "ch1_dcv")
         self.dmm_labelY = self.conf.get("dmm_labelY", "ch2_dcv")
+        self.add_instruments(self.dmm)
 
         self.gain = self.conf.get("gain", 1.0)
         self.unit = self.conf.get("unit", "V")
