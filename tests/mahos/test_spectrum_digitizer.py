@@ -55,16 +55,16 @@ def test_align_buffer_samples_is_notify_multiple():
     assert inst._align_buffer_samples(5000, 2048) == 6144
 
 
-def test_append_tracer_samples_reblocks_aligned_notifications():
+def test_append_stream_samples_reblocks_aligned_notifications():
     inst = make_inst()
     inst.queue = RollingQueue(100)
     inst._line_num = 1
     inst._stamp = False
     inst._oversample = 2
-    inst._tracer_samples = 4
+    inst._stream_samples = 4
     inst._pending = [[]]
 
-    inst._append_tracer_samples([np.arange(10.0)])
+    inst._append_stream_samples([np.arange(10.0)])
 
     np.testing.assert_allclose(inst.pop_opt(), np.array([0.5, 2.5]))
     np.testing.assert_allclose(inst.pop_opt(), np.array([4.5, 6.5]))
@@ -72,19 +72,19 @@ def test_append_tracer_samples_reblocks_aligned_notifications():
     np.testing.assert_allclose(inst._pending[0][0], np.array([8.0, 9.0]))
 
 
-def test_append_tracer_samples_handles_multi_channel_blocks():
+def test_append_stream_samples_handles_multi_channel_blocks():
     inst = make_inst({"lines": [0, 1]})
     inst.queue = RollingQueue(100)
     inst._line_num = 2
     inst._stamp = False
     inst._oversample = 1
-    inst._tracer_samples = 3
+    inst._stream_samples = 3
     inst._pending = [[], []]
 
-    inst._append_tracer_samples([np.array([1.0, 2.0]), np.array([10.0, 20.0])])
+    inst._append_stream_samples([np.array([1.0, 2.0]), np.array([10.0, 20.0])])
     assert inst.pop_opt() is None
 
-    inst._append_tracer_samples([np.array([3.0, 4.0]), np.array([30.0, 40.0])])
+    inst._append_stream_samples([np.array([3.0, 4.0]), np.array([30.0, 40.0])])
     data = inst.pop_opt()
 
     np.testing.assert_allclose(data[0], np.array([1.0, 2.0, 3.0]))

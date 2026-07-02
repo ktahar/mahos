@@ -16,7 +16,7 @@ from mahos.inst.daq_interface import BufferedReaderInterface
 
 
 class PDInterface(BufferedReaderInterface):
-    """Common interface for SinglePhotonCounter and AnalogIn-based PD."""
+    """Common interface for SinglePhotonCounter (BufferedEdgeCounter) and AnalogIn-based PD."""
 
     def configure_triggered(
         self,
@@ -43,75 +43,77 @@ class PDInterface(BufferedReaderInterface):
     ) -> bool:
         """Configure triggered fixed-length acquisition.
 
+        This is only for Analog PD now (not for SinglePhotonCounter/BufferedEdgeCounter).
+
         ``trigger_source`` is the DAQ sample clock for conventional AnalogIn and the hardware
         trigger input for Spectrum digitizers.
 
         """
 
         params = {
-            "mode": "triggered",
-            "trigger_source": trigger_source,
-            "trigger_dir": trigger_dir,
-            "clock": trigger_source,
             "cb_samples": cb_samples,
             "samples": samples,
-            "buffer_size": buffer_size,
             "rate": rate,
+            "bounds": bounds,
             "finite": finite,
-            "every": every,
+            "buffer_size": buffer_size,
             "drop_first": drop_first,
-            "clock_mode": True,
             "oversample": oversample,
             "block_reduce_factor": block_reduce_factor,
             "block_reduce_samples": block_reduce_samples,
             "block_reduce_op": block_reduce_op,
             "reduce_factor": reduce_factor,
             "reduce_op": reduce_op,
-            "bounds": bounds,
+            # DAQ (AnalogIn) parameters
+            "clock": trigger_source,
+            "clock_mode": True,
+            "data_transfer": data_transfer,
+            "every": every,
+            # SpectrumAnalogIn parameters
+            "trigger_source": trigger_source,
+            "trigger_dir": trigger_dir,
+            "segment_samples": segment_samples,
             "hardware_average": hardware_average,
         }
-        if segment_samples is not None:
-            params["segment_samples"] = segment_samples
-        if data_transfer:
-            params["data_transfer"] = data_transfer
-        return self.configure(params)
+        # label is referred by SpectrumAnalogIn only
+        return self.configure(params, "triggered")
 
-    def configure_tracer(
+    def configure_stream(
         self,
-        clock: str,
         cb_samples: int,
-        samples: int,
+        buffer_size: int,
         rate: float,
         time_window: float,
         *,
-        buffer_size: int = 0,
         bounds=(-10.0, 10.0),
-        finite: bool = False,
-        every: bool = False,
-        stamp: bool = True,
         oversample: int = 1,
+        clock: str = "",
+        stamp: bool = True,
         data_transfer: str | None = None,
     ) -> bool:
-        """Configure continuous tracer acquisition."""
+        """Configure continuously running infinite (stream) acquisition."""
 
         params = {
-            "mode": "tracer",
             "cb_samples": cb_samples,
-            "samples": samples,
             "buffer_size": buffer_size,
             "rate": rate,
-            "finite": finite,
-            "every": every,
             "stamp": stamp,
-            "clock": clock,
+            # BufferedEdgeCounter parameters
             "time_window": time_window,
-            "clock_mode": True,
+            # Analog (AnalogIn and SpectrumAnalogIn) parameters
             "oversample": oversample,
             "bounds": bounds,
+            # DAQ (BufferedEdgeCounter and AnalogIn) parameters
+            "samples": buffer_size,
+            "clock": clock,
+            "finite": False,
+            "every": False,
+            # AnalogIn parameters
+            "clock_mode": True,
+            "data_transfer": data_transfer,
         }
-        if data_transfer:
-            params["data_transfer"] = data_transfer
-        return self.configure(params)
+        # label is referred by SpectrumAnalogIn only
+        return self.configure(params, "stream")
 
 
 class SinglePhotonCounterInterface(PDInterface):

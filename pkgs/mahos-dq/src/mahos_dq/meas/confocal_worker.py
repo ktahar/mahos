@@ -206,18 +206,15 @@ class Tracer(Worker):
             clock_pd = ""
         success &= all(
             [
-                pd.configure_tracer(
-                    clock_pd,
+                pd.configure_stream(
                     self.cb_samples,
                     buffer_size,
                     freq,
                     self.time_window_sec,
-                    buffer_size=buffer_size,
-                    finite=False,
-                    every=False,
-                    stamp=True,
-                    oversample=oversample,
                     bounds=self.pd_bounds,
+                    oversample=oversample,
+                    clock=clock_pd,
+                    stamp=True,
                     data_transfer=self._pd_data_transfer,
                 )
                 for pd in self.pds

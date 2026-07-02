@@ -610,7 +610,6 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             num *= 2
         buffer_size = num * self.conf.get("buffer_size_coeff", 20)
         params_pd = {
-            "mode": "triggered",
             "trigger_source": clock_pd,
             "clock": clock_pd,
             "cb_samples": num,
@@ -629,4 +628,4 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         if self._pd_data_transfer:
             params_pd["data_transfer"] = self._pd_data_transfer
 
-        return all([pd.configure(params_pd) for pd in self.pds])
+        return all([pd.configure(params_pd, "triggered") for pd in self.pds])

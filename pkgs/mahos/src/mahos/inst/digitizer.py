@@ -25,7 +25,7 @@ class SpectrumAnalogIn(Instrument):
 
     This class supports continuous FIFO acquisition only. In ``triggered`` mode, each hardware
     trigger records a fixed-length segment with Spectrum multiple-recording FIFO mode. In
-    ``tracer`` mode, data are streamed continuously with single FIFO mode.
+    ``stream`` mode, data are streamed continuously with single FIFO mode.
 
     :param lines: channel indices to enable, for example ``[0]`` or ``[0, 1]``.
     :type lines: list[int | str]
@@ -53,7 +53,7 @@ class SpectrumAnalogIn(Instrument):
 
     class Mode(enum.Enum):
         UNCONFIGURED = 0
-        TRACER = 1
+        STREAM = 1
         TRIGGERED = 2
 
     def __init__(self, name, conf=None, prefix=None):
@@ -90,7 +90,7 @@ class SpectrumAnalogIn(Instrument):
         self._drop_records_left = 0
         self._segment_samples = 0
         self._record_samples = 0
-        self._tracer_samples = 0
+        self._stream_samples = 0
         self._notify_samples = 0
         self._buffer_samples = 0
         self._pending: list[list[np.ndarray]] = []
@@ -360,10 +360,10 @@ class SpectrumAnalogIn(Instrument):
             out.append(data)
         return out
 
-    def _reduce_tracer(self, data: np.ndarray) -> np.ndarray:
+    def _reduce_stream(self, data: np.ndarray) -> np.ndarray:
         if self._oversample > 1:
             if len(data) % self._oversample:
-                raise ValueError("tracer block length must be divisible by oversample")
+                raise ValueError("stream block length must be divisible by oversample")
             data = data.reshape(-1, self._oversample).mean(axis=1)
         return data
 
@@ -408,22 +408,22 @@ class SpectrumAnalogIn(Instrument):
                 continue
             self._append_data(record[0] if len(record) == 1 else record)
 
-    def _append_tracer_samples(self, samples: list[np.ndarray]):
+    def _append_stream_samples(self, samples: list[np.ndarray]):
         for ch_pending, data in zip(self._pending, samples):
             ch_pending.append(data)
 
         while all(
-            sum(len(a) for a in ch_pending) >= self._tracer_samples for ch_pending in self._pending
+            sum(len(a) for a in ch_pending) >= self._stream_samples for ch_pending in self._pending
         ):
             block = []
             for ch_pending in self._pending:
                 data = np.concatenate(ch_pending)
-                current = data[: self._tracer_samples]
-                rest = data[self._tracer_samples :]
+                current = data[: self._stream_samples]
+                rest = data[self._stream_samples :]
                 ch_pending.clear()
                 if len(rest):
                     ch_pending.append(rest)
-                block.append(self._reduce_tracer(current))
+                block.append(self._reduce_stream(current))
             self._append_data(block[0] if len(block) == 1 else block)
 
     def _reader_loop(self):
@@ -439,7 +439,7 @@ class SpectrumAnalogIn(Instrument):
                     if self._stop_ev.is_set():
                         break
                     converted = self._convert_fifo_block(block)
-                    self._append_tracer_samples(converted)
+                    self._append_stream_samples(converted)
         except Exception:
             if not self._stop_ev.is_set():
                 self.logger.exception("Spectrum FIFO reader stopped with an exception.")
@@ -480,7 +480,9 @@ class SpectrumAnalogIn(Instrument):
         required = ("trigger_source", "cb_samples", "samples", "rate")
         if not self.check_required_params(params, required):
             return False
-        if "segment_samples" not in params:
+        if params.get("finite", False):
+            return self.fail_with("finite samples in triggered mode is not supported yet.")
+        if not params.get("segment_samples"):
             return self.fail_with("segment_samples is required for Spectrum triggered mode.")
         if not self._validate_reduce_params(params):
             return False
@@ -546,7 +548,10 @@ class SpectrumAnalogIn(Instrument):
         if params.get("buffer_segments"):
             requested_buffer_samples = int(params["buffer_segments"]) * self._segment_samples
         else:
-            buffer_samples = int(params.get("buffer_size", params["samples"]))
+            if params.get("buffer_size", 0):
+                buffer_samples = params["buffer_size"]
+            else:
+                buffer_samples = params["samples"]
             buffer_samples *= self._oversample * self._reduce_factor
             if not self._hardware_average:
                 buffer_samples *= self._block_reduce_factor
@@ -579,8 +584,8 @@ class SpectrumAnalogIn(Instrument):
         self.logger.debug("Configured Spectrum triggered FIFO mode.")
         return True
 
-    def configure_tracer(self, params: dict) -> bool:
-        if not self.check_required_params(params, ("cb_samples", "samples", "rate")):
+    def configure_stream(self, params: dict) -> bool:
+        if not self.check_required_params(params, ("cb_samples", "buffer_size", "rate")):
             return False
         if not self._validate_reduce_params(params):
             return False
@@ -604,20 +609,19 @@ class SpectrumAnalogIn(Instrument):
             return False
 
         self._transfer = spcm.DataTransfer(card)
-        self._tracer_samples = int(params["cb_samples"]) * self._oversample
+        self._stream_samples = int(params["cb_samples"]) * self._oversample
         try:
-            self._notify_samples = self._align_notify_samples(self._tracer_samples)
+            self._notify_samples = self._align_notify_samples(self._stream_samples)
         except ValueError as e:
             return self.fail_with(str(e))
         requested_buffer_samples = max(
-            self._tracer_samples,
-            int(params.get("buffer_size", params["samples"])) * self._oversample,
+            self._stream_samples, int(params["buffer_size"]) * self._oversample
         )
         self._buffer_samples = self._align_buffer_samples(
             requested_buffer_samples, self._notify_samples
         )
         self._log_fifo_sizes(
-            "tracer", self._tracer_samples, self._notify_samples, self._buffer_samples
+            "stream", self._stream_samples, self._notify_samples, self._buffer_samples
         )
         self._transfer.allocate_buffer(self._buffer_samples)
         self._transfer.notify_samples(self._notify_samples)
@@ -626,8 +630,8 @@ class SpectrumAnalogIn(Instrument):
 
         self.queue = RollingQueue(self.queue_size)
         self._pending = [[] for _ in range(self._line_num)]
-        self._mode = self.Mode.TRACER
-        self.logger.debug("Configured Spectrum tracer FIFO mode.")
+        self._mode = self.Mode.STREAM
+        self.logger.debug("Configured Spectrum stream FIFO mode.")
         return True
 
     def get_fifo_status(self) -> dict:
@@ -638,9 +642,9 @@ class SpectrumAnalogIn(Instrument):
                 "notify_samples": self._notify_samples,
                 "buffer_samples": self._buffer_samples,
             }
-        elif self._mode == self.Mode.TRACER:
+        elif self._mode == self.Mode.STREAM:
             return {
-                "tracer_samples": self._tracer_samples,
+                "stream_samples": self._stream_samples,
                 "notify_samples": self._notify_samples,
                 "buffer_samples": self._buffer_samples,
             }
@@ -651,15 +655,12 @@ class SpectrumAnalogIn(Instrument):
     # Standard API
 
     def configure(self, params: dict, label: str = "") -> bool:
-        if not params.get("clock_mode", True):
-            return self.fail_with("SpectrumAnalogIn does not support on-demand mode.")
-        mode = params.get("mode", "triggered" if "trigger_source" in params else "tracer")
-        if mode == "triggered":
+        if label == "triggered":
             return self.configure_triggered(params)
-        elif mode == "tracer":
-            return self.configure_tracer(params)
+        elif label == "stream":
+            return self.configure_stream(params)
         else:
-            return self.fail_with(f"unknown SpectrumAnalogIn mode: {mode}")
+            return self.fail_with(f"unknown configure label: {label}")
 
     def start(self, label: str = "") -> bool:
         if self.running:
