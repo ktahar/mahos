@@ -155,8 +155,8 @@ class SpectrumAnalogIn(Instrument):
 
     def _get_offset_percent(self, amp_V: float, offset_V: float) -> int:
         ofs = int(round(offset_V / amp_V * 100))
-        if ofs > 100:
-            raise ValueError(f"requested offset is too large: {ofs:d}% > 100%")
+        if abs(ofs) > 100:
+            raise ValueError(f"requested offset is too large: abs({ofs:d}%) > 100%")
         return ofs
 
     def _setup_channels(self, params) -> bool:
@@ -335,6 +335,10 @@ class SpectrumAnalogIn(Instrument):
             self.logger.warn("queue is overflowing. The oldest data is discarded.")
 
     def _convert_gain(self, data):
+        # early return for efficiency in default NOP (gain = 1) case
+        if self.gain == 1.0:
+            return data
+
         if isinstance(data, list):
             return [d / self.gain for d in data]
         return data / self.gain

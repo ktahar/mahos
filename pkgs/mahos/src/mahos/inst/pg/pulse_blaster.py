@@ -713,6 +713,10 @@ class SpinCore_PulseBlasterESR_PRO(Instrument):
             waiting=bool(s & 0b1000),
         )
 
+    def get_finished(self) -> bool:
+        stat = self.get_status()
+        return not stat.running
+
     def trigger(self) -> bool:
         """issue a software trigger."""
 
@@ -768,6 +772,8 @@ class SpinCore_PulseBlasterESR_PRO(Instrument):
             return self.offsets  # offsets of last configure
         elif key == "opc":  # for API compatibility
             return True
+        elif key == "finished":
+            return self.get_finished()
         elif key == "validate":
             if "blocks" in args and "freq" in args:
                 return self.validate_blocks(args["blocks"], args["freq"])

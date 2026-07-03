@@ -368,7 +368,7 @@ class PulseStreamer(Instrument):
         elif key == "opc":  # for API compatibility
             return True
         elif key == "finished":
-            return self.ps.hasFinished()
+            return self.get_finished()
         elif key == "validate":
             if "blocks" in args and "freq" in args:
                 return self.validate_blocks(args["blocks"], args["freq"])

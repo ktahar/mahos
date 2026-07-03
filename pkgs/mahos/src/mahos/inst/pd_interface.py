@@ -67,6 +67,7 @@ class PDInterface(BufferedReaderInterface):
             # DAQ (AnalogIn) parameters
             "clock": trigger_source,
             "clock_mode": True,
+            "clock_dir": trigger_dir,
             "data_transfer": data_transfer,
             "every": every,
             # SpectrumAnalogIn parameters
