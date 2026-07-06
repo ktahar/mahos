@@ -721,7 +721,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
                     num,
                     buffer_size,
                     rate,
-                    segment_samples=oversamp if self._pd_spectrum else None,
+                    segment_samples=oversamp,
                     buffer_size=buffer_size,
                     finite=False,
                     every=False,

@@ -696,7 +696,7 @@ class Pulser(Worker):
                         num,
                         buffer_size,
                         rate,
-                        segment_samples=self.oversample if self._pd_spectrum else None,
+                        segment_samples=self.oversample,
                         buffer_size=buffer_size,
                         finite=False,
                         every=self.conf.get("every", False),

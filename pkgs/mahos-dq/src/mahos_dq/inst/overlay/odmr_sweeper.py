@@ -584,8 +584,9 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             granularity = self.conf.get("pd_segment_granularity", 16)
             try:
                 adjusted = round_segment_samples_down(oversamp, granularity=granularity)
-            except ValueError as e:
-                return self.fail_with(str(e))
+            except ValueError:
+                self.logger.exception("failed to round oversample to segment granularity")
+                return False
             if adjusted != oversamp:
                 self.logger.info(
                     "PD oversample adjusted down: "

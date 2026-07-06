@@ -230,8 +230,8 @@ class ODMRPGMixin(object):
         blk_trigger = Block(
             "Trigger",
             [
-                (None, final_delay),
-                ("trigger", max(trigger_width, min_len - final_delay)),
+                (None, max(final_delay, min_len - trigger_width)),
+                ("trigger", trigger_width),
             ],
         )
         self._adjust_block(blk_trigger, 0)
