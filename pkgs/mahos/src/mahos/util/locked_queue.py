@@ -20,4 +20,10 @@ warnings.warn(
     stacklevel=2,
 )
 
-LockedQueue = RollingQueue
+
+class LockedQueue(RollingQueue):
+    def pop_block(self, timeout_sec: float | None = None, interval_sec=0.001):
+        return RollingQueue.pop_block(self, timeout_sec)
+
+    def pop_all_block(self, timeout_sec: float | None = None, interval_sec=0.001):
+        return RollingQueue.pop_all_block(self, timeout_sec)
