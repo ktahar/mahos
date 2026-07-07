@@ -1015,6 +1015,10 @@ class DTG5274_mock(Instrument, DTGCoreMixin):
         )
         return tree is not None
 
+    def get_finished(self) -> bool:
+        time.sleep(0.01)
+        return True
+
     # Standard API
 
     def start(self, label: str = "") -> bool:
@@ -1066,6 +1070,8 @@ class DTG5274_mock(Instrument, DTGCoreMixin):
                 return None
         elif key == "opc":
             return True
+        elif key == "finished":
+            return self.get_finished()
         elif key == "validate":
             if "blocks" in args and "freq" in args:
                 return self.validate_blocks(args["blocks"], args["freq"])
@@ -1302,6 +1308,10 @@ class PulseStreamer_mock(Instrument):
             self.logger.error(msg)
             return False
 
+    def get_finished(self) -> bool:
+        time.sleep(0.01)
+        return True
+
     def clear(self) -> bool:
         # For API compatibility
         return True
@@ -1353,6 +1363,8 @@ class PulseStreamer_mock(Instrument):
             return self.offsets  # offsets of last configure
         elif key == "opc":  # for API compatibility
             return True
+        elif key == "finished":
+            return self.get_finished()
         elif key == "validate":
             if "blocks" in args and "freq" in args:
                 return self.validate_blocks(args["blocks"], args["freq"])

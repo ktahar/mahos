@@ -21,15 +21,15 @@ from mahos.util.queue import RollingQueue
 
 
 class SpectrumAnalogIn(Instrument):
-    """AnalogIn-compatible Spectrum Instrumentation digitizer.
+    """Spectrum Instrumentation digitizer (AnalogIn card).
 
-    This class supports continuous FIFO acquisition only. In ``triggered`` mode, each hardware
-    trigger records a fixed-length segment with Spectrum multiple-recording FIFO mode. In
-    ``stream`` mode, data are streamed continuously with single FIFO mode.
+    This class now supports continuous FIFO acquisition only. In ``triggered`` mode,
+    each hardware trigger records a fixed-length segment with multiple-recording FIFO mode.
+    In ``stream`` mode, data are streamed continuously with single FIFO mode.
 
     :param lines: channel indices to enable, for example ``[0]`` or ``[0, 1]``.
     :type lines: list[int | str]
-    :param channel_mask: explicit Spectrum channel bit mask. Takes precedence over ``lines``.
+    :param channel_mask: explicit channel bit mask. Takes precedence over ``lines``.
     :type channel_mask: int
     :param resource: card resource such as ``/dev/spcm0`` or ``TCPIP::192.168.1.10::inst0::INSTR``.
     :type resource: str
@@ -213,7 +213,7 @@ class SpectrumAnalogIn(Instrument):
         if mode == "intpll":
             clock.mode(spcm.SPC_CM_INTPLL)
         else:
-            return self.fail_with(f"unsupported Spectrum clock mode: {mode}")
+            return self.fail_with(f"unsupported clock mode: {mode}")
         rate_req = int(round(params["rate"])) * spcm.units.Hz
         rate_ret = clock.sample_rate(rate_req, return_unit=spcm.units.Hz)
         msg = f"Sampling rate: requested = {rate_req.magnitude:_d} Hz, "
@@ -260,7 +260,7 @@ class SpectrumAnalogIn(Instrument):
             trigger.or_mask(spcm.SPC_TMASK_NONE)
             trigger.and_mask(spcm.SPC_TMASK_NONE)
         else:
-            return self.fail_with(f"unsupported Spectrum trigger_source: {source}")
+            return self.fail_with(f"unsupported trigger_source: {source}")
         return True
 
     def _start_transfer(self, *commands):
@@ -449,8 +449,7 @@ class SpectrumAnalogIn(Instrument):
                     converted = self._convert_fifo_block(block)
                     self._append_stream_samples(converted)
         except Exception:
-            if not self._stop_ev.is_set():
-                self.logger.exception("Spectrum FIFO reader stopped with an exception.")
+            self.logger.exception("Exception caught in FIFO reader thread:")
 
     def _get_bounds(self, params):
         bounds = params.get("bounds", self.conf.get("bounds", (-10.0, 10.0)))
@@ -491,7 +490,7 @@ class SpectrumAnalogIn(Instrument):
         if params.get("finite", False):
             return self.fail_with("finite samples in triggered mode is not supported yet.")
         if not params.get("segment_samples"):
-            return self.fail_with("segment_samples is required for Spectrum triggered mode.")
+            return self.fail_with("segment_samples is required for triggered mode.")
         if not self._validate_reduce_params(params):
             return False
 
@@ -509,9 +508,7 @@ class SpectrumAnalogIn(Instrument):
             bool(params.get("hardware_average", True)) and self._block_reduce_factor > 1
         )
         if self._hardware_average and self._block_reduce_op != "mean":
-            return self.fail_with(
-                "Spectrum hardware averaging supports block_reduce_op='mean' only."
-            )
+            return self.fail_with("hardware averaging supports block_reduce_op='mean' only.")
         if (
             self._block_reduce_factor > 1
             and not self._hardware_average
@@ -595,7 +592,7 @@ class SpectrumAnalogIn(Instrument):
         self.queue = RollingQueue(self.queue_size)
         self._pending = [[] for _ in range(self._line_num)]
         self._mode = self.Mode.TRIGGERED
-        self.logger.debug("Configured Spectrum triggered FIFO mode.")
+        self.logger.debug("Configured triggered FIFO mode.")
         return True
 
     def configure_stream(self, params: dict) -> bool:
@@ -645,7 +642,7 @@ class SpectrumAnalogIn(Instrument):
         self.queue = RollingQueue(self.queue_size)
         self._pending = [[] for _ in range(self._line_num)]
         self._mode = self.Mode.STREAM
-        self.logger.debug("Configured Spectrum stream FIFO mode.")
+        self.logger.debug("Configured stream FIFO mode.")
         return True
 
     def get_fifo_status(self) -> dict:
@@ -701,11 +698,27 @@ class SpectrumAnalogIn(Instrument):
             spcm = self._import_spcm()
             self._card.stop(spcm.M2CMD_DATA_STOPDMA)
         except Exception:
-            self.logger.exception("Exception while stopping Spectrum card.")
+            self.logger.exception("Exception while stopping the card.")
         if self._reader is not None:
             self._reader.join(timeout=float(self.conf.get("stop_join_sec", 2.0)))
             if self._reader.is_alive():
-                self.logger.warn("Spectrum reader thread did not stop before timeout.")
+                self.logger.error(
+                    "Reader thread did not stop before timeout."
+                    " Closing card handle to force it to abort."
+                )
+                # STOPDMA didn't unblock the thread's WAITDMA call (driver-level hang).
+                # Closing the handle forces the driver to error out any pending call on it,
+                # and the reader thread exits via its own exception handler. A fresh handle
+                # is opened on the next configure_*() call so the zombie thread can never
+                # touch the new session's card/transfer/queue.
+                try:
+                    self._card.close()
+                except Exception:
+                    self.logger.exception("Exception while force-closing the card.")
+                self._card = None
+                self._reader.join(timeout=float(self.conf.get("stop_join_sec", 2.0)))
+                if self._reader.is_alive():
+                    self.logger.error("Reader thread still alive after force-close.")
         self._reader = None
         self.running = False
         self._mode = self.Mode.UNCONFIGURED
@@ -718,7 +731,7 @@ class SpectrumAnalogIn(Instrument):
             try:
                 self._card.close()
             except Exception:
-                self.logger.exception("Exception while closing Spectrum card.")
+                self.logger.exception("Exception while closing the card.")
             self._card = None
 
     def pop_opt(self):

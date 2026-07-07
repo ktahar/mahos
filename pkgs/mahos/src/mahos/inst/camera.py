@@ -829,7 +829,11 @@ class BaslerPylonCamera(Instrument):
         if self._mode == self.Mode.CONTINUOUS:
             if self._queue is None:
                 return FrameResult(frame=None)
-            return self._queue.pop_block(timeout_sec=timeout_sec)
+            r = self._queue.pop_block(timeout_sec=timeout_sec)
+            if r is None:
+                return FrameResult(frame=None)
+            else:
+                return r
         elif self._mode == self.Mode.HARD_TRIGGER:
             if self._queue is None:
                 return FrameResult(frame=None)

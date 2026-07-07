@@ -336,9 +336,11 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
                 self.logger.warn("get_point() completed with no inflight acquisition.")
             self._inflight_cond.notify()
 
-    def _wait_pg(self) -> bool:
+    def _wait_pg(self, ev: threading.Event) -> bool:
         for _ in range(10_000):
             time.sleep(0.001)
+            if ev.is_set():
+                return False
             if self.pg.get_finished():
                 return True
         return self.fail_with("PG hasn't finished operation.")
@@ -355,7 +357,8 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
                 except Exception:
                     self._decrement_inflight()
                     raise
-                if not self._wait_pg():
+                if not self._wait_pg(ev):
+                    self.logger.info("Quitting sweep loop.")
                     return
                 if ev.is_set():
                     self.logger.info("Quitting sweep loop.")
