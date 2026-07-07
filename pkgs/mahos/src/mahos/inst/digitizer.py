@@ -48,6 +48,9 @@ class SpectrumAnalogIn(Instrument):
     :param notify_alignment_bytes: (default: 4096) required byte alignment for FIFO
         notify sizes. Set to ``1`` to disable alignment.
     :type notify_alignment_bytes: int
+    :param strict: (default: True) If True, check realized sampling rate strictly -
+        the configuration fails whenever requested and realized rates don't match.
+    :type strict: bool
 
     """
 
@@ -67,6 +70,7 @@ class SpectrumAnalogIn(Instrument):
         self._silent = self.conf.get("silent", False)
         self.unit = self.conf.get("unit", "V")
         self.gain = float(self.conf.get("gain", 1.0))
+        self._strict = self.conf.get("strict", True)
 
         self._spcm = None
         self._card = None
@@ -218,6 +222,8 @@ class SpectrumAnalogIn(Instrument):
         rate_ret = clock.sample_rate(rate_req, return_unit=spcm.units.Hz)
         msg = f"Sampling rate: requested = {rate_req.magnitude:_d} Hz, "
         msg += f"actual = {rate_ret.magnitude:_d} Hz"
+        if self._strict and rate_req != rate_ret:
+            return self.fail_with(msg)
         self.logger.debug(msg)
         return True
 

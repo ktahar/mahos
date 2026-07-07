@@ -591,19 +591,25 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         )
         loader.load_preset(self.conf, cli.class_name("sg"))
 
+    def _pd_rate_param(self):
+        rate = self.conf.get("pd_rate", 400e3)
+        if isinstance(rate, (tuple, list)) and isinstance(rate[0], int):
+            return P.IntChoiceParam(rate[0], rate, doc="PD sampling rate")
+        elif isinstance(rate, int):
+            return P.IntParam(
+                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
+            )
+        elif isinstance(rate, float):
+            return P.FloatParam(
+                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
+            )
+        raise TypeError("conf['pd_rate'] has invalid type.")
+
     def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
         d = self._make_param_dict(label, self.sg.get_bounds(), self._pd_analog)
         if self._pd_analog:
             d["pd"] = P.ParamDict()
-            d["pd"]["rate"] = P.FloatParam(
-                self.conf.get("pd_rate", 400e3),
-                1e3,
-                1e9,
-                unit="Hz",
-                SI_prefix=True,
-                digit=9,
-                doc="PD sampling rate",
-            )
+            d["pd"]["rate"] = self._pd_rate_param()
             lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
             d["pd"]["bounds"] = [
                 P.FloatParam(lb, -10.0, 10.0, unit="V"),

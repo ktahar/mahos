@@ -516,19 +516,25 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             self.logger.error(f"unknown get() key: {key}")
             return None
 
+    def _pd_rate_param(self):
+        rate = self.conf.get("pd_rate", 400e3)
+        if isinstance(rate, (tuple, list)) and isinstance(rate[0], int):
+            return P.IntChoiceParam(rate[0], rate, doc="PD sampling rate")
+        elif isinstance(rate, int):
+            return P.IntParam(
+                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
+            )
+        elif isinstance(rate, float):
+            return P.FloatParam(
+                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
+            )
+        raise TypeError("conf['pd_rate'] has invalid type.")
+
     def get_pd_param_dict(self) -> P.ParamDict[str, P.PDValue] | None:
         if not self._pd_analog:
             return None
         d = P.ParamDict()
-        d["rate"] = P.FloatParam(
-            self.conf.get("pd_rate", 400e3),
-            1e3,
-            1e9,
-            unit="Hz",
-            SI_prefix=True,
-            digit=9,
-            doc="PD sampling rate",
-        )
+        d["rate"] = self._pd_rate_param()
         lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
         d["bounds"] = [
             P.FloatParam(lb, -10.0, 10.0, unit="V", doc="lower bound of expected voltage"),

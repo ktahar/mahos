@@ -358,9 +358,6 @@ class Pulser(PODMRPulser):
         self.pulse_pattern = None
         self._analysis_warned = False
 
-    def _pd_rate(self, params: dict) -> float:
-        return float(params["pd"]["rate"])
-
     def _sweeps_per_record(self, params: dict) -> int:
         return int(params.get("sweeps_per_record", 1))
 
@@ -404,7 +401,7 @@ class Pulser(PODMRPulser):
         except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {self.data.label}: {e}")
             return False
-        pd_rate = self._pd_rate(params)
+        pd_rate = params["pd"]["rate"]
         sample_period = 1.0 / pd_rate
         self.samples_per_trace = max(1, int(round(trace_length_ticks / self.freq * pd_rate)))
         if self._pd_spectrum:
@@ -455,7 +452,7 @@ class Pulser(PODMRPulser):
 
     def init_start_pds(self) -> bool:
         params = self.data.get_params()
-        rate = self._pd_rate(params)
+        rate = params["pd"]["rate"]
         sweeps_per_record = self._sweeps_per_record(params)
         shots_per_point = self._shots_per_point(params)
 
@@ -689,6 +686,20 @@ class Pulser(PODMRPulser):
             self.logger.error("Error stopping pulser.")
         return success
 
+    def _pd_rate_param(self):
+        rate = self.conf.get("pd_rate", 2e6)
+        if isinstance(rate, (tuple, list)) and isinstance(rate[0], int):
+            return P.IntChoiceParam(rate[0], rate, doc="PD sampling rate")
+        elif isinstance(rate, int):
+            return P.IntParam(
+                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
+            )
+        elif isinstance(rate, float):
+            return P.FloatParam(
+                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
+            )
+        raise TypeError("conf['pd_rate'] has invalid type.")
+
     def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
         d = super().get_param_dict(label)
         if d is None:
@@ -745,14 +756,7 @@ class Pulser(PODMRPulser):
             doc="number of repeated shots per sweep point",
         )
         d["pd"] = P.ParamDict()
-        d["pd"]["rate"] = P.FloatParam(
-            self.conf.get("pd_rate", 2e6),
-            1e3,
-            1e9,
-            unit="Hz",
-            SI_prefix=True,
-            doc="PD sampling rate",
-        )
+        d["pd"]["rate"] = self._pd_rate_param()
         lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
         d["pd"]["buffer_size_coeff"] = P.IntParam(
             self.conf.get("buffer_size_coeff", 20),
