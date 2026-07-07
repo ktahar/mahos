@@ -435,6 +435,7 @@ class SpectrumAnalogIn(Instrument):
             self._append_data(block[0] if len(block) == 1 else block)
 
     def _reader_loop(self):
+        spcm = self._import_spcm()
         try:
             if self._mode == self.Mode.TRIGGERED:
                 for block in self._transfer:
@@ -448,6 +449,11 @@ class SpectrumAnalogIn(Instrument):
                         break
                     converted = self._convert_fifo_block(block)
                     self._append_stream_samples(converted)
+        except spcm.SpcmException as e:
+            if e.error.value == 0:
+                # "no error", no need to log exception.
+                return
+            self.logger.exception("SpcmException caught in FIFO reader thread:")
         except Exception:
             self.logger.exception("Exception caught in FIFO reader thread:")
 

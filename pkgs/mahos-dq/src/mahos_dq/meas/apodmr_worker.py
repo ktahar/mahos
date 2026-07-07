@@ -9,6 +9,7 @@ Worker for Analog-PD Pulse ODMR.
 """
 
 from __future__ import annotations
+import time
 
 import numpy as np
 
@@ -329,6 +330,7 @@ class Pulser(PODMRPulser):
         self._pd_trigger = self.conf["pd_trigger"]
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
         self._quick_resume = self.conf.get("quick_resume", True)
+        self._start_delay = self._conf_nonneg_num("start_delay", 0.5)
 
         self.generators = make_generators(
             freq=self.conf["pg_freq"],
@@ -628,6 +630,9 @@ class Pulser(PODMRPulser):
         success = self.start_sg(self.data.params)
         if self._fg_enabled(self.data.params):
             success &= self.fg.set_output(True)
+
+        time.sleep(self._start_delay)
+
         success &= self.pg.start()
 
         if not success:
