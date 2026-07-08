@@ -19,6 +19,7 @@ from mahos.msgs import param_msgs as P
 from mahos.msgs.inst.pg_msgs import TriggerType
 from mahos.util.queue import RollingQueue
 from mahos.util.conf import PresetLoader
+from mahos.util.typing import ConfTypeCheckMixin
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
 from mahos_dq.util.segments import round_segment_samples_down
 
@@ -228,7 +229,7 @@ class ODMRSweeperCommandAnalogPDMM(ODMRSweeperCommandBase):
         return self.pd.get_data()
 
 
-class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
+class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
     """ODMRSweeperPG provides primitive operations for ODMR sweep.
 
     This class performs the sweep by
@@ -279,6 +280,9 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
         self._channel_remap = self.conf.get("channel_remap")
         self._continue_mw = False
         self.pulse_pattern = None
+
+        self._pg_wait_timeout = self._conf_pos_num("pg_wait_timeout_sec", 10.0)
+        self._pg_wait_interval = self._conf_pos_num("pg_wait_interval_sec", 0.001)
 
     def load_pg_conf_preset(self):
         loader = PresetLoader(self.logger, PresetLoader.Mode.FORWARD)
@@ -337,12 +341,13 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
             self._inflight_cond.notify()
 
     def _wait_pg(self, ev: threading.Event) -> bool:
-        for _ in range(10_000):
-            time.sleep(0.001)
+        deadline = time.monotonic() + self._pg_wait_timeout
+        while time.monotonic() < deadline:
             if ev.is_set():
                 return False
             if self.pg.get_finished():
                 return True
+            time.sleep(self._pg_wait_interval)
         return self.fail_with("PG hasn't finished operation.")
 
     def sweep_loop_async(self, ev: threading.Event):
@@ -360,9 +365,6 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
                 if not self._wait_pg(ev):
                     self.logger.info("Quitting sweep loop.")
                     return
-                if ev.is_set():
-                    self.logger.info("Quitting sweep loop.")
-                    return
 
     def sweep_loop_sync(self, ev: threading.Event):
         while True:
@@ -370,7 +372,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin):
                 self.sg.set_freq_CW(f)
                 self.pg.trigger()
                 self._queue.append(self.get_pd_data())
-                if ev.is_set():
+                if not self._wait_pg(ev):
                     self.logger.info("Quitting sweep loop.")
                     return
 
