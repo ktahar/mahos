@@ -555,7 +555,10 @@ class SpectrumAnalogIn(Instrument):
 
         if self._hardware_average:
             self._transfer = spcm.BlockAverage(card)
-            self._transfer.averages(self._block_reduce_factor)
+            allocated = self._transfer.averages(self._block_reduce_factor)
+            self.logger.debug(f"allocated averages: {allocated}")
+            if allocated != self._block_reduce_factor:
+                return self.fail_with("failed to allocate requested averages")
         else:
             self._transfer = spcm.Multi(card)
 
