@@ -212,7 +212,7 @@ class APODMRBlockBuilder(object):
         laser_timing = []
         trigger_timing = []
         self.all_trigger_timing = []
-        self.eos_deadtime_ticks = int(round(params["pd"].get("eos_deadtime", 0.0) * freq))
+        self.eos_deadtime_ticks = int(round(params.get("pd", {}).get("eos_deadtime", 0.0) * freq))
         t = 0
 
         init_block_width = max(init_delay + laser_width, self.minimum_block_length)

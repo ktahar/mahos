@@ -495,6 +495,18 @@ class SpectrumAnalogIn(Instrument):
             return self.fail_with(f"reduce_op must be 'sum' or 'mean': {self._reduce_op}")
         return True
 
+    def _reset_card(self):
+        """Reset the card state."""
+
+        self.stop()
+        card = self._open_card()
+        # re-defer these objects for safety before reset.
+        self._transfer = None
+        self._channels = None
+        card.reset()
+
+        return card
+
     def configure_triggered(self, params: dict) -> bool:
         required = ("trigger_source", "cb_samples", "samples", "rate")
         if not self.check_required_params(params, required):
@@ -506,9 +518,9 @@ class SpectrumAnalogIn(Instrument):
         if not self._validate_reduce_params(params):
             return False
 
-        self.stop()
         spcm = self._import_spcm()
-        card = self._open_card()
+        card = self._reset_card()
+
         self._stamp = params.get("stamp", False)
         self._segment_samples = int(params["segment_samples"])
         if self._segment_samples < 32 or self._segment_samples % 16:
@@ -616,9 +628,9 @@ class SpectrumAnalogIn(Instrument):
         if not self._validate_reduce_params(params):
             return False
 
-        self.stop()
         spcm = self._import_spcm()
-        card = self._open_card()
+        card = self._reset_card()
+
         self._stamp = params.get("stamp", False)
         self._hardware_average = False
         self._averages = 1

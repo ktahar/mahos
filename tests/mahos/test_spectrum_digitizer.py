@@ -108,7 +108,7 @@ def test_configure_triggered_rejects_nondivisible_software_block_reduce(monkeypa
     }
 
     monkeypatch.setattr(inst, "_import_spcm", lambda: object())
-    monkeypatch.setattr(inst, "_open_card", lambda: object())
+    monkeypatch.setattr(inst, "_reset_card", lambda: object())
     monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
 
     assert not inst.configure_triggered(params)
