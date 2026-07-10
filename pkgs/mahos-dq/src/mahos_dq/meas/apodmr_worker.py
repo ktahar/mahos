@@ -178,6 +178,7 @@ class APODMRBlockBuilder(object):
         self.mw_modes = mw_modes
         self.iq_amplitude = iq_amplitude
         self.channel_remap = channel_remap
+        self.eos_deadtime_ticks = 0
         self.all_trigger_timing = []
 
     def build_blocks(
@@ -211,6 +212,7 @@ class APODMRBlockBuilder(object):
         laser_timing = []
         trigger_timing = []
         self.all_trigger_timing = []
+        self.eos_deadtime_ticks = int(round(params["pd"].get("eos_deadtime", 0.0) * freq))
         t = 0
 
         init_block_width = max(init_delay + laser_width, self.minimum_block_length)
@@ -281,7 +283,7 @@ class APODMRBlockBuilder(object):
             raise ValueError("check_sample_duration is called but all_trigger_timing is not set.")
 
         for t0, t1 in zip(self.all_trigger_timing, self.all_trigger_timing[1:]):
-            if (t1 - t0) < trace_length_ticks:
+            if (t1 - t0) + self.eos_deadtime_ticks < trace_length_ticks:
                 return False
         return True
 
@@ -771,6 +773,10 @@ class Pulser(PODMRPulser):
         d["pd"]["drop_first"] = P.IntParam(0, 0, 100, doc="drop first N records to stabilize")
         if self._pd_spectrum:
             d["pd"]["hardware_average"] = P.BoolParam(True, doc="use hardware block averaging")
+        d["pd"]["eos_deadtime"] = P.FloatParam(
+            200e-9, 0.0, 1.0, unit="s", SI_prefix=True, doc="end-of-sample deadtime"
+        )
+
         return d
 
     def work(self):
