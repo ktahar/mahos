@@ -581,7 +581,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
             "rate": rate,
             "finite": False,
             "every": False,
-            "drop_first": False,
+            "drop_first": 0,
             "gate": True,
             "time_window": time_window,
         }
@@ -635,13 +635,11 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
             "rate": rate,
             "finite": False,
             "every": False,
-            "drop_first": False,
+            "drop_first": 0,
             "clock_mode": True,
             "oversample": oversamp,
             "bounds": params["pd"].get("bounds", (-10.0, 10.0)),
         }
-        if self._pd_spectrum:
-            params_pd["segment_samples"] = oversamp
         if self._pd_data_transfer:
             params_pd["data_transfer"] = self._pd_data_transfer
 

@@ -486,7 +486,6 @@ class Pulser(PODMRPulser):
                         cb_samples,
                         buffer_size,
                         rate,
-                        segment_samples=self.samples_per_trace,
                         buffer_size=buffer_size,
                         finite=False,
                         drop_first=params["pd"].get("drop_first", 0),

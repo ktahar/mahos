@@ -631,7 +631,7 @@ class AnalogIn(ConfigurableTask):
     :param block_reduce_factor: (default: 1) additional reduction stage before ``reduce_factor``.
         cb_samples, samples, and buffer_size are multiplied by ``block_reduce_factor``.
     :type block_reduce_factor: int
-    :param block_reduce_samples: (default: 0) block size (after oversample averaging) for
+    :param block_reduce_samples: (default: 1) block size (after oversample averaging) for
         ``block_reduce_factor`` reduction stage. required when ``block_reduce_factor > 1``.
     :type block_reduce_samples: int
     :param block_reduce_op: (default: mean) reduction operation for blockwise reduction.
@@ -851,7 +851,7 @@ class AnalogIn(ConfigurableTask):
         drop_first = params.get("drop_first", 0)
         oversample = params.get("oversample", 1)
         block_reduce_factor = params.get("block_reduce_factor", 1)
-        block_reduce_samples = params.get("block_reduce_samples", 0)
+        block_reduce_samples = params.get("block_reduce_samples", 1)
         block_reduce_op = str(params.get("block_reduce_op", "mean")).lower()
         reduce_factor = params.get("reduce_factor", 1)
         reduce_op = str(params.get("reduce_op", "mean")).lower()
@@ -865,10 +865,8 @@ class AnalogIn(ConfigurableTask):
         if block_reduce_op not in ("sum", "mean"):
             self.logger.error(f"block_reduce_op must be 'sum' or 'mean', got: {block_reduce_op}")
             return False
-        if block_reduce_factor > 1 and block_reduce_samples < 1:
-            self.logger.error(
-                "block_reduce_samples must be positive when block_reduce_factor > 1."
-            )
+        if block_reduce_samples < 1:
+            self.logger.error("block_reduce_samples must be positive.")
             return False
         if reduce_factor < 1:
             self.logger.error("reduce_factor must be positive.")

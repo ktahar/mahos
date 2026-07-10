@@ -85,7 +85,7 @@ class SpectrumAnalogIn(Instrument):
         self._line_num = 0
         self._oversample = 1
         self._block_reduce_factor = 1
-        self._block_reduce_samples = 0
+        self._block_reduce_samples = 1
         self._block_reduce_op = "mean"
         self._reduce_factor = 1
         self._reduce_op = "mean"
@@ -472,7 +472,7 @@ class SpectrumAnalogIn(Instrument):
     def _validate_reduce_params(self, params) -> bool:
         self._oversample = int(params.get("oversample", 1))
         self._block_reduce_factor = int(params.get("block_reduce_factor", 1))
-        self._block_reduce_samples = int(params.get("block_reduce_samples", 0))
+        self._block_reduce_samples = int(params.get("block_reduce_samples", 1))
         self._block_reduce_op = str(params.get("block_reduce_op", "mean")).lower()
         self._reduce_factor = int(params.get("reduce_factor", 1))
         self._reduce_op = str(params.get("reduce_op", "mean")).lower()
@@ -485,10 +485,8 @@ class SpectrumAnalogIn(Instrument):
             return self.fail_with(
                 f"block_reduce_op must be 'sum' or 'mean': {self._block_reduce_op}"
             )
-        if self._block_reduce_factor > 1 and self._block_reduce_samples < 1:
-            return self.fail_with(
-                "block_reduce_samples must be positive when block_reduce_factor > 1."
-            )
+        if self._block_reduce_samples < 1:
+            return self.fail_with("block_reduce_samples must be positive.")
         if self._reduce_factor < 1:
             return self.fail_with("reduce_factor must be positive.")
         if self._reduce_op not in ("sum", "mean"):
@@ -507,14 +505,15 @@ class SpectrumAnalogIn(Instrument):
 
         return card
 
+    def _derive_segment_samples(self) -> int:
+        return self._oversample * self._block_reduce_samples
+
     def configure_triggered(self, params: dict) -> bool:
         required = ("trigger_source", "cb_samples", "samples", "rate")
         if not self.check_required_params(params, required):
             return False
         if params.get("finite", False):
             return self.fail_with("finite samples in triggered mode is not supported yet.")
-        if not params.get("segment_samples"):
-            return self.fail_with("segment_samples is required for triggered mode.")
         if not self._validate_reduce_params(params):
             return False
 
@@ -522,10 +521,11 @@ class SpectrumAnalogIn(Instrument):
         card = self._reset_card()
 
         self._stamp = params.get("stamp", False)
-        self._segment_samples = int(params["segment_samples"])
+        self._segment_samples = self._derive_segment_samples()
         if self._segment_samples < 32 or self._segment_samples % 16:
             return self.fail_with(
-                "segment_samples must be an integer multiple of 16 and at least 32."
+                "derived segment_samples must be an integer multiple of 16 and at least 32: "
+                f"{self._segment_samples}"
             )
         self._drop_records_left = abs(int(params.get("drop_first", 0)))
         self._hardware_average = (

@@ -25,7 +25,6 @@ class PDInterface(BufferedReaderInterface):
         samples: int,
         rate: float,
         *,
-        segment_samples: int | None = None,
         buffer_size: int = 0,
         bounds=(-10.0, 10.0),
         finite: bool = False,
@@ -33,7 +32,7 @@ class PDInterface(BufferedReaderInterface):
         drop_first: int = 0,
         oversample: int = 1,
         block_reduce_factor: int = 1,
-        block_reduce_samples: int = 0,
+        block_reduce_samples: int = 1,
         block_reduce_op: str = "mean",
         reduce_factor: int = 1,
         reduce_op: str = "mean",
@@ -73,7 +72,6 @@ class PDInterface(BufferedReaderInterface):
             # SpectrumAnalogIn parameters
             "trigger_source": trigger_source,
             "trigger_dir": trigger_dir,
-            "segment_samples": segment_samples,
             "hardware_average": hardware_average,
         }
         # label is referred by SpectrumAnalogIn only
