@@ -85,7 +85,7 @@ class SpectrumAnalogIn(Instrument):
         self._line_num = 0
         self._oversample = 1
         self._block_reduce_factor = 1
-        self._block_reduce_samples = 1
+        self._block_samples = 1
         self._block_reduce_op = "mean"
         self._reduce_factor = 1
         self._reduce_op = "mean"
@@ -387,7 +387,7 @@ class SpectrumAnalogIn(Instrument):
                 raise ValueError("record length must be divisible by oversample")
             data = data.reshape(-1, self._oversample).mean(axis=1)
         if self._block_reduce_factor > 1 and not self._hardware_average:
-            data = data.reshape(-1, self._block_reduce_factor, self._block_reduce_samples)
+            data = data.reshape(-1, self._block_reduce_factor, self._block_samples)
             if self._block_reduce_op == "sum":
                 data = data.sum(axis=1)
             else:
@@ -472,7 +472,7 @@ class SpectrumAnalogIn(Instrument):
     def _validate_reduce_params(self, params) -> bool:
         self._oversample = int(params.get("oversample", 1))
         self._block_reduce_factor = int(params.get("block_reduce_factor", 1))
-        self._block_reduce_samples = int(params.get("block_reduce_samples", 1))
+        self._block_samples = int(params.get("block_samples", 1))
         self._block_reduce_op = str(params.get("block_reduce_op", "mean")).lower()
         self._reduce_factor = int(params.get("reduce_factor", 1))
         self._reduce_op = str(params.get("reduce_op", "mean")).lower()
@@ -485,8 +485,8 @@ class SpectrumAnalogIn(Instrument):
             return self.fail_with(
                 f"block_reduce_op must be 'sum' or 'mean': {self._block_reduce_op}"
             )
-        if self._block_reduce_samples < 1:
-            return self.fail_with("block_reduce_samples must be positive.")
+        if self._block_samples < 1:
+            return self.fail_with("block_samples must be positive.")
         if self._reduce_factor < 1:
             return self.fail_with("reduce_factor must be positive.")
         if self._reduce_op not in ("sum", "mean"):
@@ -506,7 +506,7 @@ class SpectrumAnalogIn(Instrument):
         return card
 
     def _derive_segment_samples(self) -> int:
-        return self._oversample * self._block_reduce_samples
+        return self._oversample * self._block_samples
 
     def configure_triggered(self, params: dict) -> bool:
         required = ("trigger_source", "cb_samples", "samples", "rate")
@@ -536,9 +536,9 @@ class SpectrumAnalogIn(Instrument):
         if (
             self._block_reduce_factor > 1
             and not self._hardware_average
-            and int(params["cb_samples"]) % self._block_reduce_samples != 0
+            and int(params["cb_samples"]) % self._block_samples != 0
         ):
-            return self.fail_with("cb_samples must be integer multiple of block_reduce_samples.")
+            return self.fail_with("cb_samples must be integer multiple of block_samples.")
         self._averages = self._block_reduce_factor if self._hardware_average else 1
         self._record_samples = int(params["cb_samples"]) * self._oversample * self._reduce_factor
         if not self._hardware_average:

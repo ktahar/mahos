@@ -491,7 +491,7 @@ class Pulser(PODMRPulser):
                         drop_first=params["pd"].get("drop_first", 0),
                         oversample=1,
                         block_reduce_factor=shots_per_point,
-                        block_reduce_samples=self.samples_per_trace,
+                        block_samples=self.samples_per_trace,
                         block_reduce_op="mean",
                         reduce_factor=sweeps_per_record,
                         reduce_op="mean",
