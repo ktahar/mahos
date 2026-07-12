@@ -207,6 +207,12 @@ class APODMRBlockBuilder(object):
         shots_per_point = int(params.get("shots_per_point", 1))
         if shots_per_point < 1:
             raise ValueError("shots_per_point must be positive")
+        point_init_delay = float(params.get("point_init_delay", 0.0))
+        if point_init_delay < 0.0:
+            raise ValueError("point_init_delay must be non-negative")
+        point_init_delay_ticks = int(round(point_init_delay * freq))
+        if point_init_delay > 0.0 and point_init_delay_ticks <= 0:
+            raise ValueError("point_init_delay must be at least one pulse-generator tick")
 
         out = Blocks()
         laser_timing = []
@@ -222,25 +228,40 @@ class APODMRBlockBuilder(object):
 
         phases = K.init_final_phases(num_mw)
 
-        init = Block(
-            "INIT",
-            [
-                (("sync",) + phases, init_delay),
-                (
+        if not point_init_delay_ticks:
+            init = Block(
+                "INIT",
+                [
+                    (("sync",) + phases, init_delay),
                     (
-                        "laser",
-                        "sync",
-                    )
-                    + phases,
-                    init_block_width - init_delay,
-                ),
-            ],
-        )
-        out.append(init)
-        t += init.total_length()
+                        (
+                            "laser",
+                            "sync",
+                        )
+                        + phases,
+                        init_block_width - init_delay,
+                    ),
+                ],
+            )
+            out.append(init)
+            t += init.total_length()
 
+        point_index = 0
         for blks in blocks:
             for i in range(0, len(blks), 2):
+                if point_init_delay_ticks:
+                    delay = point_init_delay_ticks + (init_delay if point_index == 0 else 0)
+                    block_length = K.offset_base_inc(
+                        max(delay + laser_width, self.minimum_block_length), base_width
+                    )
+                    pattern = [
+                        (("sync",) + phases, block_length - laser_width),
+                        (("laser", "sync") + phases, laser_width),
+                    ]
+                    point_init = Block(f"POINT_INIT{point_index}", pattern)
+                    out.append(point_init)
+                    t += point_init.total_length()
+
                 op = K.inject_trigger(blks[i], roi_head, trigger_width)
                 rd = blks[i + 1]
                 unit = op.concatenate(rd)
@@ -252,6 +273,7 @@ class APODMRBlockBuilder(object):
                     self.all_trigger_timing.append(t + trigger_offset + j * unit.total_length())
                 out.append(unit.repeat(shots_per_point))
                 t += unit.total_length() * shots_per_point
+                point_index += 1
 
         out.append(Block("FINAL", [(("sync",) + phases, final_block_width)]))
 
@@ -755,6 +777,14 @@ class Pulser(PODMRPulser):
             1,
             1000000,
             doc="number of repeated shots per sweep point",
+        )
+        d["point_init_delay"] = P.FloatParam(
+            self.conf.get("point_init_delay", 0.0),
+            0.0,
+            1.0,
+            unit="s",
+            SI_prefix=True,
+            doc="dark delay before the initialization laser for each sweep point",
         )
         d["pd"] = P.ParamDict()
         d["pd"]["rate"] = self._pd_rate_param()

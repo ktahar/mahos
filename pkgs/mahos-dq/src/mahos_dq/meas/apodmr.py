@@ -133,6 +133,9 @@ class APODMR(BasicMeasNode):
     :type pulser.sweeps_per_record: int
     :param pulser.shots_per_point: (default: 1) default number of repeated shots per sweep point.
     :type pulser.shots_per_point: int
+    :param pulser.point_init_delay: (default: 0.0) default dark delay before the initialization
+        laser for each sweep point. A positive value enables per-point initialization blocks.
+    :type pulser.point_init_delay: float
     :param pulser.pd_rate: (default: 2e6) default PD sampling rate in Hz.
     :type pulser.pd_rate: float
     :param pulser.pd_bounds: (default: ``(-10.0, 10.0)``) default PD voltage bounds.

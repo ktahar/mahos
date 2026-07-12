@@ -262,6 +262,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
                 ("mw_delay", self.mdelayBox, 1e9),
                 ("trigger_width", self.trigwidthBox, 1e9),
                 ("init_delay", self.initdelayBox, 1e9),
+                ("point_init_delay", self.pointinitdelayBox, 1e9),
                 ("final_delay", self.finaldelayBox, 1e9),
                 ("mw_offset", self.moffsetBox, 1e9),
             ],
@@ -337,6 +338,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         self.mdelayBox.setValue(p.get("mw_delay", 0.0) * 1e9)
         self.trigwidthBox.setValue(p.get("trigger_width", 0.0) * 1e9)
         self.initdelayBox.setValue(p.get("init_delay", 0.0) * 1e9)
+        self.pointinitdelayBox.setValue(p.get("point_init_delay", 0.0) * 1e9)
         self.finaldelayBox.setValue(p.get("final_delay", 0.0) * 1e9)
         self.moffsetBox.setValue(p.get("mw_offset", 0.0) * 1e9)
 
@@ -365,6 +367,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         params["mw_delay"] = self.mdelayBox.value() * 1e-9
         params["trigger_width"] = self.trigwidthBox.value() * 1e-9
         params["init_delay"] = self.initdelayBox.value() * 1e-9
+        params["point_init_delay"] = self.pointinitdelayBox.value() * 1e-9
         params["final_delay"] = self.finaldelayBox.value() * 1e-9
         params["mw_offset"] = self.moffsetBox.value() * 1e-9
 
@@ -433,6 +436,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             self.mdelayBox,
             self.trigwidthBox,
             self.initdelayBox,
+            self.pointinitdelayBox,
             self.finaldelayBox,
             self.moffsetBox,
             self.paramTable,

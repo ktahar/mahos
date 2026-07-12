@@ -9,6 +9,7 @@ Tests for mahos_dq.meas.apodmr.
 """
 
 import numpy as np
+import pytest
 
 from mahos.msgs.common_msgs import BinaryState
 from mahos_dq.meas.apodmr import APODMRClient
@@ -54,6 +55,7 @@ def _apodmr_params() -> dict:
         "sweeps_per_record": 2,
         "max_records": 0,
         "shots_per_point": 1,
+        "point_init_delay": 0.0,
         "pulse": {},
         "plot": {
             "plotmode": "data01",
@@ -121,6 +123,66 @@ def test_apodmr_builder_inserts_trigger_before_each_laser():
     assert trace_length_ticks == round(
         (params["roi_head"] + params["laser_width"] + params["roi_tail"]) * freq
     )
+
+
+def test_apodmr_builder_inserts_point_initialization():
+    params = _apodmr_params()
+    params["shots_per_point"] = 3
+    params["point_init_delay"] = 2e-6
+    xdata = np.array([100e-9, 200e-9])
+    blocks, freq, common_pulses = make_generators()["rabi"].generate_raw_blocks(xdata, params)
+    builder = APODMRBlockBuilder(
+        minimum_block_length=1000,
+        block_base=4,
+        mw_modes=(MWMode.QPSK,),
+        iq_amplitude=0.0,
+        channel_remap=None,
+    )
+
+    built, laser_timing, trigger_timing, trace_length_ticks = builder.build_blocks(
+        blocks, freq, common_pulses, params, num_mw=1
+    )
+
+    base_width, _ld, laser_width, _md, _tw, init_delay, _final_delay = common_pulses
+    point_delay = round(params["point_init_delay"] * freq)
+    point_inits = built[0:-1:2]
+    acquisitions = built[1:-1:2]
+    assert [block.name for block in point_inits] == [f"POINT_INIT{i}" for i in range(4)]
+    assert len(acquisitions) == len(laser_timing) == len(trigger_timing) == 4
+    delays = [point_delay + init_delay, point_delay, point_delay, point_delay]
+    expected_dark_durations = [
+        K.offset_base_inc(max(delay + laser_width, builder.minimum_block_length), base_width)
+        - laser_width
+        for delay in delays
+    ]
+    assert [block.pattern[0].duration for block in point_inits] == expected_dark_durations
+    for block in point_inits:
+        assert "trigger" not in block.digital_channels()
+        laser_pulses = [pulse for pulse in block.pattern if "laser" in pulse.channels]
+        assert len(laser_pulses) == 1
+        assert laser_pulses[0].duration == laser_width
+        assert block.pattern[-1] == laser_pulses[0]
+    assert [block.Nrep for block in acquisitions] == [params["shots_per_point"]] * 4
+    assert len(builder.all_trigger_timing) == 4 * params["shots_per_point"]
+    assert trace_length_ticks == round(
+        (params["roi_head"] + params["laser_width"] + params["roi_tail"]) * freq
+    )
+
+
+def test_apodmr_builder_rejects_invalid_point_init_delay():
+    params = _apodmr_params()
+    blocks, freq, common_pulses = make_generators()["rabi"].generate_raw_blocks(
+        np.array([100e-9, 200e-9]), params
+    )
+    builder = APODMRBlockBuilder(1000, 4, (MWMode.QPSK,), 0.0, None)
+
+    params["point_init_delay"] = -1e-9
+    with pytest.raises(ValueError, match="non-negative"):
+        builder.build_blocks(blocks, freq, common_pulses, params, num_mw=1)
+
+    params["point_init_delay"] = 0.1 / freq
+    with pytest.raises(ValueError, match="at least one pulse-generator tick"):
+        builder.build_blocks(blocks, freq, common_pulses, params, num_mw=1)
 
 
 def test_apodmr_analyze_rejects_out_of_range_markers():

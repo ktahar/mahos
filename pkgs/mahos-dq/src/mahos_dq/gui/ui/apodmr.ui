@@ -524,10 +524,10 @@
             <string>Common Timing</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_6">
-            <item row="1" column="1">
-             <widget class="QDoubleSpinBox" name="initdelayBox">
+            <item row="0" column="3">
+             <widget class="QDoubleSpinBox" name="lwidthBox">
               <property name="prefix">
-               <string>Init delay: </string>
+               <string>Laser width: </string>
               </property>
               <property name="suffix">
                <string> ns</string>
@@ -541,9 +541,37 @@
               <property name="singleStep">
                <double>0.500000000000000</double>
               </property>
+              <property name="value">
+               <double>5000.000000000000000</double>
+              </property>
              </widget>
             </item>
-            <item row="1" column="2">
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="ldelayBox">
+              <property name="toolTip">
+               <string>Delay between MW pattern end and laser pulse start</string>
+              </property>
+              <property name="prefix">
+               <string>Laser delay: </string>
+              </property>
+              <property name="suffix">
+               <string> ns</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <double>999999999.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.500000000000000</double>
+              </property>
+              <property name="value">
+               <double>45.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
              <widget class="QDoubleSpinBox" name="finaldelayBox">
               <property name="prefix">
                <string>Final delay: </string>
@@ -565,29 +593,7 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="3">
-             <widget class="QDoubleSpinBox" name="moffsetBox">
-              <property name="toolTip">
-               <string>Global offset (delay) for all MW channels</string>
-              </property>
-              <property name="prefix">
-               <string>MW offset: </string>
-              </property>
-              <property name="suffix">
-               <string> ns</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <double>999999999.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.500000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="3">
+            <item row="0" column="4">
              <widget class="QDoubleSpinBox" name="mdelayBox">
               <property name="toolTip">
                <string>Delay between laser pulse end and MW pattern start</string>
@@ -609,6 +615,47 @@
               </property>
               <property name="value">
                <double>1000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="QDoubleSpinBox" name="moffsetBox">
+              <property name="toolTip">
+               <string>Global offset (delay) for all MW channels</string>
+              </property>
+              <property name="prefix">
+               <string>MW offset: </string>
+              </property>
+              <property name="suffix">
+               <string> ns</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <double>999999999.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.500000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="initdelayBox">
+              <property name="prefix">
+               <string>Init delay: </string>
+              </property>
+              <property name="suffix">
+               <string> ns</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <double>999999999.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.500000000000000</double>
               </property>
              </widget>
             </item>
@@ -659,13 +706,10 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QDoubleSpinBox" name="ldelayBox">
-              <property name="toolTip">
-               <string>Delay between MW pattern end and laser pulse start</string>
-              </property>
+            <item row="1" column="5">
+             <widget class="QDoubleSpinBox" name="pointinitdelayBox">
               <property name="prefix">
-               <string>Laser delay: </string>
+               <string>Point init delay: </string>
               </property>
               <property name="suffix">
                <string> ns</string>
@@ -678,31 +722,6 @@
               </property>
               <property name="singleStep">
                <double>0.500000000000000</double>
-              </property>
-              <property name="value">
-               <double>45.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <widget class="QDoubleSpinBox" name="lwidthBox">
-              <property name="prefix">
-               <string>Laser width: </string>
-              </property>
-              <property name="suffix">
-               <string> ns</string>
-              </property>
-              <property name="decimals">
-               <number>1</number>
-              </property>
-              <property name="maximum">
-               <double>999999999.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.500000000000000</double>
-              </property>
-              <property name="value">
-               <double>5000.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -1645,6 +1664,7 @@
   <tabstop>initdelayBox</tabstop>
   <tabstop>finaldelayBox</tabstop>
   <tabstop>moffsetBox</tabstop>
+  <tabstop>pointinitdelayBox</tabstop>
   <tabstop>startBox</tabstop>
   <tabstop>numBox</tabstop>
   <tabstop>stepBox</tabstop>
