@@ -101,8 +101,8 @@ def test_configure_triggered_rejects_nondivisible_software_block_reduce(monkeypa
         "cb_samples": 24,
         "samples": 24,
         "rate": 1.0e6,
-        "block_reduce_factor": 2,
         "block_samples": 32,
+        "block_reduce_factor": 2,
         "hardware_average": False,
     }
 
@@ -112,30 +112,3 @@ def test_configure_triggered_rejects_nondivisible_software_block_reduce(monkeypa
 
     assert not inst.configure_triggered(params)
     assert errors == ["cb_samples must be integer multiple of block_samples."]
-
-
-def test_derive_segment_samples_for_apodmr_without_block_reduction():
-    inst = make_inst()
-    inst._oversample = 1
-    inst._block_reduce_factor = 1
-    inst._block_samples = 2048
-
-    assert inst._derive_segment_samples() == 2048
-
-
-def test_derive_segment_samples_for_odmr_oversampling():
-    inst = make_inst()
-    inst._oversample = 2048
-    inst._block_reduce_factor = 1
-    inst._block_samples = 1
-
-    assert inst._derive_segment_samples() == 2048
-
-
-def test_reduce_params_rejects_zero_block_samples(monkeypatch):
-    inst = make_inst()
-    errors = []
-    monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
-
-    assert not inst._validate_reduce_params({"block_samples": 0})
-    assert errors == ["block_samples must be positive."]

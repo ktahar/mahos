@@ -475,8 +475,8 @@ class AnalogInTask(D.Task):
         line_num: int,
         every: bool,
         oversample: int,
-        block_reduce_factor: int,
         block_samples: int,
+        block_reduce_factor: int,
         block_reduce_op: str,
         reduce_factor: int,
         reduce_op: str,
@@ -492,8 +492,8 @@ class AnalogInTask(D.Task):
         self._line_num = line_num
         self._every = every
         self._oversample = oversample
-        self._block_reduce_factor = block_reduce_factor
         self._block_samples = block_samples
+        self._block_reduce_factor = block_reduce_factor
         self._block_reduce_op = block_reduce_op
         self._reduce_factor = reduce_factor
         self._reduce_op = reduce_op
@@ -628,12 +628,12 @@ class AnalogIn(ConfigurableTask):
     :param oversample: (default: 1) cb_samples, samples, and buffer_size are multiplied by
                        `oversample`, and everyN_handler is passed mean of `oversample` readings.
     :type oversample: int
-    :param block_reduce_factor: (default: 1) additional reduction stage before ``reduce_factor``.
-        cb_samples, samples, and buffer_size are multiplied by ``block_reduce_factor``.
-    :type block_reduce_factor: int
     :param block_samples: (default: 1) number of samples in one logical block after oversample
         averaging. Used when ``block_reduce_factor > 1``.
     :type block_samples: int
+    :param block_reduce_factor: (default: 1) additional reduction stage before ``reduce_factor``.
+        cb_samples, samples, and buffer_size are multiplied by ``block_reduce_factor``.
+    :type block_reduce_factor: int
     :param block_reduce_op: (default: mean) reduction operation for blockwise reduction.
         one of ``sum`` or ``mean``.
     :type block_reduce_op: str
@@ -850,8 +850,8 @@ class AnalogIn(ConfigurableTask):
         self._stamp = params.get("stamp", False)
         drop_first = params.get("drop_first", 0)
         oversample = params.get("oversample", 1)
-        block_reduce_factor = params.get("block_reduce_factor", 1)
         block_samples = params.get("block_samples", 1)
+        block_reduce_factor = params.get("block_reduce_factor", 1)
         block_reduce_op = str(params.get("block_reduce_op", "mean")).lower()
         reduce_factor = params.get("reduce_factor", 1)
         reduce_op = str(params.get("reduce_op", "mean")).lower()
@@ -859,14 +859,14 @@ class AnalogIn(ConfigurableTask):
         if oversample < 1:
             self.logger.error("oversample must be positive.")
             return False
+        if block_samples < 1:
+            self.logger.error("block_samples must be positive.")
+            return False
         if block_reduce_factor < 1:
             self.logger.error("block_reduce_factor must be positive.")
             return False
         if block_reduce_op not in ("sum", "mean"):
             self.logger.error(f"block_reduce_op must be 'sum' or 'mean', got: {block_reduce_op}")
-            return False
-        if block_samples < 1:
-            self.logger.error("block_samples must be positive.")
             return False
         if reduce_factor < 1:
             self.logger.error("reduce_factor must be positive.")
@@ -900,8 +900,8 @@ class AnalogIn(ConfigurableTask):
             len(self.lines),
             every,
             oversample,
-            block_reduce_factor,
             block_samples,
+            block_reduce_factor,
             block_reduce_op,
             reduce_factor,
             reduce_op,
