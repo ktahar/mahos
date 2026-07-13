@@ -17,13 +17,16 @@ from mahos_dq.util.segments import (
 
 
 def test_round_segment_samples_up():
-    assert round_segment_samples_up(1) == 32
+    assert round_segment_samples_up(1) == 16
+    assert round_segment_samples_up(16) == 16
+    assert round_segment_samples_up(17) == 32
     assert round_segment_samples_up(32) == 32
     assert round_segment_samples_up(33) == 48
     assert round_segment_samples_up(33, granularity=2048) == 2048
 
 
 def test_round_segment_samples_down():
+    assert round_segment_samples_down(16) == 16
     assert round_segment_samples_down(4097, granularity=2048) == 4096
     assert round_segment_samples_down(2048, granularity=2048) == 2048
 
@@ -36,7 +39,8 @@ def test_round_segment_samples_down():
 
 
 def test_valid_segment_samples():
-    assert not valid_segment_samples(16)
+    assert not valid_segment_samples(15)
+    assert valid_segment_samples(16)
     assert valid_segment_samples(32)
     assert not valid_segment_samples(40)
     assert valid_segment_samples(48)

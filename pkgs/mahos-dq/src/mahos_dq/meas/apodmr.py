@@ -121,6 +121,9 @@ class APODMR(BasicMeasNode):
     :type pulser.pd_trigger: str
     :param pulser.pd_data_transfer: Optional DAQ transfer mode label.
     :type pulser.pd_data_transfer: str
+    :param pulser.pd_segment_granularity: (default: 16) logical post-trigger sample
+        granularity for Spectrum PD segments.
+    :type pulser.pd_segment_granularity: int
     :param pulser.buffer_size_coeff: Buffer size coefficient multiplied by trace length.
     :type pulser.buffer_size_coeff: int
     :param pulser.roi_head: (default: 20e-9) default margin at head of sampled trace

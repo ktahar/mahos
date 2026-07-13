@@ -27,7 +27,9 @@ class SpectrumAnalogIn(Instrument):
     In ``triggered`` mode, each hardware trigger records a fixed-length segment with
     multiple-recording FIFO mode. ``finite=True`` stops after a positive logical ``samples``
     count divisible by ``cb_samples``. In ``stream`` mode, data are streamed continuously with
-    single FIFO mode.
+    single FIFO mode. Triggered logical segments contain post-trigger samples only. The physical
+    segment is enlarged as needed for mandatory pre-trigger samples and byte alignment, and the
+    pre-trigger region is removed before data reduction and publication.
 
     :param lines: channel indices to enable, for example ``[0]`` or ``[0, 1]``.
     :type lines: list[int | str]
@@ -50,6 +52,9 @@ class SpectrumAnalogIn(Instrument):
     :param notify_alignment_bytes: (default: 4096) required byte alignment for FIFO
         notify sizes. Set to ``1`` to disable alignment.
     :type notify_alignment_bytes: int
+    :param segment_alignment_bytes: (default: ``notify_alignment_bytes``) required byte
+        alignment for physical segments in triggered mode. Set to ``1`` to disable alignment.
+    :type segment_alignment_bytes: int
     :param strict: (default: True) If True, check realized sampling rate strictly -
         the configuration fails whenever requested and realized rates don't match.
     :type strict: bool
@@ -60,6 +65,11 @@ class SpectrumAnalogIn(Instrument):
         UNCONFIGURED = 0
         STREAM = 1
         TRIGGERED = 2
+
+    TRIGGER_SAMPLE_GRANULARITY = 16
+    MIN_SEGMENT_SAMPLES = 32
+    MIN_PRE_TRIGGER_SAMPLES = 16
+    MIN_POST_TRIGGER_SAMPLES = 16
 
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
@@ -95,7 +105,10 @@ class SpectrumAnalogIn(Instrument):
         self._hardware_average = False
         self._averages = 1
         self._drop_records_left = 0
+        self._logical_segment_samples = 0
         self._segment_samples = 0
+        self._pre_trigger_samples = 0
+        self._post_trigger_samples = 0
         self._record_samples = 0
         self._stream_samples = 0
         self._notify_samples = 0
@@ -281,6 +294,12 @@ class SpectrumAnalogIn(Instrument):
     def _notify_alignment_bytes(self) -> int:
         return max(1, int(self.conf.get("notify_alignment_bytes", 4096)))
 
+    def _segment_alignment_bytes(self) -> int:
+        alignment = self.conf.get("segment_alignment_bytes")
+        if alignment is None:
+            return self._notify_alignment_bytes()
+        return max(1, int(alignment))
+
     def _samples_to_bytes(self, samples: int) -> int:
         return int(self._transfer.samples_to_bytes(int(samples)))
 
@@ -303,6 +322,27 @@ class SpectrumAnalogIn(Instrument):
         raise ValueError(
             f"could not align notify_samples to {alignment} bytes "
             f"from {min_samples} samples with step {step_samples}"
+        )
+
+    def _align_segment_samples(self, logical_samples: int) -> int:
+        step = self.TRIGGER_SAMPLE_GRANULARITY
+        min_samples = max(
+            self.MIN_SEGMENT_SAMPLES,
+            int(logical_samples) + self.MIN_PRE_TRIGGER_SAMPLES,
+        )
+        alignment = self._segment_alignment_bytes()
+        samples = self._ceil_to_multiple(min_samples, step)
+        if alignment <= 1:
+            return samples
+
+        max_trials = max(1, int(self.conf.get("segment_alignment_trials", alignment)))
+        for _ in range(max_trials):
+            if self._samples_to_bytes(samples) % alignment == 0:
+                return samples
+            samples += step
+        raise ValueError(
+            f"could not align physical segment to {alignment} bytes "
+            f"from {min_samples} samples with step {step}"
         )
 
     def _align_buffer_samples(self, min_samples: int, notify_samples: int) -> int:
@@ -385,6 +425,13 @@ class SpectrumAnalogIn(Instrument):
 
     def _convert_segment(self, segment) -> list[np.ndarray]:
         spcm = self._import_spcm()
+        if len(segment) != self._segment_samples:
+            raise ValueError(
+                "physical segment length does not match configured segment size: "
+                f"{len(segment)} != {self._segment_samples}"
+            )
+        start = self._pre_trigger_samples
+        segment = segment[start : start + self._logical_segment_samples]
         out = []
         for i, ch in enumerate(self._channels):
             raw = segment[:, i] if segment.ndim > 1 else segment
@@ -538,11 +585,17 @@ class SpectrumAnalogIn(Instrument):
         spcm = self._import_spcm()
 
         self._stamp = params.get("stamp", False)
-        self._segment_samples = self._oversample * self._block_samples
-        if self._segment_samples < 32 or self._segment_samples % 16:
+        self._logical_segment_samples = self._oversample * self._block_samples
+        self._segment_samples = 0
+        self._pre_trigger_samples = 0
+        self._post_trigger_samples = 0
+        if (
+            self._logical_segment_samples < self.MIN_POST_TRIGGER_SAMPLES
+            or self._logical_segment_samples % self.TRIGGER_SAMPLE_GRANULARITY
+        ):
             return self.fail_with(
-                "derived segment_samples must be an integer multiple of 16 and at least 32: "
-                f"{self._segment_samples}"
+                "derived logical segment samples must be an integer multiple of 16 "
+                f"and at least 16: {self._logical_segment_samples}"
             )
         self._drop_records_left = abs(int(params.get("drop_first", 0)))
         self._hardware_average = (
@@ -560,8 +613,10 @@ class SpectrumAnalogIn(Instrument):
         self._record_samples = int(params["cb_samples"]) * self._oversample * self._reduce_factor
         if not self._hardware_average:
             self._record_samples *= self._block_reduce_factor
-        if self._record_samples % self._segment_samples:
-            return self.fail_with("record samples must be an integer multiple of segment_samples.")
+        if self._record_samples % self._logical_segment_samples:
+            return self.fail_with(
+                "record samples must be an integer multiple of logical segment samples."
+            )
 
         timeout_sec = float(params.get("timeout_sec", self.conf.get("timeout_sec", 5.0)))
         if self._hardware_average:
@@ -595,10 +650,17 @@ class SpectrumAnalogIn(Instrument):
     def _setup_triggered_buffer(
         self, params, finite: bool, logical_samples: int, cb_samples: int, card
     ) -> bool:
-        segments_per_record = self._record_samples // self._segment_samples
+        try:
+            self._segment_samples = self._align_segment_samples(self._logical_segment_samples)
+        except ValueError:
+            self.logger.exception()
+            return False
+
+        segments_per_record = self._record_samples // self._logical_segment_samples
+        physical_record_samples = segments_per_record * self._segment_samples
         record_count = logical_samples // cb_samples if finite else 0
         card.loops(record_count * segments_per_record)
-        requested_notify_samples = segments_per_record * self._segment_samples
+        requested_notify_samples = physical_record_samples
 
         if params.get("buffer_segments"):
             requested_buffer_samples = int(params["buffer_segments"]) * self._segment_samples
@@ -611,13 +673,13 @@ class SpectrumAnalogIn(Instrument):
             if not self._hardware_average:
                 buffer_samples *= self._block_reduce_factor
             buffer_records = max(1, buffer_samples // self._record_samples)
-            requested_buffer_samples = buffer_records * self._record_samples
+            requested_buffer_samples = buffer_records * physical_record_samples
 
         try:
             if finite:
                 self._notify_samples = self._finite_notify_samples(
                     requested_notify_samples,
-                    record_count * self._record_samples,
+                    record_count * physical_record_samples,
                     self._segment_samples,
                 )
             else:
@@ -642,12 +704,33 @@ class SpectrumAnalogIn(Instrument):
         self._transfer.allocate_buffer(
             segment_samples=self._segment_samples, num_segments=buffer_segments
         )
+        post_trigger = self._transfer.post_trigger(self._logical_segment_samples)
+        self._post_trigger_samples = int(
+            post_trigger.magnitude if hasattr(post_trigger, "magnitude") else post_trigger
+        )
+        if self._post_trigger_samples != self._logical_segment_samples:
+            return self.fail_with(
+                "realized post-trigger samples do not match the requested logical segment: "
+                f"{self._post_trigger_samples} != {self._logical_segment_samples}"
+            )
+        self._pre_trigger_samples = self._segment_samples - self._post_trigger_samples
+        if (
+            self._pre_trigger_samples < self.MIN_PRE_TRIGGER_SAMPLES
+            or self._pre_trigger_samples % self.TRIGGER_SAMPLE_GRANULARITY
+        ):
+            return self.fail_with(
+                "realized pre-trigger samples must be an integer multiple of 16 "
+                f"and at least 16: {self._pre_trigger_samples}"
+            )
         self._transfer.notify_samples(self._notify_samples)
         if finite:
-            self._transfer.to_transfer_samples(record_count * self._record_samples)
-        # set maximum post_trigger given segment_samples. as min of pre_trigger is 16 samples,
-        # maximum post_trigger is segment_samples - 16.
-        self._transfer.post_trigger(self._segment_samples - 16)
+            self._transfer.to_transfer_samples(record_count * physical_record_samples)
+
+        self.logger.debug(
+            "triggered segment samples: "
+            f"logical(post-trigger)={self._logical_segment_samples:_d}, "
+            f"physical={self._segment_samples:_d}, pre-trigger={self._pre_trigger_samples:_d}"
+        )
 
         return True
 
@@ -712,8 +795,9 @@ class SpectrumAnalogIn(Instrument):
         self._stream_samples = int(params["cb_samples"]) * self._oversample
         try:
             self._notify_samples = self._align_notify_samples(self._stream_samples)
-        except ValueError as e:
-            return self.fail_with(str(e))
+        except ValueError:
+            self.logger.exception()
+            return False
         requested_buffer_samples = max(
             self._stream_samples, int(params["buffer_size"]) * self._oversample
         )
@@ -738,6 +822,9 @@ class SpectrumAnalogIn(Instrument):
         if self._mode == self.Mode.TRIGGERED:
             return {
                 "segment_samples": self._segment_samples,
+                "logical_segment_samples": self._logical_segment_samples,
+                "pre_trigger_samples": self._pre_trigger_samples,
+                "post_trigger_samples": self._post_trigger_samples,
                 "record_samples": self._record_samples,
                 "notify_samples": self._notify_samples,
                 "buffer_samples": self._buffer_samples,

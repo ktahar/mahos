@@ -8,7 +8,7 @@ Segment sample utility functions.
 
 """
 
-DEFAULT_SEGMENT_SAMPLES_MIN = 32
+DEFAULT_SEGMENT_SAMPLES_MIN = 16
 DEFAULT_SEGMENT_SAMPLES_BASE = 16
 
 
@@ -45,7 +45,7 @@ def round_segment_samples_up(
     minimum: int = DEFAULT_SEGMENT_SAMPLES_MIN,
     base: int = DEFAULT_SEGMENT_SAMPLES_BASE,
 ) -> int:
-    """Round sample count up to segment constraints."""
+    """Round a sample count up to segment constraints."""
 
     granularity = validate_segment_granularity(granularity, base=base)
     samples = max(int(minimum), int(samples))
@@ -58,7 +58,7 @@ def round_segment_samples_down(
     minimum: int = DEFAULT_SEGMENT_SAMPLES_MIN,
     base: int = DEFAULT_SEGMENT_SAMPLES_BASE,
 ) -> int:
-    """Round sample count down to segment constraints."""
+    """Round a sample count down to segment constraints."""
 
     minimum = int(minimum)
     granularity = validate_segment_granularity(granularity, base=base)
@@ -74,7 +74,7 @@ def valid_segment_samples(
     minimum: int = DEFAULT_SEGMENT_SAMPLES_MIN,
     base: int = DEFAULT_SEGMENT_SAMPLES_BASE,
 ) -> bool:
-    """Return whether ``samples`` satisfies segment constraints."""
+    """Return whether a sample count satisfies segment constraints."""
 
     granularity = validate_segment_granularity(granularity, base=base)
     samples = int(samples)

@@ -42,7 +42,8 @@ class ConfigureTransfer(DummyTransfer):
         self.transfer_samples = samples
 
     def post_trigger(self, samples):
-        self.post_trigger_samples = samples
+        self.post_trigger_samples = samples + getattr(self.card, "post_trigger_offset", 0)
+        return self.post_trigger_samples
 
 
 class DummyCard:
@@ -58,6 +59,7 @@ class DummyCard:
 
 class DummyUnits:
     s = 1.0
+    V = 1.0
 
 
 class DummySpcm:
@@ -106,12 +108,20 @@ class DummyThread:
         return False
 
 
+class ConvertChannel:
+    def convert_data(self, raw, *args, **kwargs):
+        return raw
+
+
 def make_inst(conf=None):
     return SpectrumAnalogIn("digitizer", {"mock": True, "lines": [0], **(conf or {})})
 
 
-def configure_triggered(inst, monkeypatch, **overrides):
+def configure_triggered(
+    inst, monkeypatch, *, post_trigger_offset=0, expect_success=True, **overrides
+):
     card = DummyCard()
+    card.post_trigger_offset = post_trigger_offset
     params = {
         "trigger_source": "software",
         "cb_samples": 64,
@@ -132,7 +142,7 @@ def configure_triggered(inst, monkeypatch, **overrides):
 
     monkeypatch.setattr(inst, "_setup_channels", setup_channels)
     monkeypatch.setattr(inst, "_setup_clock", lambda _params: True)
-    assert inst.configure_triggered(params)
+    assert inst.configure_triggered(params) is expect_success
     return card, inst._transfer
 
 
@@ -156,6 +166,25 @@ def test_align_notify_samples_preserves_segment_boundary():
     assert samples >= 1500
     assert samples % 512 == 0
     assert inst._samples_to_bytes(samples) % 4096 == 0
+
+
+def test_align_segment_samples_uses_physical_byte_alignment():
+    inst = make_inst({"segment_alignment_bytes": 4096})
+    inst._transfer = DummyTransfer(bytes_per_sample=2, channels=1)
+
+    assert inst._align_segment_samples(2032) == 2048
+    assert inst._align_segment_samples(2048) == 4096
+
+    inst._transfer = DummyTransfer(bytes_per_sample=2, channels=2)
+
+    assert inst._align_segment_samples(1008) == 1024
+
+
+def test_align_segment_samples_can_disable_byte_alignment():
+    inst = make_inst({"notify_alignment_bytes": 4096, "segment_alignment_bytes": 1})
+    inst._transfer = DummyTransfer(bytes_per_sample=2, channels=1)
+
+    assert inst._align_segment_samples(16) == 32
 
 
 def test_align_buffer_samples_is_notify_multiple():
@@ -202,6 +231,20 @@ def test_append_stream_samples_handles_multi_channel_blocks():
     np.testing.assert_allclose(inst._pending[1][0], np.array([40.0]))
 
 
+def test_convert_segment_removes_pre_trigger_samples():
+    inst = make_inst()
+    inst._spcm = DummySpcm
+    inst._channels = [ConvertChannel()]
+    inst._averages = 1
+    inst._logical_segment_samples = 16
+    inst._segment_samples = 32
+    inst._pre_trigger_samples = 16
+
+    converted = inst._convert_segment(np.arange(32.0)[:, np.newaxis])
+
+    np.testing.assert_allclose(converted[0], np.arange(16.0, 32.0))
+
+
 @pytest.mark.parametrize(
     ("trigger_source", "expected_commands"),
     [
@@ -246,6 +289,49 @@ def test_configure_triggered_rejects_nondivisible_software_block_reduce(monkeypa
     assert errors == ["cb_samples must be integer multiple of block_samples."]
 
 
+@pytest.mark.parametrize("block_samples", [1, 15, 17, 24])
+def test_configure_triggered_rejects_invalid_logical_segment(monkeypatch, block_samples):
+    inst = make_inst()
+    errors = []
+    params = {
+        "trigger_source": "software",
+        "cb_samples": 64,
+        "samples": 64,
+        "rate": 1.0e6,
+        "block_samples": block_samples,
+    }
+    monkeypatch.setattr(inst, "_import_spcm", lambda: DummySpcm)
+    monkeypatch.setattr(inst, "_reset_card", lambda: DummyCard())
+    monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
+
+    assert not inst.configure_triggered(params)
+    assert "logical segment samples" in errors[0]
+
+
+def test_configure_triggered_accepts_sixteen_logical_samples(monkeypatch):
+    inst = make_inst({"notify_alignment_bytes": 1})
+
+    _card, transfer = configure_triggered(
+        inst, monkeypatch, cb_samples=32, samples=32, block_samples=16
+    )
+
+    assert inst._logical_segment_samples == 16
+    assert inst._segment_samples == 32
+    assert transfer.post_trigger_samples == 16
+    assert inst._pre_trigger_samples == 16
+
+
+def test_configure_triggered_rejects_mismatched_realized_post_trigger(monkeypatch):
+    inst = make_inst({"notify_alignment_bytes": 1})
+
+    _card, transfer = configure_triggered(
+        inst, monkeypatch, post_trigger_offset=16, expect_success=False
+    )
+
+    assert transfer.post_trigger_samples == 48
+    assert inst._mode == inst.Mode.UNCONFIGURED
+
+
 @pytest.mark.parametrize("samples", [0, -64, 65])
 def test_configure_triggered_rejects_invalid_finite_samples(monkeypatch, samples):
     inst = make_inst()
@@ -277,7 +363,7 @@ def test_configure_triggered_finite_multi_counts_output_segments(monkeypatch):
 
     assert card.mode == DummySpcm.SPC_REC_FIFO_MULTI
     assert card.loop_count == 6
-    assert transfer.transfer_samples == 192
+    assert transfer.transfer_samples == 288
 
 
 def test_configure_triggered_finite_average_excludes_average_factor(monkeypatch):
@@ -288,7 +374,7 @@ def test_configure_triggered_finite_average_excludes_average_factor(monkeypatch)
 
     assert card.mode == DummySpcm.SPC_REC_FIFO_AVERAGE
     assert card.loop_count == 6
-    assert transfer.transfer_samples == 192
+    assert transfer.transfer_samples == 288
 
 
 def test_configure_triggered_finite_multi_includes_software_block_factor(monkeypatch):
@@ -298,7 +384,7 @@ def test_configure_triggered_finite_multi_includes_software_block_factor(monkeyp
     )
 
     assert card.loop_count == 18
-    assert transfer.transfer_samples == 576
+    assert transfer.transfer_samples == 864
 
 
 def test_finite_notify_samples_is_aligned_exact_divisor():
@@ -321,5 +407,18 @@ def test_configure_triggered_increases_buffer_to_finite_notify_size(monkeypatch)
 
     _card, transfer = configure_triggered(inst, monkeypatch, samples=256, buffer_size=64)
 
-    assert transfer.notified == 128
-    assert inst._buffer_samples == 128
+    assert transfer.notified == 256
+    assert inst._buffer_samples == 256
+
+
+def test_triggered_fifo_status_distinguishes_logical_and_physical_samples(monkeypatch):
+    inst = make_inst({"notify_alignment_bytes": 1})
+    configure_triggered(inst, monkeypatch)
+
+    status = inst.get_fifo_status()
+
+    assert status["segment_samples"] == 48
+    assert status["logical_segment_samples"] == 32
+    assert status["pre_trigger_samples"] == 16
+    assert status["post_trigger_samples"] == 32
+    assert status["record_samples"] == 64

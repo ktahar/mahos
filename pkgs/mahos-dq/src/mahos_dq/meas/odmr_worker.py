@@ -470,6 +470,9 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :type sweeper.pd_bounds: tuple[float, float]
     :param sweeper.pd_data_transfer: DAQ data transfer mode for analog PD.
     :type sweeper.pd_data_transfer: str
+    :param sweeper.pd_segment_granularity: (default: 16) logical post-trigger sample
+        granularity for Spectrum PD segments.
+    :type sweeper.pd_segment_granularity: int
     :param sweeper.buffer_size_coeff: (default: 20) multiplier for PD buffer size.
     :type sweeper.buffer_size_coeff: int
     :param sweeper.clock_name: (default: "clock") DAQ clock source name in target.servers.
