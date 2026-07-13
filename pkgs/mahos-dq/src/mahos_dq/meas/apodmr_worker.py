@@ -305,7 +305,7 @@ class APODMRBlockBuilder(object):
             raise ValueError("check_sample_duration is called but all_trigger_timing is not set.")
 
         for t0, t1 in zip(self.all_trigger_timing, self.all_trigger_timing[1:]):
-            if (t1 - t0) + self.eos_deadtime_ticks < trace_length_ticks:
+            if t1 - t0 < trace_length_ticks + self.eos_deadtime_ticks:
                 return False
         return True
 

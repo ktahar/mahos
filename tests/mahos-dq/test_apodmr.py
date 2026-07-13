@@ -265,6 +265,18 @@ def test_apodmr_builder_rejects_invalid_point_init_delay():
         builder.build_blocks(blocks, freq, common_pulses, params, num_mw=1)
 
 
+def test_apodmr_builder_requires_deadtime_after_trace():
+    builder = APODMRBlockBuilder(1000, 4, (MWMode.QPSK,), 0.0, None)
+    builder.all_trigger_timing = [0, 110]
+    builder.eos_deadtime_ticks = 10
+
+    assert builder.check_sample_duration(100)
+
+    builder.all_trigger_timing = [0, 109]
+
+    assert not builder.check_sample_duration(100)
+
+
 def test_apodmr_analyze_rejects_out_of_range_markers():
     data = APODMRData(_apodmr_params(), "rabi")
     data.raw_data_sum = np.zeros((4, 6), dtype=np.float64)
