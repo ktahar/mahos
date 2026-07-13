@@ -13,6 +13,7 @@ from __future__ import annotations
 import threading
 import time
 import enum
+import math
 
 import numpy as np
 
@@ -23,9 +24,10 @@ from mahos.util.queue import RollingQueue
 class SpectrumAnalogIn(Instrument):
     """Spectrum Instrumentation digitizer (AnalogIn card).
 
-    This class now supports continuous FIFO acquisition only. In ``triggered`` mode,
-    each hardware trigger records a fixed-length segment with multiple-recording FIFO mode.
-    In ``stream`` mode, data are streamed continuously with single FIFO mode.
+    In ``triggered`` mode, each hardware trigger records a fixed-length segment with
+    multiple-recording FIFO mode. ``finite=True`` stops after a positive logical ``samples``
+    count divisible by ``cb_samples``. In ``stream`` mode, data are streamed continuously with
+    single FIFO mode.
 
     :param lines: channel indices to enable, for example ``[0]`` or ``[0, 1]``.
     :type lines: list[int | str]
@@ -302,6 +304,29 @@ class SpectrumAnalogIn(Instrument):
     def _align_buffer_samples(self, min_samples: int, notify_samples: int) -> int:
         return self._ceil_to_multiple(max(min_samples, notify_samples), notify_samples)
 
+    def _finite_notify_samples(
+        self, min_samples: int, total_samples: int, step_samples: int
+    ) -> int:
+        """Find an aligned segment-boundary notify size that divides a finite transfer."""
+
+        min_samples = self._ceil_to_multiple(min_samples, step_samples)
+        alignment = self._notify_alignment_bytes()
+        divisors = set()
+        for divisor in range(1, math.isqrt(total_samples) + 1):
+            if total_samples % divisor == 0:
+                divisors.add(divisor)
+                divisors.add(total_samples // divisor)
+        for samples in sorted(divisors):
+            if samples < min_samples:
+                continue
+            if samples % step_samples == 0 and self._samples_to_bytes(samples) % alignment == 0:
+                return samples
+        raise ValueError(
+            "finite transfer has no valid notify size that divides total_samples: "
+            f"total_samples={total_samples}, min_samples={min_samples}, "
+            f"segment_samples={step_samples}, alignment_bytes={alignment}"
+        )
+
     def _log_fifo_sizes(
         self,
         mode: str,
@@ -509,10 +534,21 @@ class SpectrumAnalogIn(Instrument):
         required = ("trigger_source", "cb_samples", "samples", "rate")
         if not self.check_required_params(params, required):
             return False
-        if params.get("finite", False):
-            return self.fail_with("finite samples in triggered mode is not supported yet.")
         if not self._validate_reduce_params(params):
             return False
+
+        finite = bool(params.get("finite", False))
+        logical_samples = int(params["samples"])
+        cb_samples = int(params["cb_samples"])
+        if finite and cb_samples <= 0:
+            return self.fail_with("cb_samples must be positive in finite triggered mode.")
+        if finite and logical_samples <= 0:
+            return self.fail_with("samples must be positive in finite triggered mode.")
+        if finite and logical_samples % cb_samples:
+            return self.fail_with(
+                "samples must be an integer multiple of cb_samples in finite triggered mode: "
+                f"samples={logical_samples}, cb_samples={cb_samples}"
+            )
 
         spcm = self._import_spcm()
         card = self._reset_card()
@@ -551,7 +587,6 @@ class SpectrumAnalogIn(Instrument):
             card.card_mode(spcm.SPC_REC_FIFO_MULTI)
             self.logger.debug("Card mode: SPC_REC_FIFO_MULTI")
         card.timeout(timeout_sec * spcm.units.s)
-        card.loops(0)
 
         if not self._setup_trigger(params):
             return False
@@ -572,13 +607,9 @@ class SpectrumAnalogIn(Instrument):
             self._transfer = spcm.Multi(card)
 
         segments_per_record = self._record_samples // self._segment_samples
+        record_count = logical_samples // cb_samples if finite else 0
+        card.loops(record_count * segments_per_record)
         requested_notify_samples = segments_per_record * self._segment_samples
-        try:
-            self._notify_samples = self._align_notify_samples(
-                requested_notify_samples, step_samples=self._segment_samples
-            )
-        except ValueError as e:
-            return self.fail_with(str(e))
 
         if params.get("buffer_segments"):
             requested_buffer_samples = int(params["buffer_segments"]) * self._segment_samples
@@ -593,7 +624,21 @@ class SpectrumAnalogIn(Instrument):
             buffer_records = max(1, buffer_samples // self._record_samples)
             requested_buffer_samples = buffer_records * self._record_samples
 
-        requested_buffer_samples = max(requested_notify_samples, requested_buffer_samples)
+        try:
+            if finite:
+                self._notify_samples = self._finite_notify_samples(
+                    requested_notify_samples,
+                    record_count * self._record_samples,
+                    self._segment_samples,
+                )
+            else:
+                self._notify_samples = self._align_notify_samples(
+                    requested_notify_samples, step_samples=self._segment_samples
+                )
+        except ValueError:
+            self.logger.exception()
+            return False
+
         self._buffer_samples = self._align_buffer_samples(
             requested_buffer_samples, self._notify_samples
         )
@@ -609,6 +654,8 @@ class SpectrumAnalogIn(Instrument):
             segment_samples=self._segment_samples, num_segments=buffer_segments
         )
         self._transfer.notify_samples(self._notify_samples)
+        if finite:
+            self._transfer.to_transfer_samples(record_count * self._record_samples)
         # set maximum post_trigger given segment_samples. as min of pre_trigger is 16 samples,
         # maximum post_trigger is segment_samples - 16.
         self._transfer.post_trigger(self._segment_samples - 16)

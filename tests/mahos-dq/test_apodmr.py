@@ -8,13 +8,15 @@ Tests for mahos_dq.meas.apodmr.
 
 """
 
+import logging
+
 import numpy as np
 import pytest
 
 from mahos.msgs.common_msgs import BinaryState
 from mahos_dq.meas.apodmr import APODMRClient
 from mahos_dq.meas.apodmr_io import APODMRIO
-from mahos_dq.meas.apodmr_worker import APODMRBlockBuilder, APODMRDataOperator
+from mahos_dq.meas.apodmr_worker import APODMRBlockBuilder, APODMRDataOperator, Pulser
 from mahos_dq.msgs.apodmr_msgs import APODMRData, MWMode
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos_dq.meas.podmr_generator import generator_kernel as K
@@ -71,6 +73,84 @@ def _apodmr_params() -> dict:
             "flipY": False,
         },
     }
+
+
+def test_apodmr_sweep_validation_and_remaining_records(caplog):
+    pulser = Pulser.__new__(Pulser)
+    pulser.logger = logging.getLogger("test_apodmr_sweep_validation")
+
+    assert pulser._validate_sweep_params(
+        {"sweeps": 4, "sweeps_per_record": 2, "hardware_sweep_limit": True}
+    )
+    assert pulser._validate_sweep_params({"sweeps": 0, "sweeps_per_record": 3})
+    assert pulser._validate_sweep_params({"sweeps": 5, "sweeps_per_record": 2})
+    assert not pulser._validate_sweep_params(
+        {"sweeps": 5, "sweeps_per_record": 2, "hardware_sweep_limit": True}
+    )
+    assert "sweeps=5, sweeps_per_record=2" in caplog.text
+    assert not pulser._validate_sweep_params({"sweeps": 0, "sweeps_per_record": 0})
+
+    params = {"sweeps": 8, "sweeps_per_record": 2, "hardware_sweep_limit": True}
+    assert pulser._remaining_records(params, 1) == 3
+    assert pulser._remaining_records(params, 4) == 0
+    assert pulser._remaining_records(params, 5) == 0
+    assert pulser._remaining_records({"sweeps": 0, "sweeps_per_record": 2}, 100) is None
+    assert pulser._remaining_records({"sweeps": 8, "sweeps_per_record": 2}, 1) is None
+
+
+def test_apodmr_start_rejects_nondivisible_sweeps_before_locking():
+    class Operator:
+        def update_axes(self, data):
+            pass
+
+    pulser = Pulser.__new__(Pulser)
+    pulser.logger = logging.getLogger("test_apodmr_start_validation")
+    pulser.data = APODMRData()
+    pulser.op = Operator()
+    locked = []
+    pulser.lock_instruments = lambda: locked.append(True) or True
+    params = _apodmr_params()
+    params.update({"sweeps": 5, "sweeps_per_record": 2, "hardware_sweep_limit": True})
+
+    assert not pulser.start(params, "rabi")
+    assert not locked
+
+
+def test_apodmr_pd_finite_samples_include_drop_first():
+    class PD:
+        def configure_triggered(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+            return True
+
+        def start(self):
+            return True
+
+    pulser = Pulser.__new__(Pulser)
+    pulser.data = APODMRData()
+    pulser.data.params = {
+        "pd": {"rate": 1.0e6, "buffer_size_coeff": 20, "drop_first": 2},
+        "sweeps_per_record": 2,
+        "hardware_sweep_limit": True,
+        "shots_per_point": 1,
+        "pulse": {},
+    }
+    pulser.trace_count = 4
+    pulser.samples_per_trace = 8
+    pulser.clock = None
+    pulser._pd_trigger = "trigger"
+    pulser._pd_data_transfer = None
+    pulser.conf = {}
+    pulser.pds = [PD()]
+
+    assert pulser.init_start_pds(2)
+    assert pulser.pds[0].args[1] == 32
+    assert pulser.pds[0].args[2] == 32 * (2 + 2)
+    assert pulser.pds[0].kwargs["finite"] is True
+
+    assert pulser.init_start_pds(None)
+    assert pulser.pds[0].args[2] == 32 * 20
+    assert pulser.pds[0].kwargs["finite"] is False
 
 
 def test_apodmr_builder_inserts_trigger_before_each_laser():
@@ -261,6 +341,12 @@ def test_apodmr(server, apodmr, server_conf, apodmr_conf):
     params["plot"]["sigwidth"].set(1e-9)
     params["plot"]["refdelay"].set(1e-9)
     params["plot"]["refwidth"].set(1e-9)
+    params["sweeps"].set(5)
+    params["hardware_sweep_limit"].set(True)
+    assert not apodmr.validate(params, "rabi")
+    assert not apodmr.start(params, "rabi")
+    assert apodmr.get_state() == BinaryState.IDLE
+    params["sweeps"].set(4)
     assert apodmr.validate(params, "rabi")
     assert apodmr.start(params, "rabi")
     assert expect_apodmr(apodmr, params["num"].value(), poll_timeout_ms)

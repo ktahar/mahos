@@ -385,6 +385,36 @@ class Pulser(PODMRPulser):
     def _sweeps_per_record(self, params: dict) -> int:
         return int(params.get("sweeps_per_record", 1))
 
+    def _validate_sweep_params(self, params: dict) -> bool:
+        sweeps = int(params.get("sweeps", 0))
+        sweeps_per_record = self._sweeps_per_record(params)
+        if sweeps_per_record < 1:
+            self.logger.error(
+                f"sweeps_per_record must be at least 1: sweeps_per_record={sweeps_per_record}"
+            )
+            return False
+        if params.get("hardware_sweep_limit", False) and sweeps > 0 and sweeps % sweeps_per_record:
+            self.logger.error(
+                "sweeps must be an integer multiple of sweeps_per_record: "
+                f"sweeps={sweeps}, sweeps_per_record={sweeps_per_record}"
+            )
+            return False
+        return True
+
+    def _remaining_records(self, params: dict, records: int) -> int | None:
+        sweeps = int(params.get("sweeps", 0))
+        if not params.get("hardware_sweep_limit", False) or sweeps == 0:
+            return None
+        target_records = sweeps // self._sweeps_per_record(params)
+        remaining_records = target_records - int(records)
+        if remaining_records <= 0:
+            self.logger.error(
+                "finite sweep target has already been reached: "
+                f"target_records={target_records}, records={records}"
+            )
+            return 0
+        return remaining_records
+
     def _shots_per_point(self, params: dict) -> int:
         return int(params.get("shots_per_point", 1))
 
@@ -404,6 +434,8 @@ class Pulser(PODMRPulser):
         self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
     ) -> bool:
         params = P.unwrap(params)
+        if not self._validate_sweep_params(params):
+            return False
         d = APODMRData(params, label)
         try:
             blocks, freq, _, _, _ = self.generate_blocks(d)
@@ -474,7 +506,7 @@ class Pulser(PODMRPulser):
         )
         return True
 
-    def init_start_pds(self) -> bool:
+    def init_start_pds(self, remaining_records: int | None) -> bool:
         params = self.data.get_params()
         rate = params["pd"]["rate"]
         sweeps_per_record = self._sweeps_per_record(params)
@@ -497,20 +529,23 @@ class Pulser(PODMRPulser):
             clock_pd = self.clock.get_internal_output()
 
         cb_samples = self.trace_count * self.samples_per_trace
+        drop_first = params["pd"].get("drop_first", 0)
+        finite = remaining_records is not None
         buffer_size = cb_samples * params["pd"].get(
             "buffer_size_coeff", self.conf.get("buffer_size_coeff", 20)
         )
+        samples = cb_samples * (remaining_records + drop_first) if finite else buffer_size
         if not (
             all(
                 [
                     pd.configure_triggered(
                         clock_pd,
                         cb_samples,
-                        buffer_size,
+                        samples,
                         rate,
                         buffer_size=buffer_size,
-                        finite=False,
-                        drop_first=params["pd"].get("drop_first", 0),
+                        finite=finite,
+                        drop_first=drop_first,
                         oversample=1,
                         block_samples=self.samples_per_trace,
                         block_reduce_factor=shots_per_point,
@@ -621,6 +656,11 @@ class Pulser(PODMRPulser):
             self.op.update_axes(self.data)
         else:
             self.data.update_params(params)
+        if not self._validate_sweep_params(self.data.params):
+            return False
+        remaining_records = self._remaining_records(self.data.params, self.data.records)
+        if remaining_records == 0:
+            return False
         try:
             self._set_num_pattern_and_validate_params(self.data)
         except ValueError as e:
@@ -633,9 +673,9 @@ class Pulser(PODMRPulser):
         if sweeps_limit > 0 and sweeps_limit % sweeps_per_record:
             self.logger.warn(
                 "sweeps is not divisible by sweeps_per_record; measurement will stop on the "
-                "next completed record boundary."
+                "next completed record boundary. Enable hardware_sweep_limit to require an "
+                "exact limit."
             )
-
         if not self.lock_instruments():
             return self.fail_with_release("Error acquiring instrument locks.")
 
@@ -644,7 +684,7 @@ class Pulser(PODMRPulser):
         if not quick_resume and not self.init_inst(self.data.params):
             return self.fail_with_release("Error initializing instruments.")
         # PD/clock configuration is always refreshed on each start, even with quick resume.
-        if not self.init_start_pds():
+        if not self.init_start_pds(remaining_records):
             return self.fail_with_release("Error initializing or starting PDs.")
 
         success = self.start_sg(self.data.params)
@@ -739,6 +779,14 @@ class Pulser(PODMRPulser):
             del d["timebin"]
         if "interval" in d:
             del d["interval"]
+
+        d["hardware_sweep_limit"] = P.BoolParam(
+            False,
+            doc=(
+                "stop detector acquisition at the exact sweep limit in hardware; requires "
+                "sweeps divisible by sweeps_per_record"
+            ),
+        )
 
         # set defaults which won't result in marker out-of-bounds
         d["plot"]["sigdelay"].set(200e-9)
