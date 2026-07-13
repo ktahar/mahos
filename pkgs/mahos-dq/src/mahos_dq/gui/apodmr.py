@@ -252,6 +252,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
                 ("shots_per_point", self.shotsPerPointBox),
                 ("max_records", self.maxRecordsBox),
                 ("sweeps", self.sweepsBox),
+                ("hardware_sweep_limit", self.hardwareSweepLimitBox),
                 ("duration", self.durationBox),
                 ("roi_head", self.roiheadBox, 1e9),
                 ("roi_tail", self.roitailBox, 1e9),
@@ -294,6 +295,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         p = self.data.params
 
         self.sweepsBox.setValue(p.get("sweeps", 0))
+        self.hardwareSweepLimitBox.setChecked(p.get("hardware_sweep_limit", False))
         self.sweepsPerRecordBox.setValue(p.get("sweeps_per_record", 1))
         self.shotsPerPointBox.setValue(p.get("shots_per_point", 1))
         self.maxRecordsBox.setValue(p.get("max_records", 1))
@@ -349,6 +351,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         params["freq"] = self.freqBox.value() * 1e6
         params["power"] = self.powerBox.value()
         params["sweeps"] = self.sweepsBox.value()
+        params["hardware_sweep_limit"] = self.hardwareSweepLimitBox.isChecked()
         params["sweeps_per_record"] = self.sweepsPerRecordBox.value()
         params["shots_per_point"] = self.shotsPerPointBox.value()
         params["max_records"] = self.maxRecordsBox.value()
@@ -421,6 +424,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             self.methodBox,
             self.partialBox,
             self.sweepsBox,
+            self.hardwareSweepLimitBox,
             self.sweepsPerRecordBox,
             self.shotsPerPointBox,
             self.maxRecordsBox,
