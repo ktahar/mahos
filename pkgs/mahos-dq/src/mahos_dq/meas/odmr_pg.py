@@ -253,9 +253,14 @@ class ODMRPGMixin(object):
 
     def configure_pg_CW_apd(self, params: dict, trigger_type: TriggerType) -> bool:
         freq = self.conf["pg_freq_cw"]
+        time_window = params["timing"]["time_window"]
+        if time_window < 1.0e-6:
+            self.logger.error("time_window must be at least 1 us for CW APD measurement.")
+            return False
+
         # gate / trigger pulse width
         unit = round(freq * 1.0e-6)
-        window = round(freq * params["timing"]["time_window"])
+        window = round(freq * time_window)
         gate_delay = round(freq * params["timing"].get("gate_delay", 0.0))
         post_gate_delay = round(freq * params["timing"].get("post_gate_delay", 0.0))
         delay = round(freq * params.get("delay", 0.0))
