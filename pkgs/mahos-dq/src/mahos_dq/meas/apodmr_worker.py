@@ -64,23 +64,23 @@ class APODMRDataOperator(PODMRDataOperator):
         data.params["instrument"]["mw_modes"] = [MWMode.parse(m).name for m in mw_modes]
 
     def append_record(self, data: APODMRData, traces: np.ndarray):
-        traces = np.array(traces, dtype=np.float64, copy=True)
+        traces = np.asarray(traces, dtype=np.float64)
         data.records += 1
         if data.raw_data_sum is None:
-            data.raw_data_sum = traces
+            data.raw_data_sum = traces.copy()
         else:
             data.raw_data_sum += traces
 
-        if data.raw_data is None:
-            data.raw_data = traces[np.newaxis, :, :].copy()
-        else:
-            data.raw_data = np.concatenate((data.raw_data, traces[np.newaxis, :, :]), axis=0)
         try:
             max_records = int(data.params.get("max_records", 0))
         except (AttributeError, TypeError, ValueError):
             max_records = 0
-        if max_records > 0 and data.raw_data.shape[0] > max_records:
-            data.raw_data = data.raw_data[-max_records:].copy()
+
+        if max_records == 1 or data.raw_data is None:
+            data.raw_data = traces[np.newaxis].copy()
+        else:
+            start = max(0, data.raw_data.shape[0] + 1 - max_records) if max_records else 0
+            data.raw_data = np.concatenate((data.raw_data[start:], traces[np.newaxis]), axis=0)
 
     def get_marker_indices(self, data: APODMRData):
         tbin = data.get_bin()
@@ -767,7 +767,7 @@ class Pulser(PODMRPulser):
             doc="number of sweeps accumulated in one stored raw trace record",
         )
         d["max_records"] = P.IntParam(
-            self.conf.get("max_records", 0),
+            self.conf.get("max_records", 1),
             0,
             100000000,
             doc="maximum number of raw trace records to retain (0 for unlimited)",

@@ -181,16 +181,16 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
             if not data.has_raw_data_sum() or data.records < 1:
                 self._show_empty()
                 return
-            plot_traces = data.raw_data_sum / data.records
+            plot_traces = data.raw_data_sum[tstart:tstop] / data.records
         else:
             record = max(min(self.recordBox.value(), retained_records - 1), -retained_records)
-            plot_traces = traces[record]
+            plot_traces = traces[record, tstart:tstop]
 
         tnum = tstop - tstart
-        for i, trace_idx in enumerate(range(tstart, tstop)):
-            y = plot_traces[trace_idx]
+        for i in range(tnum):
+            y = plot_traces[i]
             pen = self.cmap.map(i / (tnum - 1)) if tnum > 1 else self.cmap.map(0.5)
-            self._trace_items.append(self.raw_plot.plot(x, y, pen=pen, name=f"t{trace_idx:d}"))
+            self._trace_items.append(self.raw_plot.plot(x, y, pen=pen, name=f"t{tstart+i:d}"))
 
         self._update_marker_lines(data.marker_indices, x)
 
@@ -296,7 +296,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         self.sweepsBox.setValue(p.get("sweeps", 0))
         self.sweepsPerRecordBox.setValue(p.get("sweeps_per_record", 1))
         self.shotsPerPointBox.setValue(p.get("shots_per_point", 1))
-        self.maxRecordsBox.setValue(p.get("max_records", 0))
+        self.maxRecordsBox.setValue(p.get("max_records", 1))
         self.durationBox.setValue(p.get("duration", 0.0))
         self.roiheadBox.setValue(p.get("roi_head", 0.0) * 1e9)
         self.roitailBox.setValue(p.get("roi_tail", 0.0) * 1e9)

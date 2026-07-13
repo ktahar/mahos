@@ -205,6 +205,7 @@ class Ui_APODMR(object):
         self.nomwBox.setObjectName("nomwBox")
         self.gridLayout_base.addWidget(self.nomwBox, 3, 3, 1, 1)
         self.maxRecordsBox = QtWidgets.QSpinBox(parent=self.groupBox_2)
+        self.maxRecordsBox.setProperty("value", 1)
         self.maxRecordsBox.setObjectName("maxRecordsBox")
         self.gridLayout_base.addWidget(self.maxRecordsBox, 1, 3, 1, 1)
         self.verticalLayout.addWidget(self.groupBox_2)

@@ -513,6 +513,9 @@
               <property name="prefix">
                <string>max records: </string>
               </property>
+              <property name="value">
+               <number>1</number>
+              </property>
              </widget>
             </item>
            </layout>

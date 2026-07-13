@@ -133,6 +133,9 @@ class APODMR(BasicMeasNode):
     :type pulser.sweeps_per_record: int
     :param pulser.shots_per_point: (default: 1) default number of repeated shots per sweep point.
     :type pulser.shots_per_point: int
+    :param pulser.max_records: (default: 1) default maximum number of retained raw trace records.
+        Set to 0 for unlimited retention.
+    :type pulser.max_records: int
     :param pulser.point_init_delay: (default: 0.0) default dark delay before the initialization
         laser for each sweep point. A positive value enables per-point initialization blocks.
     :type pulser.point_init_delay: float
