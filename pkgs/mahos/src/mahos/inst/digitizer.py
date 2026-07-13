@@ -83,6 +83,7 @@ class SpectrumAnalogIn(Instrument):
         self.running = False
 
         self._mode = self.Mode.UNCONFIGURED
+        self._trigger_source = None
         self._stamp = False
         self._line_num = 0
         self._oversample = 1
@@ -261,12 +262,15 @@ class SpectrumAnalogIn(Instrument):
                 * spcm.units.V
             )
             trigger.and_mask(spcm.SPC_TMASK_NONE)
+            self._trigger_source = "ext0"
         elif source in ("software", "soft"):
             trigger.or_mask(spcm.SPC_TMASK_SOFTWARE)
             trigger.and_mask(spcm.SPC_TMASK_NONE)
+            self._trigger_source = "software"
         elif source in ("none", ""):
             trigger.or_mask(spcm.SPC_TMASK_NONE)
             trigger.and_mask(spcm.SPC_TMASK_NONE)
+            self._trigger_source = "none"
         else:
             return self.fail_with(f"unsupported trigger_source: {source}")
         return True
@@ -768,7 +772,10 @@ class SpectrumAnalogIn(Instrument):
         spcm = self._import_spcm()
         self._stop_ev.clear()
         self._start_transfer(spcm.M2CMD_DATA_STARTDMA)
-        self._card.start(spcm.M2CMD_CARD_ENABLETRIGGER)
+        start_commands = [spcm.M2CMD_CARD_ENABLETRIGGER]
+        if self._trigger_source == "software":
+            start_commands.append(spcm.M2CMD_CARD_FORCETRIGGER)
+        self._card.start(*start_commands)
         self._reader = threading.Thread(target=self._reader_loop, daemon=True)
         self._reader.start()
         self.running = True

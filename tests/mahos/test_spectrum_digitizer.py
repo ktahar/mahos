@@ -69,6 +69,43 @@ class DummySpcm:
     BlockAverage = ConfigureTransfer
 
 
+class StartTransfer:
+    def start_buffer_transfer(self, *commands):
+        self.commands = commands
+
+
+class StartCard:
+    def start(self, *commands):
+        self.start_commands = commands
+
+    def stop(self, *commands):
+        self.stop_commands = commands
+
+    def close(self):
+        pass
+
+
+class StartSpcm:
+    M2CMD_DATA_STARTDMA = 1
+    M2CMD_DATA_STOPDMA = 8
+    M2CMD_CARD_ENABLETRIGGER = 2
+    M2CMD_CARD_FORCETRIGGER = 4
+
+
+class DummyThread:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def start(self):
+        pass
+
+    def join(self, timeout=None):
+        pass
+
+    def is_alive(self):
+        return False
+
+
 def make_inst(conf=None):
     return SpectrumAnalogIn("digitizer", {"mock": True, "lines": [0], **(conf or {})})
 
@@ -163,6 +200,29 @@ def test_append_stream_samples_handles_multi_channel_blocks():
     np.testing.assert_allclose(data[1], np.array([10.0, 20.0, 30.0]))
     np.testing.assert_allclose(inst._pending[0][0], np.array([4.0]))
     np.testing.assert_allclose(inst._pending[1][0], np.array([40.0]))
+
+
+@pytest.mark.parametrize(
+    ("trigger_source", "expected_commands"),
+    [
+        ("software", (StartSpcm.M2CMD_CARD_ENABLETRIGGER, StartSpcm.M2CMD_CARD_FORCETRIGGER)),
+        ("ext0", (StartSpcm.M2CMD_CARD_ENABLETRIGGER,)),
+    ],
+)
+def test_start_forces_only_software_trigger(monkeypatch, trigger_source, expected_commands):
+    inst = make_inst()
+    inst._spcm = StartSpcm
+    inst._card = StartCard()
+    inst._transfer = StartTransfer()
+    inst._mode = inst.Mode.STREAM
+    inst._trigger_source = trigger_source
+    monkeypatch.setattr("mahos.inst.digitizer.threading.Thread", DummyThread)
+
+    assert inst.start()
+    assert inst._transfer.commands == (StartSpcm.M2CMD_DATA_STARTDMA,)
+    assert inst._card.start_commands == expected_commands
+    assert inst.stop()
+    assert inst._card.stop_commands == (StartSpcm.M2CMD_DATA_STOPDMA,)
 
 
 def test_configure_triggered_rejects_nondivisible_software_block_reduce(monkeypatch):
