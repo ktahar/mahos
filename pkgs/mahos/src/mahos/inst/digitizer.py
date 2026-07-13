@@ -530,28 +530,8 @@ class SpectrumAnalogIn(Instrument):
 
         return card
 
-    def configure_triggered(self, params: dict) -> bool:
-        required = ("trigger_source", "cb_samples", "samples", "rate")
-        if not self.check_required_params(params, required):
-            return False
-        if not self._validate_reduce_params(params):
-            return False
-
-        finite = bool(params.get("finite", False))
-        logical_samples = int(params["samples"])
-        cb_samples = int(params["cb_samples"])
-        if finite and cb_samples <= 0:
-            return self.fail_with("cb_samples must be positive in finite triggered mode.")
-        if finite and logical_samples <= 0:
-            return self.fail_with("samples must be positive in finite triggered mode.")
-        if finite and logical_samples % cb_samples:
-            return self.fail_with(
-                "samples must be an integer multiple of cb_samples in finite triggered mode: "
-                f"samples={logical_samples}, cb_samples={cb_samples}"
-            )
-
+    def _setup_triggered_card(self, params, card) -> bool:
         spcm = self._import_spcm()
-        card = self._reset_card()
 
         self._stamp = params.get("stamp", False)
         self._segment_samples = self._oversample * self._block_samples
@@ -606,6 +586,11 @@ class SpectrumAnalogIn(Instrument):
         else:
             self._transfer = spcm.Multi(card)
 
+        return True
+
+    def _setup_triggered_buffer(
+        self, params, finite: bool, logical_samples: int, cb_samples: int, card
+    ) -> bool:
         segments_per_record = self._record_samples // self._segment_samples
         record_count = logical_samples // cb_samples if finite else 0
         card.loops(record_count * segments_per_record)
@@ -659,6 +644,35 @@ class SpectrumAnalogIn(Instrument):
         # set maximum post_trigger given segment_samples. as min of pre_trigger is 16 samples,
         # maximum post_trigger is segment_samples - 16.
         self._transfer.post_trigger(self._segment_samples - 16)
+
+        return True
+
+    def configure_triggered(self, params: dict) -> bool:
+        required = ("trigger_source", "cb_samples", "samples", "rate")
+        if not self.check_required_params(params, required):
+            return False
+        if not self._validate_reduce_params(params):
+            return False
+
+        finite = bool(params.get("finite", False))
+        logical_samples = int(params["samples"])
+        cb_samples = int(params["cb_samples"])
+        if finite and cb_samples <= 0:
+            return self.fail_with("cb_samples must be positive in finite triggered mode.")
+        if finite and logical_samples <= 0:
+            return self.fail_with("samples must be positive in finite triggered mode.")
+        if finite and logical_samples % cb_samples:
+            return self.fail_with(
+                "samples must be an integer multiple of cb_samples in finite triggered mode: "
+                f"samples={logical_samples}, cb_samples={cb_samples}"
+            )
+
+        card = self._reset_card()
+
+        if not self._setup_triggered_card(params, card):
+            return False
+        if not self._setup_triggered_buffer(params, finite, logical_samples, cb_samples, card):
+            return False
 
         self.queue = RollingQueue(self.queue_size)
         self._pending = [[] for _ in range(self._line_num)]
