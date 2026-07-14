@@ -129,7 +129,9 @@ class DummyThread:
 
 
 def make_inst(conf=None):
-    return SpectrumAnalogIn("digitizer", {"mock": True, "lines": [0], **(conf or {})})
+    inst = SpectrumAnalogIn("digitizer", {"mock": True, "lines": [0], **(conf or {})})
+    inst._spcm = DummySpcm
+    return inst
 
 
 def make_triggered_params(**overrides):
@@ -269,7 +271,6 @@ def test_finite_notify_samples_rejects_transfer_without_valid_divisor():
 
 def test_convert_segment_removes_pre_trigger_samples():
     inst = make_inst()
-    inst._spcm = DummySpcm
     inst._channels = [DummyChannel()]
     inst._averages = 1
     inst._logical_segment_samples = 16
@@ -539,7 +540,6 @@ def test_triggered_fifo_status_distinguishes_logical_and_physical_samples(monkey
 )
 def test_start_forces_only_software_trigger(monkeypatch, trigger_source, expected_commands):
     inst = make_inst()
-    inst._spcm = DummySpcm
     inst._card = DummyCard()
     inst._transfer = DummyTransfer()
     inst._mode = inst.Mode.STREAM
