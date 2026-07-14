@@ -472,7 +472,7 @@ class Pulser(PODMRPulser):
             if adjusted != self.samples_per_trace:
                 self.logger.info(
                     "PD samples_per_trace adjusted: "
-                    f"{self.samples_per_trace} -> {adjusted} (granularity={granularity})"
+                    f"{self.samples_per_trace} to {adjusted} (granularity = {granularity})"
                 )
             self.samples_per_trace = adjusted
             trace_length_ticks = int(np.ceil(self.samples_per_trace * self.freq / pd_rate))

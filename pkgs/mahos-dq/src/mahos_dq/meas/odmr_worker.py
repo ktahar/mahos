@@ -693,7 +693,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             if adjusted != oversamp:
                 self.logger.info(
                     "PD oversample adjusted down: "
-                    f"{oversamp} -> {adjusted} (granularity={granularity})"
+                    f"{oversamp} to {adjusted} (granularity = {granularity})"
                 )
             oversamp = adjusted
 

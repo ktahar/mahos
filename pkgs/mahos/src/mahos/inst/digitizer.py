@@ -728,8 +728,8 @@ class SpectrumAnalogIn(Instrument):
 
         self.logger.debug(
             "triggered segment samples: "
-            f"logical(post-trigger)={self._logical_segment_samples:_d}, "
-            f"physical={self._segment_samples:_d}, pre-trigger={self._pre_trigger_samples:_d}"
+            f"logical (post-trigger) = {self._logical_segment_samples:_d}, "
+            f"physical = {self._segment_samples:_d}, pre-trigger = {self._pre_trigger_samples:_d}"
         )
 
         return True
