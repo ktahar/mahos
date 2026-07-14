@@ -788,6 +788,13 @@ class AnalogIn(ConfigurableTask):
 
         return self.queue.pop_block()
 
+    def pop_block_with_status(
+        self,
+    ) -> tuple[np.ndarray | list[np.ndarray] | tuple[np.ndarray | list[np.ndarray], float], bool]:
+        """Get data and whether the software queue has discarded data."""
+
+        return self.queue.pop_block_with_status()
+
     def pop_all_block(
         self,
     ) -> list[np.ndarray | list[np.ndarray] | tuple[np.ndarray | list[np.ndarray], float]]:
@@ -1010,6 +1017,10 @@ class AnalogIn(ConfigurableTask):
                 return self.pop_block()
             else:
                 return self.pop_opt()
+        elif key == "data_with_status":
+            if not self.clock_mode:
+                return self.read_on_demand(), False
+            return self.pop_block_with_status()
         elif key == "all_data":
             if args:
                 return self.pop_all_block()
@@ -1318,6 +1329,8 @@ class BufferedEdgeCounter(ConfigurableTask):
                 return self.pop_block()
             else:
                 return self.pop_opt()
+        elif key == "data_with_status":
+            return self.queue.pop_block_with_status()
         elif key == "all_data":
             if args:
                 return self.pop_all_block()

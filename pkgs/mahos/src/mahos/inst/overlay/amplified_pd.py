@@ -267,6 +267,9 @@ class LockinAnalogPD_LI5640(InstrumentOverlay, _LI5640Mixin):
     def get(self, key: str, args=None, label: str = ""):
         if key == "data":
             return self._convert_data(self.pd.get(key, args))
+        elif key == "data_with_status":
+            data, overflowed = self.pd.get(key, args)
+            return self._convert_data(data), overflowed
         elif key == "all_data":
             return self._convert_all_data(self.pd.get(key, args))
         elif key == "unit":
@@ -433,6 +436,9 @@ class OE200_AI(InstrumentOverlay):
     def get(self, key: str, args=None, label: str = ""):
         if key == "data":
             return self._convert_data(self.pd.get(key, args))
+        elif key == "data_with_status":
+            data, overflowed = self.pd.get(key, args)
+            return self._convert_data(data), overflowed
         elif key == "all_data":
             return self._convert_all_data(self.pd.get(key, args))
         elif key == "unit":
@@ -571,6 +577,9 @@ class OE200_LI5640_AI(InstrumentOverlay):
     def get(self, key: str, args=None, label: str = ""):
         if key == "data":
             return self._convert_data(self.pd.get(key, args))
+        elif key == "data_with_status":
+            data, overflowed = self.pd.get(key, args)
+            return self._convert_data(data), overflowed
         elif key == "all_data":
             return self._convert_all_data(self.pd.get(key, args))
         elif key == "unit":
@@ -734,6 +743,9 @@ class OE200_SR860_AI(InstrumentOverlay):
     def get(self, key: str, args=None, label: str = ""):
         if key == "data":
             return self._convert_data(self.pd.get(key, args))
+        elif key == "data_with_status":
+            data, overflowed = self.pd.get(key, args)
+            return self._convert_data(data), overflowed
         elif key == "all_data":
             return self._convert_all_data(self.pd.get(key, args))
         elif key == "unit":

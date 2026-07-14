@@ -153,6 +153,31 @@ def test_apodmr_pd_finite_samples_include_drop_first():
     assert pulser.pds[0].kwargs["finite"] is False
 
 
+def test_apodmr_finite_acquisition_finishes_on_pd_queue_overflow(caplog):
+    class PD:
+        def pop_block_with_status(self):
+            return np.zeros(1), True
+
+        def pop_block(self):
+            raise AssertionError("finite acquisition must use overflow-aware pop")
+
+    params = _apodmr_params()
+    params.update({"sweeps": 2, "hardware_sweep_limit": True})
+    pulser = Pulser.__new__(Pulser)
+    pulser.logger = logging.getLogger("test_apodmr_queue_overflow")
+    pulser.data = APODMRData(params, "rabi")
+    pulser.data.start()
+    pulser.pd_names = ["pd0"]
+    pulser.pds = [PD()]
+    pulser._acquisition_failed = False
+
+    assert not pulser.update()
+    assert pulser._acquisition_failed
+    assert pulser.is_finished()
+    assert pulser.data.records == 0
+    assert "PD queue overflowed during finite acquisition (pd0)" in caplog.text
+
+
 def test_apodmr_builder_inserts_trigger_before_each_laser():
     params = _apodmr_params()
     params["shots_per_point"] = 3

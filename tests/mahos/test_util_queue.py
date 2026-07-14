@@ -81,14 +81,14 @@ def test_pop_all_block_with_data():
     assert len(q) == 0
 
 
-def test_pop_opt_with_status_reports_full_queue():
+def test_pop_opt_with_status_does_not_report_full_queue():
     q = RollingQueue(2)
     q.append("a")
     q.append("b")
 
     data, overflowed = q.pop_opt_with_status()
     assert data == "a"
-    assert overflowed
+    assert not overflowed
 
     data, overflowed = q.pop_opt_with_status()
     assert data == "b"

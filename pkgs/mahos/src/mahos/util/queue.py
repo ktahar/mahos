@@ -19,7 +19,9 @@ class RollingQueue(object):
 
     The queue keeps at most ``size`` items. When :meth:`append` is called while
     full, the newest item is still appended, the oldest item is discarded, and
-    ``False`` is returned. Blocking pop methods wait on a condition variable.
+    ``False`` is returned. Status pop methods report whether at least one item
+    has been discarded since queue creation or the previous successful status
+    pop. Blocking pop methods wait on a condition variable.
 
     """
 
@@ -45,7 +47,7 @@ class RollingQueue(object):
         return len(self.buffer) >= self._size
 
     def append(self, data) -> bool:
-        """append data in queue. return False if queue is overflowing."""
+        """Append data and return False if the oldest item was discarded."""
 
         with self.cond:
             ok = not self._is_full_locked()
@@ -67,8 +69,8 @@ class RollingQueue(object):
     def pop_opt_with_status(self):
         """Pop single data and return ``(data, overflowed)`` immediately.
 
-        ``overflowed`` is True when the queue was full at the time of the pop or
-        when an append has overflowed since the previous status pop.
+        ``overflowed`` is True when an append has discarded an item since queue
+        creation or the previous successful status pop.
         """
 
         with self.cond:
@@ -105,8 +107,8 @@ class RollingQueue(object):
     def pop_block_with_status(self, timeout_sec: float | None = None):
         """Pop single data and return ``(data, overflowed)``, blocking if empty.
 
-        ``overflowed`` is True when the queue was full at the time of the pop or
-        when an append has overflowed since the previous status pop.
+        ``overflowed`` is True when an append has discarded an item since queue
+        creation or the previous successful status pop.
 
         :param timeout_sec: timeout of blocking. if None or zero, block is unlimited.
 
@@ -134,7 +136,7 @@ class RollingQueue(object):
             return ret
 
     def _pop_with_status_locked(self):
-        overflowed = self._overflowed or self._is_full_locked()
+        overflowed = self._overflowed
         self._overflowed = False
         return self.buffer.popleft(), overflowed
 

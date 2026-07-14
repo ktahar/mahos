@@ -381,6 +381,7 @@ class Pulser(PODMRPulser):
         self.bounds = Bounds()
         self.pulse_pattern = None
         self._analysis_warned = False
+        self._acquisition_failed = False
 
     def _sweeps_per_record(self, params: dict) -> int:
         return int(params.get("sweeps_per_record", 1))
@@ -594,9 +595,23 @@ class Pulser(PODMRPulser):
         if not self.data.running:
             return False
 
+        hardware_limited = bool(
+            self.data.params.get("hardware_sweep_limit", False)
+            and int(self.data.params.get("sweeps", 0)) > 0
+        )
         lines = []
-        for pd in self.pds:
-            ls = pd.pop_block()
+        for name, pd in zip(self.pd_names, self.pds):
+            if hardware_limited:
+                ls, overflowed = pd.pop_block_with_status()
+                if overflowed:
+                    self.logger.error(
+                        f"PD queue overflowed during finite acquisition ({name}); "
+                        "acquired records were dropped."
+                    )
+                    self._acquisition_failed = True
+                    return False
+            else:
+                ls = pd.pop_block()
             if isinstance(ls, list):
                 # PD has multi channel
                 lines.extend(ls)
@@ -644,6 +659,7 @@ class Pulser(PODMRPulser):
     def start(
         self, params: None | P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
     ) -> bool:
+        self._acquisition_failed = False
         if params is not None:
             params = P.unwrap(params)
         resume = params is None or ("resume" in params and params["resume"])
@@ -717,6 +733,8 @@ class Pulser(PODMRPulser):
     def is_finished(self) -> bool:
         if not self.data.has_params():
             return False
+        if self._acquisition_failed:
+            return True
         if (
             self.data.params.get("sweeps", 0) > 0
             and self.data.sweeps() >= self.data.params["sweeps"]
@@ -784,7 +802,8 @@ class Pulser(PODMRPulser):
             False,
             doc=(
                 "stop detector acquisition at the exact sweep limit in hardware; requires "
-                "sweeps divisible by sweeps_per_record"
+                "sweeps divisible by sweeps_per_record; acquisition is aborted if the detector "
+                "software queue discards a record"
             ),
         )
 

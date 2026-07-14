@@ -928,6 +928,9 @@ class SpectrumAnalogIn(Instrument):
     def pop_block(self):
         return self.queue.pop_block()
 
+    def pop_block_with_status(self):
+        return self.queue.pop_block_with_status()
+
     def pop_all_block(self):
         return self.queue.pop_all_block()
 
@@ -944,6 +947,8 @@ class SpectrumAnalogIn(Instrument):
     def get(self, key: str, args=None, label: str = ""):
         if key == "data":
             return self.pop_block() if args else self.pop_opt()
+        elif key == "data_with_status":
+            return self.pop_block_with_status()
         elif key == "all_data":
             return self.pop_all_block() if args else self.pop_all_opt()
         elif key == "fifo_status":

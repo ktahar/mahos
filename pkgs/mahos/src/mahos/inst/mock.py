@@ -552,6 +552,8 @@ class PD_mock(Instrument):
     def get(self, key: str, args=None, label: str = ""):
         if key == "data":
             return self.get_data()
+        elif key == "data_with_status":
+            return self.get_data(), False
         elif key == "all_data":
             return [self.get_data()]
         elif key == "unit":
