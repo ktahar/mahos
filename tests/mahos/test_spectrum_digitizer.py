@@ -304,6 +304,34 @@ def test_append_stream_samples_handles_multi_channel_blocks():
     np.testing.assert_allclose(inst._pending[1][0], np.array([40.0]))
 
 
+def test_append_stream_samples_uses_sample_derived_stamps(monkeypatch):
+    inst = make_inst()
+    inst.queue = RollingQueue(100)
+    inst._line_num = 1
+    inst._stamp = True
+    inst._oversample = 1
+    inst._sampling_rate = 100
+    inst._stream_samples = 5
+    inst._stream_epoch_ns = None
+    inst._stream_emitted_samples = 0
+    inst._pending = [[]]
+    monkeypatch.setattr("mahos.inst.digitizer.time.time_ns", lambda: 1_000_000_000)
+
+    inst._note_stream_notification(12)
+    inst._append_stream_samples([np.arange(12.0)])
+    inst._note_stream_notification(12)
+    inst._append_stream_samples([np.arange(12.0, 24.0)])
+
+    items = inst.pop_all_opt()
+    chunks, stamps = zip(*items)
+    np.testing.assert_allclose(chunks[0], np.arange(5.0))
+    np.testing.assert_allclose(chunks[1], np.arange(5.0, 10.0))
+    np.testing.assert_allclose(chunks[2], np.arange(10.0, 15.0))
+    np.testing.assert_allclose(chunks[3], np.arange(15.0, 20.0))
+    np.testing.assert_array_equal(stamps, [930_000_000, 980_000_000, 1_030_000_000, 1_080_000_000])
+    np.testing.assert_allclose(inst._pending[0][0], np.arange(20.0, 24.0))
+
+
 @pytest.mark.parametrize("samples", [0, -64, 65])
 def test_configure_triggered_rejects_invalid_finite_samples(monkeypatch, samples):
     inst = make_inst()

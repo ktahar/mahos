@@ -111,6 +111,9 @@ class SpectrumAnalogIn(Instrument):
         self._post_trigger_samples = 0
         self._record_samples = 0
         self._stream_samples = 0
+        self._sampling_rate = 0
+        self._stream_epoch_ns: int | None = None
+        self._stream_emitted_samples = 0
         self._notify_samples = 0
         self._buffer_samples = 0
         self._pending: list[list[np.ndarray]] = []
@@ -242,6 +245,7 @@ class SpectrumAnalogIn(Instrument):
         msg += f"actual = {rate_ret.magnitude:_d} Hz"
         if self._strict and rate_req != rate_ret:
             return self.fail_with(msg)
+        self._sampling_rate = int(rate_ret.magnitude)
         self.logger.debug(msg)
         return True
 
@@ -403,12 +407,11 @@ class SpectrumAnalogIn(Instrument):
             )
         self.logger.debug(msg)
 
-    def _append_data(self, data: np.ndarray | list[np.ndarray]):
+    def _append_data(self, data: np.ndarray | list[np.ndarray], stamp_ns: int | None = None):
         data = self._convert_gain(data)
-        if (
-            not self.queue.append((data, time.time_ns()) if self._stamp else data)
-            and not self._silent
-        ):
+        if self._stamp:
+            data = (data, time.time_ns() if stamp_ns is None else stamp_ns)
+        if not self.queue.append(data) and not self._silent:
             self.logger.warn("queue is overflowing. The oldest data is discarded.")
 
     def _convert_gain(self, data):
@@ -458,6 +461,21 @@ class SpectrumAnalogIn(Instrument):
                 raise ValueError("stream block length must be divisible by oversample")
             data = data.reshape(-1, self._oversample).mean(axis=1)
         return data
+
+    def _stream_elapsed_ns(self, samples: int) -> int:
+        numerator = int(samples) * 1_000_000_000
+        return (numerator + self._sampling_rate // 2) // self._sampling_rate
+
+    def _note_stream_notification(self, samples: int):
+        if not self._stamp or self._stream_epoch_ns is not None:
+            return
+        self._stream_epoch_ns = time.time_ns() - self._stream_elapsed_ns(samples)
+
+    def _next_stream_stamp_ns(self) -> int:
+        if self._stream_epoch_ns is None:
+            raise RuntimeError("stream timestamp epoch is not initialized")
+        self._stream_emitted_samples += self._stream_samples
+        return self._stream_epoch_ns + self._stream_elapsed_ns(self._stream_emitted_samples)
 
     def _reduce_record(self, data: np.ndarray) -> np.ndarray:
         if self._oversample > 1:
@@ -516,7 +534,8 @@ class SpectrumAnalogIn(Instrument):
                 if len(rest):
                     ch_pending.append(rest)
                 block.append(self._reduce_stream(current))
-            self._append_data(block[0] if len(block) == 1 else block)
+            stamp_ns = self._next_stream_stamp_ns() if self._stamp else None
+            self._append_data(block[0] if len(block) == 1 else block, stamp_ns=stamp_ns)
 
     def _reader_loop(self):
         spcm = self._import_spcm()
@@ -531,6 +550,7 @@ class SpectrumAnalogIn(Instrument):
                 for block in self._transfer:
                     if self._stop_ev.is_set():
                         break
+                    self._note_stream_notification(self._notify_samples)
                     converted = self._convert_fifo_block(block)
                     self._append_stream_samples(converted)
         except spcm.SpcmException as e:
@@ -820,6 +840,8 @@ class SpectrumAnalogIn(Instrument):
 
         self.queue = RollingQueue(self.queue_size)
         self._pending = [[] for _ in range(self._line_num)]
+        self._stream_epoch_ns = None
+        self._stream_emitted_samples = 0
         self._mode = self.Mode.STREAM
         self.logger.debug("Configured stream FIFO mode.")
         return True
