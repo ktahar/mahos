@@ -162,22 +162,28 @@ class SpectrumAnalogIn(Instrument):
             mask |= int(getattr(spcm, f"CHANNEL{idx}", 1 << idx))
         return mask
 
-    def _get_amp_mV(self, termination: int, amp_V: float) -> int:
+    def _get_amp_offset(self, termination: int, lower_V: float, upper_V: float) -> tuple[int, int]:
         amps = {1_000_000: [200, 500, 1000, 2000, 5000, 10000], 50: [500, 1000, 2500, 5000]}[
             termination
         ]
-        target_mV = round(amp_V * 1e3)
-        for a in amps:
-            if target_mV <= a:
-                return a
-        else:
-            raise ValueError(f"requested amplitude is invalid: {amp_V}")
+        lower_V, upper_V = float(lower_V), float(upper_V)
+        if not (math.isfinite(lower_V) and math.isfinite(upper_V)) or lower_V >= upper_V:
+            raise ValueError(f"requested bounds are invalid: ({lower_V}, {upper_V})")
 
-    def _get_offset_percent(self, amp_V: float, offset_V: float) -> int:
-        ofs = int(round(offset_V / amp_V * 100))
-        if abs(ofs) > 100:
-            raise ValueError(f"requested offset is too large: abs({ofs:d}%) > 100%")
-        return ofs
+        center_V = (lower_V + upper_V) / 2.0
+        half_span_V = (upper_V - lower_V) / 2.0
+        required_amp_V = max(half_span_V, abs(center_V))
+        for amp_mV in amps:
+            amp_V = amp_mV / 1e3
+            if amp_V < required_amp_V and not math.isclose(amp_V, required_amp_V):
+                continue
+
+            offset = int(round(center_V / amp_V * 100))
+            actual_center_V = amp_V * offset / 100.0
+            if actual_center_V - amp_V <= lower_V and upper_V <= actual_center_V + amp_V:
+                return amp_mV, offset
+
+        raise ValueError(f"requested bounds cannot be represented: ({lower_V}, {upper_V})")
 
     def _setup_channels(self, params) -> bool:
         spcm = self._import_spcm()
@@ -211,11 +217,7 @@ class SpectrumAnalogIn(Instrument):
         for ch, bnds in zip(self._channels, bounds):
             if len(bnds) == 2 and isinstance(bnds[0], (float, int, np.integer, np.floating)):
                 lb, ub = bnds
-                # amp is zero-to-peak amplitude
-                amp_V = float(ub - lb) / 2.0
-                offset_V = float(ub + lb) / 2.0
-                amp = self._get_amp_mV(termination, amp_V)
-                offset = self._get_offset_percent(amp / 1e3, offset_V)
+                amp, offset = self._get_amp_offset(termination, lb, ub)
                 amp_set = ch.amp(amp * spcm.units.mV, return_unit=spcm.units.mV)
                 ofs_set = ch.offset(offset * spcm.units.percent, return_unit=spcm.units.V)
                 self.logger.debug(f"{ch} range: Amp = {amp_set}, Offset = {ofs_set}")
