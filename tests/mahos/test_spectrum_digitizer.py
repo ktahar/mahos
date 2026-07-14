@@ -134,7 +134,7 @@ def make_inst(conf=None):
 
 def make_triggered_params(**overrides):
     return {
-        "trigger_source": "software",
+        "trigger_source": "ext0",
         "cb_samples": 64,
         "samples": 192,
         "rate": 1.0e6,
@@ -229,6 +229,21 @@ def test_align_segment_samples_can_disable_byte_alignment():
     inst._transfer = DummyTransfer(bytes_per_sample=2, channels=1)
 
     assert inst._align_segment_samples(16) == 32
+
+
+def test_align_segment_samples_uses_configured_hardware_constraints():
+    inst = make_inst(
+        {
+            "segment_alignment_bytes": 1,
+            "trigger_sample_granularity": 64,
+            "min_segment_samples": 128,
+            "min_pre_trigger_samples": 32,
+        }
+    )
+    inst._transfer = DummyTransfer(bytes_per_sample=2, channels=1)
+
+    assert inst._align_segment_samples(64) == 128
+    assert inst._align_segment_samples(128) == 192
 
 
 def test_align_buffer_samples_is_notify_multiple():
@@ -332,6 +347,18 @@ def test_append_stream_samples_uses_sample_derived_stamps(monkeypatch):
     np.testing.assert_allclose(inst._pending[0][0], np.arange(20.0, 24.0))
 
 
+@pytest.mark.parametrize("trigger_source", ["software", "soft"])
+def test_configure_triggered_rejects_software_trigger(monkeypatch, trigger_source):
+    inst = make_inst()
+    errors = []
+    params = make_triggered_params(trigger_source=trigger_source)
+    monkeypatch.setattr(inst, "_reset_card", lambda: pytest.fail("card should not be reset"))
+    monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
+
+    assert not inst.configure_triggered(params)
+    assert errors == ["software trigger is not supported in triggered mode."]
+
+
 @pytest.mark.parametrize("samples", [0, -64, 65])
 def test_configure_triggered_rejects_invalid_finite_samples(monkeypatch, samples):
     inst = make_inst()
@@ -356,14 +383,34 @@ def test_configure_triggered_rejects_invalid_logical_segment(monkeypatch, block_
     assert "logical segment samples" in errors[0]
 
 
-def test_configure_triggered_rejects_nondivisible_software_block_reduce(monkeypatch):
+def test_configure_triggered_uses_configured_min_post_trigger(monkeypatch):
+    inst = make_inst({"min_post_trigger_samples": 64})
+    errors = []
+    params = make_triggered_params(samples=64, block_samples=32)
+    monkeypatch.setattr(inst, "_reset_card", lambda: DummyCard())
+    monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
+
+    assert not inst.configure_triggered(params)
+    assert errors == [
+        "derived logical segment samples must be an integer multiple of 16 and at least 64: 32"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("block_reduce_factor", "hardware_average", "reduce_factor"),
+    [(2, False, 1), (2, True, 1), (1, False, 2)],
+)
+def test_configure_triggered_rejects_nondivisible_cb_samples(
+    monkeypatch, block_reduce_factor, hardware_average, reduce_factor
+):
     inst = make_inst()
     errors = []
     params = make_triggered_params(
         cb_samples=24,
         samples=24,
-        block_reduce_factor=2,
-        hardware_average=False,
+        block_reduce_factor=block_reduce_factor,
+        hardware_average=hardware_average,
+        reduce_factor=reduce_factor,
     )
 
     monkeypatch.setattr(inst, "_import_spcm", lambda: object())
@@ -460,6 +507,14 @@ def test_configure_triggered_increases_buffer_to_finite_notify_size(monkeypatch)
 
     assert transfer.notified == 256
     assert inst._buffer_samples == 256
+
+
+def test_configure_triggered_rounds_buffer_up_to_whole_records(monkeypatch):
+    inst = make_inst({"notify_alignment_bytes": 1})
+
+    configure_triggered(inst, monkeypatch, buffer_size=100)
+
+    assert inst._buffer_samples == 192
 
 
 def test_triggered_fifo_status_distinguishes_logical_and_physical_samples(monkeypatch):

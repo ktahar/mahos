@@ -29,7 +29,8 @@ class SpectrumAnalogIn(Instrument):
     count divisible by ``cb_samples``. In ``stream`` mode, data are streamed continuously with
     single FIFO mode. Triggered logical segments contain post-trigger samples only. The physical
     segment is enlarged as needed for mandatory pre-trigger samples and byte alignment, and the
-    pre-trigger region is removed before data reduction and publication.
+    pre-trigger region is removed before data reduction and publication. Software triggering is
+    rejected in ``triggered`` mode; ``stream`` mode uses a one-time software trigger internally.
 
     :param lines: channel indices to enable, for example ``[0]`` or ``[0, 1]``.
     :type lines: list[int | str]
@@ -55,6 +56,16 @@ class SpectrumAnalogIn(Instrument):
     :param segment_alignment_bytes: (default: ``notify_alignment_bytes``) required byte
         alignment for physical segments in triggered mode. Set to ``1`` to disable alignment.
     :type segment_alignment_bytes: int
+    :param trigger_sample_granularity: (default: 16) sample-count granularity required for
+        triggered logical segments and pre-trigger regions.
+    :type trigger_sample_granularity: int
+    :param min_segment_samples: (default: 32) minimum physical segment length in samples.
+    :type min_segment_samples: int
+    :param min_pre_trigger_samples: (default: 16) minimum pre-trigger region in samples.
+    :type min_pre_trigger_samples: int
+    :param min_post_trigger_samples: (default: 16) minimum logical post-trigger segment length
+        in samples.
+    :type min_post_trigger_samples: int
     :param strict: (default: True) If True, check realized sampling rate strictly -
         the configuration fails whenever requested and realized rates don't match.
     :type strict: bool
@@ -65,11 +76,6 @@ class SpectrumAnalogIn(Instrument):
         UNCONFIGURED = 0
         STREAM = 1
         TRIGGERED = 2
-
-    TRIGGER_SAMPLE_GRANULARITY = 16
-    MIN_SEGMENT_SAMPLES = 32
-    MIN_PRE_TRIGGER_SAMPLES = 16
-    MIN_POST_TRIGGER_SAMPLES = 16
 
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
@@ -83,6 +89,12 @@ class SpectrumAnalogIn(Instrument):
         self.unit = self.conf.get("unit", "V")
         self.gain = float(self.conf.get("gain", 1.0))
         self._strict = self.conf.get("strict", True)
+        self._trigger_sample_granularity = max(
+            1, int(self.conf.get("trigger_sample_granularity", 16))
+        )
+        self._min_segment_samples = max(1, int(self.conf.get("min_segment_samples", 32)))
+        self._min_pre_trigger_samples = max(1, int(self.conf.get("min_pre_trigger_samples", 16)))
+        self._min_post_trigger_samples = max(1, int(self.conf.get("min_post_trigger_samples", 16)))
 
         self._spcm = None
         self._card = None
@@ -331,10 +343,10 @@ class SpectrumAnalogIn(Instrument):
         )
 
     def _align_segment_samples(self, logical_samples: int) -> int:
-        step = self.TRIGGER_SAMPLE_GRANULARITY
+        step = self._trigger_sample_granularity
         min_samples = max(
-            self.MIN_SEGMENT_SAMPLES,
-            int(logical_samples) + self.MIN_PRE_TRIGGER_SAMPLES,
+            self._min_segment_samples,
+            int(logical_samples) + self._min_pre_trigger_samples,
         )
         alignment = self._segment_alignment_bytes()
         samples = self._ceil_to_multiple(min_samples, step)
@@ -613,12 +625,13 @@ class SpectrumAnalogIn(Instrument):
         self._pre_trigger_samples = 0
         self._post_trigger_samples = 0
         if (
-            self._logical_segment_samples < self.MIN_POST_TRIGGER_SAMPLES
-            or self._logical_segment_samples % self.TRIGGER_SAMPLE_GRANULARITY
+            self._logical_segment_samples < self._min_post_trigger_samples
+            or self._logical_segment_samples % self._trigger_sample_granularity
         ):
             return self.fail_with(
-                "derived logical segment samples must be an integer multiple of 16 "
-                f"and at least 16: {self._logical_segment_samples}"
+                "derived logical segment samples must be an integer multiple of "
+                f"{self._trigger_sample_granularity} and at least "
+                f"{self._min_post_trigger_samples}: {self._logical_segment_samples}"
             )
         self._drop_records_left = abs(int(params.get("drop_first", 0)))
         self._hardware_average = (
@@ -626,11 +639,7 @@ class SpectrumAnalogIn(Instrument):
         )
         if self._hardware_average and self._block_reduce_op != "mean":
             return self.fail_with("hardware averaging supports block_reduce_op='mean' only.")
-        if (
-            self._block_reduce_factor > 1
-            and not self._hardware_average
-            and int(params["cb_samples"]) % self._block_samples != 0
-        ):
+        if int(params["cb_samples"]) % self._block_samples:
             return self.fail_with("cb_samples must be integer multiple of block_samples.")
         self._averages = self._block_reduce_factor if self._hardware_average else 1
         self._record_samples = int(params["cb_samples"]) * self._oversample * self._reduce_factor
@@ -695,7 +704,10 @@ class SpectrumAnalogIn(Instrument):
             buffer_samples *= self._oversample * self._reduce_factor
             if not self._hardware_average:
                 buffer_samples *= self._block_reduce_factor
-            buffer_records = max(1, buffer_samples // self._record_samples)
+            buffer_records = max(
+                1,
+                (buffer_samples + self._record_samples - 1) // self._record_samples,
+            )
             requested_buffer_samples = buffer_records * physical_record_samples
 
         try:
@@ -738,12 +750,13 @@ class SpectrumAnalogIn(Instrument):
             )
         self._pre_trigger_samples = self._segment_samples - self._post_trigger_samples
         if (
-            self._pre_trigger_samples < self.MIN_PRE_TRIGGER_SAMPLES
-            or self._pre_trigger_samples % self.TRIGGER_SAMPLE_GRANULARITY
+            self._pre_trigger_samples < self._min_pre_trigger_samples
+            or self._pre_trigger_samples % self._trigger_sample_granularity
         ):
             return self.fail_with(
-                "realized pre-trigger samples must be an integer multiple of 16 "
-                f"and at least 16: {self._pre_trigger_samples}"
+                "realized pre-trigger samples must be an integer multiple of "
+                f"{self._trigger_sample_granularity} and at least "
+                f"{self._min_pre_trigger_samples}: {self._pre_trigger_samples}"
             )
         self._transfer.notify_samples(self._notify_samples)
         if finite:
@@ -761,6 +774,8 @@ class SpectrumAnalogIn(Instrument):
         required = ("trigger_source", "cb_samples", "samples", "rate")
         if not self.check_required_params(params, required):
             return False
+        if str(params["trigger_source"]).lower() in ("software", "soft"):
+            return self.fail_with("software trigger is not supported in triggered mode.")
         if not self._validate_reduce_params(params):
             return False
 
