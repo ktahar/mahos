@@ -290,7 +290,11 @@ class Confocal(Node):
     :type tracer.size: int
     :param tracer.samples: (default: 5) Number of samples per chunk.
     :type tracer.samples: int
-    :param tracer.oversample: (default: 1) Oversample factor.
+    :param tracer.pd_rate: Optional analog-PD sampling rate. Leave unset when using
+        ``SinglePhotonCounter``. When set, this takes precedence over ``tracer.oversample``.
+    :type tracer.pd_rate: float
+    :param tracer.oversample: (default: 1) Analog-PD oversampling factor. Leave unset when using
+        ``SinglePhotonCounter``.
     :type tracer.oversample: int
     :param tracer.time_window_sec: (default: 0.01) Time window for single data point.
     :type tracer.time_window_sec: float
@@ -761,7 +765,11 @@ class TraceNode(Node):
     :type tracer.size: int
     :param tracer.samples: (default: 5) Number of samples per chunk.
     :type tracer.samples: int
-    :param tracer.oversample: (default: 1) Oversample factor.
+    :param tracer.pd_rate: Optional analog-PD sampling rate. Leave unset when using
+        ``SinglePhotonCounter``. When set, this takes precedence over ``tracer.oversample``.
+    :type tracer.pd_rate: float
+    :param tracer.oversample: (default: 1) Analog-PD oversampling factor. Leave unset when using
+        ``SinglePhotonCounter``.
     :type tracer.oversample: int
     :param tracer.time_window_sec: (default: 0.01) Time window for single data point.
     :type tracer.time_window_sec: float
