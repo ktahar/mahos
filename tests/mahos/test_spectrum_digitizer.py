@@ -44,6 +44,9 @@ class DummyChannels(list):
 
 
 class DummyCard:
+    def reset(self):
+        self.was_reset = True
+
     def card_mode(self, mode):
         self.mode = mode
 
@@ -142,13 +145,20 @@ def make_triggered_params(**overrides):
 
 
 def configure_triggered(
-    inst, monkeypatch, *, post_trigger_offset=0, expect_success=True, **overrides
+    inst,
+    monkeypatch,
+    *,
+    post_trigger_offset=0,
+    expect_success=True,
+    use_real_reset=False,
+    **overrides,
 ):
     card = DummyCard()
     card.post_trigger_offset = post_trigger_offset
     params = make_triggered_params(**overrides)
     monkeypatch.setattr(inst, "_import_spcm", lambda: DummySpcm)
-    monkeypatch.setattr(inst, "_reset_card", lambda: card)
+    if not use_real_reset:
+        monkeypatch.setattr(inst, "_reset_card", lambda: card)
     monkeypatch.setattr(inst, "_open_card", lambda: card)
     monkeypatch.setattr(inst, "_setup_trigger", lambda _params: True)
     monkeypatch.setattr(inst, "_setup_clock", lambda _params: True)
@@ -159,11 +169,11 @@ def configure_triggered(
 @pytest.mark.parametrize(
     ("bounds", "expected_amp", "expected_offset"),
     [
-        ((0.0, 0.6), 500.0, 60.0),
-        ((-0.6, 0.0), 500.0, -60.0),
+        ((0.0, 0.6), 500.0, -60.0),
+        ((-0.6, 0.0), 500.0, 60.0),
         ((-0.6, 0.6), 1000.0, 0.0),
-        ((0.5, 1.0), 1000.0, 75.0),
-        ((-1.0, -0.5), 1000.0, -75.0),
+        ((0.5, 1.0), 1000.0, -75.0),
+        ((-1.0, -0.5), 1000.0, 75.0),
         ((-0.499, 0.501), 1000.0, 0.0),
     ],
 )
@@ -358,6 +368,23 @@ def test_configure_triggered_rejects_mismatched_realized_post_trigger(monkeypatc
 
     assert transfer.post_trigger_samples == 48
     assert inst._mode == inst.Mode.UNCONFIGURED
+
+
+def test_failed_triggered_reconfiguration_cannot_be_started(monkeypatch):
+    inst = make_inst({"notify_alignment_bytes": 1})
+    inst._mode = inst.Mode.STREAM
+
+    _card, transfer = configure_triggered(
+        inst,
+        monkeypatch,
+        post_trigger_offset=16,
+        expect_success=False,
+        use_real_reset=True,
+    )
+
+    assert transfer is not None
+    assert inst._mode == inst.Mode.UNCONFIGURED
+    assert not inst.start()
 
 
 def test_configure_triggered_infinite_uses_zero_loops(monkeypatch):

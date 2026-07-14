@@ -178,8 +178,8 @@ class SpectrumAnalogIn(Instrument):
             if amp_V < required_amp_V and not math.isclose(amp_V, required_amp_V):
                 continue
 
-            offset = int(round(center_V / amp_V * 100))
-            actual_center_V = amp_V * offset / 100.0
+            offset = int(round(-center_V / amp_V * 100))
+            actual_center_V = -amp_V * offset / 100.0
             if actual_center_V - amp_V <= lower_V and upper_V <= actual_center_V + amp_V:
                 return amp_mV, offset
 
@@ -575,6 +575,7 @@ class SpectrumAnalogIn(Instrument):
         """Reset the card state."""
 
         self.stop()
+        self._mode = self.Mode.UNCONFIGURED
         card = self._open_card()
         # re-defer these objects for safety before reset.
         self._transfer = None
