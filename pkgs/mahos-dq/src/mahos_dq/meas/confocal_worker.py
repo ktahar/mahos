@@ -198,13 +198,13 @@ class Tracer(Worker):
             oversample = self.oversample
         buffer_size = self.cb_samples * self.conf.get("buffer_size_coeff", 200)
         params_clock = {"freq": freq, "samples": buffer_size, "finite": False}
-        success = True
         if self.clock is not None:
-            success &= self.clock.configure(params_clock)
+            if not self.clock.configure(params_clock):
+                return self.fail_with_release("Failed to configure clock.")
             clock_pd = self.clock.get_internal_output()
         else:
             clock_pd = ""
-        success &= all(
+        if not all(
             [
                 pd.configure_stream(
                     self.cb_samples,
@@ -219,13 +219,17 @@ class Tracer(Worker):
                 )
                 for pd in self.pds
             ]
-        )
-        success &= all([pd.start() for pd in self.pds])
-        if self.clock is not None:
-            success &= self.clock.start()
-
-        if not success:
-            return self.fail_with_release("Error starting tracer.")
+        ):
+            return self.fail_with_release("Failed to configure PDs.")
+        if not all([pd.start() for pd in self.pds]):
+            for pd in self.pds:
+                pd.stop()
+            return self.fail_with_release("Failed to start PDs.")
+        if self.clock is not None and not self.clock.start():
+            self.clock.stop()
+            for pd in self.pds:
+                pd.stop()
+            return self.fail_with_release("Failed to start clock.")
 
         self.running = True
         self.timer = IntervalTimer(self.interval_sec)

@@ -15,6 +15,54 @@ from mahos.inst.digitizer import SpectrumAnalogIn
 from mahos.util.queue import RollingQueue
 
 
+class DummyUnits:
+    s = 1.0
+    V = 1.0
+    mV = 1.0
+    percent = 1.0
+
+
+class DummyChannel:
+    def amp(self, value, return_unit):
+        self.amp_value = value
+        return value
+
+    def offset(self, value, return_unit):
+        self.offset_value = value
+        return value
+
+    def convert_data(self, raw, *args, **kwargs):
+        return raw
+
+
+class DummyChannels(list):
+    def __init__(self, card, card_enable):
+        super().__init__([DummyChannel()])
+
+    def termination(self, value):
+        self.termination_value = value
+
+
+class DummyCard:
+    def card_mode(self, mode):
+        self.mode = mode
+
+    def timeout(self, timeout):
+        self.timeout_value = timeout
+
+    def loops(self, loops):
+        self.loop_count = loops
+
+    def start(self, *commands):
+        self.start_commands = commands
+
+    def stop(self, *commands):
+        self.stop_commands = commands
+
+    def close(self):
+        pass
+
+
 class DummyTransfer:
     def __init__(self, bytes_per_sample=2, channels=1):
         self.bytes_per_sample = bytes_per_sample
@@ -23,8 +71,11 @@ class DummyTransfer:
     def samples_to_bytes(self, samples):
         return int(samples) * self.bytes_per_sample * self.channels
 
+    def start_buffer_transfer(self, *commands):
+        self.commands = commands
 
-class ConfigureTransfer(DummyTransfer):
+
+class DummyTriggeredTransfer(DummyTransfer):
     def __init__(self, card):
         super().__init__()
         self.card = card
@@ -46,52 +97,18 @@ class ConfigureTransfer(DummyTransfer):
         return self.post_trigger_samples
 
 
-class DummyCard:
-    def card_mode(self, mode):
-        self.mode = mode
-
-    def timeout(self, timeout):
-        self.timeout_value = timeout
-
-    def loops(self, loops):
-        self.loop_count = loops
-
-
-class DummyUnits:
-    s = 1.0
-    V = 1.0
-
-
 class DummySpcm:
     SPC_REC_FIFO_AVERAGE = 1
     SPC_REC_FIFO_MULTI = 2
+    M2CMD_DATA_STARTDMA = 4
+    M2CMD_DATA_STOPDMA = 8
+    M2CMD_CARD_ENABLETRIGGER = 16
+    M2CMD_CARD_FORCETRIGGER = 32
     units = DummyUnits()
 
-    Multi = ConfigureTransfer
-    BlockAverage = ConfigureTransfer
-
-
-class StartTransfer:
-    def start_buffer_transfer(self, *commands):
-        self.commands = commands
-
-
-class StartCard:
-    def start(self, *commands):
-        self.start_commands = commands
-
-    def stop(self, *commands):
-        self.stop_commands = commands
-
-    def close(self):
-        pass
-
-
-class StartSpcm:
-    M2CMD_DATA_STARTDMA = 1
-    M2CMD_DATA_STOPDMA = 8
-    M2CMD_CARD_ENABLETRIGGER = 2
-    M2CMD_CARD_FORCETRIGGER = 4
+    Channels = DummyChannels
+    Multi = DummyTriggeredTransfer
+    BlockAverage = DummyTriggeredTransfer
 
 
 class DummyThread:
@@ -108,21 +125,12 @@ class DummyThread:
         return False
 
 
-class ConvertChannel:
-    def convert_data(self, raw, *args, **kwargs):
-        return raw
-
-
 def make_inst(conf=None):
     return SpectrumAnalogIn("digitizer", {"mock": True, "lines": [0], **(conf or {})})
 
 
-def configure_triggered(
-    inst, monkeypatch, *, post_trigger_offset=0, expect_success=True, **overrides
-):
-    card = DummyCard()
-    card.post_trigger_offset = post_trigger_offset
-    params = {
+def make_triggered_params(**overrides):
+    return {
         "trigger_source": "software",
         "cb_samples": 64,
         "samples": 192,
@@ -131,19 +139,42 @@ def configure_triggered(
         "block_samples": 32,
         **overrides,
     }
+
+
+def configure_triggered(
+    inst, monkeypatch, *, post_trigger_offset=0, expect_success=True, **overrides
+):
+    card = DummyCard()
+    card.post_trigger_offset = post_trigger_offset
+    params = make_triggered_params(**overrides)
     monkeypatch.setattr(inst, "_import_spcm", lambda: DummySpcm)
     monkeypatch.setattr(inst, "_reset_card", lambda: card)
+    monkeypatch.setattr(inst, "_open_card", lambda: card)
     monkeypatch.setattr(inst, "_setup_trigger", lambda _params: True)
-
-    def setup_channels(_params):
-        inst._channels = [object()]
-        inst._line_num = 1
-        return True
-
-    monkeypatch.setattr(inst, "_setup_channels", setup_channels)
     monkeypatch.setattr(inst, "_setup_clock", lambda _params: True)
     assert inst.configure_triggered(params) is expect_success
     return card, inst._transfer
+
+
+@pytest.mark.parametrize(
+    ("bounds", "expected_amp", "expected_offset"),
+    [
+        ((0.0, 0.6), 500.0, 60.0),
+        ((-0.6, 0.0), 500.0, -60.0),
+        ((-0.6, 0.6), 1000.0, 0.0),
+    ],
+)
+def test_setup_channels_computes_offset_from_selected_amplitude(
+    monkeypatch, bounds, expected_amp, expected_offset
+):
+    inst = make_inst()
+    monkeypatch.setattr(inst, "_import_spcm", lambda: DummySpcm)
+    monkeypatch.setattr(inst, "_open_card", lambda: object())
+
+    assert inst._setup_channels({"bounds": bounds})
+    channel = inst._channels[0]
+    assert channel.amp_value == expected_amp
+    assert channel.offset_value == expected_offset
 
 
 def test_align_notify_samples_uses_transfer_byte_size():
@@ -193,6 +224,35 @@ def test_align_buffer_samples_is_notify_multiple():
     assert inst._align_buffer_samples(5000, 2048) == 6144
 
 
+def test_finite_notify_samples_is_aligned_exact_divisor():
+    inst = make_inst({"notify_alignment_bytes": 256})
+    inst._transfer = DummyTransfer(bytes_per_sample=2)
+
+    assert inst._finite_notify_samples(64, 256, 32) == 128
+
+
+def test_finite_notify_samples_rejects_transfer_without_valid_divisor():
+    inst = make_inst({"notify_alignment_bytes": 256})
+    inst._transfer = DummyTransfer(bytes_per_sample=2)
+
+    with pytest.raises(ValueError, match="no valid notify size"):
+        inst._finite_notify_samples(64, 192, 32)
+
+
+def test_convert_segment_removes_pre_trigger_samples():
+    inst = make_inst()
+    inst._spcm = DummySpcm
+    inst._channels = [DummyChannel()]
+    inst._averages = 1
+    inst._logical_segment_samples = 16
+    inst._segment_samples = 32
+    inst._pre_trigger_samples = 16
+
+    converted = inst._convert_segment(np.arange(32.0)[:, np.newaxis])
+
+    np.testing.assert_allclose(converted[0], np.arange(16.0, 32.0))
+
+
 def test_append_stream_samples_reblocks_aligned_notifications():
     inst = make_inst()
     inst.queue = RollingQueue(100)
@@ -231,55 +291,39 @@ def test_append_stream_samples_handles_multi_channel_blocks():
     np.testing.assert_allclose(inst._pending[1][0], np.array([40.0]))
 
 
-def test_convert_segment_removes_pre_trigger_samples():
+@pytest.mark.parametrize("samples", [0, -64, 65])
+def test_configure_triggered_rejects_invalid_finite_samples(monkeypatch, samples):
     inst = make_inst()
-    inst._spcm = DummySpcm
-    inst._channels = [ConvertChannel()]
-    inst._averages = 1
-    inst._logical_segment_samples = 16
-    inst._segment_samples = 32
-    inst._pre_trigger_samples = 16
+    errors = []
+    params = make_triggered_params(samples=samples)
+    monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
 
-    converted = inst._convert_segment(np.arange(32.0)[:, np.newaxis])
-
-    np.testing.assert_allclose(converted[0], np.arange(16.0, 32.0))
+    assert not inst.configure_triggered(params)
+    assert errors
 
 
-@pytest.mark.parametrize(
-    ("trigger_source", "expected_commands"),
-    [
-        ("software", (StartSpcm.M2CMD_CARD_ENABLETRIGGER, StartSpcm.M2CMD_CARD_FORCETRIGGER)),
-        ("ext0", (StartSpcm.M2CMD_CARD_ENABLETRIGGER,)),
-    ],
-)
-def test_start_forces_only_software_trigger(monkeypatch, trigger_source, expected_commands):
+@pytest.mark.parametrize("block_samples", [1, 15, 17, 24])
+def test_configure_triggered_rejects_invalid_logical_segment(monkeypatch, block_samples):
     inst = make_inst()
-    inst._spcm = StartSpcm
-    inst._card = StartCard()
-    inst._transfer = StartTransfer()
-    inst._mode = inst.Mode.STREAM
-    inst._trigger_source = trigger_source
-    monkeypatch.setattr("mahos.inst.digitizer.threading.Thread", DummyThread)
+    errors = []
+    params = make_triggered_params(samples=64, block_samples=block_samples)
+    monkeypatch.setattr(inst, "_import_spcm", lambda: DummySpcm)
+    monkeypatch.setattr(inst, "_reset_card", lambda: DummyCard())
+    monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
 
-    assert inst.start()
-    assert inst._transfer.commands == (StartSpcm.M2CMD_DATA_STARTDMA,)
-    assert inst._card.start_commands == expected_commands
-    assert inst.stop()
-    assert inst._card.stop_commands == (StartSpcm.M2CMD_DATA_STOPDMA,)
+    assert not inst.configure_triggered(params)
+    assert "logical segment samples" in errors[0]
 
 
 def test_configure_triggered_rejects_nondivisible_software_block_reduce(monkeypatch):
     inst = make_inst()
     errors = []
-    params = {
-        "trigger_source": "software",
-        "cb_samples": 24,
-        "samples": 24,
-        "rate": 1.0e6,
-        "block_samples": 32,
-        "block_reduce_factor": 2,
-        "hardware_average": False,
-    }
+    params = make_triggered_params(
+        cb_samples=24,
+        samples=24,
+        block_reduce_factor=2,
+        hardware_average=False,
+    )
 
     monkeypatch.setattr(inst, "_import_spcm", lambda: object())
     monkeypatch.setattr(inst, "_reset_card", lambda: object())
@@ -287,25 +331,6 @@ def test_configure_triggered_rejects_nondivisible_software_block_reduce(monkeypa
 
     assert not inst.configure_triggered(params)
     assert errors == ["cb_samples must be integer multiple of block_samples."]
-
-
-@pytest.mark.parametrize("block_samples", [1, 15, 17, 24])
-def test_configure_triggered_rejects_invalid_logical_segment(monkeypatch, block_samples):
-    inst = make_inst()
-    errors = []
-    params = {
-        "trigger_source": "software",
-        "cb_samples": 64,
-        "samples": 64,
-        "rate": 1.0e6,
-        "block_samples": block_samples,
-    }
-    monkeypatch.setattr(inst, "_import_spcm", lambda: DummySpcm)
-    monkeypatch.setattr(inst, "_reset_card", lambda: DummyCard())
-    monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
-
-    assert not inst.configure_triggered(params)
-    assert "logical segment samples" in errors[0]
 
 
 def test_configure_triggered_accepts_sixteen_logical_samples(monkeypatch):
@@ -330,23 +355,6 @@ def test_configure_triggered_rejects_mismatched_realized_post_trigger(monkeypatc
 
     assert transfer.post_trigger_samples == 48
     assert inst._mode == inst.Mode.UNCONFIGURED
-
-
-@pytest.mark.parametrize("samples", [0, -64, 65])
-def test_configure_triggered_rejects_invalid_finite_samples(monkeypatch, samples):
-    inst = make_inst()
-    errors = []
-    params = {
-        "trigger_source": "software",
-        "cb_samples": 64,
-        "samples": samples,
-        "rate": 1.0e6,
-        "finite": True,
-    }
-    monkeypatch.setattr(inst, "fail_with", lambda msg: errors.append(msg) or False)
-
-    assert not inst.configure_triggered(params)
-    assert errors
 
 
 def test_configure_triggered_infinite_uses_zero_loops(monkeypatch):
@@ -387,21 +395,6 @@ def test_configure_triggered_finite_multi_includes_software_block_factor(monkeyp
     assert transfer.transfer_samples == 864
 
 
-def test_finite_notify_samples_is_aligned_exact_divisor():
-    inst = make_inst({"notify_alignment_bytes": 256})
-    inst._transfer = DummyTransfer(bytes_per_sample=2)
-
-    assert inst._finite_notify_samples(64, 256, 32) == 128
-
-
-def test_finite_notify_samples_rejects_transfer_without_valid_divisor():
-    inst = make_inst({"notify_alignment_bytes": 256})
-    inst._transfer = DummyTransfer(bytes_per_sample=2)
-
-    with pytest.raises(ValueError, match="no valid notify size"):
-        inst._finite_notify_samples(64, 192, 32)
-
-
 def test_configure_triggered_increases_buffer_to_finite_notify_size(monkeypatch):
     inst = make_inst({"notify_alignment_bytes": 256})
 
@@ -422,3 +415,26 @@ def test_triggered_fifo_status_distinguishes_logical_and_physical_samples(monkey
     assert status["pre_trigger_samples"] == 16
     assert status["post_trigger_samples"] == 32
     assert status["record_samples"] == 64
+
+
+@pytest.mark.parametrize(
+    ("trigger_source", "expected_commands"),
+    [
+        ("software", (DummySpcm.M2CMD_CARD_ENABLETRIGGER, DummySpcm.M2CMD_CARD_FORCETRIGGER)),
+        ("ext0", (DummySpcm.M2CMD_CARD_ENABLETRIGGER,)),
+    ],
+)
+def test_start_forces_only_software_trigger(monkeypatch, trigger_source, expected_commands):
+    inst = make_inst()
+    inst._spcm = DummySpcm
+    inst._card = DummyCard()
+    inst._transfer = DummyTransfer()
+    inst._mode = inst.Mode.STREAM
+    inst._trigger_source = trigger_source
+    monkeypatch.setattr("mahos.inst.digitizer.threading.Thread", DummyThread)
+
+    assert inst.start()
+    assert inst._transfer.commands == (DummySpcm.M2CMD_DATA_STARTDMA,)
+    assert inst._card.start_commands == expected_commands
+    assert inst.stop()
+    assert inst._card.stop_commands == (DummySpcm.M2CMD_DATA_STOPDMA,)

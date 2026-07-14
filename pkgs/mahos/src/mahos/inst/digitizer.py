@@ -215,7 +215,7 @@ class SpectrumAnalogIn(Instrument):
                 amp_V = float(ub - lb) / 2.0
                 offset_V = float(ub + lb) / 2.0
                 amp = self._get_amp_mV(termination, amp_V)
-                offset = self._get_offset_percent(amp_V, offset_V)
+                offset = self._get_offset_percent(amp / 1e3, offset_V)
                 amp_set = ch.amp(amp * spcm.units.mV, return_unit=spcm.units.mV)
                 ofs_set = ch.offset(offset * spcm.units.percent, return_unit=spcm.units.V)
                 self.logger.debug(f"{ch} range: Amp = {amp_set}, Offset = {ofs_set}")
@@ -744,14 +744,14 @@ class SpectrumAnalogIn(Instrument):
         finite = bool(params.get("finite", False))
         logical_samples = int(params["samples"])
         cb_samples = int(params["cb_samples"])
-        if finite and cb_samples <= 0:
-            return self.fail_with("cb_samples must be positive in finite triggered mode.")
-        if finite and logical_samples <= 0:
-            return self.fail_with("samples must be positive in finite triggered mode.")
+        if cb_samples <= 0:
+            return self.fail_with("cb_samples must be positive.")
+        if logical_samples <= 0:
+            return self.fail_with("samples must be positive.")
         if finite and logical_samples % cb_samples:
             return self.fail_with(
                 "samples must be an integer multiple of cb_samples in finite triggered mode: "
-                f"samples={logical_samples}, cb_samples={cb_samples}"
+                f"samples = {logical_samples}, cb_samples = {cb_samples}"
             )
 
         card = self._reset_card()
@@ -772,6 +772,9 @@ class SpectrumAnalogIn(Instrument):
             return False
         if not self._validate_reduce_params(params):
             return False
+        cb_samples = int(params["cb_samples"])
+        if cb_samples <= 0:
+            return self.fail_with("cb_samples must be positive.")
 
         spcm = self._import_spcm()
         card = self._reset_card()
@@ -792,7 +795,7 @@ class SpectrumAnalogIn(Instrument):
             return False
 
         self._transfer = spcm.DataTransfer(card)
-        self._stream_samples = int(params["cb_samples"]) * self._oversample
+        self._stream_samples = cb_samples * self._oversample
         try:
             self._notify_samples = self._align_notify_samples(self._stream_samples)
         except ValueError:
