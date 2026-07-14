@@ -108,6 +108,9 @@ class ODMRPGMixin(object):
         ]
         mw_offset = round(freq * params["timing"].get("mw_offset", 0.0))
 
+        if trigger_width < 1:
+            self.logger.error("trigger_width must be at least one PG tick.")
+            return False
         if mw_delay < trigger_width:
             self.logger.error("mw_delay >= trigger_width must be satisfied.")
             return False
@@ -476,6 +479,9 @@ class ODMRPGMixin(object):
         burst_num = params["timing"]["burst_num"]
         mw_offset = round(freq * params["timing"].get("mw_offset", 0.0))
 
+        if trigger_width < 1:
+            self.logger.error("trigger_width must be at least one PG tick.")
+            return False
         if mw_delay < trigger_width:
             self.logger.error("mw_delay >= trigger_width must be satisfied.")
             return False
