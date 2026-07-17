@@ -39,8 +39,14 @@ class DummyChannels(list):
     def __init__(self, card, card_enable):
         super().__init__([DummyChannel()])
 
+    def path(self, value):
+        self._path_value = value
+
     def termination(self, value):
-        self.termination_value = value
+        self._termination_value = value
+
+    def coupling(self, value):
+        self._coupling_value = value
 
 
 class DummyCard:
@@ -107,6 +113,8 @@ class DummySpcm:
     M2CMD_DATA_STOPDMA = 8
     M2CMD_CARD_ENABLETRIGGER = 16
     M2CMD_CARD_FORCETRIGGER = 32
+    COUPLING_DC = 0
+    COUPLING_AC = 1
     units = DummyUnits()
 
     Channels = DummyChannels

@@ -177,10 +177,8 @@ class SpectrumAnalogIn(Instrument):
             mask |= int(getattr(spcm, f"CHANNEL{idx}", 1 << idx))
         return mask
 
-    def _get_amp_offset(self, termination: int, lower_V: float, upper_V: float) -> tuple[int, int]:
-        amps = {1_000_000: [200, 500, 1000, 2000, 5000, 10000], 50: [500, 1000, 2500, 5000]}[
-            termination
-        ]
+    def _get_amp_offset(self, path: int, lower_V: float, upper_V: float) -> tuple[int, int]:
+        amps = {0: [200, 500, 1000, 2000, 5000, 10000], 1: [500, 1000, 2500, 5000]}[path]
         lower_V, upper_V = float(lower_V), float(upper_V)
         if not (math.isfinite(lower_V) and math.isfinite(upper_V)) or lower_V >= upper_V:
             raise ValueError(f"requested bounds are invalid: ({lower_V}, {upper_V})")
@@ -206,24 +204,40 @@ class SpectrumAnalogIn(Instrument):
         self._channels = spcm.Channels(card, card_enable=self._channel_mask())
         self._line_num = len(self._channels)
 
-        # need to set termination before setting amp/offset
+        # Don't change the order of settings.
+        # 1: input path
+        path = int(params.get("input_path", self.conf.get("input_path", 0)))
+        if path not in (0, 1):
+            return self.fail_with(f"Invalid input path {path} (must be 0 or 1)")
+        self._channels.path(path)
+
+        # 2: termination
         termination = int(params.get("termination", self.conf.get("termination", 1_000_000)))
-        if termination == 1_000_000:
-            self._channels.termination(0)
-            self.logger.debug("input termination: HighZ (1 M)")
-        elif termination == 50:
-            self._channels.termination(1)
-            self.logger.debug("input termination: 50 Ohm")
-        else:
-            return self.fail_with(f"invalid termination: {termination} (must be 50 or 1 M)")
-
-        if "DC_coupling" in params or "DC_coupling" in self.conf:
-            DC_coupling = bool(params.get("DC_coupling", self.conf.get("DC_coupling", True)))
-            if DC_coupling:
-                self._channels.coupling(spcm.COUPLING_DC)
+        if path == 1 and termination != 50:
+            return self.fail_with("For path 1, termination is always 50.")
+        if path == 0:
+            # don't set termination for path 1 that's always 50 Ohm (attempt will raise error).
+            if termination == 1_000_000:
+                self._channels.termination(0)
+            elif termination == 50:
+                self._channels.termination(1)
             else:
-                self._channels.coupling(spcm.COUPLING_AC)
+                return self.fail_with(f"invalid termination: {termination} (must be 50 or 1 M)")
 
+        # 3: coupling
+        DC_coupling = bool(params.get("DC_coupling", self.conf.get("DC_coupling", True)))
+        if DC_coupling:
+            self._channels.coupling(spcm.COUPLING_DC)
+        else:
+            self._channels.coupling(spcm.COUPLING_AC)
+
+        self.logger.debug(
+            "Channels: path = {}, termination = {}, coupling = {}".format(
+                path, "50" if termination == 50 else "HighZ", "DC" if DC_coupling else "AC"
+            )
+        )
+
+        # 4: bounds (amp and offset)
         bounds = self._get_bounds(params)
         if len(bounds) != len(self._channels):
             return self.fail_with(
@@ -232,7 +246,7 @@ class SpectrumAnalogIn(Instrument):
         for ch, bnds in zip(self._channels, bounds):
             if len(bnds) == 2 and isinstance(bnds[0], (float, int, np.integer, np.floating)):
                 lb, ub = bnds
-                amp, offset = self._get_amp_offset(termination, lb, ub)
+                amp, offset = self._get_amp_offset(path, lb, ub)
                 amp_set = ch.amp(amp * spcm.units.mV, return_unit=spcm.units.mV)
                 ofs_set = ch.offset(offset * spcm.units.percent, return_unit=spcm.units.V)
                 self.logger.debug(f"{ch} range: Amp = {amp_set}, Offset = {ofs_set}")
