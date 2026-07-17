@@ -142,7 +142,7 @@ class ODMRData(BasicMeasData, ComplexDataMixin):
 
         if not self.has_data():
             return None, None
-        if last_n < 0 and self.data.shape[1] <= -last_n:
+        if last_n < 0 and self._rm_nan(self.data).shape[1] <= -last_n:
             return None, None
 
         if self.has_background():
