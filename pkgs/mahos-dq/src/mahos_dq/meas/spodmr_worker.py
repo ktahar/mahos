@@ -156,6 +156,7 @@ class BlockSeqBuilder(object):
         channel_remap: dict | None,
         pd_spectrum: bool = False,
         pd_segment_granularity: int = 16,
+        pd_segment_offset: int = 0,
     ):
         self.trigger_width = trigger_width
         self.nest = nest
@@ -166,6 +167,7 @@ class BlockSeqBuilder(object):
         self.channel_remap = channel_remap
         self.pd_spectrum = pd_spectrum
         self.pd_segment_granularity = pd_segment_granularity
+        self.pd_segment_offset = pd_segment_offset
 
     def fix_block_base(self, blk: Block, idx: int = 0) -> Block:
         res = blk.total_length() % self.block_base
@@ -193,13 +195,14 @@ class BlockSeqBuilder(object):
         self, accum_window: int, sample_factor: int, pd_period: int
     ) -> tuple[int, int]:
         if self.pd_spectrum:
-            return round_duration_for_segment_samples(
+            aw, samples = round_duration_for_segment_samples(
                 accum_window,
                 self.block_base,
                 sample_factor,
                 pd_period,
                 granularity=self.pd_segment_granularity,
             )
+            return aw, samples - self.pd_segment_offset
         return accum_window, accum_window * sample_factor // pd_period
 
     def build_complementary(
@@ -604,6 +607,7 @@ class Pulser(Worker):
             channel_remap,
             pd_spectrum=self._pd_spectrum,
             pd_segment_granularity=self.conf.get("pd_segment_granularity", 16),
+            pd_segment_offset=self.conf.get("pd_segment_offset", 0),
         )
 
         self.data = SPODMRData()

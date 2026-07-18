@@ -686,14 +686,17 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         oversamp = round(params["timing"]["time_window"] * rate)
         if self._pd_spectrum:
             granularity = self.conf.get("pd_segment_granularity", 16)
+            offset = self.conf.get("pd_segment_offset", 0)
             try:
                 adjusted = round_segment_samples_down(oversamp, granularity=granularity)
-            except ValueError as e:
-                return self.fail_with(str(e))
+                adjusted -= offset
+            except ValueError:
+                self.logger.exception("failed to round oversample to segment granularity")
+                return False
             if adjusted != oversamp:
                 self.logger.info(
                     "PD oversample adjusted down: "
-                    f"{oversamp} to {adjusted} (granularity = {granularity})"
+                    f"{oversamp} to {adjusted} (granularity = {granularity} offset = {offset})"
                 )
             oversamp = adjusted
 

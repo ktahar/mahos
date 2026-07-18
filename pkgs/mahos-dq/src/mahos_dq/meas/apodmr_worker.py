@@ -463,17 +463,20 @@ class Pulser(PODMRPulser):
         self.samples_per_trace = max(1, int(round(trace_length_ticks / self.freq * pd_rate)))
         if self._pd_spectrum:
             granularity = self.conf.get("pd_segment_granularity", 16)
+            offset = self.conf.get("pd_segment_offset", 0)
             try:
                 adjusted = round_segment_samples_up(
                     self.samples_per_trace, granularity=granularity
                 )
-            except ValueError as e:
-                self.logger.error(str(e))
+                adjusted -= offset
+            except ValueError:
+                self.logger.exception("failed to round samples_per_trace to segment granularity")
                 return False
             if adjusted != self.samples_per_trace:
                 self.logger.info(
                     "PD samples_per_trace adjusted: "
-                    f"{self.samples_per_trace} to {adjusted} (granularity = {granularity})"
+                    f"{self.samples_per_trace} to {adjusted} (granularity = {granularity} "
+                    f"offset = {offset})"
                 )
             self.samples_per_trace = adjusted
             trace_length_ticks = int(np.ceil(self.samples_per_trace * self.freq / pd_rate))
