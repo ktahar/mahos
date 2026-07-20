@@ -21,6 +21,12 @@ from mahos.util.queue import RollingQueue
 from mahos.util.conf import PresetLoader
 from mahos.util.typing import ConfTypeCheckMixin
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
+from mahos_dq.meas.odmr_pd import (
+    configure_trace_pds,
+    make_pd_param_dict,
+    reduce_traces,
+    sum_pd_blocks,
+)
 from mahos_dq.util.segments import round_segment_samples_down
 
 
@@ -179,6 +185,8 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
     def get(self, key: str, args=None, label: str = ""):
         if key == "line":
             return self.get_line()
+        elif key == "validate":
+            return True
         elif key == "bounds":
             return self.sg.get_bounds()
         elif key == "unit":
@@ -187,6 +195,8 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
             return self.pulse_pattern
         elif key == "pd_analog":
             return self._pd_analog
+        elif key == "pd_trace":
+            return False
         else:
             self.logger.error(f"unknown get() key: {key}")
             return None
@@ -232,15 +242,68 @@ class ODMRSweeperCommandAnalogPDMM(ODMRSweeperCommandBase):
 class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
     """ODMRSweeperPG provides primitive operations for ODMR sweep.
 
-    This class performs the sweep by
-    - change SG frequency by set_freq()
-    - software-triggering PG
+    This class changes the SG frequency and software-triggers the PG for each point. With
+    ``pd_trace`` enabled, its ``pulse`` method averages laser-resolved AnalogPD traces and
+    reduces each averaged trace before returning the point to the ODMR worker.
 
     :param sg: The reference to SG Instrument.
+    :type sg: Instrument
     :param pg: The reference to PG Instrument.
-    :param pd_names: Name of PD Instruments.
+    :type pg: Instrument
+    :param pd_names: (default: ["pd0", "pd1"]) names of PD Instruments in this overlay.
+    :type pd_names: list[str]
+    :param pd0: Reference to the first PD Instrument when named in ``pd_names``.
+    :type pd0: Instrument
+    :param pd1: Reference to the second PD Instrument when named in ``pd_names``.
+    :type pd1: Instrument
+    :param clock: Reference to the retriggerable clock for DAQ-based AnalogPDs.
+    :type clock: Instrument
+    :param pd_clock: Detector trigger terminal used by the PG ``gate`` channel.
+    :type pd_clock: str
+    :param pd_analog: (default: False) set True for an AnalogIn-based PD.
+    :type pd_analog: bool
+    :param pd_spectrum: (default: False) set True for a SpectrumAnalogIn-based PD.
+    :type pd_spectrum: bool
+    :param pd_trace: (default: False) enable laser-resolved trace acquisition for the ``pulse``
+        method. Requires ``pd_analog`` or ``pd_spectrum``.
+    :type pd_trace: bool
+    :param pd_async: (default: False) acquire points asynchronously while triggering the PG.
+    :type pd_async: bool
+    :param pd_rate: (default param: 250e6 for trace pulse acquisition, 400e3 otherwise)
+        AnalogPD sampling rate.
+    :type pd_rate: float | int | list[int]
+    :param pd_bounds: (default param: [-10.0, 10.0]) AnalogPD voltage bounds.
+    :type pd_bounds: tuple[float, float]
+    :param pd_data_transfer: data transfer mode for DAQ-based AnalogPDs.
+    :type pd_data_transfer: str
+    :param pd_segment_granularity: (default: 16) Spectrum trace segment granularity.
+    :type pd_segment_granularity: int
+    :param pd_segment_offset: (default: 0) sample offset subtracted after Spectrum segment
+        rounding.
+    :type pd_segment_offset: int
+    :param buffer_size_coeff: (default: 20) initial and fallback value for the
+        ``pd.buffer_size_coeff`` parameter.
+    :type buffer_size_coeff: int
     :param queue_size: (default: 8) Size of queue of scanned line data.
     :type queue_size: int
+    :param max_inflight_coeff: (default: 4) asynchronous acquisition inflight multiplier.
+    :type max_inflight_coeff: int
+    :param start_delay: (default: 0.0) delay before starting the sweep thread.
+    :type start_delay: float
+    :param channel_remap: Mapping to replace PG channel names.
+    :type channel_remap: dict[str | int, str | int]
+    :param pg_freq_cw: (has preset) PG frequency for CW mode.
+    :type pg_freq_cw: float
+    :param pg_freq_pulse: (has preset) PG frequency for pulse mode.
+    :type pg_freq_pulse: float
+    :param minimum_block_length: (has preset) minimum PG block length.
+    :type minimum_block_length: int
+    :param block_base: (has preset) PG block granularity.
+    :type block_base: int
+    :param pg_wait_timeout_sec: (default: 10.0) timeout for PG completion.
+    :type pg_wait_timeout_sec: float
+    :param pg_wait_interval_sec: (default: 0.001) PG completion polling interval.
+    :type pg_wait_interval_sec: float
 
     """
 
@@ -253,6 +316,9 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
         self.pds = [self.conf.get(n) for n in self.pd_names]
         self._pd_spectrum = self.conf.get("pd_spectrum", False)
         self._pd_analog = self.conf.get("pd_analog", False) or self._pd_spectrum
+        self._pd_trace = self.conf.get("pd_trace", False)
+        if self._pd_trace and not self._pd_analog:
+            raise ValueError("pd_trace requires pd_analog or pd_spectrum")
         self._pd_async = self.conf.get("pd_async", False)
         self._max_inflight_coeff = self.conf.get("max_inflight_coeff", 4)
         self._max_inflight = 1
@@ -280,6 +346,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
         self._channel_remap = self.conf.get("channel_remap")
         self._continue_mw = False
         self.pulse_pattern = None
+        self._samples_per_trace = None
 
         self._pg_wait_timeout = self._conf_pos_num("pg_wait_timeout_sec", 10.0)
         self._pg_wait_interval = self._conf_pos_num("pg_wait_interval_sec", 0.001)
@@ -377,17 +444,23 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
                     return
 
     def get_pd_data(self):
-        """returns 1D array of length 1 (without BG) or 2 (with BG)."""
+        """Return reduced point data and, in trace mode, its summed-channel raw traces."""
+
+        blocks = [pd.pop_block() for pd in self.pds]
+        point_count = 2 if self.params.get("background", False) else 1
+        if self._label == "pulse" and self._pd_trace:
+            traces = sum_pd_blocks(blocks, point_count, self._samples_per_trace)
+            point = reduce_traces(traces, self.params["timing"], self.params["pd"]["rate"])
+            return point, traces
 
         data = []
-        for pd in self.pds:
-            d = pd.pop_block()
-            if isinstance(d, list):
+        for block in blocks:
+            if isinstance(block, list):
                 # PD has multi channel
-                data.extend(d)
+                data.extend(block)
             else:
                 # single channel, assume ls is np.ndarray
-                data.append(d)
+                data.append(block)
         return np.sum(data, axis=0)
 
     def configure_sg(self, params: dict, label: str):
@@ -411,11 +484,13 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
     # Standard API
 
     def get_param_dict_labels(self) -> list[str]:
-        return ["pd"]
+        return ["pd", "pd_trace"] if self._pd_trace else ["pd"]
 
     def get_param_dict(self, label: str = "") -> P.ParamDict[str, P.PDValue] | None:
         if label == "pd":
-            return self.get_pd_param_dict()
+            return self.get_pd_param_dict(False)
+        elif label == "pd_trace" and self._pd_trace:
+            return self.get_pd_param_dict(True)
 
     def configure(self, params: dict, label: str = "") -> bool:
         if not self.check_required_params(params, ("start", "stop", "num", "power", "delay")):
@@ -423,6 +498,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
 
         self._set_attrs(params)
         self.params = params
+        self._label = label
         self._queue = RollingQueue(self._queue_size)
 
         if not self.configure_sg(params, label):
@@ -436,6 +512,12 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
             if self._pd_spectrum:
                 status = self.pds[0].get_fifo_status()
                 segments_per_trigger = 2 if params.get("background", False) else 1
+                if (
+                    label == "pulse"
+                    and self._pd_trace
+                    and not params["pd"].get("hardware_average", True)
+                ):
+                    segments_per_trigger *= params["timing"]["burst_num"]
                 notify_segments = status["notify_samples"] // status["segment_samples"]
                 required_inflight = math.ceil(notify_segments / segments_per_trigger)
                 max_inflight = self._max_inflight_coeff * required_inflight
@@ -503,9 +585,21 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
 
         return True
 
+    def validate(self, params: dict, label: str) -> bool:
+        """Validate parameters using this overlay's hardware configuration."""
+
+        if label == "pulse" and self._pd_trace:
+            return self.validate_pg_pulse_trace(params)
+        return True
+
     def get(self, key: str, args=None, label: str = ""):
         if key == "point":
             return self.get_point()
+        elif key == "validate":
+            if not isinstance(args, dict):
+                self.logger.error(f"Invalid args for get(validate): {args}")
+                return False
+            return self.validate(args, label)
         elif key == "bounds":
             return self.sg.get_bounds()
         elif key == "unit":
@@ -514,35 +608,20 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
             return self.pulse_pattern
         elif key == "pd_analog":
             return self._pd_analog
+        elif key == "pd_trace":
+            return self._pd_trace
         else:
             self.logger.error(f"unknown get() key: {key}")
             return None
 
-    def _pd_rate_param(self):
-        rate = self.conf.get("pd_rate", 400e3)
-        if isinstance(rate, (tuple, list)) and isinstance(rate[0], int):
-            return P.IntChoiceParam(rate[0], rate, doc="PD sampling rate")
-        elif isinstance(rate, int):
-            return P.IntParam(
-                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
-            )
-        elif isinstance(rate, float):
-            return P.FloatParam(
-                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
-            )
-        raise TypeError("conf['pd_rate'] has invalid type.")
-
-    def get_pd_param_dict(self) -> P.ParamDict[str, P.PDValue] | None:
+    def get_pd_param_dict(self, pd_trace: bool = False) -> P.ParamDict[str, P.PDValue] | None:
         if not self._pd_analog:
             return None
-        d = P.ParamDict()
-        d["rate"] = self._pd_rate_param()
-        lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
-        d["bounds"] = [
-            P.FloatParam(lb, -10.0, 10.0, unit="V", doc="lower bound of expected voltage"),
-            P.FloatParam(ub, -10.0, 10.0, unit="V", doc="upper bound of expected voltage"),
-        ]
-        return d
+        return make_pd_param_dict(
+            self.conf,
+            pd_trace=pd_trace,
+            has_hardware_average=pd_trace and self._pd_spectrum,
+        )
 
     def configure_pd(self, params, label):
         if self._pd_analog:
@@ -589,6 +668,22 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
         return all([pd.configure(params_pd) for pd in self.pds])
 
     def configure_analog_pd(self, params: dict, label: str) -> bool:
+        if label == "pulse" and self._pd_trace:
+            point_count = 2 if params.get("background", False) else 1
+            self._samples_per_trace = configure_trace_pds(
+                self.clock,
+                self.pds,
+                self._pd_clock,
+                params,
+                self.conf,
+                self._pd_spectrum,
+                point_count,
+                0,
+                self._pd_data_transfer,
+                self.logger,
+            )
+            return self._samples_per_trace is not None
+
         rate = params["pd"]["rate"]
         oversamp = round(params["timing"]["time_window"] * rate)
         if self._pd_spectrum:
@@ -627,7 +722,9 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
         num = 1
         if params.get("background", False):
             num *= 2
-        buffer_size = num * self.conf.get("buffer_size_coeff", 20)
+        buffer_size = num * params["pd"].get(
+            "buffer_size_coeff", self.conf.get("buffer_size_coeff", 20)
+        )
         params_pd = {
             "trigger_source": clock_pd,
             "clock": clock_pd,

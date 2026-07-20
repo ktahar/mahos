@@ -15,6 +15,7 @@ import math
 from mahos.msgs.inst.pg_msgs import Block, Blocks, TriggerType
 from mahos.msgs.pulse_msgs import PulsePattern
 from mahos_dq.meas.podmr_generator import generator_kernel as K
+from mahos_dq.meas.odmr_pd import trace_samples, validate_trace_params
 
 
 class ODMRPGMixin(object):
@@ -24,7 +25,9 @@ class ODMRPGMixin(object):
     - conf
         - pg_freq_cw
     - pg
-    - _analog_pd
+    - _pd_analog
+    - _pd_spectrum
+    - _pd_trace
     - _block_base
     - _channel_remap
     - _minimum_block_length
@@ -249,6 +252,252 @@ class ODMRPGMixin(object):
             blocks = blocks.replace(self._channel_remap)
 
         blocks = blocks.simplify()
+        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
+        if success:
+            self.pulse_pattern = PulsePattern(blocks, freq)
+        return success
+
+    def _make_block_pulse_trace_main(
+        self,
+        name,
+        laser_delay,
+        laser_width,
+        mw_delay,
+        mw_width,
+        trigger_width,
+        roi_head,
+        burst_num,
+        background=False,
+    ):
+        unit_length = mw_delay + mw_width + laser_delay + laser_width
+        if residual := unit_length % self._block_base:
+            mw_delay += self._block_base - residual
+        mw_channels = None if background else "mw"
+        op = Block(
+            name + "-OP",
+            [
+                (None, mw_delay),
+                (mw_channels, mw_width),
+                (None, laser_delay),
+            ],
+        )
+        op = K.inject_trigger(op, roi_head, trigger_width).replace({"trigger": "gate"})
+        main = op.concatenate(Block(name + "-READ", [("laser", laser_width)]))
+        main.name = name
+        main.Nrep = burst_num
+        return main
+
+    def _make_blocks_pulse_trace_nobg(
+        self,
+        delay,
+        final_delay,
+        laser_delay,
+        laser_width,
+        mw_delay,
+        mw_width,
+        trigger_width,
+        roi_head,
+        burst_num,
+        mw_offset,
+    ):
+        min_len = self._minimum_block_length
+        init = Block(
+            "INIT",
+            [
+                (None, max(delay, min_len - laser_width)),
+                ("laser", laser_width),
+            ],
+            trigger=True,
+        )
+        main = self._make_block_pulse_trace_main(
+            "MAIN",
+            laser_delay,
+            laser_width,
+            mw_delay,
+            mw_width,
+            trigger_width,
+            roi_head,
+            burst_num,
+        )
+        final = Block(
+            "FINAL",
+            [
+                (None, max(final_delay, min_len - trigger_width)),
+                ("trigger", trigger_width),
+            ],
+        )
+        for block in (init, final):
+            self._adjust_block(block, 0)
+
+        blocks = Blocks([init, main, final])
+        if mw_offset:
+            blocks = K.apply_mw_offset(blocks, mw_offset)
+        if self._channel_remap is not None:
+            blocks = blocks.replace(self._channel_remap)
+        return blocks.simplify()
+
+    def _make_blocks_pulse_trace_bg(
+        self,
+        delay,
+        bg_delay,
+        final_delay,
+        laser_delay,
+        laser_width,
+        mw_delay,
+        mw_width,
+        trigger_width,
+        roi_head,
+        burst_num,
+        mw_offset,
+    ):
+        min_len = self._minimum_block_length
+        init = Block(
+            "INIT",
+            [
+                (None, max(delay, min_len - laser_width)),
+                ("laser", laser_width),
+            ],
+            trigger=True,
+        )
+        main = self._make_block_pulse_trace_main(
+            "MAIN",
+            laser_delay,
+            laser_width,
+            mw_delay,
+            mw_width,
+            trigger_width,
+            roi_head,
+            burst_num,
+        )
+        init_bg = Block(
+            "INIT-BG",
+            [
+                (None, max(bg_delay, min_len - laser_width)),
+                ("laser", laser_width),
+            ],
+        )
+        main_bg = self._make_block_pulse_trace_main(
+            "MAIN-BG",
+            laser_delay,
+            laser_width,
+            mw_delay,
+            mw_width,
+            trigger_width,
+            roi_head,
+            burst_num,
+            background=True,
+        )
+        final = Block(
+            "FINAL",
+            [
+                (None, max(final_delay, min_len - trigger_width)),
+                ("trigger", trigger_width),
+            ],
+        )
+        for block in (init, init_bg, final):
+            self._adjust_block(block, 0)
+
+        blocks = Blocks([init, main, init_bg, main_bg, final])
+        if mw_offset:
+            blocks = K.apply_mw_offset(blocks, mw_offset)
+        if self._channel_remap is not None:
+            blocks = blocks.replace(self._channel_remap)
+        return blocks.simplify()
+
+    def validate_pg_pulse_trace(self, params: dict) -> bool:
+        """Validate trace parameters using the configured detector and PG constraints."""
+
+        try:
+            validate_trace_params(params, self.conf, self._pd_spectrum)
+            freq = self.conf["pg_freq_pulse"]
+            laser_delay, mw_delay, mw_width, trigger_width, roi_head = [
+                round(params["timing"][key] * freq)
+                for key in ("laser_delay", "mw_delay", "mw_width", "trigger_width", "roi_head")
+            ]
+        except (KeyError, TypeError, ValueError):
+            self.logger.exception("Invalid trace parameters")
+            return False
+
+        if trigger_width < 1:
+            self.logger.error("trigger_width must be at least one PG tick.")
+            return False
+        if trigger_width > roi_head:
+            self.logger.error("trigger_width <= roi_head must be satisfied.")
+            return False
+        if roi_head > mw_delay + mw_width + laser_delay:
+            self.logger.error("roi_head must fit inside the complete pre-laser sequence.")
+            return False
+        return True
+
+    def configure_pg_pulse_trace(self, params: dict, trigger_type: TriggerType) -> bool:
+        """Configure the laser-resolved AnalogPD trace pulse sequence."""
+
+        if not self.validate_pg_pulse_trace(params):
+            return False
+
+        if params.get("background", False):
+            samples = trace_samples(params, self.conf, self._pd_spectrum)
+            timing = params["timing"]
+            minimum_bg_delay = max(
+                0.0,
+                samples.realized / params["pd"]["rate"]
+                - timing["roi_head"]
+                - timing["laser_width"],
+            )
+            bg_delay = params.get("background_delay", 0.0)
+            if bg_delay < minimum_bg_delay:
+                self.logger.warning(
+                    f"background_delay {bg_delay*1e9:.1f} ns is shorter than the recommended "
+                    f"minimum {minimum_bg_delay*1e9:.1f} ns; the background initialization "
+                    "laser may start before the final foreground trace finishes",
+                )
+
+        freq = self.conf["pg_freq_pulse"]
+        delay = round(freq * params.get("delay", 0.0))
+        bg_delay = round(freq * params.get("background_delay", 0.0))
+        final_delay = round(freq * params.get("final_delay", 0.0))
+        laser_delay, laser_width, mw_delay, mw_width, trigger_width, roi_head = [
+            round(params["timing"][key] * freq)
+            for key in (
+                "laser_delay",
+                "laser_width",
+                "mw_delay",
+                "mw_width",
+                "trigger_width",
+                "roi_head",
+            )
+        ]
+        burst_num = params["timing"]["burst_num"]
+        mw_offset = round(freq * params["timing"].get("mw_offset", 0.0))
+
+        if params.get("background", False):
+            blocks = self._make_blocks_pulse_trace_bg(
+                delay,
+                bg_delay,
+                final_delay,
+                laser_delay,
+                laser_width,
+                mw_delay,
+                mw_width,
+                trigger_width,
+                roi_head,
+                burst_num,
+                mw_offset,
+            )
+        else:
+            blocks = self._make_blocks_pulse_trace_nobg(
+                delay,
+                final_delay,
+                laser_delay,
+                laser_width,
+                mw_delay,
+                mw_width,
+                trigger_width,
+                roi_head,
+                burst_num,
+                mw_offset,
+            )
+
         success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
         if success:
             self.pulse_pattern = PulsePattern(blocks, freq)
@@ -523,6 +772,8 @@ class ODMRPGMixin(object):
         if self._pd_analog:
             if label != "pulse":
                 return self.configure_pg_CW_analog(params, trigger_type)
+            elif self._pd_trace:
+                return self.configure_pg_pulse_trace(params, trigger_type)
             else:
                 return self.configure_pg_pulse_analog(params, trigger_type)
         else:

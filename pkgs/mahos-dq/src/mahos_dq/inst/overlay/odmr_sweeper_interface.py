@@ -17,13 +17,18 @@ from mahos.msgs.pulse_msgs import PulsePattern
 class ODMRSweeperInterface(InstrumentInterface):
     """Interface for ODMR Sweeper."""
 
+    def validate(self, params: dict, label: str) -> bool:
+        """Validate parameters using sweeper-specific constraints."""
+
+        return bool(self.get("validate", params, label))
+
     def get_line(self) -> np.ndarray | None:
         """Get single sweep line."""
 
         return self.get("line")
 
-    def get_point(self) -> np.ndarray | None:
-        """Get single point in sweep line."""
+    def get_point(self) -> np.ndarray | tuple[np.ndarray, np.ndarray] | None:
+        """Get a point, paired with its raw traces when trace acquisition is enabled."""
 
         return self.get("point")
 
@@ -47,6 +52,11 @@ class ODMRSweeperInterface(InstrumentInterface):
         """Get if this sweeper uses AnalogPD or not."""
 
         return self.get("pd_analog")
+
+    def get_pd_trace(self) -> bool:
+        """Get if this sweeper uses laser-resolved AnalogPD traces or not."""
+
+        return self.get("pd_trace")
 
     def get_pulse_pattern(self) -> PulsePattern | None:
         """Get current pulse pattern."""

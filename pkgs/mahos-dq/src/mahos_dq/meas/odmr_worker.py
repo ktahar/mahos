@@ -24,6 +24,15 @@ from mahos.inst.daq_interface import ClockSourceInterface
 from mahos_dq.inst.overlay.odmr_sweeper_interface import ODMRSweeperInterface
 from mahos.util.conf import PresetLoader
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
+from mahos_dq.meas.odmr_pd import (
+    configure_trace_pds,
+    make_pd_param_dict,
+    make_trace_timing_param_dict,
+    reduce_traces,
+    result_unit,
+    sum_pd_blocks,
+    validate_trace_params,
+)
 from mahos_dq.util.segments import round_segment_samples_down
 from mahos.meas.common_worker import Worker
 
@@ -41,6 +50,48 @@ class SweeperBase(Worker):
         else:
             return None
 
+    def append_raw_line(self, traces: np.ndarray):
+        """Add one frequency-ordered trace line to the cumulative raw trace sum."""
+
+        traces = np.asarray(traces)
+        if self.data.raw_data_sum is None:
+            self.data.raw_data_sum = traces.copy()
+        elif self.data.raw_data_sum.shape != traces.shape:
+            self.logger.error(
+                "Cannot append raw trace line with shape "
+                f"{traces.shape} to raw_data_sum with shape {self.data.raw_data_sum.shape}."
+            )
+        else:
+            self.data.raw_data_sum += traces
+
+    def append_raw_point(self, traces: np.ndarray):
+        """Add one point's traces to the matching row in the cumulative raw trace sum."""
+
+        traces = np.asarray(traces)
+        point_count = 2 if self.data.measure_background() else 1
+        if traces.ndim != 2 or traces.shape[0] != point_count:
+            self.logger.error(
+                f"Invalid raw point trace shape {traces.shape}; expected ({point_count}, sample)."
+            )
+            return
+
+        if self.data.data is None or not np.isnan(self.data.data).any():
+            index = 0
+        else:
+            index = int(np.where(np.isnan(self.data.data[:, -1]))[0][0])
+
+        shape = (self.data.params["num"] * point_count, traces.shape[1])
+        if self.data.raw_data_sum is None:
+            self.data.raw_data_sum = np.zeros(shape, dtype=traces.dtype)
+        elif self.data.raw_data_sum.shape != shape:
+            self.logger.error(
+                f"Invalid raw_data_sum shape {self.data.raw_data_sum.shape}; expected {shape}."
+            )
+            return
+
+        start = index * point_count
+        self.data.raw_data_sum[start : start + point_count] += traces
+
     def is_finished(self) -> bool:
         if not self.data.has_params() or not self.data.has_data():
             return False
@@ -57,12 +108,29 @@ class SweeperBase(Worker):
         if params["start"] >= params["stop"]:
             self.logger.error("stop must be greater than start")
             return False
+        if label == "pulse" and getattr(self, "_pd_trace", False):
+            return self._validate_trace_params(params, label)
+        return True
+
+    def _validate_trace_params(self, params: dict, label: str) -> bool:
+        """Validate trace parameters using the direct sweeper configuration."""
+
+        try:
+            pd_spectrum = getattr(self, "_pd_spectrum", False) or (
+                "hardware_average" in params.get("pd", {})
+            )
+            validate_trace_params(params, self.conf, pd_spectrum)
+        except (KeyError, TypeError, ValueError) as exc:
+            self.logger.error(f"Invalid trace parameters: {exc}")
+            return False
         return True
 
     def get_param_dict_labels(self) -> list:
         return ["cw", "pulse"] + _MOD_LABELS
 
-    def _make_param_dict(self, label, bounds, pd_analog) -> P.ParamDict[str, P.PDValue] | None:
+    def _make_param_dict(
+        self, label, bounds, pd_analog, pd_trace=False
+    ) -> P.ParamDict[str, P.PDValue] | None:
         if label in ["cw"] + _MOD_LABELS:
             timing = P.ParamDict(
                 time_window=P.FloatParam(
@@ -75,6 +143,8 @@ class SweeperBase(Worker):
                     self.conf.get("post_gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
                 ),
             )
+        elif label == "pulse" and pd_trace:
+            timing = make_trace_timing_param_dict(self.conf)
         elif label == "pulse":
             timing = P.ParamDict(
                 laser_delay=P.FloatParam(
@@ -206,6 +276,8 @@ class SweeperOverlay(SweeperBase):
     """Sweeper using Overlay.
 
     Refer to :mod:`mahos_dq.inst.overlay.odmr_sweeper` for docs of target overlay.
+    If the target overlay has ``pd_trace`` enabled, the ``pulse`` parameter dictionary uses
+    laser-resolved AnalogPD trace acquisition and exposes the trace-analysis timings below.
 
     :param sweeper.sweeper_name: (default: "sweeper") target overlay name in target.servers.
     :type sweeper.sweeper_name: str
@@ -226,6 +298,31 @@ class SweeperOverlay(SweeperBase):
     :type sweeper.gate_delay: float
     :param sweeper.post_gate_delay: (default param) extra excitation after measurement window.
     :type sweeper.post_gate_delay: float
+    :param sweeper.trigger_width: (default: 20e-9) detector-trigger width for trace mode.
+    :type sweeper.trigger_width: float
+    :param sweeper.burst_num: (default: 100) traces averaged at each frequency in trace mode.
+    :type sweeper.burst_num: int
+    :param sweeper.roi_head: (default: 20e-9) detector-trigger to laser delay in trace mode.
+    :type sweeper.roi_head: float
+    :param sweeper.roi_tail: (default: 100e-9) trace margin after the laser pulse.
+    :type sweeper.roi_tail: float
+    :param sweeper.sig_delay: (default: 0.0) signal-window delay after the laser.
+    :type sweeper.sig_delay: float
+    :param sweeper.sig_width: (default: 100e-9) signal-window width.
+    :type sweeper.sig_width: float
+    :param sweeper.ref_delay: (default: 0.0) reference delay after the signal window.
+    :type sweeper.ref_delay: float
+    :param sweeper.ref_width: (default: 100e-9) reference-window width.
+    :type sweeper.ref_width: float
+    :param sweeper.refmode: (default: "divide") trace reduction mode: ``subtract``, ``divide``,
+        or ``ignore``.
+    :type sweeper.refmode: str
+    :param sweeper.pd.buffer_size_coeff: (default param: 20) detector buffer size relative to
+        one callback block.
+    :type sweeper.pd.buffer_size_coeff: int
+    :param sweeper.pd.eos_deadtime: (default param: 200e-9) required deadtime after each
+        realized trace before the next detector trigger.
+    :type sweeper.pd.eos_deadtime: float
 
     :param sweeper.am_depth: (default param) depth of AM modulation.
     :type sweeper.am_depth: float
@@ -247,8 +344,22 @@ class SweeperOverlay(SweeperBase):
         self.add_instruments(self.sweeper)
 
         self._class_name = cli.class_name(self.sweeper_name)
+        if self._class_name.startswith("ODMRSweeperCommand"):
+            self._pd_trace = False
+            self._pd_spectrum = False
+        else:
+            self._pd_trace = bool(self.sweeper.get_pd_trace())
+            self._pd_spectrum = False
         self.point = self.conf.get("point", False)
         self.data = ODMRData()
+
+    def _validate_trace_params(self, params: dict, label: str) -> bool:
+        """Delegate trace validation to the overlay that owns the hardware configuration."""
+
+        if not self.sweeper.validate(params, label):
+            self.logger.error("ODMR sweeper overlay rejected the trace parameters.")
+            return False
+        return True
 
     def get_param_dict_labels(self) -> list[str]:
         if self._class_name.startswith("ODMRSweeperCommand"):
@@ -266,8 +377,9 @@ class SweeperOverlay(SweeperBase):
             return None
 
         pd_analog = self.sweeper.get_pd_analog()
-        d = self._make_param_dict(label, bounds, pd_analog)
-        pd = self.sweeper.get_param_dict("pd")
+        d = self._make_param_dict(label, bounds, pd_analog, self._pd_trace)
+        pd_label = "pd_trace" if label == "pulse" and self._pd_trace else "pd"
+        pd = self.sweeper.get_param_dict(pd_label)
         if pd is not None:
             d["pd"] = pd
 
@@ -305,13 +417,15 @@ class SweeperOverlay(SweeperBase):
             # new measurement.
             self.data = ODMRData(params, label)
             self.data.start()
-            self.data.yunit = self.sweeper.get_unit()
             self.logger.info("Started sweeper.")
         else:
             # resume.
             self.data.update_params(params)
             self.data.resume()
             self.logger.info("Resuming sweeper.")
+        self.data.yunit = result_unit(
+            self.sweeper.get_unit(), self.data.params, self.data.label, self._pd_trace
+        )
 
         return True
 
@@ -421,6 +535,12 @@ class SweeperOverlay(SweeperBase):
             self.logger.error("Got None from sweeper.get_point()")
             return
 
+        if self.data.label == "pulse" and self._pd_trace:
+            if not isinstance(point, (list, tuple)) or len(point) != 2:
+                self.logger.error("Got invalid point and raw-trace pair from sweeper.")
+                return
+            point, traces = point
+            self.append_raw_point(traces)
         self.append_point(point)
 
     def stop(self) -> bool:
@@ -464,6 +584,11 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :type sweeper.pd_names: list[str]
     :param sweeper.pd_analog: (default: False) set True if PD is AnalogIn-based.
     :type sweeper.pd_analog: bool
+    :param sweeper.pd_spectrum: (default: False) set True if PD is SpectrumAnalogIn-based.
+    :type sweeper.pd_spectrum: bool
+    :param sweeper.pd_trace: (default: False) enable laser-resolved AnalogPD trace acquisition
+        for the ``pulse`` method. Requires ``pd_analog`` or ``pd_spectrum``.
+    :type sweeper.pd_trace: bool
     :param sweeper.pd_rate: (default param) analog PD sampling rate.
     :type sweeper.pd_rate: float
     :param sweeper.pd_bounds: (default: [-10.0, 10.0]) analog PD voltage bounds.
@@ -473,7 +598,11 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :param sweeper.pd_segment_granularity: (default: 16) logical post-trigger sample
         granularity for Spectrum PD segments.
     :type sweeper.pd_segment_granularity: int
-    :param sweeper.buffer_size_coeff: (default: 20) multiplier for PD buffer size.
+    :param sweeper.pd_segment_offset: (default: 0) sample offset subtracted after Spectrum
+        segment rounding.
+    :type sweeper.pd_segment_offset: int
+    :param sweeper.buffer_size_coeff: (default: 20) default and fallback value for
+        ``pd.buffer_size_coeff``.
     :type sweeper.buffer_size_coeff: int
     :param sweeper.clock_name: (default: "clock") DAQ clock source name in target.servers.
     :type sweeper.clock_name: str
@@ -503,6 +632,34 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :type sweeper.gate_delay: float
     :param sweeper.post_gate_delay: (default param) extra excitation after measurement window.
     :type sweeper.post_gate_delay: float
+    :param sweeper.trigger_width: (default: 20e-9) detector-trigger width for trace mode.
+    :type sweeper.trigger_width: float
+    :param sweeper.burst_num: (default: 100) traces averaged at each frequency in trace mode.
+    :type sweeper.burst_num: int
+    :param sweeper.roi_head: (default: 20e-9) detector-trigger to laser delay in trace mode.
+    :type sweeper.roi_head: float
+    :param sweeper.roi_tail: (default: 100e-9) trace margin after the laser pulse.
+    :type sweeper.roi_tail: float
+    :param sweeper.sig_delay: (default: 0.0) signal-window delay after the laser.
+    :type sweeper.sig_delay: float
+    :param sweeper.sig_width: (default: 100e-9) signal-window width.
+    :type sweeper.sig_width: float
+    :param sweeper.ref_delay: (default: 0.0) reference delay after the signal window.
+    :type sweeper.ref_delay: float
+    :param sweeper.ref_width: (default: 100e-9) reference-window width.
+    :type sweeper.ref_width: float
+    :param sweeper.refmode: (default: "divide") trace reduction mode: ``subtract``, ``divide``,
+        or ``ignore``.
+    :type sweeper.refmode: str
+    :param sweeper.pd.hardware_average: (default param: True) use Spectrum hardware averaging
+        for trace bursts. This parameter is exposed only for Spectrum trace mode.
+    :type sweeper.pd.hardware_average: bool
+    :param sweeper.pd.buffer_size_coeff: (default param: 20) detector buffer size relative to
+        one callback block.
+    :type sweeper.pd.buffer_size_coeff: int
+    :param sweeper.pd.eos_deadtime: (default param: 200e-9) required deadtime after each
+        realized trace before the next detector trigger.
+    :type sweeper.pd.eos_deadtime: float
 
     :param sweeper.am_depth: (default param) depth of AM modulation.
     :type sweeper.am_depth: float
@@ -528,6 +685,9 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
         self._pd_spectrum = self.conf.get("pd_spectrum", False)
         self._pd_analog = self.conf.get("pd_analog", False) or self._pd_spectrum
+        self._pd_trace = self.conf.get("pd_trace", False)
+        if self._pd_trace and not self._pd_analog:
+            raise ValueError("pd_trace requires pd_analog or pd_spectrum")
         if self._pd_analog and not self._pd_spectrum:
             self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
         else:
@@ -544,9 +704,15 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         self._pg_immediate = self.conf.get("pg_immediate", False)
         self._channel_remap = self.conf.get("channel_remap")
         self._continue_mw = False
+        self._samples_per_trace = None
 
         self.pulse_pattern = None
         self.data = ODMRData()
+
+    def _validate_trace_params(self, params: dict, label: str) -> bool:
+        """Validate trace parameters using this worker's hardware configuration."""
+
+        return self.validate_pg_pulse_trace(params)
 
     def load_pg_conf_preset(self, cli):
         loader = PresetLoader(self.logger, PresetLoader.Mode.FORWARD)
@@ -594,30 +760,14 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         )
         loader.load_preset(self.conf, cli.class_name("sg"))
 
-    def _pd_rate_param(self):
-        rate = self.conf.get("pd_rate", 400e3)
-        if isinstance(rate, (tuple, list)) and isinstance(rate[0], int):
-            return P.IntChoiceParam(rate[0], rate, doc="PD sampling rate")
-        elif isinstance(rate, int):
-            return P.IntParam(
-                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
-            )
-        elif isinstance(rate, float):
-            return P.FloatParam(
-                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
-            )
-        raise TypeError("conf['pd_rate'] has invalid type.")
-
     def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
-        d = self._make_param_dict(label, self.sg.get_bounds(), self._pd_analog)
+        d = self._make_param_dict(label, self.sg.get_bounds(), self._pd_analog, self._pd_trace)
         if self._pd_analog:
-            d["pd"] = P.ParamDict()
-            d["pd"]["rate"] = self._pd_rate_param()
-            lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
-            d["pd"]["bounds"] = [
-                P.FloatParam(lb, -10.0, 10.0, unit="V"),
-                P.FloatParam(ub, -10.0, 10.0, unit="V"),
-            ]
+            d["pd"] = make_pd_param_dict(
+                self.conf,
+                pd_trace=label == "pulse" and self._pd_trace,
+                has_hardware_average=label == "pulse" and self._pd_trace and self._pd_spectrum,
+            )
         return d
 
     def configure_sg(self, params: dict, label: str) -> bool:
@@ -682,6 +832,26 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         return success
 
     def start_analog_pd(self, params: dict, label: str) -> bool:
+        if label == "pulse" and self._pd_trace:
+            point_count = params["num"] * (2 if params.get("background", False) else 1)
+            drop_first = 1 if self._sg_first or self._pg_immediate else 0
+            self._samples_per_trace = configure_trace_pds(
+                self.clock,
+                self.pds,
+                self._pd_clock,
+                params,
+                self.conf,
+                self._pd_spectrum,
+                point_count,
+                drop_first,
+                self._pd_data_transfer,
+                self.logger,
+            )
+            if self._samples_per_trace is None:
+                return False
+            success = self.clock is None or self.clock.start()
+            return success and all([pd.start() for pd in self.pds])
+
         rate = params["pd"]["rate"]
         oversamp = round(params["timing"]["time_window"] * rate)
         if self._pd_spectrum:
@@ -720,7 +890,9 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         num = params["num"]
         if params.get("background", False):
             num *= 2
-        buffer_size = num * self.conf.get("buffer_size_coeff", 20)
+        buffer_size = num * params["pd"].get(
+            "buffer_size_coeff", self.conf.get("buffer_size_coeff", 20)
+        )
         # when sg_first or pg_immediate,
         # drop the first line because it contains invalid data at the first point
         # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
@@ -765,7 +937,9 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         else:
             # TODO: check ident if resume?
             self.data.update_params(params)
-        self.data.yunit = self.pds[0].get_unit()
+        self.data.yunit = result_unit(
+            self.pds[0].get_unit(), self.data.params, self.data.label, self._pd_trace
+        )
 
         if not self.configure_sg(self.data.params, self.data.label):
             return self.fail_with_release("Failed to configure SG.")
@@ -852,17 +1026,31 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         if not self.data.running:
             return  # or raise Error?
 
-        lines = []
-        for pd in self.pds:
-            ls = pd.pop_block()
-            if isinstance(ls, list):
-                # PD has multi channel
-                lines.extend(ls)
-            else:
-                # single channel, assume ls is np.ndarray
-                lines.append(ls)
-
-        line = np.sum(lines, axis=0)
+        blocks = [pd.pop_block() for pd in self.pds]
+        if self.data.label == "pulse" and self._pd_trace:
+            bg_factor = 2 if self.data.measure_background() else 1
+            point_count = self.data.params["num"] * bg_factor
+            try:
+                traces = sum_pd_blocks(blocks, point_count, self._samples_per_trace)
+                line = reduce_traces(
+                    traces, self.data.params["timing"], self.data.params["pd"]["rate"]
+                )
+            except ValueError:
+                self.logger.exception("Failed to reduce AnalogPD traces")
+                return
+            if self._sg_first or self._pg_immediate:
+                traces = np.roll(traces, -bg_factor, axis=0)
+            self.append_raw_line(traces)
+        else:
+            lines = []
+            for block in blocks:
+                if isinstance(block, list):
+                    # PD has multi channel
+                    lines.extend(block)
+                else:
+                    # single channel, assume ls is np.ndarray
+                    lines.append(block)
+            line = np.sum(lines, axis=0)
         self.append_line(line)
 
     def stop(self) -> bool:
