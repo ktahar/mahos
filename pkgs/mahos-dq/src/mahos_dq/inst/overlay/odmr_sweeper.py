@@ -18,8 +18,7 @@ from mahos.inst.overlay.overlay import InstrumentOverlay
 from mahos.msgs import param_msgs as P
 from mahos.msgs.inst.pg_msgs import TriggerType
 from mahos.util.queue import RollingQueue
-from mahos.util.conf import PresetLoader
-from mahos.util.typing import ConfTypeCheckMixin
+from mahos.util.conf import ConfAccessorMixin, PresetLoader
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
 from mahos_dq.meas.odmr_pd import (
     configure_trace_pds,
@@ -239,7 +238,7 @@ class ODMRSweeperCommandAnalogPDMM(ODMRSweeperCommandBase):
         return self.pd.get_data()
 
 
-class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
+class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
     """ODMRSweeperPG provides primitive operations for ODMR sweep.
 
     This class changes the SG frequency and software-triggers the PG for each point. With

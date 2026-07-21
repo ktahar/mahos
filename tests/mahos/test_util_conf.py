@@ -8,7 +8,9 @@ Tests for mahos.util.conf.
 
 """
 
-from mahos.util.conf import PresetLoader
+import pytest
+
+from mahos.util.conf import ConfAccessorMixin, PresetLoader
 
 
 class DummyLogger:
@@ -23,6 +25,26 @@ class DummyLogger:
 
     def debug(self, msg):
         self.messages.append(("debug", msg))
+
+
+class ConfOwner(ConfAccessorMixin):
+    def __init__(self, conf):
+        self.conf = conf
+
+
+def test_conf_accessor_mixin():
+    owner = ConfOwner({"count": 2, "rate": 1.5})
+
+    assert owner._conf_pos_int("count", 1) == 2
+    assert owner._conf_pos_num("rate", 1.0) == 1.5
+    assert owner._conf_bool("enabled", True) is True
+
+    for method in ("_conf_float", "_conf_pos_float", "_conf_nonneg_float"):
+        with pytest.raises(ValueError):
+            getattr(ConfOwner({"value": float("nan")}), method)("value", 0.0)
+    for method in ("_conf_num", "_conf_pos_num", "_conf_nonneg_num"):
+        with pytest.raises(ValueError):
+            getattr(ConfOwner({"value": float("inf")}), method)("value", 0.0)
 
 
 def test_preset_loader_exact_match():

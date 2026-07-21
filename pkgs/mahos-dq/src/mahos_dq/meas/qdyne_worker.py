@@ -27,8 +27,7 @@ from mahos.inst.sg_interface import SGInterface
 from mahos.inst.pg_interface import PGInterface
 from mahos.inst.tdc_interface import TDCInterface
 from mahos.inst.fg_interface import FGInterface
-from mahos.util.conf import PresetLoader
-from mahos.util.typing import ConfTypeCheckMixin
+from mahos.util.conf import ConfAccessorMixin, PresetLoader
 from mahos.meas.common_worker import Worker
 
 from mahos_dq.meas.podmr_generator import generator_kernel as K
@@ -228,7 +227,7 @@ class QdyneAnalyzer(object):
             return self._analyze_ext(data)
 
 
-class Pulser(Worker, ConfTypeCheckMixin):
+class Pulser(Worker, ConfAccessorMixin):
     def __init__(self, cli, logger, conf: dict):
         """Worker for Qdyne.
 
