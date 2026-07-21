@@ -105,7 +105,8 @@ class Requester(object):
         except zmq.ZMQError:
             # Comes here when timed-out for example.
             self.logger.exception("ZMQError in Requester.request().")
-            self.logger.info("Creating new socket.")
+            self.logger.info("Closing current socket and creating new socket.")
+            self._socket.close()
             self.create_socket()
             return Reply(False, message="ZMQError in request()")
         return rep
