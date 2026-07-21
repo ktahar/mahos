@@ -162,13 +162,28 @@ class SweeperBase(Worker):
         if label in ["cw"] + _MOD_LABELS:
             timing = P.ParamDict(
                 time_window=P.FloatParam(
-                    self.conf.get("time_window", 10e-3), 0.1e-3, 10.0, unit="s", SI_prefix=True
+                    self.conf.get("time_window", 10e-3),
+                    0.1e-3,
+                    10.0,
+                    unit="s",
+                    SI_prefix=True,
+                    doc="duration of the data acquisition window",
                 ),
                 gate_delay=P.FloatParam(
-                    self.conf.get("gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
+                    self.conf.get("gate_delay", 0.0),
+                    0.0,
+                    10.0,
+                    unit="s",
+                    SI_prefix=True,
+                    doc="delay from excitation onset to the start of data acquisition",
                 ),
                 post_gate_delay=P.FloatParam(
-                    self.conf.get("post_gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
+                    self.conf.get("post_gate_delay", 0.0),
+                    0.0,
+                    10.0,
+                    unit="s",
+                    SI_prefix=True,
+                    doc="delay from the end of data acquisition to excitation end",
                 ),
             )
         elif label == "pulse" and pd_trace:
@@ -206,17 +221,32 @@ class SweeperBase(Worker):
             )
             if pd_analog:
                 timing["time_window"] = P.FloatParam(
-                    self.conf.get("time_window", 10e-3), 0.1e-3, 10.0, unit="s", SI_prefix=True
+                    self.conf.get("time_window", 10e-3),
+                    0.1e-3,
+                    10.0,
+                    unit="s",
+                    SI_prefix=True,
+                    doc="duration of the data acquisition window",
                 )
                 timing["gate_delay"] = P.FloatParam(
-                    self.conf.get("gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
+                    self.conf.get("gate_delay", 0.0),
+                    0.0,
+                    10.0,
+                    unit="s",
+                    SI_prefix=True,
+                    doc="delay from excitation onset to the start of data acquisition",
                 )
                 timing["post_gate_delay"] = P.FloatParam(
-                    self.conf.get("post_gate_delay", 0.0), 0.0, 10.0, unit="s", SI_prefix=True
+                    self.conf.get("post_gate_delay", 0.0),
+                    0.0,
+                    10.0,
+                    unit="s",
+                    SI_prefix=True,
+                    doc="delay from the end of data acquisition to excitation end",
                 )
             else:
                 timing["burst_num"] = P.IntParam(
-                    100, 1, 100_000, doc="number of bursts at each freq."
+                    100, 1, 100_000, doc="number of bursts at each freq"
                 )
 
         else:
@@ -231,11 +261,19 @@ class SweeperBase(Worker):
         f_start = max(min(self.conf.get("start", 2.74e9), f_max), f_min)
         f_stop = max(min(self.conf.get("stop", 3.00e9), f_max), f_min)
         d = P.ParamDict(
-            start=P.FloatParam(f_start, f_min, f_max),
-            stop=P.FloatParam(f_stop, f_min, f_max),
-            num=P.IntParam(self.conf.get("num", 101), 2, 10000),
-            power=P.FloatParam(self.conf.get("power", p_min), p_min, p_max),
-            sweeps=P.IntParam(0, 0, 1_000_000_000),
+            start=P.FloatParam(
+                f_start, f_min, f_max, unit="Hz", SI_prefix=True, doc="sweep start frequency"
+            ),
+            stop=P.FloatParam(
+                f_stop, f_min, f_max, unit="Hz", SI_prefix=True, doc="sweep stop frequency"
+            ),
+            num=P.IntParam(
+                self.conf.get("num", 101), 2, 10000, doc="number of frequency sweep points"
+            ),
+            power=P.FloatParam(
+                self.conf.get("power", p_min), p_min, p_max, unit="dBm", doc="MW power at SG"
+            ),
+            sweeps=P.IntParam(0, 0, 1_000_000_000, doc="number of sweeps (0 for infinite)"),
             timing=timing,
             background=P.BoolParam(False, doc="take background data"),
             delay=P.FloatParam(

@@ -760,7 +760,7 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         elif label == "pulse":
             self.pulseLabel.setText(pulse_summary)
         else:
-            self.pulseLabel.setText("Parameters are valid.")
+            self.pulseLabel.setText("Parameters are valid")
         return success
 
     def start_sweep(self):

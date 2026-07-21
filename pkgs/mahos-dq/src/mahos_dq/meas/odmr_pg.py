@@ -490,10 +490,10 @@ class ODMRPGMixin(object):
             s = f"Burst num: {burst_num}"
             if "post_gate_delay" in timing:
                 post_gate_delay_num = math.ceil(timing["post_gate_delay"] / window)
-                s += f" + {post_gate_delay_num}"
+                s += f" (+ Post gate delay num: {post_gate_delay_num})"
             if "gate_delay" in timing:
                 gate_delay_num = math.ceil(timing["gate_delay"] / window)
-                s += f" Gate delay num: {gate_delay_num}"
+                s += f", Gate delay num: {gate_delay_num}"
             return s
 
     def validate_pg_pulse_trace(self, params: dict) -> tuple[bool, str]:
