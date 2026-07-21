@@ -16,87 +16,163 @@ import enum
 import math
 
 
+_MISSING = object()
+
+
 class ConfAccessorMixin(object):
     """Mixin providing validated access to ``self.conf`` entries."""
 
-    def _conf_str(self, key: str, default: str) -> str:
-        v = self.conf.get(key, default)
+    def _conf_get(self, key: str, default: object = _MISSING) -> T.Any:
+        if key in self.conf:
+            return self.conf[key]
+        if default is not _MISSING:
+            return default
+        raise KeyError(f"Required configuration {key} is missing.")
+
+    @T.overload
+    def _conf_str(self, key: str) -> str: ...
+
+    @T.overload
+    def _conf_str(self, key: str, default: str) -> str: ...
+
+    def _conf_str(self, key: str, default: object = _MISSING) -> str:
+        v = self._conf_get(key, default)
         if not isinstance(v, str):
             raise TypeError(f"{key} must be str. Got {type(v).__name__}: {v!r}")
         return v
 
-    def _conf_int(self, key: str, default: int) -> int:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_int(self, key: str) -> int: ...
+
+    @T.overload
+    def _conf_int(self, key: str, default: int) -> int: ...
+
+    def _conf_int(self, key: str, default: object = _MISSING) -> int:
+        v = self._conf_get(key, default)
         if isinstance(v, bool) or not isinstance(v, int):
             raise TypeError(f"{key} must be int. Got {type(v).__name__}: {v!r}")
         return v
 
-    def _conf_pos_int(self, key: str, default: int) -> int:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_pos_int(self, key: str) -> int: ...
+
+    @T.overload
+    def _conf_pos_int(self, key: str, default: int) -> int: ...
+
+    def _conf_pos_int(self, key: str, default: object = _MISSING) -> int:
+        v = self._conf_get(key, default)
         if isinstance(v, bool) or not isinstance(v, int):
             raise TypeError(f"{key} must be int. Got {type(v).__name__}: {v!r}")
         if v <= 0:
             raise ValueError(f"{key} must be positive int. Got {v}")
         return v
 
-    def _conf_nonneg_int(self, key: str, default: int) -> int:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_nonneg_int(self, key: str) -> int: ...
+
+    @T.overload
+    def _conf_nonneg_int(self, key: str, default: int) -> int: ...
+
+    def _conf_nonneg_int(self, key: str, default: object = _MISSING) -> int:
+        v = self._conf_get(key, default)
         if isinstance(v, bool) or not isinstance(v, int):
             raise TypeError(f"{key} must be int. Got {type(v).__name__}: {v!r}")
         if v < 0:
             raise ValueError(f"{key} must be non-negative int. Got {v}")
         return v
 
-    def _conf_float(self, key: str, default: float) -> float:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_float(self, key: str) -> float: ...
+
+    @T.overload
+    def _conf_float(self, key: str, default: float) -> float: ...
+
+    def _conf_float(self, key: str, default: object = _MISSING) -> float:
+        v = self._conf_get(key, default)
         if not isinstance(v, float):
             raise TypeError(f"{key} must be float. Got {type(v).__name__}: {v!r}")
         if not math.isfinite(v):
             raise ValueError(f"{key} must be finite float. Got {v}")
         return v
 
-    def _conf_pos_float(self, key: str, default: float) -> float:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_pos_float(self, key: str) -> float: ...
+
+    @T.overload
+    def _conf_pos_float(self, key: str, default: float) -> float: ...
+
+    def _conf_pos_float(self, key: str, default: object = _MISSING) -> float:
+        v = self._conf_get(key, default)
         if not isinstance(v, float):
             raise TypeError(f"{key} must be float. Got {type(v).__name__}: {v!r}")
         if not math.isfinite(v) or v <= 0.0:
             raise ValueError(f"{key} must be positive finite float. Got {v}")
         return v
 
-    def _conf_nonneg_float(self, key: str, default: float) -> float:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_nonneg_float(self, key: str) -> float: ...
+
+    @T.overload
+    def _conf_nonneg_float(self, key: str, default: float) -> float: ...
+
+    def _conf_nonneg_float(self, key: str, default: object = _MISSING) -> float:
+        v = self._conf_get(key, default)
         if not isinstance(v, float):
             raise TypeError(f"{key} must be float. Got {type(v).__name__}: {v!r}")
         if not math.isfinite(v) or v < 0.0:
             raise ValueError(f"{key} must be non-negative finite float. Got {v}")
         return v
 
-    def _conf_num(self, key: str, default: float | int) -> float | int:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_num(self, key: str) -> float | int: ...
+
+    @T.overload
+    def _conf_num(self, key: str, default: float | int) -> float | int: ...
+
+    def _conf_num(self, key: str, default: object = _MISSING) -> float | int:
+        v = self._conf_get(key, default)
         if isinstance(v, bool) or not isinstance(v, (float, int)):
             raise TypeError(f"{key} must be float or int. Got {type(v).__name__}: {v!r}")
         if isinstance(v, float) and not math.isfinite(v):
             raise ValueError(f"{key} must be finite number. Got {v}")
         return v
 
-    def _conf_pos_num(self, key: str, default: float | int) -> float | int:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_pos_num(self, key: str) -> float | int: ...
+
+    @T.overload
+    def _conf_pos_num(self, key: str, default: float | int) -> float | int: ...
+
+    def _conf_pos_num(self, key: str, default: object = _MISSING) -> float | int:
+        v = self._conf_get(key, default)
         if isinstance(v, bool) or not isinstance(v, (float, int)):
             raise TypeError(f"{key} must be float or int. Got {type(v).__name__}: {v!r}")
         if isinstance(v, float) and not math.isfinite(v) or v <= 0.0:
             raise ValueError(f"{key} must be positive finite number. Got {v}")
         return v
 
-    def _conf_nonneg_num(self, key: str, default: float | int) -> float | int:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_nonneg_num(self, key: str) -> float | int: ...
+
+    @T.overload
+    def _conf_nonneg_num(self, key: str, default: float | int) -> float | int: ...
+
+    def _conf_nonneg_num(self, key: str, default: object = _MISSING) -> float | int:
+        v = self._conf_get(key, default)
         if isinstance(v, bool) or not isinstance(v, (float, int)):
             raise TypeError(f"{key} must be float or int. Got {type(v).__name__}: {v!r}")
         if isinstance(v, float) and not math.isfinite(v) or v < 0.0:
             raise ValueError(f"{key} must be non-negative finite number. Got {v}")
         return v
 
-    def _conf_bool(self, key: str, default: bool) -> bool:
-        v = self.conf.get(key, default)
+    @T.overload
+    def _conf_bool(self, key: str) -> bool: ...
+
+    @T.overload
+    def _conf_bool(self, key: str, default: bool) -> bool: ...
+
+    def _conf_bool(self, key: str, default: object = _MISSING) -> bool:
+        v = self._conf_get(key, default)
         if not isinstance(v, bool):
             raise TypeError(f"{key} must be bool. Got {type(v).__name__}: {v!r}")
         return v

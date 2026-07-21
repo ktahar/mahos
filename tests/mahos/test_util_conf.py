@@ -35,9 +35,11 @@ class ConfOwner(ConfAccessorMixin):
 def test_conf_accessor_mixin():
     owner = ConfOwner({"count": 2, "rate": 1.5})
 
-    assert owner._conf_pos_int("count", 1) == 2
-    assert owner._conf_pos_num("rate", 1.0) == 1.5
+    assert owner._conf_pos_int("count") == 2
+    assert owner._conf_pos_num("rate") == 1.5
     assert owner._conf_bool("enabled", True) is True
+    with pytest.raises(KeyError, match="Required configuration name is missing"):
+        owner._conf_str("name")
 
     for method in ("_conf_float", "_conf_pos_float", "_conf_nonneg_float"):
         with pytest.raises(ValueError):
