@@ -17,10 +17,15 @@ from mahos.msgs.pulse_msgs import PulsePattern
 class ODMRSweeperInterface(InstrumentInterface):
     """Interface for ODMR Sweeper."""
 
-    def validate(self, params: dict, label: str) -> bool:
+    def validate(self, params: dict, label: str) -> tuple[bool, str, str]:
         """Validate parameters using sweeper-specific constraints."""
 
-        return bool(self.get("validate", params, label))
+        ret = self.get("validate", params, label)
+        if ret is None:
+            return False, "Failed to request validation from ODMR sweeper.", ""
+        if not isinstance(ret, tuple) or len(ret) != 3:
+            return False, "Invalid validation response from ODMR sweeper.", ""
+        return ret
 
     def get_line(self) -> np.ndarray | None:
         """Get single sweep line."""

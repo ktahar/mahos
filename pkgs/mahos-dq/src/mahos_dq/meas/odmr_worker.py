@@ -23,6 +23,7 @@ from mahos.inst.pd_interface import PDInterface
 from mahos.inst.daq_interface import ClockSourceInterface
 from mahos_dq.inst.overlay.odmr_sweeper_interface import ODMRSweeperInterface
 from mahos.util.conf import PresetLoader
+from mahos.util.param import ParamAccessor, ParamError
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
 from mahos_dq.meas.odmr_pd import (
     configure_trace_pds,
@@ -31,7 +32,6 @@ from mahos_dq.meas.odmr_pd import (
     reduce_traces,
     result_unit,
     sum_pd_blocks,
-    validate_trace_params,
 )
 from mahos_dq.util.segments import round_segment_samples_down
 from mahos.meas.common_worker import Worker
@@ -103,27 +103,55 @@ class SweeperBase(Worker):
 
     def validate_params(
         self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
-    ) -> bool:
+    ) -> tuple[bool, str, str]:
         params = P.unwrap(params)
-        if params["start"] >= params["stop"]:
-            self.logger.error("stop must be greater than start")
-            return False
-        if label == "pulse" and getattr(self, "_pd_trace", False):
-            return self._validate_trace_params(params, label)
-        return True
-
-    def _validate_trace_params(self, params: dict, label: str) -> bool:
-        """Validate trace parameters using the direct sweeper configuration."""
 
         try:
-            pd_spectrum = getattr(self, "_pd_spectrum", False) or (
-                "hardware_average" in params.get("pd", {})
-            )
-            validate_trace_params(params, self.conf, pd_spectrum)
-        except (KeyError, TypeError, ValueError) as exc:
-            self.logger.error(f"Invalid trace parameters: {exc}")
-            return False
-        return True
+            if label not in self.get_param_dict_labels():
+                raise ParamError(f"Unknown measurement label: {label}")
+
+            p = ParamAccessor(params)
+            start = p.num("start")
+            stop = p.num("stop")
+            if start >= stop:
+                raise ParamError("stop must be greater than start")
+            num = p.pos_int("num")
+            if num < 2:
+                raise ParamError(f"num must be at least 2. Got {num}")
+            p.num("power")
+            p.nonneg_int("sweeps", 0)
+
+            for key in ("delay", "background_delay", "final_delay"):
+                p.nonneg_num(key, 0.0)
+            for key in ("background", "resume", "continue_mw"):
+                p.bool(key, False)
+
+            timing = p.child("timing")
+            if label != "pulse" and "time_window" in timing:
+                timing.pos_num("time_window")
+                timing.nonneg_num("gate_delay", 0.0)
+                timing.nonneg_num("post_gate_delay", 0.0)
+
+            mod = p.child("mod", {})
+            if label in ("am_ext", "am_int"):
+                mod.num("am_depth")
+                mod.bool("am_log")
+                if label == "am_int":
+                    mod.pos_num("am_rate")
+            elif label in ("fm_ext", "fm_int"):
+                mod.num("fm_deviation")
+                if label == "fm_int":
+                    mod.pos_num("fm_rate")
+        except ParamError as e:
+            self.logger.error(f"Invalid ODMR parameters: {e}")
+            return False, str(e), ""
+
+        if label == "pulse":
+            return self._validate_pulse_params(params)
+        return True, "", ""
+
+    def _validate_pulse_params(self, params: dict) -> tuple[bool, str, str]:
+        return False, "validation method for pulse is not implemented", ""
 
     def get_param_dict_labels(self) -> list:
         return ["cw", "pulse"] + _MOD_LABELS
@@ -353,13 +381,10 @@ class SweeperOverlay(SweeperBase):
         self.point = self.conf.get("point", False)
         self.data = ODMRData()
 
-    def _validate_trace_params(self, params: dict, label: str) -> bool:
-        """Delegate trace validation to the overlay that owns the hardware configuration."""
+    def _validate_pulse_params(self, params: dict) -> tuple[bool, str, str]:
+        """Delegate pulse param validation to the overlay that owns the hardware configuration."""
 
-        if not self.sweeper.validate(params, label):
-            self.logger.error("ODMR sweeper overlay rejected the trace parameters.")
-            return False
-        return True
+        return self.sweeper.validate(params, "pulse")
 
     def get_param_dict_labels(self) -> list[str]:
         if self._class_name.startswith("ODMRSweeperCommand"):
@@ -709,10 +734,10 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         self.pulse_pattern = None
         self.data = ODMRData()
 
-    def _validate_trace_params(self, params: dict, label: str) -> bool:
-        """Validate trace parameters using this worker's hardware configuration."""
+    def _validate_pulse_params(self, params: dict) -> tuple[bool, str, str]:
+        """Validate pulse parameters using the direct sweeper configuration."""
 
-        return self.validate_pg_pulse_trace(params)
+        return self.validate_pulse_params(params)
 
     def load_pg_conf_preset(self, cli):
         loader = PresetLoader(self.logger, PresetLoader.Mode.FORWARD)

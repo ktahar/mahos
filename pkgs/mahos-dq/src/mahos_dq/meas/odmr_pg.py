@@ -14,6 +14,8 @@ import math
 
 from mahos.msgs.inst.pg_msgs import Block, Blocks, TriggerType
 from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.util.param import ParamAccessor, ParamError
+from mahos.util.unit import SI_format
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from mahos_dq.meas.odmr_pd import trace_samples, validate_trace_params
 
@@ -404,7 +406,97 @@ class ODMRPGMixin(object):
             blocks = blocks.replace(self._channel_remap)
         return blocks.simplify()
 
-    def validate_pg_pulse_trace(self, params: dict) -> bool:
+    def validate_pulse_params(self, params: dict) -> tuple[bool, str, str]:
+        """Validate params for the pulse mode."""
+
+        try:
+            p = ParamAccessor(params)
+            for key in ("delay", "background_delay", "final_delay"):
+                p.nonneg_num(key, 0.0)
+            p.bool("background", False)
+
+            timing = p.child("timing")
+            laser_delay = timing.nonneg_num("laser_delay")
+            laser_width = timing.nonneg_num("laser_width")
+            mw_delay = timing.nonneg_num("mw_delay")
+            mw_width = timing.nonneg_num("mw_width")
+            trigger_width = timing.pos_num("trigger_width")
+            timing.num("mw_offset", 0.0)
+
+            window = laser_delay + laser_width + mw_delay + mw_width
+            if window <= 0.0:
+                raise ParamError("Length of laser and MW pulse sequence must be positive.")
+
+            freq = self.conf["pg_freq_pulse"]
+            trigger_width_ticks = round(trigger_width * freq)
+            if trigger_width_ticks < 1:
+                raise ParamError("timing.trigger_width must be at least one PG tick.")
+
+            time_window = None
+            if self._pd_analog and not self._pd_trace:
+                time_window = timing.pos_num("time_window")
+                timing.nonneg_num("gate_delay", 0.0)
+                timing.nonneg_num("post_gate_delay", 0.0)
+            else:
+                timing.pos_int("burst_num")
+
+            if not self._pd_trace:
+                if laser_width <= 0.0:
+                    raise ParamError("timing.laser_width must be positive.")
+                if round(mw_delay * freq) < trigger_width_ticks:
+                    raise ParamError("timing.mw_delay >= timing.trigger_width must be satisfied.")
+
+            if self._pd_analog:
+                pd = p.child("pd")
+                rate = pd.pos_num("rate")
+                pd.pos_int("buffer_size_coeff", self.conf.get("buffer_size_coeff", 20))
+                pd.nonneg_num("eos_deadtime", 0.0)
+                pd.bool("hardware_average", True)
+                pd.ascending_numbers("bounds", 2, (-10.0, 10.0))
+                if time_window is not None and round(time_window * rate) < 1:
+                    raise ParamError("timing.time_window must contain at least one PD sample.")
+
+            if self._pd_trace:
+                for key in (
+                    "roi_head",
+                    "roi_tail",
+                    "sig_delay",
+                    "sig_width",
+                    "ref_delay",
+                    "ref_width",
+                ):
+                    timing.nonneg_num(key)
+                timing.str("refmode")
+                success, msg = self.validate_pg_pulse_trace(params)
+                if not success:
+                    return False, msg, ""
+
+            return True, "", self.make_pulse_summary(params, window)
+
+        except (KeyError, TypeError, ValueError, OverflowError) as e:
+            self.logger.error(f"Invalid pulse parameters: {e}")
+            return False, str(e), ""
+
+    def make_pulse_summary(self, params: dict, window: float) -> str:
+        timing = params["timing"]
+        if "burst_num" in timing:
+            total = SI_format(window * timing["burst_num"], suffix="s")
+            single = SI_format(window, suffix="s")
+            rate = SI_format(1 / window, suffix="Hz")
+            return f"total window: {total} single window: {single} (rate: {rate})"
+        else:  # slow AnalogPD (pd_analog = True, pd_trace = False) configuration.
+            time_window = timing["time_window"]
+            burst_num = math.ceil(time_window / window)
+            s = f"Burst num: {burst_num}"
+            if "post_gate_delay" in timing:
+                post_gate_delay_num = math.ceil(timing["post_gate_delay"] / window)
+                s += f" + {post_gate_delay_num}"
+            if "gate_delay" in timing:
+                gate_delay_num = math.ceil(timing["gate_delay"] / window)
+                s += f" Gate delay num: {gate_delay_num}"
+            return s
+
+    def validate_pg_pulse_trace(self, params: dict) -> tuple[bool, str]:
         """Validate trace parameters using the configured detector and PG constraints."""
 
         try:
@@ -414,25 +506,29 @@ class ODMRPGMixin(object):
                 round(params["timing"][key] * freq)
                 for key in ("laser_delay", "mw_delay", "mw_width", "trigger_width", "roi_head")
             ]
-        except (KeyError, TypeError, ValueError):
-            self.logger.exception("Invalid trace parameters")
-            return False
+        except (KeyError, TypeError, ValueError) as e:
+            self.logger.error(f"Invalid trace parameters: {e}")
+            return False, str(e)
 
         if trigger_width < 1:
-            self.logger.error("trigger_width must be at least one PG tick.")
-            return False
+            msg = "trigger_width must be at least one PG tick."
+            self.logger.error(msg)
+            return False, msg
         if trigger_width > roi_head:
-            self.logger.error("trigger_width <= roi_head must be satisfied.")
-            return False
+            msg = "trigger_width <= roi_head must be satisfied."
+            self.logger.error(msg)
+            return False, msg
         if roi_head > mw_delay + mw_width + laser_delay:
-            self.logger.error("roi_head must fit inside the complete pre-laser sequence.")
-            return False
-        return True
+            msg = "roi_head must fit inside the complete pre-laser sequence."
+            self.logger.error(msg)
+            return False, msg
+        return True, ""
 
     def configure_pg_pulse_trace(self, params: dict, trigger_type: TriggerType) -> bool:
         """Configure the laser-resolved AnalogPD trace pulse sequence."""
 
-        if not self.validate_pg_pulse_trace(params):
+        success, _ = self.validate_pg_pulse_trace(params)
+        if not success:
             return False
 
         if params.get("background", False):

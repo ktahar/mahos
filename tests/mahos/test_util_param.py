@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+
+"""
+Tests for mahos.util.param.
+
+.. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
+.. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
+
+"""
+
+import pytest
+
+from mahos.util.param import ParamAccessor, ParamError
+
+
+def test_param_accessor():
+    params = {
+        "name": "test",
+        "enabled": True,
+        "count": 2,
+        "offset": 0,
+        "rate": 1.5,
+        "nested": {},
+        "bounds": [-1.0, 1.0],
+        "levels": (3, 2, 1),
+    }
+    p = ParamAccessor(params)
+
+    assert p.str("name") == "test"
+    assert p.bool("enabled") is True
+    assert p.int("count") == 2
+    assert p.pos_int("count") == 2
+    assert p.nonneg_int("offset") == 0
+    assert p.num("rate") == 1.5
+    assert p.pos_num("rate") == 1.5
+    assert p.nonneg_num("offset") == 0
+    assert "nested" in p
+    assert p.get("nested") == {}
+    assert p.ascending_numbers("bounds", 2) == (-1.0, 1.0)
+    assert p.descending_numbers("levels", 3) == (3, 2, 1)
+    assert p.int("missing", 3) == 3
+
+    with pytest.raises(ParamError, match="Required parameter missing is missing"):
+        p.int("missing")
+    with pytest.raises(ParamError, match="strictly ascending"):
+        p.ascending_numbers("levels", 3)
+    with pytest.raises(ParamError, match=r"bounds\[1\] must be finite number"):
+        ParamAccessor({"bounds": [0.0, float("inf")]}).ascending_numbers("bounds", 2)
+
+
+@pytest.mark.parametrize(
+    ("method", "value"),
+    [
+        ("num", True),
+        ("num", float("nan")),
+        ("num", float("inf")),
+        ("num", -float("inf")),
+        ("pos_num", 0.0),
+        ("nonneg_num", -1.0),
+        ("pos_int", 0),
+        ("nonneg_int", -1),
+    ],
+)
+def test_param_accessor_rejects_invalid_numbers(method, value):
+    with pytest.raises(ParamError):
+        getattr(ParamAccessor({"value": value}), method)("value")
+
+
+def test_param_accessor_nested_path():
+    p = ParamAccessor({"timing": {"trigger": {"width": -1.0}}})
+
+    trigger = p.child("timing").child("trigger")
+    assert trigger.num("width") == -1.0
+    with pytest.raises(ParamError, match=r"timing\.trigger\.width must be positive"):
+        trigger.pos_num("width")

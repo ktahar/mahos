@@ -144,6 +144,8 @@ def set_enabled(params: dict, name_widgets: list[tuple[str, QtWidgets.QWidget]])
 class ParamTable(QtWidgets.QTableWidget):
     """QTableWidget for input of ParamDict."""
 
+    paramsChanged = QtCore.pyqtSignal()
+
     def __init__(self, parent=None):
         QtWidgets.QTableWidget.__init__(self, parent=parent)
 
@@ -184,7 +186,12 @@ class ParamTable(QtWidgets.QTableWidget):
             if min_step is not None:
                 opts["minStep"] = min_step
             widget = SpinBox(**opts)
-        widget.valueChanged.connect(param.set)
+
+        def set_(value):
+            param.set(value)
+            self.paramsChanged.emit()
+
+        widget.valueChanged.connect(set_)
 
         def restore():
             widget.setValue(param.default())
@@ -196,10 +203,12 @@ class ParamTable(QtWidgets.QTableWidget):
 
         def set_():
             param.set(widget.text())
+            self.paramsChanged.emit()
 
         def restore():
             param.restore_default()
             widget.setText(param.default())
+            self.paramsChanged.emit()
 
         widget.editingFinished.connect(set_)
         return widget, restore
@@ -217,15 +226,17 @@ class ParamTable(QtWidgets.QTableWidget):
     def _add_widget_bool(self, param: P.BoolParam):
         widget = QtWidgets.QCheckBox("True", parent=self)
 
-        def set_(value):
+        def set_(value, emit=True):
             param.set(value)
             widget.setChecked(value)
             widget.setText("True" if value else "False")
+            if emit:
+                self.paramsChanged.emit()
 
         def restore():
             widget.setChecked(param.default())
 
-        set_(param.some_value())
+        set_(param.some_value(), emit=False)
         widget.toggled.connect(set_)
         return widget, restore
 
@@ -238,6 +249,7 @@ class ParamTable(QtWidgets.QTableWidget):
 
         def set_(i):
             param.set(param.options()[i])
+            self.paramsChanged.emit()
 
         def restore():
             widget.setCurrentIndex(default_i)
@@ -251,16 +263,18 @@ class ParamTable(QtWidgets.QTableWidget):
     ):
         checkbox = QtWidgets.QCheckBox("Enabled", parent=self)
 
-        def toggle(checked):
+        def toggle(checked, emit=True):
             param.set_enable(checked)
             checkbox.setText("Enabled" if checked else "Disabled")
             widget.setEnabled(checked)
             button.setEnabled(checked)
+            if emit:
+                self.paramsChanged.emit()
 
-        checkbox.toggled.connect(toggle)
         enabled = param.enabled()
-        checkbox.setChecked(True)
         checkbox.setChecked(enabled)
+        toggle(enabled, emit=False)
+        checkbox.toggled.connect(toggle)
         return checkbox
 
     def update_contents(self, params: P.ParamDict):

@@ -373,7 +373,7 @@ def test_overlay_trace_validation_uses_overlay_spectrum_and_pg_configuration():
     sweeper = ODMRSweeperPG.__new__(ODMRSweeperPG)
     sweeper._closed = True
     sweeper.logger = logging.getLogger("test_odmr_overlay_trace_validation")
-    sweeper._pd_trace = sweeper._pd_spectrum = True
+    sweeper._pd_trace = sweeper._pd_spectrum = sweeper._pd_analog = True
     sweeper.conf = {
         "pg_freq_pulse": 1.0e9,
         "pd_segment_granularity": 64,
@@ -381,13 +381,16 @@ def test_overlay_trace_validation_uses_overlay_spectrum_and_pg_configuration():
     }
     params = _trace_params()
 
-    assert not sweeper.get("validate", params, "pulse")
+    success, _, _ = sweeper.get("validate", params, "pulse")
+    assert not success
 
     sweeper.conf["pd_segment_granularity"] = 16
-    assert sweeper.get("validate", params, "pulse")
+    success, _, _ = sweeper.get("validate", params, "pulse")
+    assert success
 
     params["timing"]["trigger_width"] = 0.4e-9
-    assert not sweeper.get("validate", params, "pulse")
+    success, _, _ = sweeper.get("validate", params, "pulse")
+    assert not success
 
 
 def test_trace_parameter_defaults_pass_validation():

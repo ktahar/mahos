@@ -186,7 +186,7 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
         if key == "line":
             return self.get_line()
         elif key == "validate":
-            return True
+            return True, "", ""
         elif key == "bounds":
             return self.sg.get_bounds()
         elif key == "unit":
@@ -585,12 +585,16 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfTypeCheckMixin):
 
         return True
 
-    def validate(self, params: dict, label: str) -> bool:
-        """Validate parameters using this overlay's hardware configuration."""
+    def validate(self, params: dict, label: str) -> tuple[bool, str, str]:
+        """Validate parameters using this overlay's hardware configuration.
 
-        if label == "pulse" and self._pd_trace:
-            return self.validate_pg_pulse_trace(params)
-        return True
+        Only pulse mode params are validated here.
+
+        """
+
+        if label == "pulse":
+            return self.validate_pulse_params(params)
+        return True, "", ""
 
     def get(self, key: str, args=None, label: str = ""):
         if key == "point":

@@ -6,12 +6,12 @@ Unit conversion module.
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
 
-The SI_scale function is taken from the pyqtgraph project (https://github.com/pyqtgraph/pyqtgraph),
-which is licensed under the MIT License:
+The SI_scale and SI_format functions are taken from the pyqtgraph project
+(https://github.com/pyqtgraph/pyqtgraph), which is licensed under the MIT License:
 Copyright 2012 Luke Campagnola, University of North Carolina at Chapel Hill.
 
-The function is redefined here because we sometimes want to avoid importing pyqtgraph
-(from non-GUI codes) only for this function.
+The functions are redefined here because we sometimes want to avoid importing pyqtgraph
+(from non-GUI codes) only for these functions.
 
 """
 
@@ -33,7 +33,7 @@ def SI_scale(x: float | int | decimal.Decimal, min_val=1e-25, use_unicode=True):
 
     Example::
 
-        siScale(0.0001)   # returns (1e6, 'μ')
+        SI_scale(0.0001)   # returns (1e6, 'μ')
         # This indicates that the number 0.0001 is best represented as 0.0001 * 1e6 = 100 μUnits
 
     """
@@ -61,3 +61,46 @@ def SI_scale(x: float | int | decimal.Decimal, min_val=1e-25, use_unicode=True):
     m1 = -3 * m
     p = 10.0**m1
     return (p, pref)
+
+
+def SI_format(x, precision=3, suffix="", space=True, error=None, min_val=1e-25, use_unicode=True):
+    """
+    Return the number x formatted in engineering notation with SI prefix.
+
+    Example::
+        SI_format(0.0001, suffix='V')  # returns "100 μV"
+
+    """
+
+    if space:
+        space = " "
+    else:
+        space = ""
+
+    (p, pref) = SI_scale(x, min_val, use_unicode)
+    if not (len(pref) > 0 and pref[0] == "e"):
+        pref = space + pref
+
+    if error is None:
+        fmt = "%." + str(precision) + "g%s%s"
+        return fmt % (x * p, pref, suffix)
+    else:
+        if use_unicode:
+            plusminus = space + "±" + space
+        else:
+            plusminus = " +/- "
+        fmt = "%." + str(precision) + "g%s%s%s%s"
+        return fmt % (
+            x * p,
+            pref,
+            suffix,
+            plusminus,
+            SI_format(
+                error,
+                precision=precision,
+                suffix=suffix,
+                space=space,
+                min_val=min_val,
+                use_unicode=use_unicode,
+            ),
+        )
