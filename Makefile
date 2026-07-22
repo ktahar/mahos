@@ -1,4 +1,4 @@
-.PHONY: all format lint install-dev test dq-ext docs browse clean
+.PHONY: all format format-check lint install-dev test dq-ext docs browse clean
 
 TEST_QPA_PLATFORM ?= offscreen
 
@@ -16,10 +16,13 @@ endif
 all: format lint test
 
 format:
-	black .
+	ruff format .
+
+format-check:
+	ruff format --check .
 
 lint:
-	flake8 . --show-source --statistics
+	ruff check . --statistics
 
 install-dev:
 	python -m pip install -e './pkgs/mahos[dev]' -e ./pkgs/mahos-dq

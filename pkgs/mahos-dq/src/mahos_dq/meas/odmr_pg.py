@@ -543,8 +543,8 @@ class ODMRPGMixin(object):
             bg_delay = params.get("background_delay", 0.0)
             if bg_delay < minimum_bg_delay:
                 self.logger.warning(
-                    f"background_delay {bg_delay*1e9:.1f} ns is shorter than the recommended "
-                    f"minimum {minimum_bg_delay*1e9:.1f} ns; the background initialization "
+                    f"background_delay {bg_delay * 1e9:.1f} ns is shorter than the recommended "
+                    f"minimum {minimum_bg_delay * 1e9:.1f} ns; the background initialization "
                     "laser may start before the final foreground trace finishes",
                 )
 

@@ -163,20 +163,20 @@ class PulseMonitorWidget(ClientTopWidget):
 
     def update_label(self):
         scale, prefix = pg.siScale(self._mx)
-        s = f"M({scale*self._mx:7.3f} {prefix}s, {self._my:7.3f})"
+        s = f"M({scale * self._mx:7.3f} {prefix}s, {self._my:7.3f})"
         if self.cursor0 is not None:
             x0 = self.cursor0[0].value()
             y0 = self.cursor0[1].value()
             scale, prefix = pg.siScale(x0)
-            s += f"  C0({scale*x0:7.3f} {prefix}s, {y0:7.3f})"
+            s += f"  C0({scale * x0:7.3f} {prefix}s, {y0:7.3f})"
         if self.cursor1 is not None:
             x1 = self.cursor1[0].value()
             y1 = self.cursor1[1].value()
             scale, prefix = pg.siScale(x1)
-            s += f"  C1({scale*x1:7.3f} {prefix}s, {y1:7.3f})"
+            s += f"  C1({scale * x1:7.3f} {prefix}s, {y1:7.3f})"
         if self.cursor0 is not None and self.cursor1 is not None:
             scale, prefix = pg.siScale(x1 - x0)
-            s += f"  Delta({scale*(x1-x0):7.3f} {prefix}s, {y1-y0:7.3f})"
+            s += f"  Delta({scale * (x1 - x0):7.3f} {prefix}s, {y1 - y0:7.3f})"
         self.label.setText(s)
 
     def update_pos(self, pos):

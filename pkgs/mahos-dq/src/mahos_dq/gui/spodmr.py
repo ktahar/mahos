@@ -491,7 +491,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         self.cli.statusUpdated.disconnect(self.init_with_status)
 
         self._pg_freq = status.pg_freq
-        self.pgfreqLabel.setText(f"PG freq: {self._pg_freq*1e-9:.2f} GHz")
+        self.pgfreqLabel.setText(f"PG freq: {self._pg_freq * 1e-9:.2f} GHz")
         self.update_timing_box_step()
 
         self.methodBox.clear()
@@ -1131,7 +1131,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         elif round(self._pg_freq) == round(0.5e9):
             step = 2.0
         else:
-            print(f"Cannot determine timing box step with PG freq {self._pg_freq*1e-9:.2f} GHz")
+            print(f"Cannot determine timing box step with PG freq {self._pg_freq * 1e-9:.2f} GHz")
             step = 1.0
 
         for b in self.timing_boxes():
@@ -1147,7 +1147,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         elif round(self._pg_freq) == round(0.5e9):
             _round = round_evenint
         else:
-            print(f"Cannot determine round method with PG freq {self._pg_freq*1e-9:.2f} GHz")
+            print(f"Cannot determine round method with PG freq {self._pg_freq * 1e-9:.2f} GHz")
             _round = round
 
         for b in self.timing_boxes():

@@ -19,16 +19,17 @@ Ignore following directories when inspecting or editing:
   when extension features are needed.
   (`-e` option may be removed if necessary.)
 - `make test` (or `pytest --timeout=30`): run the test suite with timeouts.
-- `make lint`: run flake8 with configured excludes
+- `make lint`: run Ruff linting with configured excludes
   (`build`, `tests`, and generated UI code).
-- `make format`: format Python code with Black.
+- `make format`: format Python code with Ruff.
+- `make format-check`: check Python formatting with Ruff without modifying files.
 - `make docs`: build Sphinx HTML docs from `docs-src/` into `docs/`.
 - `make browse`: open the built docs in a browser.
 
 ## Coding Style & Naming Conventions
 
-Python code follows Black with a line length of 99 and flake8 with the same
-limit. Indentation is 4 spaces. Use PEP 8 naming: `snake_case` for functions and
+Python code follows the Ruff formatter and linter with a line length of 99.
+Indentation is 4 spaces. Use PEP 8 naming: `snake_case` for functions and
 variables, `PascalCase` for classes, and `UPPER_CASE` for constants. Generated UI
 code in `pkgs/mahos/src/mahos/gui/ui` and `pkgs/mahos-dq/src/mahos_dq/gui/ui` is excluded
 from formatting and linting.

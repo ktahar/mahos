@@ -190,7 +190,7 @@ class QdyneAnalyzer(object):
             idx += head_idx + tail_idx
 
             if not (i % each):
-                print(f"[{i}/{len(data.xdata)}] {i/len(data.xdata):.1%} {w.elapsed_str()}")
+                print(f"[{i}/{len(data.xdata)}] {i / len(data.xdata):.1%} {w.elapsed_str()}")
         return True
 
     def _analyze_ext(self, data: QdyneData) -> bool:

@@ -14,6 +14,7 @@ Added
 Changed
 ^^^^^^^
 
+- Development tooling: replace black and flake8 with Ruff for formatting and linting.
 - rename ``mahos.util.locked_queue`` to ``mahos.util.queue.RollingQueue``.
 
 Fixed

@@ -121,7 +121,7 @@ class PatternGenerator(object):
             return
         if p270 < p90:
             raise ValueError(
-                f"270pulse ({p270*1e9:.1f} ns) must be >= 90pulse ({p90*1e9:.1f} ns)."
+                f"270pulse ({p270 * 1e9:.1f} ns) must be >= 90pulse ({p90 * 1e9:.1f} ns)."
             )
 
     def get_common_pulses(self, params: dict):
@@ -2462,7 +2462,7 @@ def make_generators(
 ):
     if generators is not None and not isinstance(generators, dict):
         raise TypeError(
-            "generators must be dict[str, [module_name, class_name]], " f"got {generators!r}"
+            f"generators must be dict[str, [module_name, class_name]], got {generators!r}"
         )
     mw_modes = tuple(MWMode.parse(m) for m in mw_modes)
 

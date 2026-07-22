@@ -333,7 +333,7 @@ class SpinCore_PulseBlasterESR_PRO(Instrument):
 
         length_s = self.length / self._freq
         scale, prefix = SI_scale(length_s)
-        msg = f"Configured with blocks. length: {self.length} ({length_s*scale:.3f} {prefix}s),"
+        msg = f"Configured with blocks. length: {self.length} ({length_s * scale:.3f} {prefix}s),"
         msg += f" {self._last_addr + 1}/{self._max_instructions} inst"
         self.logger.info(msg)
         return True
@@ -698,7 +698,9 @@ class SpinCore_PulseBlasterESR_PRO(Instrument):
 
         length_s = self.length / self._freq
         scale, prefix = SI_scale(length_s)
-        msg = f"Configured with blockseq. length: {self.length} ({length_s*scale:.3f} {prefix}s),"
+        msg = (
+            f"Configured with blockseq. length: {self.length} ({length_s * scale:.3f} {prefix}s),"
+        )
         msg += f" {self._last_addr + 1}/{self._max_instructions} inst"
         self.logger.info(msg)
         return True

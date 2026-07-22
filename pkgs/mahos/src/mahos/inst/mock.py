@@ -538,7 +538,7 @@ class PD_mock(Instrument):
             * self.reduce_factor
             / params.get("rate", 1.0)
         )
-        self.logger.info(f"Period: {self.period*1e3:.1f} ms")
+        self.logger.info(f"Period: {self.period * 1e3:.1f} ms")
         return True
 
     def start(self, label: str = "") -> bool:

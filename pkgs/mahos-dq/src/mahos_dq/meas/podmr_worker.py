@@ -319,7 +319,7 @@ class PODMRDataOperator(object):
         data.laser_timing_offset = result.offsets
         mn, mx = np.min(data.laser_timing_offset) * 1e9, np.max(data.laser_timing_offset) * 1e9
         self.logger.info(
-            f"Set laser timing offset: min {mn:.1f}, max {mx:.1f}, delta {mx-mn:.1f} ns"
+            f"Set laser timing offset: min {mn:.1f}, max {mx:.1f}, delta {mx - mn:.1f} ns"
         )
         return True
 
@@ -895,8 +895,7 @@ class Pulser(Worker, ConfAccessorMixin):
         options = self._plotmode_options(data.label)
         if plotmode not in options:
             raise ValueError(
-                f"plotmode '{plotmode}' is invalid for method '{data.label}'. "
-                f"available: {options}"
+                f"plotmode '{plotmode}' is invalid for method '{data.label}'. available: {options}"
             )
 
     def _set_num_pattern_and_validate_params(self, data: PODMRData):

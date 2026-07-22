@@ -91,7 +91,7 @@ class PlotWidget(QtWidgets.QWidget):
             unit = data.get_unit(ch)
             if len(y):
                 scale, prefix = SI_scale(y[-1])
-                latest_data.append(f"{ch}: {y[-1]*scale:.3f} {prefix}{unit}")
+                latest_data.append(f"{ch}: {y[-1] * scale:.3f} {prefix}{unit}")
         self.label.setText(" ".join(latest_data))
 
 

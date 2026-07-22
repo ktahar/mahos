@@ -156,7 +156,7 @@ class BasicMeasWidget(ClientWidget, Ui_BasicMeas):
 
     def save_data(self):
         default_path = str(self.gparams_cli.get_param("work_dir"))
-        fn = save_dialog(self, default_path, "" "")
+        fn = save_dialog(self, default_path, "")
         if not fn:
             return
 

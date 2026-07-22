@@ -293,7 +293,7 @@ class IODMRIO(object):
                 edgecolor="#1E90FF",
             )
             head, ext = path.splitext(fn)
-            freq_str = f"{freq*1E-6:.1f}MHz"
+            freq_str = f"{freq * 1e-6:.1f}MHz"
             xfn = f"{head}_d{i}f{freq_str}{ext}"
             save_image(
                 xfn,

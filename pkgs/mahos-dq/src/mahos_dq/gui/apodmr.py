@@ -190,7 +190,7 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
         for i in range(tnum):
             y = plot_traces[i]
             pen = self.cmap.map(i / (tnum - 1)) if tnum > 1 else self.cmap.map(0.5)
-            self._trace_items.append(self.raw_plot.plot(x, y, pen=pen, name=f"t{tstart+i:d}"))
+            self._trace_items.append(self.raw_plot.plot(x, y, pen=pen, name=f"t{tstart + i:d}"))
 
         self._update_marker_lines(data.marker_indices, x)
 

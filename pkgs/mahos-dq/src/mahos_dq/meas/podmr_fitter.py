@@ -98,7 +98,7 @@ class RabiFitter(Fitter):
         p2p = 2 * abs(A)
         return (
             f"Peak-to-Peak: 2|A| = {p2p:.3%}, "
-            f"MW pulses: {p90*1e9:.1f}, {p180*1e9:.1f}, {p270*1e9:.1f} ns"
+            f"MW pulses: {p90 * 1e9:.1f}, {p180 * 1e9:.1f}, {p270 * 1e9:.1f} ns"
         )
 
 
@@ -444,7 +444,7 @@ class MultiPeakFitter(SinglePeakFitter):
     ):
         for i in range(1, raw_params["n_peaks"]):
             fit_params.add(
-                f"center_diff{i}", expr=f"p{i}_center-p{i-1}_center", min=0.0, max=np.max(xdata)
+                f"center_diff{i}", expr=f"p{i}_center-p{i - 1}_center", min=0.0, max=np.max(xdata)
             )
 
     def guess_fit_params(

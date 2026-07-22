@@ -117,7 +117,7 @@ This includes ``argcomplete``, which is used for :ref:`bash/zsh CLI completion <
 Dev requirements
 ................
 
-Development tools (pytest, black, flake8, sphinx, etc.) are in
+Development tools (pytest, Ruff, Sphinx, etc.) are in
 ``dev-requirements.txt``.
 
 - You can install all of them by ``pip install -e './pkgs/mahos[dev]'`` or
