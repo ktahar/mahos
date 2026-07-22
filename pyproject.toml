@@ -2,3 +2,12 @@
 line-length = 99
 # gui/ui/*.py is auto-generated. podmr_patterns.py is too large.
 extend-exclude = "(pkgs/mahos/src/mahos/gui/ui|pkgs/mahos-dq/src/mahos_dq/gui/ui|tests/mahos-dq/podmr_patterns.py)"
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+
+reportMissingParameterType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+reportUnknownParameterType = false
+reportUnknownMemberType = false
