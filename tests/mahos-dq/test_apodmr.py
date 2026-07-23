@@ -56,7 +56,7 @@ def _apodmr_params() -> dict:
         "pd_rate": 500e3,
         "sweeps_per_record": 2,
         "max_records": 0,
-        "shots_per_point": 1,
+        "burst_num": 1,
         "point_init_delay": 0.0,
         "pulse": {},
         "plot": {
@@ -132,7 +132,7 @@ def test_apodmr_pd_finite_samples_include_drop_first():
         "pd": {"rate": 1.0e6, "buffer_size_coeff": 20, "drop_first": 2},
         "sweeps_per_record": 2,
         "hardware_sweep_limit": True,
-        "shots_per_point": 1,
+        "burst_num": 1,
         "pulse": {},
     }
     pulser.trace_count = 4
@@ -180,7 +180,7 @@ def test_apodmr_finite_acquisition_finishes_on_pd_queue_overflow(caplog):
 
 def test_apodmr_builder_inserts_trigger_before_each_laser():
     params = _apodmr_params()
-    params["shots_per_point"] = 3
+    params["burst_num"] = 3
     xdata = np.array([100e-9, 200e-9])
     generators = make_generators()
     blocks, freq, common_pulses = generators["rabi"].generate_raw_blocks(xdata, params)
@@ -222,9 +222,9 @@ def test_apodmr_builder_inserts_trigger_before_each_laser():
         lt - tt == round(params["roi_head"] * freq) for lt, tt in zip(laser_timing, trigger_timing)
     )
     assert [blk.total_length() for blk in built[1:-1]] == [
-        L * params["shots_per_point"] for L in unit_lengths
+        L * params["burst_num"] for L in unit_lengths
     ]
-    assert [blk.Nrep for blk in built[1:-1]] == [params["shots_per_point"]] * len(unit_lengths)
+    assert [blk.Nrep for blk in built[1:-1]] == [params["burst_num"]] * len(unit_lengths)
     assert trace_length_ticks == round(
         (params["roi_head"] + params["laser_width"] + params["roi_tail"]) * freq
     )
@@ -232,7 +232,7 @@ def test_apodmr_builder_inserts_trigger_before_each_laser():
 
 def test_apodmr_builder_inserts_point_initialization():
     params = _apodmr_params()
-    params["shots_per_point"] = 3
+    params["burst_num"] = 3
     params["point_init_delay"] = 2e-6
     xdata = np.array([100e-9, 200e-9])
     blocks, freq, common_pulses = make_generators()["rabi"].generate_raw_blocks(xdata, params)
@@ -267,8 +267,8 @@ def test_apodmr_builder_inserts_point_initialization():
         assert len(laser_pulses) == 1
         assert laser_pulses[0].duration == laser_width
         assert block.pattern[-1] == laser_pulses[0]
-    assert [block.Nrep for block in acquisitions] == [params["shots_per_point"]] * 4
-    assert len(builder.all_trigger_timing) == 4 * params["shots_per_point"]
+    assert [block.Nrep for block in acquisitions] == [params["burst_num"]] * 4
+    assert len(builder.all_trigger_timing) == 4 * params["burst_num"]
     assert trace_length_ticks == round(
         (params["roi_head"] + params["laser_width"] + params["roi_tail"]) * freq
     )
@@ -373,7 +373,7 @@ def test_apodmr(server, apodmr, server_conf, apodmr_conf):
     params["sweeps"].set(4)
     params["sweeps_per_record"].set(2)
     params["max_records"].set(1)
-    params["shots_per_point"].set(2)
+    params["burst_num"].set(2)
     params["plot"]["sigdelay"].set(0.0)
     params["plot"]["sigwidth"].set(1e-9)
     params["plot"]["refdelay"].set(1e-9)

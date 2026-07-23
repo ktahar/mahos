@@ -205,9 +205,9 @@ class APODMRBlockBuilder(object):
         roi_tail = int(round(params["roi_tail"] * freq))
         if roi_head < 0 or roi_tail < 0:
             raise ValueError("roi_head and roi_tail must be non-negative")
-        shots_per_point = int(params.get("shots_per_point", 1))
-        if shots_per_point < 1:
-            raise ValueError("shots_per_point must be positive")
+        burst_num = int(params.get("burst_num", 1))
+        if burst_num < 1:
+            raise ValueError("burst_num must be positive")
         point_init_delay = float(params.get("point_init_delay", 0.0))
         if point_init_delay < 0.0:
             raise ValueError("point_init_delay must be non-negative")
@@ -270,10 +270,10 @@ class APODMRBlockBuilder(object):
                 laser_offset = op.total_length()
                 trigger_timing.append(t + trigger_offset)
                 laser_timing.append(t + laser_offset)
-                for j in range(shots_per_point):
+                for j in range(burst_num):
                     self.all_trigger_timing.append(t + trigger_offset + j * unit.total_length())
-                out.append(unit.repeat(shots_per_point))
-                t += unit.total_length() * shots_per_point
+                out.append(unit.repeat(burst_num))
+                t += unit.total_length() * burst_num
                 point_index += 1
 
         out.append(Block("FINAL", [(("sync",) + phases, final_block_width)]))
@@ -417,8 +417,8 @@ class Pulser(PODMRPulser):
             return 0
         return remaining_records
 
-    def _shots_per_point(self, params: dict) -> int:
-        return int(params.get("shots_per_point", 1))
+    def _burst_num(self, params: dict) -> int:
+        return int(params.get("burst_num", 1))
 
     def generate_blocks(self, data: APODMRData | None = None):
         if data is None:
@@ -515,7 +515,7 @@ class Pulser(PODMRPulser):
         params = self.data.get_params()
         rate = params["pd"]["rate"]
         sweeps_per_record = self._sweeps_per_record(params)
-        shots_per_point = self._shots_per_point(params)
+        burst_num = self._burst_num(params)
 
         params_clock = {
             "freq": rate,
@@ -553,7 +553,7 @@ class Pulser(PODMRPulser):
                         drop_first=drop_first,
                         oversample=1,
                         block_samples=self.samples_per_trace,
-                        block_reduce_factor=shots_per_point,
+                        block_reduce_factor=burst_num,
                         block_reduce_op="mean",
                         reduce_factor=sweeps_per_record,
                         reduce_op="mean",
@@ -843,11 +843,11 @@ class Pulser(PODMRPulser):
             100000000,
             doc="maximum number of raw trace records to retain (0 for unlimited)",
         )
-        d["shots_per_point"] = P.IntParam(
-            self.conf.get("shots_per_point", 1),
+        d["burst_num"] = P.IntParam(
+            self.conf.get("burst_num", 1),
             1,
             1000000,
-            doc="number of repeated shots per sweep point",
+            doc="number of burst (repeated shots per sweep point)",
         )
         d["point_init_delay"] = P.FloatParam(
             self.conf.get("point_init_delay", 0.0),

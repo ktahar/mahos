@@ -134,8 +134,8 @@ class APODMR(BasicMeasNode):
     :param pulser.sweeps_per_record: (default: 10) default number of sweeps accumulated in one
         stored raw trace record.
     :type pulser.sweeps_per_record: int
-    :param pulser.shots_per_point: (default: 1) default number of repeated shots per sweep point.
-    :type pulser.shots_per_point: int
+    :param pulser.burst_num: (default: 1) default number of burst (repeated shots per sweep point).
+    :type pulser.burst_num: int
     :param pulser.max_records: (default: 1) default maximum number of retained raw trace records.
         Set to 0 for unlimited retention.
     :type pulser.max_records: int

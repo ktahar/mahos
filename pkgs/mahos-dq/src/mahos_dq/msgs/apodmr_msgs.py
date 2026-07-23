@@ -56,7 +56,7 @@ class APODMRData(PODMRData):
     :ivar laser_timing: Laser-start timings in sequence time (same semantics as
         :class:`mahos_dq.msgs.podmr_msgs.PODMRData`), kept for compatibility;
         APODMR analysis uses ``trace_laser_timing`` instead. When
-        ``shots_per_point > 1``, each entry marks only the first shot of a repeated point.
+        ``burst_num > 1``, each entry marks only the first shot of a repeated point.
 
     ``data0`` .. ``data3`` and ``data0ref`` .. ``data3ref`` retain the same
     analyzed-data semantics as :class:`mahos_dq.msgs.podmr_msgs.PODMRData`.
@@ -65,7 +65,7 @@ class APODMRData(PODMRData):
 
     def __init__(self, params: dict | None = None, label: str = ""):
         super().__init__(params, label)
-        self.set_version(0)
+        self.set_version(1)
 
         self.tdc_status = None
         self.raw_data_sum = None
@@ -155,5 +155,11 @@ class APODMRData(PODMRData):
 
 def update_data(data: APODMRData):
     """Update APODMR data to the latest schema."""
+
+    if data.version() <= 0:
+        # version 0 to 1
+        if data.has_params() and "shots_per_point" in data.params:
+            data.params["burst_num"] = data.params.pop("shots_per_point")
+        data.set_version(1)
 
     return data
