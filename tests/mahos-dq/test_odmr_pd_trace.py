@@ -369,7 +369,7 @@ def test_trace_parameter_dictionary_and_legacy_regressions():
     assert cw_trace == cw_legacy
 
 
-def test_overlay_trace_validation_uses_overlay_spectrum_and_pg_configuration():
+def test_overlay_trace_validation_uses_overlay_configuration():
     sweeper = ODMRSweeperPG.__new__(ODMRSweeperPG)
     sweeper._closed = True
     sweeper.logger = logging.getLogger("test_odmr_overlay_trace_validation")
@@ -449,7 +449,7 @@ def test_validate_trace_params_includes_eos_deadtime():
         validate_trace_params(params, {"pg_freq_pulse": 1.0e9, "pd_segment_granularity": 16}, True)
 
 
-def test_direct_spectrum_exposes_hardware_average_only_for_trace_pulse():
+def test_direct_parameter_exposures():
     class SG:
         def get_bounds(self):
             return _bounds()
@@ -467,9 +467,11 @@ def test_direct_spectrum_exposes_hardware_average_only_for_trace_pulse():
     assert pulse["pd"]["rate"] == 250e6
     assert "hardware_average" not in cw["pd"]
     assert pulse["pd"]["hardware_average"] is True
+    assert "eos_deadtime" not in cw["pd"]
+    assert "eos_deadtime" in pulse["pd"]
 
 
-def test_overlay_exposes_trace_rate_only_for_trace_pulse():
+def test_overlay_parameter_exposures():
     class Overlay:
         def get_bounds(self):
             return _bounds()
@@ -499,6 +501,8 @@ def test_overlay_exposes_trace_rate_only_for_trace_pulse():
     assert pulse["pd"]["rate"] == 250e6
     assert "hardware_average" not in cw["pd"]
     assert pulse["pd"]["hardware_average"] is True
+    assert "eos_deadtime" not in cw["pd"]
+    assert "eos_deadtime" in pulse["pd"]
 
 
 def test_trace_samples_and_markers_follow_apodmr_rounding():

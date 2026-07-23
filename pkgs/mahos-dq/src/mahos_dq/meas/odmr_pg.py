@@ -450,13 +450,13 @@ class ODMRPGMixin(object):
                 pd = p.child("pd")
                 rate = pd.pos_num("rate")
                 pd.pos_int("buffer_size_coeff", self.conf.get("buffer_size_coeff", 20))
-                pd.nonneg_num("eos_deadtime", 0.0)
                 pd.bool("hardware_average", True)
                 pd.ascending_numbers("bounds", 2, (-10.0, 10.0))
                 if time_window is not None and round(time_window * rate) < 1:
                     raise ParamError("timing.time_window must contain at least one PD sample.")
 
             if self._pd_trace:
+                p.child("pd").nonneg_num("eos_deadtime", 0.0)
                 for key in (
                     "roi_head",
                     "roi_tail",

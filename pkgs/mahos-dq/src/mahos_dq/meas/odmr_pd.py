@@ -66,9 +66,10 @@ def make_pd_param_dict(
     ]
     if has_hardware_average:
         d["hardware_average"] = P.BoolParam(True, doc="use hardware block averaging")
-    d["eos_deadtime"] = P.FloatParam(
-        200e-9, 0.0, 1.0, unit="s", SI_prefix=True, doc="end-of-sample deadtime"
-    )
+    if pd_trace:
+        d["eos_deadtime"] = P.FloatParam(
+            200e-9, 0.0, 1.0, unit="s", SI_prefix=True, doc="end-of-sample deadtime"
+        )
     return d
 
 
