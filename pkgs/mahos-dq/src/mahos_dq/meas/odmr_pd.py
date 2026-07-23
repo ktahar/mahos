@@ -246,30 +246,18 @@ def validate_trace_params(params: dict, conf: dict, pd_spectrum: bool) -> None:
             f"(head = {ref_head}, tail = {ref_tail}, samples = {samples})"
         )
 
-    interval = sum(timing[key] for key in ("mw_delay", "mw_width", "laser_delay", "laser_width"))
-    pg_freq = conf.get("pg_freq_pulse")
-    if pg_freq:
-        interval_ticks = sum(
-            round(timing[key] * pg_freq)
-            for key in ("mw_delay", "mw_width", "laser_delay", "laser_width")
-        )
-        trace_ticks = math.ceil(samples.realized / params["pd"]["rate"] * pg_freq)
-        eos_deadtime_ticks = math.ceil(eos_deadtime * pg_freq)
-        fits = trace_ticks + eos_deadtime_ticks <= interval_ticks
-        msg = (
+    pg_freq = conf["pg_freq_pulse"]
+    interval_ticks = sum(
+        round(timing[key] * pg_freq)
+        for key in ("mw_delay", "mw_width", "laser_delay", "laser_width")
+    )
+    trace_ticks = math.ceil(samples.realized / params["pd"]["rate"] * pg_freq)
+    eos_deadtime_ticks = math.ceil(eos_deadtime * pg_freq)
+    if interval_ticks < trace_ticks + eos_deadtime_ticks:
+        raise ValueError(
+            "trace window including eos_deadtime overlaps the next detector trigger "
             f"(samples = {samples}, trace = {trace_ticks}, "
             f"eos = {eos_deadtime_ticks}, interval = {interval_ticks})"
-        )
-    else:
-        trace = samples.realized / params["pd"]["rate"]
-        fits = trace + eos_deadtime <= interval
-        msg = (
-            f"(samples = {samples}, trace = {trace * 1e9:.1f}, "
-            f"eos = {eos_deadtime}, interval = {interval * 1e9:.1f})"
-        )
-    if not fits:
-        raise ValueError(
-            "trace window including eos_deadtime overlaps the next detector trigger " + msg
         )
 
     if timing["refmode"] not in ("subtract", "divide", "ignore"):

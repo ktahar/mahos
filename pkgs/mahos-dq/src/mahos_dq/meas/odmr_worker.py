@@ -757,7 +757,9 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             self.clock = None
         self.add_instruments(self.sg, self.pg, self.clock, *self.pds)
 
-        self.check_required_conf(["pd_clock", "block_base", "minimum_block_length"])
+        self.check_required_conf(
+            ["pd_clock", "block_base", "pg_freq_cw", "pg_freq_pulse", "minimum_block_length"]
+        )
         self._pd_clock = self.conf["pd_clock"]
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
         self._minimum_block_length = self.conf["minimum_block_length"]

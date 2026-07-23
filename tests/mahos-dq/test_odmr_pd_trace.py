@@ -202,7 +202,7 @@ def test_overlay_worker_sums_raw_trace_points_by_frequency():
 def test_configure_trace_pds(spectrum, point_count, background, expected_samples):
     params = _trace_params(background=background)
     params["pd"]["hardware_average"] = False
-    conf = {"buffer_size_coeff": 5, "pd_segment_granularity": 16}
+    conf = {"buffer_size_coeff": 5, "pd_segment_granularity": 16, "pg_freq_pulse": 1e9}
     clock = None if spectrum else _Clock()
     pd = _PD()
 
@@ -399,8 +399,8 @@ def test_trace_parameter_defaults_pass_validation():
     params = P.unwrap(worker._make_param_dict("pulse", _bounds(), True, True))
     params["pd"] = P.unwrap(make_pd_param_dict({}, pd_trace=True))
 
-    validate_trace_params(params, {}, False)
-    validate_trace_params(params, {"pd_segment_granularity": 16}, True)
+    validate_trace_params(params, {"pg_freq_pulse": 1e9}, False)
+    validate_trace_params(params, {"pd_segment_granularity": 16, "pg_freq_pulse": 1e9}, True)
 
 
 def test_direct_sweeper_rolls_background_raw_traces_into_frequency_order():
