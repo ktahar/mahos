@@ -34,6 +34,14 @@ variables, `PascalCase` for classes, and `UPPER_CASE` for constants. Generated U
 code in `pkgs/mahos/src/mahos/gui/ui` and `pkgs/mahos-dq/src/mahos_dq/gui/ui` is excluded
 from formatting and linting.
 
+## Qt GUI Lifetime
+
+- Keep GUI helpers as ordinary Python objects unless they require QObject-specific behavior.
+- Avoid parenting a QObject helper to a widget while retaining bound callbacks to that widget;
+  combined with signal connections, this can create mixed Python/Qt reference cycles and make
+  GUI teardown nondeterministic. Prefer connecting widget signals to widget-owned slots and
+  passing data through lightweight helpers.
+
 ## CLI Completion Performance
 
 - Keep CLI parser-building paths lightweight for `argcomplete`.
