@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Tests for pd_trace logic for ODMR.
+Tests for pd_trace logic option in ODMR.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
@@ -120,6 +120,7 @@ class _PGBuilder(ODMRPGMixin):
         self._minimum_block_length = 1
         self._block_base = block_base
         self._channel_remap = None
+        self._pd_chop = False
 
 
 class _PGConfig:
@@ -374,6 +375,7 @@ def test_overlay_trace_validation_uses_overlay_configuration():
     sweeper._closed = True
     sweeper.logger = logging.getLogger("test_odmr_overlay_trace_validation")
     sweeper._pd_trace = sweeper._pd_spectrum = sweeper._pd_analog = True
+    sweeper._pd_chop = False
     sweeper.conf = {
         "pg_freq_pulse": 1.0e9,
         "pd_segment_granularity": 64,
@@ -459,6 +461,7 @@ def test_direct_parameter_exposures():
     sweeper.logger = logging.getLogger("test_direct_spectrum_params")
     sweeper.sg = SG()
     sweeper._pd_analog = sweeper._pd_spectrum = sweeper._pd_trace = True
+    sweeper._pd_chop = False
 
     cw = P.unwrap(sweeper.get_param_dict("cw"))
     pulse = P.unwrap(sweeper.get_param_dict("pulse"))
@@ -476,9 +479,6 @@ def test_overlay_parameter_exposures():
         def get_bounds(self):
             return _bounds()
 
-        def get_pd_analog(self):
-            return True
-
         def get_param_dict(self, label):
             return overlay.get_param_dict(label)
 
@@ -491,7 +491,9 @@ def test_overlay_parameter_exposures():
     worker.conf = {}
     worker.logger = logging.getLogger("test_odmr_overlay_spectrum_params")
     worker._class_name = "ODMRSweeperPG"
+    worker._pd_analog = True
     worker._pd_trace = True
+    worker._pd_chop = False
     worker.sweeper = Overlay()
 
     cw = P.unwrap(worker.get_param_dict("cw"))

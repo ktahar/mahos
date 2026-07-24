@@ -157,7 +157,7 @@ class SweeperBase(Worker):
         return ["cw", "pulse"] + _MOD_LABELS
 
     def _make_param_dict(
-        self, label, bounds, pd_analog, pd_trace=False
+        self, label, bounds, pd_analog, pd_trace=False, pd_chop=False
     ) -> P.ParamDict[str, P.PDValue] | None:
         if label in ["cw"] + _MOD_LABELS:
             timing = P.ParamDict(
@@ -248,6 +248,23 @@ class SweeperBase(Worker):
                 timing["burst_num"] = P.IntParam(
                     100, 1, 100_000, doc="number of bursts at each freq"
                 )
+                if pd_chop:
+                    timing["chop_delay"] = P.FloatParam(
+                        self.conf.get("chop_delay", 0.0),
+                        0.0,
+                        1e-3,
+                        unit="s",
+                        SI_prefix=True,
+                        doc="delay from laser onset to counter chop onset",
+                    )
+                    timing["chop_window"] = P.FloatParam(
+                        self.conf.get("chop_window", 100e-9),
+                        1e-9,
+                        1e-3,
+                        unit="s",
+                        SI_prefix=True,
+                        doc="width of counter chop window",
+                    )
 
         else:
             self.logger.error(f"Unknown param dict label: {label}")
@@ -349,6 +366,12 @@ class SweeperOverlay(SweeperBase):
     :type sweeper.sweeper_name: str
     :param sweeper.point: (default: False) set True to publish data per point acquisition.
     :type sweeper.point: bool
+    :param sweeper.chop_delay: (default: 0.0) delay from commanded laser onset to the
+        SinglePhotonCounter chop window. Exposed for pulse mode when the target overlay has
+        ``pd_chop`` enabled.
+    :type sweeper.chop_delay: float
+    :param sweeper.chop_window: (default: 100e-9) width of the SinglePhotonCounter chop window.
+    :type sweeper.chop_window: float
 
     :param sweeper.start: (default param) start frequency in Hz.
     :type sweeper.start: float
@@ -410,12 +433,11 @@ class SweeperOverlay(SweeperBase):
         self.add_instruments(self.sweeper)
 
         self._class_name = cli.class_name(self.sweeper_name)
-        if self._class_name.startswith("ODMRSweeperCommand"):
-            self._pd_trace = False
-            self._pd_spectrum = False
-        else:
-            self._pd_trace = bool(self.sweeper.get_pd_trace())
-            self._pd_spectrum = False
+        capability = self.sweeper.get_capability()
+        self._pd_analog = bool(capability["pd_analog"])
+        self._pd_trace = bool(capability.get("pd_trace", False))
+        self._pd_chop = bool(capability.get("pd_chop", False))
+        self._pd_spectrum = False
         self.point = self.conf.get("point", False)
         self.data = ODMRData()
 
@@ -439,8 +461,7 @@ class SweeperOverlay(SweeperBase):
             self.logger.error("Failed to get bounds from sweeper.")
             return None
 
-        pd_analog = self.sweeper.get_pd_analog()
-        d = self._make_param_dict(label, bounds, pd_analog, self._pd_trace)
+        d = self._make_param_dict(label, bounds, self._pd_analog, self._pd_trace, self._pd_chop)
         pd_label = "pd_trace" if label == "pulse" and self._pd_trace else "pd"
         pd = self.sweeper.get_param_dict(pd_label)
         if pd is not None:
@@ -652,6 +673,10 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :param sweeper.pd_trace: (default: False) enable laser-resolved AnalogPD trace acquisition
         for the ``pulse`` method. Requires ``pd_analog`` or ``pd_spectrum``.
     :type sweeper.pd_trace: bool
+    :param sweeper.pd_chop: (default: False) enable the active-high SinglePhotonCounter chop
+        output. Requires ``pd_analog`` and ``pd_spectrum`` to be False and a configured ``chop``
+        PG channel.
+    :type sweeper.pd_chop: bool
     :param sweeper.pd_rate: (default param) analog PD sampling rate.
     :type sweeper.pd_rate: float
     :param sweeper.pd_bounds: (default: [-10.0, 10.0]) analog PD voltage bounds.
@@ -714,6 +739,11 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :param sweeper.refmode: (default: "divide") trace reduction mode: ``subtract``, ``divide``,
         or ``ignore``.
     :type sweeper.refmode: str
+    :param sweeper.chop_delay: (default: 0.0) delay from commanded laser onset to the
+        SinglePhotonCounter chop window.
+    :type sweeper.chop_delay: float
+    :param sweeper.chop_window: (default: 100e-9) width of the SinglePhotonCounter chop window.
+    :type sweeper.chop_window: float
     :param sweeper.pd.hardware_average: (default param: True) use Spectrum hardware averaging
         for trace bursts. This parameter is exposed only for Spectrum trace mode.
     :type sweeper.pd.hardware_average: bool
@@ -751,6 +781,9 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         self._pd_trace = self.conf.get("pd_trace", False)
         if self._pd_trace and not self._pd_analog:
             raise ValueError("pd_trace requires pd_analog or pd_spectrum")
+        self._pd_chop = self.conf.get("pd_chop", False)
+        if self._pd_chop and self._pd_analog:
+            raise ValueError("pd_chop requires a SinglePhotonCounter (pd_analog = False)")
         if self._pd_analog and not self._pd_spectrum:
             self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
         else:
@@ -826,7 +859,9 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         loader.load_preset(self.conf, cli.class_name("sg"))
 
     def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
-        d = self._make_param_dict(label, self.sg.get_bounds(), self._pd_analog, self._pd_trace)
+        d = self._make_param_dict(
+            label, self.sg.get_bounds(), self._pd_analog, self._pd_trace, self._pd_chop
+        )
         if self._pd_analog:
             d["pd"] = make_pd_param_dict(
                 self.conf,
@@ -857,14 +892,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         return success
 
     def start_apd(self, params: dict, label: str) -> bool:
-        if label != "pulse":
-            time_window = params["timing"]["time_window"]
-        else:
-            # time_window is used to compute APD's count rate.
-            # gate is opened for whole burst sequence, but meaning time window for APD
-            # is just burst_num * laser_width.
-            t = params["timing"]
-            time_window = t["burst_num"] * t["laser_width"]
+        time_window = self.apd_time_window(params, label)
 
         # max. expected sampling rate. double expected freq due to gate mode.
         # this max rate is achieved if freq switching time was zero (it's non-zero in reality).

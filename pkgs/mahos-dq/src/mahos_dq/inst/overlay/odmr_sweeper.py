@@ -100,6 +100,11 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
     def get_pd_param_dict(self) -> P.ParamDict[str, P.PDValue] | None:
         raise NotImplementedError("get_pd_param_dict is not implemented.")
 
+    def get_capability(self) -> dict[str, bool]:
+        """Return detector and pulse-generation capabilities."""
+
+        return {"pd_analog": self._pd_analog, "pd_trace": False, "pd_chop": False}
+
     # Standard API
 
     def get_param_dict_labels(self) -> list[str]:
@@ -192,10 +197,8 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
             return self.pd.get("unit")
         elif key == "pulse_pattern":
             return self.pulse_pattern
-        elif key == "pd_analog":
-            return self._pd_analog
-        elif key == "pd_trace":
-            return False
+        elif key == "capability":
+            return self.get_capability()
         else:
             self.logger.error(f"unknown get() key: {key}")
             return None
@@ -266,6 +269,9 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
     :param pd_trace: (default: False) enable laser-resolved trace acquisition for the ``pulse``
         method. Requires ``pd_analog`` or ``pd_spectrum``.
     :type pd_trace: bool
+    :param pd_chop: (default: False) enable the active-high SinglePhotonCounter chop output.
+        This is valid only when ``pd_analog`` and ``pd_spectrum`` are False.
+    :type pd_chop: bool
     :param pd_async: (default: False) acquire points asynchronously while triggering the PG.
     :type pd_async: bool
     :param pd_rate: (default param: 250e6 for trace pulse acquisition, 400e3 otherwise)
@@ -318,6 +324,9 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
         self._pd_trace = self.conf.get("pd_trace", False)
         if self._pd_trace and not self._pd_analog:
             raise ValueError("pd_trace requires pd_analog or pd_spectrum")
+        self._pd_chop = self.conf.get("pd_chop", False)
+        if self._pd_chop and self._pd_analog:
+            raise ValueError("pd_chop requires a SinglePhotonCounter (pd_analog = False)")
         self._pd_async = self.conf.get("pd_async", False)
         self._max_inflight_coeff = self.conf.get("max_inflight_coeff", 4)
         self._max_inflight = 1
@@ -611,10 +620,8 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             return self.pds[0].get("unit")
         elif key == "pulse_pattern":
             return self.pulse_pattern
-        elif key == "pd_analog":
-            return self._pd_analog
-        elif key == "pd_trace":
-            return self._pd_trace
+        elif key == "capability":
+            return self.get_capability()
         else:
             self.logger.error(f"unknown get() key: {key}")
             return None
@@ -627,6 +634,15 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             pd_trace=pd_trace,
             has_hardware_average=pd_trace and self._pd_spectrum,
         )
+
+    def get_capability(self) -> dict[str, bool]:
+        """Return detector and pulse-generation capabilities."""
+
+        return {
+            "pd_analog": self._pd_analog,
+            "pd_trace": self._pd_trace,
+            "pd_chop": self._pd_chop,
+        }
 
     def configure_pd(self, params, label):
         if self._pd_analog:
@@ -641,14 +657,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             return all([pd.start() for pd in self.pds])
 
     def configure_apd(self, params: dict, label: str) -> bool:
-        if label != "pulse":
-            time_window = params["timing"]["time_window"]
-        else:
-            # time_window is used to compute APD's count rate.
-            # gate is opened for whole burst sequence, but meaning time window for APD
-            # is just burst_num * laser_width.
-            t = params["timing"]
-            time_window = t["burst_num"] * t["laser_width"]
+        time_window = self.apd_time_window(params, label)
 
         # max. expected sampling rate. double expected freq due to gate mode.
         # this max rate is achieved if freq switching time was zero (it's non-zero in reality).

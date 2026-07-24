@@ -53,15 +53,10 @@ class ODMRSweeperInterface(InstrumentInterface):
 
         return self.get("bounds")
 
-    def get_pd_analog(self) -> bool:
-        """Get if this sweeper uses AnalogPD or not."""
+    def get_capability(self) -> dict[str, bool]:
+        """Get detector and pulse-generation capabilities."""
 
-        return self.get("pd_analog")
-
-    def get_pd_trace(self) -> bool:
-        """Get if this sweeper uses laser-resolved AnalogPD traces or not."""
-
-        return self.get("pd_trace")
+        return self.get("capability")
 
     def get_pulse_pattern(self) -> PulsePattern | None:
         """Get current pulse pattern."""

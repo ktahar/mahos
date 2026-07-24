@@ -9,7 +9,10 @@ Added
 ^^^^^
 
 - inst: ``digitizer`` module and ``SpectrumAnalogIn`` Instrument.
-- ODMR: new params ``final_delay`` and ``post_gate_delay`` (for certain modes).
+- ODMR:
+  - new params ``final_delay`` and ``post_gate_delay`` (for certain modes).
+  - new conf switches ``pd_trace`` and ``pd_chop`` for pulse ODMR.
+
 
 Changed
 ^^^^^^^
