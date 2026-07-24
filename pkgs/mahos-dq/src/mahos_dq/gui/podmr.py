@@ -34,7 +34,7 @@ from mahos.node.global_params import GlobalParamsClient
 from mahos.gui.gui_node import GUINode
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
-from mahos.gui.param import set_enabled, apply_widgets
+from mahos.gui.param import ParamDictComboBoxHandler, set_enabled, apply_widgets
 from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
 from mahos.node.node import local_conf, join_name
 from mahos.util.plot import colors_tab20_pair
@@ -966,6 +966,7 @@ class PODMRWidgetBase(ClientWidget):
         for w in (self.NstartBox, self.NstepBox, self.NnumBox):
             w.valueChanged.connect(self.update_Nstop)
 
+        self._method_handler = ParamDictComboBoxHandler(self.methodBox)
         self.methodBox.currentIndexChanged.connect(self.switch_method)
         self.partialBox.currentIndexChanged.connect(self.switch_partial)
 
@@ -1084,8 +1085,10 @@ class PODMRWidgetBase(ClientWidget):
             self._found_sg1 = True
 
     def switch_method(self):
-        method = self.methodBox.currentText()
-        self._params = self.cli.get_param_dict(method)
+        params = self._method_handler.get(self.cli.get_param_dict)
+        if params is None:
+            return
+        self._params = params
         self.update_cond_widgets()
         self._apply_sg1(self._params)
         pp = P.ParamDict(

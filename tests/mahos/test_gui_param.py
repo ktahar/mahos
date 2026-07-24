@@ -8,8 +8,57 @@ Tests for mahos.gui.param utilities.
 
 """
 
-from mahos.gui.param import _infer_adaptive_min_step
-from mahos.msgs.param_msgs import FloatParam, IntParam
+import os
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+from mahos.gui.Qt import QtCore, QtWidgets
+from mahos.gui.param import ParamDictComboBoxHandler, _infer_adaptive_min_step
+from mahos.msgs.param_msgs import FloatParam, IntParam, ParamDict
+
+
+def test_param_dict_combo_box_handler(qtbot):
+    parent = QtWidgets.QWidget()
+    qtbot.addWidget(parent)
+    combo_box = QtWidgets.QComboBox(parent)
+    combo_box.addItems(["first", "second"])
+
+    first = ParamDict(first=IntParam(1))
+    second = ParamDict(second=IntParam(2))
+    responses = {"first": first, "second": None}
+    handler = ParamDictComboBoxHandler(combo_box)
+    applied = []
+
+    def update():
+        params = handler.get(responses.get)
+        if params is not None:
+            applied.append(params)
+
+    combo_box.currentIndexChanged.connect(update)
+
+    assert not isinstance(handler, QtCore.QObject)
+    update()
+    assert applied == [first]
+
+    combo_box.setCurrentIndex(1)
+    assert combo_box.currentIndex() == 0
+    assert applied == [first]
+
+    responses["second"] = second
+    combo_box.setCurrentIndex(1)
+    assert applied == [first, second]
+
+
+def test_param_dict_combo_box_handler_clears_failed_initial_selection(qtbot):
+    parent = QtWidgets.QWidget()
+    qtbot.addWidget(parent)
+    combo_box = QtWidgets.QComboBox(parent)
+    combo_box.addItem("unavailable")
+
+    handler = ParamDictComboBoxHandler(combo_box)
+
+    assert handler.get(lambda label: None) is None
+    assert combo_box.currentIndex() == -1
 
 
 def test_infer_adaptive_min_step():

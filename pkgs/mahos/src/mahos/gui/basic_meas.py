@@ -26,6 +26,7 @@ from mahos.node.global_params import GlobalParamsClient
 from mahos.gui.gui_node import GUINode
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
+from mahos.gui.param import ParamDictComboBoxHandler
 from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
 from mahos.node.node import local_conf, join_name
 
@@ -130,6 +131,7 @@ class BasicMeasWidget(ClientWidget, Ui_BasicMeas):
 
         labels = filter_out_label_prefix("fit", self.cli.get_param_dict_labels())
         self.labelBox.addItems(labels)
+        self._param_dict_handler = ParamDictComboBoxHandler(self.labelBox)
         self.labelBox.currentIndexChanged.connect(self.update_param_table)
         if labels:
             self.update_param_table()
@@ -194,8 +196,9 @@ class BasicMeasWidget(ClientWidget, Ui_BasicMeas):
         self.refresh_plot()
 
     def update_param_table(self):
-        label = self.labelBox.currentText()
-        d = self.cli.get_param_dict(label)
+        d = self._param_dict_handler.get(self.cli.get_param_dict)
+        if d is None:
+            return
         self.paramTable.update_contents(d)
 
     def refresh_plot(self):

@@ -24,6 +24,7 @@ from mahos.msgs.recorder_msgs import RecorderData
 from mahos.node.global_params import GlobalParamsClient
 from mahos.gui.gui_node import GUINode
 from mahos.gui.common_widget import ClientWidget
+from mahos.gui.param import ParamDictComboBoxHandler
 from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
 from mahos.node.node import local_conf, join_name
 from mahos.util.plot import colors_tab10
@@ -124,6 +125,7 @@ class RecorderWidget(ClientWidget, Ui_Recorder):
 
         labels = self.cli.get_param_dict_labels()
         self.labelBox.addItems(labels)
+        self._param_dict_handler = ParamDictComboBoxHandler(self.labelBox)
         self.labelBox.currentIndexChanged.connect(self.update_param_table)
         if labels:
             self.update_param_table()
@@ -183,8 +185,9 @@ class RecorderWidget(ClientWidget, Ui_Recorder):
         self.apply_widgets(self.data)
 
     def update_param_table(self):
-        label = self.labelBox.currentText()
-        d = self.cli.get_param_dict(label)
+        d = self._param_dict_handler.get(self.cli.get_param_dict)
+        if d is None:
+            return
         self.paramTable.update_contents(d)
 
     def refresh_plot(self):

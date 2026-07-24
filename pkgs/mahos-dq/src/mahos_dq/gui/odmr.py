@@ -35,7 +35,7 @@ from mahos.util.plot import colors_tab20_pair
 from mahos.gui.gui_node import GUINode
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
-from mahos.gui.param import apply_widgets
+from mahos.gui.param import ParamDictComboBoxHandler, apply_widgets
 from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
 from mahos.node.node import local_conf, join_name
 
@@ -587,6 +587,7 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         for w in (self.backgroundBox, self.mwcontBox):
             w.toggled.connect(self.reset_pulse_label)
 
+        self._method_handler = ParamDictComboBoxHandler(self.methodBox)
         self.methodBox.currentIndexChanged.connect(self.switch_method)
         self.paramTable.paramsChanged.connect(self.reset_pulse_label)
 
@@ -625,8 +626,9 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             return False
 
     def switch_method(self):
-        method = self.methodBox.currentText()
-        params = self.cli.get_param_dict(method)
+        params = self._method_handler.get(self.cli.get_param_dict)
+        if params is None:
+            return
         ps = P.ParamDict()
         for key in ("timing", "pd", "mod"):
             if key in params:

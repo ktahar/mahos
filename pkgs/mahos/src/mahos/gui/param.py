@@ -11,10 +11,40 @@ Common widgets/utilities for GUI to deal with Generic Parameters (mahos.msgs.par
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
 from mahos.msgs import param_msgs as P
 from mahos.gui.Qt import QtWidgets, QtCore
 from mahos.gui.common_widget import SpinBox
+
+
+class ParamDictComboBoxHandler:
+    """Fetch a selected ParamDict and roll back the combo box when fetching fails."""
+
+    def __init__(self, combo_box: QtWidgets.QComboBox):
+        self._combo_box = combo_box
+        self._accepted_index = -1
+
+    def get(
+        self, fetch: Callable[[str], P.ParamDict[str, P.PDValue] | None]
+    ) -> P.ParamDict[str, P.PDValue] | None:
+        """Fetch parameters for the current item and accept or roll back the selection."""
+
+        index = self._combo_box.currentIndex()
+        if index < 0:
+            return None
+
+        params = fetch(self._combo_box.itemText(index))
+        if params is not None:
+            self._accepted_index = index
+            return params
+
+        was_blocked = self._combo_box.blockSignals(True)
+        try:
+            self._combo_box.setCurrentIndex(self._accepted_index)
+        finally:
+            self._combo_box.blockSignals(was_blocked)
+        return None
 
 
 def _is_positive_finite(value) -> bool:
