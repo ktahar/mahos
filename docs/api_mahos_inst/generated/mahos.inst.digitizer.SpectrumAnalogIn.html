@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>mahos.inst.sg.SRS_SG390 &#8212; MAHOS 0.4.0 documentation</title>
+    <title>mahos.inst.digitizer.SpectrumAnalogIn &#8212; MAHOS 0.4.0 documentation</title>
   
   
   
@@ -41,11 +41,11 @@
     <script src="../../_static/documentation_options.js?v=6c02275b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_inst/generated/mahos.inst.sg.SRS_SG390';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_inst/generated/mahos.inst.digitizer.SpectrumAnalogIn';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="mahos.inst.sg.DS_SG" href="mahos.inst.sg.DS_SG.html" />
-    <link rel="prev" title="mahos.inst.sg.MG3710E" href="mahos.inst.sg.MG3710E.html" />
+    <link rel="next" title="mahos.inst.dmm" href="../dmm.html" />
+    <link rel="prev" title="mahos.inst.digitizer" href="../digitizer.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
@@ -381,7 +381,10 @@
 <li class="toctree-l2"><a class="reference internal" href="../InstrumentInterface.html">mahos.inst.interface.InstrumentInterface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../camera.html">mahos.inst.camera</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../daq.html">mahos.inst.daq</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../digitizer.html">mahos.inst.digitizer</a></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../digitizer.html">mahos.inst.digitizer</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">mahos.inst.digitizer.SpectrumAnalogIn</a></li>
+</ul>
+</details></li>
 <li class="toctree-l2"><a class="reference internal" href="../dmm.html">mahos.inst.dmm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../fg.html">mahos.inst.fg</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../filter_wheel.html">mahos.inst.filter_wheel</a></li>
@@ -391,14 +394,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../piezo.html">mahos.inst.piezo</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../positioner.html">mahos.inst.positioner</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../power_sensor.html">mahos.inst.power_sensor</a></li>
-<li class="toctree-l2 current active has-children"><a class="reference internal" href="../sg.html">mahos.inst.sg</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="mahos.inst.sg_interface.SGInterface.html">mahos.inst.sg_interface.SGInterface</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mahos.inst.sg.N5182B.html">mahos.inst.sg.N5182B</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mahos.inst.sg.MG3710E.html">mahos.inst.sg.MG3710E</a></li>
-<li class="toctree-l3 current active"><a class="current reference internal" href="#">mahos.inst.sg.SRS_SG390</a></li>
-<li class="toctree-l3"><a class="reference internal" href="mahos.inst.sg.DS_SG.html">mahos.inst.sg.DS_SG</a></li>
-</ul>
-</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../sg.html">mahos.inst.sg</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../spectrometer.html">mahos.inst.spectrometer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tdc.html">mahos.inst.tdc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../InstrumentOverlay.html">mahos.inst.overlay.overlay.InstrumentOverlay</a></li>
@@ -461,9 +457,9 @@
     <li class="breadcrumb-item"><a href="../index.html" class="nav-link">mahos.inst</a></li>
     
     
-    <li class="breadcrumb-item"><a href="../sg.html" class="nav-link">mahos.inst.sg</a></li>
+    <li class="breadcrumb-item"><a href="../digitizer.html" class="nav-link">mahos.inst.digitizer</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mahos.inst.sg.SRS_SG390</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mahos.inst.digitizer.SpectrumAnalogIn</span></li>
   </ul>
 </nav>
 </div>
@@ -480,118 +476,98 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="mahos-inst-sg-srs-sg390">
-<h1>mahos.inst.sg.SRS_SG390<a class="headerlink" href="#mahos-inst-sg-srs-sg390" title="Link to this heading">#</a></h1>
+  <section id="mahos-inst-digitizer-spectrumanalogin">
+<h1>mahos.inst.digitizer.SpectrumAnalogIn<a class="headerlink" href="#mahos-inst-digitizer-spectrumanalogin" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="mahos.inst.sg.SRS_SG390">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.sg.</span></span><span class="sig-name descname"><span class="pre">SRS_SG390</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.sg.SRS_SG390" title="Link to this definition">#</a></dt>
-<dd><p>SRS SG390 Series Vector Signal Generator.</p>
-<p>Currently supports only RF (N-type) output connector.</p>
+<dt class="sig sig-object py" id="mahos.inst.digitizer.SpectrumAnalogIn">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.digitizer.</span></span><span class="sig-name descname"><span class="pre">SpectrumAnalogIn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.digitizer.SpectrumAnalogIn" title="Link to this definition">#</a></dt>
+<dd><p>Spectrum Instrumentation digitizer (AnalogIn card).</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">triggered</span></code> mode, each hardware trigger records a fixed-length segment with
+multiple-recording FIFO mode. <code class="docutils literal notranslate"><span class="pre">finite=True</span></code> stops after a positive logical <code class="docutils literal notranslate"><span class="pre">samples</span></code>
+count divisible by <code class="docutils literal notranslate"><span class="pre">cb_samples</span></code>. In <code class="docutils literal notranslate"><span class="pre">stream</span></code> mode, data are streamed continuously with
+single FIFO mode. Triggered logical segments contain post-trigger samples only. The physical
+segment is enlarged as needed for mandatory pre-trigger samples and byte alignment, and the
+pre-trigger region is removed before data reduction and publication. Software triggering is
+rejected in <code class="docutils literal notranslate"><span class="pre">triggered</span></code> mode; <code class="docutils literal notranslate"><span class="pre">stream</span></code> mode uses a one-time software trigger internally.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>power_bounds</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Power bounds in dBm (min, max).</p></li>
-<li><p><strong>freq_bounds</strong> (<em>tuple</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em>) – Frequency bounds in Hz (min, max).</p></li>
+<li><p><strong>lines</strong> (<em>list</em><em>[</em><em>int</em><em> | </em><em>str</em><em>]</em>) – channel indices to enable, for example <code class="docutils literal notranslate"><span class="pre">[0]</span></code> or <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>.</p></li>
+<li><p><strong>channel_mask</strong> (<em>int</em>) – explicit channel bit mask. Takes precedence over <code class="docutils literal notranslate"><span class="pre">lines</span></code>.</p></li>
+<li><p><strong>resource</strong> (<em>str</em>) – card resource such as <code class="docutils literal notranslate"><span class="pre">/dev/spcm0</span></code> or <code class="docutils literal notranslate"><span class="pre">TCPIP::192.168.1.10::inst0::INSTR</span></code>.</p></li>
+<li><p><strong>serial_number</strong> (<em>int</em>) – card serial number.</p></li>
+<li><p><strong>queue_size</strong> (<em>int</em>) – (default: 10000) software buffer size.</p></li>
+<li><p><strong>silent</strong> (<em>bool</em>) – (default: False) suppress queue overflow warnings.</p></li>
+<li><p><strong>unit</strong> (<em>str</em>) – (default: V) reported data unit.</p></li>
+<li><p><strong>gain</strong> (<em>float</em>) – (default: 1.0) conversion gain in V per output unit.</p></li>
+<li><p><strong>timeout_sec</strong> (<em>float</em>) – (default: 5.0) card timeout in seconds.</p></li>
+<li><p><strong>notify_alignment_bytes</strong> (<em>int</em>) – (default: 4096) required byte alignment for FIFO
+notify sizes. Set to <code class="docutils literal notranslate"><span class="pre">1</span></code> to disable alignment.</p></li>
+<li><p><strong>segment_alignment_bytes</strong> (<em>int</em>) – (default: <code class="docutils literal notranslate"><span class="pre">notify_alignment_bytes</span></code>) required byte
+alignment for physical segments in triggered mode. Set to <code class="docutils literal notranslate"><span class="pre">1</span></code> to disable alignment.</p></li>
+<li><p><strong>trigger_sample_granularity</strong> (<em>int</em>) – (default: 16) sample-count granularity required for
+triggered logical segments and pre-trigger regions.</p></li>
+<li><p><strong>min_segment_samples</strong> (<em>int</em>) – (default: 32) minimum physical segment length in samples.</p></li>
+<li><p><strong>min_pre_trigger_samples</strong> (<em>int</em>) – (default: 16) minimum pre-trigger region in samples.</p></li>
+<li><p><strong>min_post_trigger_samples</strong> (<em>int</em>) – (default: 16) minimum logical post-trigger segment length
+in samples.</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>) – (default: True) If True, check realized sampling rate strictly -
+the configuration fails whenever requested and realized rates don’t match.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="mahos.inst.sg.SRS_SG390.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.sg.SRS_SG390.__init__" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mahos.inst.digitizer.SpectrumAnalogIn.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.digitizer.SpectrumAnalogIn.__init__" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#mahos.inst.sg.SRS_SG390.__init__" title="mahos.inst.sg.SRS_SG390.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(name, conf[, prefix])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mahos.inst.digitizer.SpectrumAnalogIn.__init__" title="mahos.inst.digitizer.SpectrumAnalogIn.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(name[, conf, prefix])</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure</span></code>(params[, label])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close_resources</span></code>()</p></td>
+<td><p>Close instrument resources.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure</span></code>(params[, label])</p></td>
 <td><p>Configure the instrument settings.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_am_ext</span></code>(depth[, log])</p></td>
-<td><p>Setup external AM mode.</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_stream</span></code>(params)</p></td>
+<td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_cw</span></code>(freq, power[, reset])</p></td>
-<td><p>Setup Continuous Wave output with fixed freq and power.</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_triggered</span></code>(params)</p></td>
+<td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_fm_ext</span></code>(deviation)</p></td>
-<td><p>Setup external FM mode.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_iq_ext</span></code>()</p></td>
-<td><p>Setup external IQ modulation mode.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code>(key[, args, label])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code>(key[, args, label])</p></td>
 <td><p>Get an instrument setting or measurement data.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_bounds</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_fifo_status</span></code>()</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_freq_bounds</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pop_all_block</span></code>()</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_power_bounds</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pop_all_opt</span></code>()</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">query_error</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pop_block</span></code>()</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>([label])</p></td>
-<td><p>Reset the instrument settings.</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pop_block_with_status</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pop_opt</span></code>()</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set</span></code>(key[, value, label])</p></td>
 <td><p>Set an instrument setting or commanding value.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_am</span></code>()</p></td>
-<td><p>Set modulation type to analog AM (Amplitude Modulation).</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">start</span></code>([label])</p></td>
+<td><p>Start the instrument operation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_am_depth</span></code>(depth)</p></td>
-<td><p>Set AM depth.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_analog_ext_coupling</span></code>(DC_coupling)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_analog_mod_func</span></code>(func)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_dm_func</span></code>(func)</p></td>
-<td><p>Set digital (IQ) moduration function.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_fm</span></code>()</p></td>
-<td><p>Set modulation type to analog FM (Frequency Modulation).</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_fm_deviation</span></code>(deviation_Hz)</p></td>
-<td><p>Set FM deviation in Hz.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_freq_CW</span></code>(freq)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_modulation</span></code>(on)</p></td>
-<td><p>If on is True turn on modulation.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_output</span></code>(on[, silent])</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_power</span></code>(power_dBm)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_qam</span></code>()</p></td>
-<td><p>Set modulation type to digital QAM (Quadrature Amplitude Modulation).</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p class="rubric">Attributes</p>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">AMOD_FUNC</span></code></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">DMOD_FUNC</span></code></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ERROR_CODES</span></code></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">stop</span></code>([label])</p></td>
+<td><p>Stop the instrument operation.</p></td>
 </tr>
 </tbody>
 </table>
@@ -611,20 +587,20 @@
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="mahos.inst.sg.MG3710E.html"
+       href="../digitizer.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">mahos.inst.sg.MG3710E</p>
+        <p class="prev-next-title">mahos.inst.digitizer</p>
       </div>
     </a>
     <a class="right-next"
-       href="mahos.inst.sg.DS_SG.html"
+       href="../dmm.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">mahos.inst.sg.DS_SG</p>
+        <p class="prev-next-title">mahos.inst.dmm</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -647,8 +623,8 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.sg.SRS_SG390"><code class="docutils literal notranslate"><span class="pre">SRS_SG390</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.sg.SRS_SG390.__init__"><code class="docutils literal notranslate"><span class="pre">SRS_SG390.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.digitizer.SpectrumAnalogIn"><code class="docutils literal notranslate"><span class="pre">SpectrumAnalogIn</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.digitizer.SpectrumAnalogIn.__init__"><code class="docutils literal notranslate"><span class="pre">SpectrumAnalogIn.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -658,7 +634,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/api_mahos_inst/generated/mahos.inst.sg.SRS_SG390.rst.txt"
+      <li><a href="../../_sources/api_mahos_inst/generated/mahos.inst.digitizer.SpectrumAnalogIn.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>
