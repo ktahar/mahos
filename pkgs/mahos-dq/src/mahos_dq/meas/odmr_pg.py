@@ -45,6 +45,23 @@ class ODMRPGMixin(object):
             ch, d = block.pattern[index].channels, block.pattern[index].duration
             block.pattern[index] = (ch, d + self._block_base - M)
 
+    def _finalize_blocks(self, blocks: Blocks, mw_offset: int = 0) -> Blocks:
+        """Apply MW offset and channel remapping, then simplify blocks."""
+
+        if mw_offset:
+            blocks = K.apply_mw_offset(blocks, mw_offset)
+        if self._channel_remap is not None:
+            blocks = blocks.replace(self._channel_remap)
+        return blocks.simplify()
+
+    def _configure_blocks(self, blocks: Blocks, freq: float, trigger_type: TriggerType) -> bool:
+        """Configure PG blocks and store the resulting pulse pattern."""
+
+        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
+        if success:
+            self.pulse_pattern = PulsePattern(blocks, freq)
+        return success
+
     def apd_time_window(self, params: dict, label: str) -> float:
         """Return the effective APD (SinglePhotonCounter) integration time."""
 
@@ -119,14 +136,8 @@ class ODMRPGMixin(object):
             )
 
         self._adjust_block(b, 0)
-        blocks = Blocks([b])
-        if self._channel_remap is not None:
-            blocks = blocks.replace(self._channel_remap)
-        blocks = blocks.simplify()
-        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
-        if success:
-            self.pulse_pattern = PulsePattern(blocks, freq)
-        return success
+        blocks = self._finalize_blocks(Blocks([b]))
+        return self._configure_blocks(blocks, freq, trigger_type)
 
     def configure_pg_pulse_analog(self, params: dict, trigger_type: TriggerType) -> bool:
         freq = self.conf["pg_freq_pulse"]
@@ -275,19 +286,8 @@ class ODMRPGMixin(object):
         self._adjust_block(blk_trigger, 0)
         blocks.append(blk_trigger)
 
-        blocks = Blocks(blocks)
-
-        if mw_offset:
-            blocks = K.apply_mw_offset(blocks, mw_offset)
-
-        if self._channel_remap is not None:
-            blocks = blocks.replace(self._channel_remap)
-
-        blocks = blocks.simplify()
-        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
-        if success:
-            self.pulse_pattern = PulsePattern(blocks, freq)
-        return success
+        blocks = self._finalize_blocks(Blocks(blocks), mw_offset)
+        return self._configure_blocks(blocks, freq, trigger_type)
 
     def _make_block_pulse_trace_main(
         self,
@@ -361,12 +361,7 @@ class ODMRPGMixin(object):
         for block in (init, final):
             self._adjust_block(block, 0)
 
-        blocks = Blocks([init, main, final])
-        if mw_offset:
-            blocks = K.apply_mw_offset(blocks, mw_offset)
-        if self._channel_remap is not None:
-            blocks = blocks.replace(self._channel_remap)
-        return blocks.simplify()
+        return self._finalize_blocks(Blocks([init, main, final]), mw_offset)
 
     def _make_blocks_pulse_trace_bg(
         self,
@@ -429,12 +424,7 @@ class ODMRPGMixin(object):
         for block in (init, init_bg, final):
             self._adjust_block(block, 0)
 
-        blocks = Blocks([init, main, init_bg, main_bg, final])
-        if mw_offset:
-            blocks = K.apply_mw_offset(blocks, mw_offset)
-        if self._channel_remap is not None:
-            blocks = blocks.replace(self._channel_remap)
-        return blocks.simplify()
+        return self._finalize_blocks(Blocks([init, main, init_bg, main_bg, final]), mw_offset)
 
     def validate_pulse_params(self, params: dict) -> tuple[bool, str, str]:
         """Validate params for the pulse mode."""
@@ -639,10 +629,7 @@ class ODMRPGMixin(object):
                 mw_offset,
             )
 
-        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
-        if success:
-            self.pulse_pattern = PulsePattern(blocks, freq)
-        return success
+        return self._configure_blocks(blocks, freq, trigger_type)
 
     def configure_pg_CW_apd(self, params: dict, trigger_type: TriggerType) -> bool:
         freq = self.conf["pg_freq_cw"]
@@ -701,14 +688,8 @@ class ODMRPGMixin(object):
         self._adjust_block(b, 0)
         if self._pd_chop:
             b = b.union(Block("CW-ODMR-CHOP", [("chop", b.total_length())]))
-        blocks = Blocks([b])
-        if self._channel_remap is not None:
-            blocks = blocks.replace(self._channel_remap)
-        blocks = blocks.simplify()
-        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
-        if success:
-            self.pulse_pattern = PulsePattern(blocks, freq)
-        return success
+        blocks = self._finalize_blocks(Blocks([b]))
+        return self._configure_blocks(blocks, freq, trigger_type)
 
     def _make_blocks_pulse_apd_nobg(
         self,
@@ -764,15 +745,7 @@ class ODMRPGMixin(object):
         if self._pd_chop:
             main = self._add_chop(main, mw_width + laser_delay, chop_delay, chop_window)
 
-        blocks = Blocks([init, main, final])
-
-        if mw_offset:
-            blocks = K.apply_mw_offset(blocks, mw_offset)
-
-        if self._channel_remap is not None:
-            blocks = blocks.replace(self._channel_remap)
-
-        return blocks.simplify()
+        return self._finalize_blocks(Blocks([init, main, final]), mw_offset)
 
     def _make_blocks_pulse_apd_bg(
         self,
@@ -861,15 +834,9 @@ class ODMRPGMixin(object):
             main = self._add_chop(main, laser_start, chop_delay, chop_window)
             main_bg = self._add_chop(main_bg, laser_start, chop_delay, chop_window)
 
-        blocks = Blocks([init, main, final, init_bg, main_bg, final_bg])
-
-        if mw_offset:
-            blocks = K.apply_mw_offset(blocks, mw_offset)
-
-        if self._channel_remap is not None:
-            blocks = blocks.replace(self._channel_remap)
-
-        return blocks.simplify()
+        return self._finalize_blocks(
+            Blocks([init, main, final, init_bg, main_bg, final_bg]), mw_offset
+        )
 
     def configure_pg_pulse_apd(self, params: dict, trigger_type: TriggerType) -> bool:
         freq = self.conf["pg_freq_pulse"]
@@ -925,10 +892,7 @@ class ODMRPGMixin(object):
                 chop_window,
             )
 
-        success = self.pg.configure_blocks(blocks, freq, trigger_type=trigger_type, n_runs=1)
-        if success:
-            self.pulse_pattern = PulsePattern(blocks, freq)
-        return success
+        return self._configure_blocks(blocks, freq, trigger_type)
 
     def configure_pg(self, params: dict, label: str, trigger_type: TriggerType) -> bool:
         if not (self.pg.stop() and self.pg.clear()):
