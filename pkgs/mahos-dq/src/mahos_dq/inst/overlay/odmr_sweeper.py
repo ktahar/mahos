@@ -20,6 +20,7 @@ from mahos.msgs.inst.pg_msgs import TriggerType
 from mahos.util.queue import RollingQueue
 from mahos.util.conf import ConfAccessorMixin, PresetLoader
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
+from mahos_dq.meas.odmr_sg import configure_modulation
 from mahos_dq.meas.odmr_pd import (
     configure_analog_pds,
     configure_apds,
@@ -129,20 +130,8 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
         if not self.configure_pd():
             return self.fail_with("failed to configure PD.")
 
-        mod = params.get("mod", {})
         success = self.sg.configure_cw(self.start_f, self.power)
-        if label == "iq_ext":
-            success &= self.sg.configure_iq_ext()
-        elif label == "iq_int":
-            success &= self.sg.configure_iq_int()
-        elif label == "fm_ext":
-            success &= self.sg.configure_fm_ext(mod["fm_deviation"])
-        elif label == "fm_int":
-            success &= self.sg.configure_fm_int(mod["fm_deviation"], mod["fm_rate"])
-        elif label == "am_ext":
-            success &= self.sg.configure_am_ext(mod["am_depth"], mod["am_log"])
-        elif label == "am_int":
-            success &= self.sg.configure_am_int(mod["am_depth"], mod["am_log"], mod["am_rate"])
+        success &= configure_modulation(self.sg, label, params.get("mod", {}))
         if not success:
             return self.fail_with("failed to configure SG.")
 
@@ -468,20 +457,8 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
         return sum_pd_channels(blocks)
 
     def configure_sg(self, params: dict, label: str):
-        mod = params.get("mod", {})
         success = self.sg.configure_cw(self.start_f, self.power)
-        if label == "iq_ext":
-            success &= self.sg.configure_iq_ext()
-        elif label == "iq_int":
-            success &= self.sg.configure_iq_int()
-        elif label == "fm_ext":
-            success &= self.sg.configure_fm_ext(mod["fm_deviation"])
-        elif label == "fm_int":
-            success &= self.sg.configure_fm_int(mod["fm_deviation"], mod["fm_rate"])
-        elif label == "am_ext":
-            success &= self.sg.configure_am_ext(mod["am_depth"], mod["am_log"])
-        elif label == "am_int":
-            success &= self.sg.configure_am_int(mod["am_depth"], mod["am_log"], mod["am_rate"])
+        success &= configure_modulation(self.sg, label, params.get("mod", {}))
         success &= self.sg.query_opc()
         return success
 

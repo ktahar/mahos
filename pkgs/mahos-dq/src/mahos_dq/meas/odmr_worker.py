@@ -25,6 +25,7 @@ from mahos_dq.inst.overlay.odmr_sweeper_interface import ODMRSweeperInterface
 from mahos.util.conf import PresetLoader
 from mahos.util.param import ParamAccessor, ParamError
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
+from mahos_dq.meas.odmr_sg import MOD_LABELS, configure_modulation
 from mahos_dq.meas.odmr_pd import (
     configure_apds,
     configure_analog_pds,
@@ -37,9 +38,6 @@ from mahos_dq.meas.odmr_pd import (
     sum_pd_channels,
 )
 from mahos.meas.common_worker import Worker
-
-
-_MOD_LABELS = ["iq_ext", "am_ext", "fm_ext", "iq_int", "am_int", "fm_int"]
 
 
 class SweeperBase(Worker):
@@ -189,12 +187,12 @@ class SweeperBase(Worker):
         return False, "validation method for pulse is not implemented", ""
 
     def get_param_dict_labels(self) -> list:
-        return ["cw", "pulse"] + _MOD_LABELS
+        return ["cw", "pulse"] + MOD_LABELS
 
     def _make_param_dict(
         self, label, bounds, pd_analog, pd_trace=False, pd_chop=False
     ) -> P.ParamDict[str, P.PDValue] | None:
-        if label in ["cw"] + _MOD_LABELS:
+        if label in ["cw"] + MOD_LABELS:
             timing = P.ParamDict(
                 time_window=P.FloatParam(
                     self.conf.get("time_window", 10e-3),
@@ -483,9 +481,9 @@ class SweeperOverlay(SweeperBase):
 
     def get_param_dict_labels(self) -> list[str]:
         if self._class_name.startswith("ODMRSweeperCommand"):
-            return ["cw"] + _MOD_LABELS
+            return ["cw"] + MOD_LABELS
         else:
-            return ["cw", "pulse"] + _MOD_LABELS
+            return ["cw", "pulse"] + MOD_LABELS
 
     def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
         if self._class_name.startswith("ODMRSweeperCommand") and label == "pulse":
@@ -885,19 +883,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         success = self.sg.configure_point_trig_freq_sweep(
             p["start"], p["stop"], p["num"], p["power"]
         )
-        mod = params.get("mod", {})
-        if label == "iq_ext":
-            success &= self.sg.configure_iq_ext()
-        elif label == "iq_int":
-            success &= self.sg.configure_iq_int()
-        elif label == "fm_ext":
-            success &= self.sg.configure_fm_ext(mod["fm_deviation"])
-        elif label == "fm_int":
-            success &= self.sg.configure_fm_int(mod["fm_deviation"], mod["fm_rate"])
-        elif label == "am_ext":
-            success &= self.sg.configure_am_ext(mod["am_depth"], mod["am_log"])
-        elif label == "am_int":
-            success &= self.sg.configure_am_int(mod["am_depth"], mod["am_log"], mod["am_rate"])
+        success &= configure_modulation(self.sg, label, params.get("mod", {}))
         success &= self.sg.get_opc()
         return success
 
