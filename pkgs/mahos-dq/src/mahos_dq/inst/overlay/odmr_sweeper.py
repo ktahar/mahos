@@ -25,6 +25,7 @@ from mahos_dq.meas.odmr_pd import (
     make_pd_param_dict,
     reduce_traces,
     sum_pd_blocks,
+    sum_pd_channels,
 )
 from mahos_dq.util.segments import round_segment_samples_down
 
@@ -463,15 +464,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             point = reduce_traces(traces, self.params["timing"], self.params["pd"]["rate"])
             return point, traces
 
-        data = []
-        for block in blocks:
-            if isinstance(block, list):
-                # PD has multi channel
-                data.extend(block)
-            else:
-                # single channel, assume ls is np.ndarray
-                data.append(block)
-        return np.sum(data, axis=0)
+        return sum_pd_channels(blocks)
 
     def configure_sg(self, params: dict, label: str):
         mod = params.get("mod", {})

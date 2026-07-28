@@ -32,6 +32,7 @@ from mahos_dq.meas.odmr_pd import (
     reduce_traces,
     result_unit,
     sum_pd_blocks,
+    sum_pd_channels,
 )
 from mahos_dq.util.segments import round_segment_samples_down
 from mahos.meas.common_worker import Worker
@@ -49,6 +50,39 @@ class SweeperBase(Worker):
             return self.pulse_pattern
         else:
             return None
+
+    def _normalize_line(self, line):
+        """Normalize one detector line before storing it in frequency order."""
+
+        return line
+
+    def _append_line_nobg(self, data, line):
+        line = self._normalize_line(line)
+        if data is None:
+            return np.array(line, ndmin=2).T
+        else:
+            return np.append(data, np.array(line, ndmin=2).T, axis=1)
+
+    def _append_line_bg(self, data, bg_data, line):
+        l_data = self._normalize_line(line[0::2])
+        l_bg = self._normalize_line(line[1::2])
+        if data is None:
+            return np.array(l_data, ndmin=2).T, np.array(l_bg, ndmin=2).T
+        else:
+            return (
+                np.append(data, np.array(l_data, ndmin=2).T, axis=1),
+                np.append(bg_data, np.array(l_bg, ndmin=2).T, axis=1),
+            )
+
+    def append_line(self, line):
+        """Append one detector line, splitting interleaved background data when enabled."""
+
+        if not self.data.measure_background():
+            self.data.data = self._append_line_nobg(self.data.data, line)
+        else:
+            self.data.data, self.data.bg_data = self._append_line_bg(
+                self.data.data, self.data.bg_data, line
+            )
 
     def append_raw_line(self, traces: np.ndarray):
         """Add one frequency-ordered trace line to the cumulative raw trace sum."""
@@ -512,31 +546,6 @@ class SweeperOverlay(SweeperBase):
         )
 
         return True
-
-    def _append_line_nobg(self, data, line):
-        if data is None:
-            return np.array(line, ndmin=2).T
-        else:
-            return np.append(data, np.array(line, ndmin=2).T, axis=1)
-
-    def _append_line_bg(self, data, bg_data, line):
-        l_data = line[0::2]
-        l_bg = line[1::2]
-        if data is None:
-            return np.array(l_data, ndmin=2).T, np.array(l_bg, ndmin=2).T
-        else:
-            return (
-                np.append(data, np.array(l_data, ndmin=2).T, axis=1),
-                np.append(bg_data, np.array(l_bg, ndmin=2).T, axis=1),
-            )
-
-    def append_line(self, line):
-        if not self.data.measure_background():
-            self.data.data = self._append_line_nobg(self.data.data, line)
-        else:
-            self.data.data, self.data.bg_data = self._append_line_bg(
-                self.data.data, self.data.bg_data, line
-            )
 
     def _new_line(self, dtype):
         return np.array([np.nan] * self.data.params["num"], dtype=dtype)
@@ -1089,31 +1098,8 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         else:
             return line
 
-    def _append_line_nobg(self, data, line):
-        line = self._roll_line(line)
-        if data is None:
-            return np.array(line, ndmin=2).T
-        else:
-            return np.append(data, np.array(line, ndmin=2).T, axis=1)
-
-    def _append_line_bg(self, data, bg_data, line):
-        l_data = self._roll_line(line[0::2])
-        l_bg = self._roll_line(line[1::2])
-        if data is None:
-            return np.array(l_data, ndmin=2).T, np.array(l_bg, ndmin=2).T
-        else:
-            return (
-                np.append(data, np.array(l_data, ndmin=2).T, axis=1),
-                np.append(bg_data, np.array(l_bg, ndmin=2).T, axis=1),
-            )
-
-    def append_line(self, line):
-        if not self.data.measure_background():
-            self.data.data = self._append_line_nobg(self.data.data, line)
-        else:
-            self.data.data, self.data.bg_data = self._append_line_bg(
-                self.data.data, self.data.bg_data, line
-            )
+    def _normalize_line(self, line):
+        return self._roll_line(line)
 
     def work(self):
         if not self.data.running:
@@ -1135,15 +1121,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
                 traces = np.roll(traces, -bg_factor, axis=0)
             self.append_raw_line(traces)
         else:
-            lines = []
-            for block in blocks:
-                if isinstance(block, list):
-                    # PD has multi channel
-                    lines.extend(block)
-                else:
-                    # single channel, assume ls is np.ndarray
-                    lines.append(block)
-            line = np.sum(lines, axis=0)
+            line = sum_pd_channels(blocks)
         self.append_line(line)
 
     def stop(self) -> bool:

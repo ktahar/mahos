@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Shared AnalogPD trace acquisition logic for ODMR.
+Shared PD-related logic for ODMR.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
@@ -391,18 +391,32 @@ def reduce_pd_blocks(
     return reduce_traces(traces, params["timing"], params["pd"]["rate"])
 
 
-def sum_pd_blocks(blocks: list, point_count: int, samples_per_trace: int) -> np.ndarray:
-    """Reshape and sum trace blocks from all detector channels."""
+def _collect_pd_channels(blocks: list) -> list:
+    """Collect data from multiple PDs, flattening multi-channel blocks."""
 
     channels = []
     for block in blocks:
         if isinstance(block, list):
+            # PD has multiple channels
             channels.extend(block)
         else:
+            # single channel
             channels.append(block)
+    return channels
+
+
+def sum_pd_channels(blocks: list) -> np.ndarray:
+    """Sum ordinary non-``pd_trace`` data from all detector channels as-is."""
+
+    return np.sum(_collect_pd_channels(blocks), axis=0)
+
+
+def sum_pd_blocks(blocks: list, point_count: int, samples_per_trace: int) -> np.ndarray:
+    """Reshape and sum ``pd_trace`` blocks from all detector channels as point-major traces."""
+
+    channels = _collect_pd_channels(blocks)
     if not channels:
         raise ValueError("no PD data")
-
     return np.sum(
         [reshape_trace_block(channel, point_count, samples_per_trace) for channel in channels],
         axis=0,
