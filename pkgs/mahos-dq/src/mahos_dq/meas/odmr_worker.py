@@ -676,7 +676,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :type sweeper.pd_names: list[str]
     :param sweeper.pd_analog: (default: False) set True if PD is AnalogIn-based.
     :type sweeper.pd_analog: bool
-    :param sweeper.pd_spectrum: (default: False) set True if PD is SpectrumAnalogIn-based.
+    :param sweeper.pd_spectrum: (default: False) set True if PD is Spectrum_AnalogIn-based.
     :type sweeper.pd_spectrum: bool
     :param sweeper.pd_trace: (default: False) enable laser-resolved AnalogPD trace acquisition
         for the ``pulse`` method. Requires ``pd_analog`` or ``pd_spectrum``.

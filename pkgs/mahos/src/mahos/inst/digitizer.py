@@ -21,7 +21,7 @@ from mahos.inst.instrument import Instrument
 from mahos.util.queue import RollingQueue
 
 
-class SpectrumAnalogIn(Instrument):
+class Spectrum_AnalogIn(Instrument):
     """Spectrum Instrumentation digitizer (AnalogIn card).
 
     In ``triggered`` mode, each hardware trigger records a fixed-length segment with
@@ -923,7 +923,7 @@ class SpectrumAnalogIn(Instrument):
         self._reader = threading.Thread(target=self._reader_loop, daemon=True)
         self._reader.start()
         self.running = True
-        self.logger.debug("Started SpectrumAnalogIn.")
+        self.logger.debug("Started Spectrum_AnalogIn.")
         return True
 
     def stop(self, label: str = "") -> bool:
@@ -958,7 +958,7 @@ class SpectrumAnalogIn(Instrument):
         self._reader = None
         self.running = False
         self._mode = self.Mode.UNCONFIGURED
-        self.logger.debug("Stopped SpectrumAnalogIn.")
+        self.logger.debug("Stopped Spectrum_AnalogIn.")
         return True
 
     def close_resources(self):

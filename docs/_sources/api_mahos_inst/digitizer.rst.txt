@@ -18,4 +18,4 @@ Instruments
 .. autosummary::
    :toctree: generated
 
-   SpectrumAnalogIn
+   Spectrum_AnalogIn

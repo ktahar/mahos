@@ -69,12 +69,12 @@ class PDInterface(BufferedReaderInterface):
             "clock_dir": trigger_dir,
             "data_transfer": data_transfer,
             "every": every,
-            # SpectrumAnalogIn parameters
+            # Spectrum_AnalogIn parameters
             "trigger_source": trigger_source,
             "trigger_dir": trigger_dir,
             "hardware_average": hardware_average,
         }
-        # label is referred by SpectrumAnalogIn only
+        # label is referred by Spectrum_AnalogIn only
         return self.configure(params, "triggered")
 
     def configure_stream(
@@ -99,7 +99,7 @@ class PDInterface(BufferedReaderInterface):
             "stamp": stamp,
             # BufferedEdgeCounter parameters
             "time_window": time_window,
-            # Analog (AnalogIn and SpectrumAnalogIn) parameters
+            # Analog (AnalogIn and Spectrum_AnalogIn) parameters
             "oversample": oversample,
             "bounds": bounds,
             # DAQ (BufferedEdgeCounter and AnalogIn) parameters
@@ -111,7 +111,7 @@ class PDInterface(BufferedReaderInterface):
             "clock_mode": True,
             "data_transfer": data_transfer,
         }
-        # label is referred by SpectrumAnalogIn only
+        # label is referred by Spectrum_AnalogIn only
         return self.configure(params, "stream")
 
 

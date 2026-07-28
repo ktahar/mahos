@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>mahos.inst.digitizer.SpectrumAnalogIn &#8212; MAHOS 0.4.0 documentation</title>
+    <title>mahos.inst.digitizer.Spectrum_AnalogIn &#8212; MAHOS 0.4.0 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
     <script src="../../_static/documentation_options.js?v=6c02275b"></script>
     <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_inst/generated/mahos.inst.digitizer.SpectrumAnalogIn';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api_mahos_inst/generated/mahos.inst.digitizer.Spectrum_AnalogIn';</script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="mahos.inst.dmm" href="../dmm.html" />
@@ -382,7 +382,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../camera.html">mahos.inst.camera</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../daq.html">mahos.inst.daq</a></li>
 <li class="toctree-l2 current active has-children"><a class="reference internal" href="../digitizer.html">mahos.inst.digitizer</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
-<li class="toctree-l3 current active"><a class="current reference internal" href="#">mahos.inst.digitizer.SpectrumAnalogIn</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">mahos.inst.digitizer.Spectrum_AnalogIn</a></li>
 </ul>
 </details></li>
 <li class="toctree-l2"><a class="reference internal" href="../dmm.html">mahos.inst.dmm</a></li>
@@ -459,7 +459,7 @@
     
     <li class="breadcrumb-item"><a href="../digitizer.html" class="nav-link">mahos.inst.digitizer</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mahos.inst.digitizer.SpectrumAnalogIn</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">mahos.inst.digitizer.Spectrum_AnalogIn</span></li>
   </ul>
 </nav>
 </div>
@@ -476,11 +476,11 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="mahos-inst-digitizer-spectrumanalogin">
-<h1>mahos.inst.digitizer.SpectrumAnalogIn<a class="headerlink" href="#mahos-inst-digitizer-spectrumanalogin" title="Link to this heading">#</a></h1>
+  <section id="mahos-inst-digitizer-spectrum-analogin">
+<h1>mahos.inst.digitizer.Spectrum_AnalogIn<a class="headerlink" href="#mahos-inst-digitizer-spectrum-analogin" title="Link to this heading">#</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="mahos.inst.digitizer.SpectrumAnalogIn">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.digitizer.</span></span><span class="sig-name descname"><span class="pre">SpectrumAnalogIn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.digitizer.SpectrumAnalogIn" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mahos.inst.digitizer.Spectrum_AnalogIn">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mahos.inst.digitizer.</span></span><span class="sig-name descname"><span class="pre">Spectrum_AnalogIn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.digitizer.Spectrum_AnalogIn" title="Link to this definition">#</a></dt>
 <dd><p>Spectrum Instrumentation digitizer (AnalogIn card).</p>
 <p>In <code class="docutils literal notranslate"><span class="pre">triggered</span></code> mode, each hardware trigger records a fixed-length segment with
 multiple-recording FIFO mode. <code class="docutils literal notranslate"><span class="pre">finite=True</span></code> stops after a positive logical <code class="docutils literal notranslate"><span class="pre">samples</span></code>
@@ -517,14 +517,14 @@ the configuration fails whenever requested and realized rates don’t match.</p>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="mahos.inst.digitizer.SpectrumAnalogIn.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.digitizer.SpectrumAnalogIn.__init__" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="mahos.inst.digitizer.Spectrum_AnalogIn.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#mahos.inst.digitizer.Spectrum_AnalogIn.__init__" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <p class="rubric">Methods</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#mahos.inst.digitizer.SpectrumAnalogIn.__init__" title="mahos.inst.digitizer.SpectrumAnalogIn.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(name[, conf, prefix])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mahos.inst.digitizer.Spectrum_AnalogIn.__init__" title="mahos.inst.digitizer.Spectrum_AnalogIn.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(name[, conf, prefix])</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">close_resources</span></code>()</p></td>
@@ -623,8 +623,8 @@ the configuration fails whenever requested and realized rates don’t match.</p>
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.digitizer.SpectrumAnalogIn"><code class="docutils literal notranslate"><span class="pre">SpectrumAnalogIn</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.digitizer.SpectrumAnalogIn.__init__"><code class="docutils literal notranslate"><span class="pre">SpectrumAnalogIn.__init__()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.digitizer.Spectrum_AnalogIn"><code class="docutils literal notranslate"><span class="pre">Spectrum_AnalogIn</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mahos.inst.digitizer.Spectrum_AnalogIn.__init__"><code class="docutils literal notranslate"><span class="pre">Spectrum_AnalogIn.__init__()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -634,7 +634,7 @@ the configuration fails whenever requested and realized rates don’t match.</p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/api_mahos_inst/generated/mahos.inst.digitizer.SpectrumAnalogIn.rst.txt"
+      <li><a href="../../_sources/api_mahos_inst/generated/mahos.inst.digitizer.Spectrum_AnalogIn.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div></div>

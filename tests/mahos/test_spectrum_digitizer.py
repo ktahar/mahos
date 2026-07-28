@@ -11,7 +11,7 @@ Tests for Spectrum digitizer internals.
 import numpy as np
 import pytest
 
-from mahos.inst.digitizer import SpectrumAnalogIn
+from mahos.inst.digitizer import Spectrum_AnalogIn
 from mahos.util.queue import RollingQueue
 
 
@@ -137,7 +137,7 @@ class DummyThread:
 
 
 def make_inst(conf=None):
-    inst = SpectrumAnalogIn("digitizer", {"mock": True, "lines": [0], **(conf or {})})
+    inst = Spectrum_AnalogIn("digitizer", {"mock": True, "lines": [0], **(conf or {})})
     inst._spcm = DummySpcm
     return inst
 

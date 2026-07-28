@@ -255,7 +255,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
     :type pd_clock: str
     :param pd_analog: (default: False) set True for an AnalogIn-based PD.
     :type pd_analog: bool
-    :param pd_spectrum: (default: False) set True for a SpectrumAnalogIn-based PD.
+    :param pd_spectrum: (default: False) set True for a Spectrum_AnalogIn-based PD.
     :type pd_spectrum: bool
     :param pd_trace: (default: False) enable laser-resolved trace acquisition for the ``pulse``
         method. Requires ``pd_analog`` or ``pd_spectrum``.
