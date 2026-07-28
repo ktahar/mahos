@@ -26,6 +26,8 @@ from mahos.util.conf import PresetLoader
 from mahos.util.param import ParamAccessor, ParamError
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
 from mahos_dq.meas.odmr_pd import (
+    configure_apds,
+    configure_analog_pds,
     configure_trace_pds,
     make_pd_param_dict,
     make_trace_timing_param_dict,
@@ -34,7 +36,6 @@ from mahos_dq.meas.odmr_pd import (
     sum_pd_blocks,
     sum_pd_channels,
 )
-from mahos_dq.util.segments import round_segment_samples_down
 from mahos.meas.common_worker import Worker
 
 
@@ -901,42 +902,28 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         return success
 
     def start_apd(self, params: dict, label: str) -> bool:
-        time_window = self.apd_time_window(params, label)
-
-        # max. expected sampling rate. double expected freq due to gate mode.
-        # this max rate is achieved if freq switching time was zero (it's non-zero in reality).
-        rate = 2.0 / time_window
-        num = params["num"]
-        if params.get("background", False):
-            num *= 2
-        buffer_size = num * self.conf.get("buffer_size_coeff", 20)
         # when sg_first or pg_immediate,
         # drop the first line because it contains invalid data at the first point
         # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
         #  SG is unknown state at the first point of the first line)
         drop_first = 1 if self._sg_first or self._pg_immediate else 0
-        params_pd = {
-            "clock": self._pd_clock,
-            "cb_samples": num,
-            "samples": buffer_size,
-            "buffer_size": buffer_size,
-            "rate": rate,
-            "finite": False,
-            "every": False,
-            "drop_first": drop_first,
-            "gate": True,
-            "time_window": time_window,
-        }
 
-        success = all([pd.configure(params_pd) for pd in self.pds]) and all(
-            [pd.start() for pd in self.pds]
-        )
-        return success
+        if not configure_apds(
+            self.pds,
+            self._pd_clock,
+            self.apd_time_window(params, label),
+            params["num"] * (2 if params.get("background", False) else 1),
+            self.conf.get("buffer_size_coeff", 20),
+            drop_first,
+        ):
+            return False
+        return all([pd.start() for pd in self.pds])
 
     def start_analog_pd(self, params: dict, label: str) -> bool:
+        point_count = params["num"] * (2 if params.get("background", False) else 1)
+        drop_first = 1 if self._sg_first or self._pg_immediate else 0
+
         if label == "pulse" and self._pd_trace:
-            point_count = params["num"] * (2 if params.get("background", False) else 1)
-            drop_first = 1 if self._sg_first or self._pg_immediate else 0
             self._samples_per_trace = configure_trace_pds(
                 self.clock,
                 self.pds,
@@ -951,77 +938,23 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             )
             if self._samples_per_trace is None:
                 return False
-            success = self.clock is None or self.clock.start()
-            return success and all([pd.start() for pd in self.pds])
-
-        rate = params["pd"]["rate"]
-        oversamp = round(params["timing"]["time_window"] * rate)
-        if self._pd_spectrum:
-            granularity = self.conf.get("pd_segment_granularity", 16)
-            offset = self.conf.get("pd_segment_offset", 0)
-            try:
-                adjusted = round_segment_samples_down(oversamp, granularity=granularity)
-                adjusted -= offset
-            except ValueError:
-                self.logger.exception("failed to round oversample to segment granularity")
-                return False
-            if adjusted != oversamp:
-                self.logger.info(
-                    "PD oversample adjusted down: "
-                    f"{oversamp} to {adjusted} (granularity = {granularity} offset = {offset})"
-                )
-            oversamp = adjusted
-
-        self.logger.info(f"Analog PD oversample: {oversamp}")
-
-        params_clock = {
-            "freq": rate,
-            "samples": oversamp,
-            "finite": True,
-            "trigger_source": self._pd_clock,
-            "trigger_dir": True,
-            "retriggerable": True,
-        }
-        if self.clock is None:
-            clock_pd = self._pd_clock
         else:
-            if not self.clock.configure(params_clock):
-                return self.fail_with("failed to configure clock.")
-            clock_pd = self.clock.get_internal_output()
+            if not configure_analog_pds(
+                self.clock,
+                self.pds,
+                self._pd_clock,
+                params,
+                self.conf,
+                self._pd_spectrum,
+                point_count,
+                drop_first,
+                self._pd_data_transfer,
+                self.logger,
+            ):
+                return False
 
-        num = params["num"]
-        if params.get("background", False):
-            num *= 2
-        buffer_size = num * params["pd"].get(
-            "buffer_size_coeff", self.conf.get("buffer_size_coeff", 20)
-        )
-        # when sg_first or pg_immediate,
-        # drop the first line because it contains invalid data at the first point
-        # (line will be [f_N-1, f_0, f_1, ..., f_N-2) in general, however,
-        #  SG is unknown state at the first point of the first line)
-        drop_first = 1 if self._sg_first or self._pg_immediate else 0
-        success = all(
-            [
-                pd.configure_triggered(
-                    clock_pd,
-                    num,
-                    buffer_size,
-                    rate,
-                    buffer_size=buffer_size,
-                    finite=False,
-                    every=False,
-                    drop_first=drop_first,
-                    oversample=oversamp,
-                    bounds=params["pd"].get("bounds", (-10.0, 10.0)),
-                    data_transfer=self._pd_data_transfer,
-                )
-                for pd in self.pds
-            ]
-        )
-        if self.clock is not None:
-            success = success and self.clock.start()
-        success = success and all([pd.start() for pd in self.pds])
-        return success
+        success = self.clock is None or self.clock.start()
+        return success and all([pd.start() for pd in self.pds])
 
     def start(
         self, params: None | P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str = ""

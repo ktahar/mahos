@@ -16,7 +16,7 @@ import math
 import numpy as np
 
 from mahos.msgs import param_msgs as P
-from mahos_dq.util.segments import round_segment_samples_up
+from mahos_dq.util.segments import round_segment_samples_up, round_segment_samples_down
 
 
 @dataclass(frozen=True)
@@ -262,6 +262,113 @@ def validate_trace_params(params: dict, conf: dict, pd_spectrum: bool) -> None:
 
     if timing["refmode"] not in ("subtract", "divide", "ignore"):
         raise ValueError(f"unknown refmode: {timing['refmode']}")
+
+
+def configure_apds(
+    pds,
+    pd_clock: str,
+    time_window: float,
+    point_count: int,
+    buffer_size_coeff: int,
+    drop_first: int,
+) -> bool:
+    """Configure APDs (daq.SinglePhotonCounters) for ODMR."""
+
+    # max. expected sampling rate. double expected freq due to gate mode.
+    # this max rate is achieved if freq switching time was zero (it's non-zero in reality).
+    rate = 2.0 / time_window
+    buffer_size = point_count * buffer_size_coeff
+    params_pd = {
+        "clock": pd_clock,
+        "cb_samples": point_count,
+        "samples": buffer_size,
+        "buffer_size": buffer_size,
+        "rate": rate,
+        "finite": False,
+        "every": False,
+        "drop_first": drop_first,
+        "gate": True,
+        "time_window": time_window,
+    }
+
+    return all([pd.configure(params_pd) for pd in pds])
+
+
+def configure_analog_pds(
+    clock,
+    pds,
+    pd_trigger: str,
+    params: dict,
+    conf: dict,
+    pd_spectrum: bool,
+    point_count: int,
+    drop_first: int,
+    data_transfer: str | None,
+    logger,
+) -> bool:
+    """Configure a retriggerable clock and AnalogPDs for integrated acquisition."""
+
+    rate = params["pd"]["rate"]
+    oversamp = round(params["timing"]["time_window"] * rate)
+
+    if pd_spectrum:
+        granularity = conf.get("pd_segment_granularity", 16)
+        offset = conf.get("pd_segment_offset", 0)
+        try:
+            adjusted = round_segment_samples_down(oversamp, granularity=granularity)
+            adjusted -= offset
+        except ValueError:
+            logger.exception("failed to round oversample to segment granularity")
+            return False
+        if adjusted != oversamp:
+            logger.info(
+                "PD oversample adjusted down: "
+                f"{oversamp} to {adjusted} (granularity = {granularity} offset = {offset})"
+            )
+        oversamp = adjusted
+
+    logger.info(f"Analog PD oversample: {oversamp}")
+
+    params_clock = {
+        "freq": rate,
+        "samples": oversamp,
+        "finite": True,
+        "trigger_source": pd_trigger,
+        "trigger_dir": True,
+        "retriggerable": True,
+    }
+    if clock is None:
+        clock_pd = pd_trigger
+    else:
+        if not clock.configure(params_clock):
+            logger.error("failed to configure clock")
+            return False
+        clock_pd = clock.get_internal_output()
+
+    buffer_size = point_count * params["pd"].get(
+        "buffer_size_coeff", conf.get("buffer_size_coeff", 20)
+    )
+    params_pd = {
+        "trigger_source": clock_pd,
+        "clock": clock_pd,
+        "cb_samples": point_count,
+        "samples": buffer_size,
+        "buffer_size": buffer_size,
+        "rate": rate,
+        "bounds": params["pd"].get("bounds", (-10.0, 10.0)),
+        "finite": False,
+        "every": False,
+        "drop_first": drop_first,
+        "oversample": oversamp,
+        "clock_mode": True,
+        "clock_dir": True,
+        "trigger_dir": True,
+        "data_transfer": data_transfer,
+    }
+    success = all(pd.configure(params_pd, "triggered") for pd in pds)
+    if not success:
+        return False
+    return True
 
 
 def configure_trace_pds(

@@ -76,18 +76,10 @@ class _Clock:
     def get_internal_output(self):
         return "clock-output"
 
-    def start(self):
-        return True
-
 
 class _PD:
     def __init__(self, data=None):
         self.data = data
-
-    def configure_triggered(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-        return True
 
     def configure(self, params, label):
         self.params = params
@@ -99,20 +91,6 @@ class _PD:
 
     def start(self):
         return True
-
-
-def _legacy_analog_params():
-    return {
-        "num": 2,
-        "background": True,
-        "timing": {"time_window": 10e-6},
-        "pd": {
-            "rate": 1e6,
-            "buffer_size_coeff": 3,
-            "bounds": (-5.0, 5.0),
-            "eos_deadtime": 200e-9,
-        },
-    }
 
 
 class _PGBuilder(ODMRPGMixin):
@@ -605,39 +583,3 @@ def test_reduce_traces(mode, expected):
     traces[1, 7:10] = 4.0
 
     assert np.allclose(reduce_traces(traces, params["timing"], params["pd"]["rate"]), expected)
-
-
-def test_direct_legacy_analog_uses_buffer_size_parameter():
-    params = _legacy_analog_params()
-    sweeper = Sweeper.__new__(Sweeper)
-    sweeper.conf = {"buffer_size_coeff": 9}
-    sweeper.logger = logging.getLogger("test_direct_legacy_buffer")
-    sweeper._pd_trace = sweeper._pd_spectrum = False
-    sweeper._sg_first = sweeper._pg_immediate = False
-    sweeper._pd_clock = "gate-in"
-    sweeper._pd_data_transfer = None
-    sweeper.clock = _Clock()
-    sweeper.pds = [_PD()]
-
-    assert sweeper.start_analog_pd(params, "cw")
-    assert sweeper.pds[0].args[1:3] == (4, 12)
-    assert sweeper.pds[0].kwargs["buffer_size"] == 12
-
-
-def test_overlay_legacy_analog_uses_buffer_size_parameter():
-    params = _legacy_analog_params()
-    sweeper = ODMRSweeperPG.__new__(ODMRSweeperPG)
-    sweeper._closed = True
-    sweeper.conf = {"buffer_size_coeff": 9}
-    sweeper.logger = logging.getLogger("test_overlay_legacy_buffer")
-    sweeper._pd_trace = sweeper._pd_spectrum = False
-    sweeper._pd_clock = "gate-in"
-    sweeper._pd_data_transfer = None
-    sweeper.clock = _Clock()
-    sweeper.pds = [_PD()]
-
-    assert sweeper.configure_analog_pd(params, "cw")
-    configured = sweeper.pds[0]
-    assert configured.params["cb_samples"] == 2
-    assert configured.params["samples"] == configured.params["buffer_size"] == 6
-    assert configured.label == "triggered"

@@ -21,13 +21,14 @@ from mahos.util.queue import RollingQueue
 from mahos.util.conf import ConfAccessorMixin, PresetLoader
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
 from mahos_dq.meas.odmr_pd import (
+    configure_analog_pds,
+    configure_apds,
     configure_trace_pds,
     make_pd_param_dict,
     reduce_traces,
     sum_pd_blocks,
     sum_pd_channels,
 )
-from mahos_dq.util.segments import round_segment_samples_down
 
 
 class ODMRSweeperCommandBase(InstrumentOverlay):
@@ -650,33 +651,18 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             return all([pd.start() for pd in self.pds])
 
     def configure_apd(self, params: dict, label: str) -> bool:
-        time_window = self.apd_time_window(params, label)
-
-        # max. expected sampling rate. double expected freq due to gate mode.
-        # this max rate is achieved if freq switching time was zero (it's non-zero in reality).
-        rate = 2.0 / time_window
-        num = 1
-        if params.get("background", False):
-            num *= 2
-        buffer_size = num * self.conf.get("buffer_size_coeff", 20)
-        params_pd = {
-            "clock": self._pd_clock,
-            "cb_samples": num,
-            "samples": buffer_size,
-            "buffer_size": buffer_size,
-            "rate": rate,
-            "finite": False,
-            "every": False,
-            "drop_first": 0,
-            "gate": True,
-            "time_window": time_window,
-        }
-
-        return all([pd.configure(params_pd) for pd in self.pds])
+        return configure_apds(
+            self.pds,
+            self._pd_clock,
+            self.apd_time_window(params, label),
+            2 if params.get("background", False) else 1,
+            self.conf.get("buffer_size_coeff", 20),
+            0,
+        )
 
     def configure_analog_pd(self, params: dict, label: str) -> bool:
+        point_count = 2 if params.get("background", False) else 1
         if label == "pulse" and self._pd_trace:
-            point_count = 2 if params.get("background", False) else 1
             self._samples_per_trace = configure_trace_pds(
                 self.clock,
                 self.pds,
@@ -691,62 +677,15 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             )
             return self._samples_per_trace is not None
 
-        rate = params["pd"]["rate"]
-        oversamp = round(params["timing"]["time_window"] * rate)
-        if self._pd_spectrum:
-            granularity = self.conf.get("pd_segment_granularity", 16)
-            offset = self.conf.get("pd_segment_offset", 0)
-            try:
-                adjusted = round_segment_samples_down(oversamp, granularity=granularity)
-                adjusted -= offset
-            except ValueError:
-                self.logger.exception("failed to round oversample to segment granularity")
-                return False
-            if adjusted != oversamp:
-                self.logger.info(
-                    "PD oversample adjusted down: "
-                    f"{oversamp} to {adjusted} (granularity = {granularity} offset = {offset})"
-                )
-            oversamp = adjusted
-
-        self.logger.info(f"Analog PD oversample: {oversamp}")
-
-        params_clock = {
-            "freq": rate,
-            "samples": oversamp,
-            "finite": True,
-            "trigger_source": self._pd_clock,
-            "trigger_dir": True,
-            "retriggerable": True,
-        }
-        if self.clock is None:
-            clock_pd = self._pd_clock
-        else:
-            if not self.clock.configure(params_clock):
-                return self.fail_with("failed to configure clock.")
-            clock_pd = self.clock.get_internal_output()
-
-        num = 1
-        if params.get("background", False):
-            num *= 2
-        buffer_size = num * params["pd"].get(
-            "buffer_size_coeff", self.conf.get("buffer_size_coeff", 20)
+        return configure_analog_pds(
+            self.clock,
+            self.pds,
+            self._pd_clock,
+            params,
+            self.conf,
+            self._pd_spectrum,
+            point_count,
+            0,
+            self._pd_data_transfer,
+            self.logger,
         )
-        params_pd = {
-            "trigger_source": clock_pd,
-            "clock": clock_pd,
-            "cb_samples": num,
-            "samples": buffer_size,
-            "buffer_size": buffer_size,
-            "rate": rate,
-            "finite": False,
-            "every": False,
-            "drop_first": 0,
-            "clock_mode": True,
-            "oversample": oversamp,
-            "bounds": params["pd"].get("bounds", (-10.0, 10.0)),
-        }
-        if self._pd_data_transfer:
-            params_pd["data_transfer"] = self._pd_data_transfer
-
-        return all([pd.configure(params_pd, "triggered") for pd in self.pds])
