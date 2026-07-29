@@ -68,23 +68,21 @@ class ODMRPGMixin(object):
         timing = params["timing"]
         if label != "pulse":
             return timing["time_window"]
-        width = timing["chop_window"] if self._pd_chop else timing["laser_width"]
+        width = timing["chop_width"] if self._pd_chop else timing["laser_width"]
         return timing["burst_num"] * width
 
-    def _add_chop(
-        self, block: Block, laser_start: int, chop_delay: int, chop_window: int
-    ) -> Block:
+    def _add_chop(self, block: Block, laser_start: int, chop_delay: int, chop_width: int) -> Block:
         """Overlay a chop pulse on one raw pulse-sequence unit."""
 
         repetitions = block.Nrep
         unit = block.copy()
         unit.Nrep = 1
         chop_start = laser_start + chop_delay
-        chop_tail = unit.raw_length() - chop_start - chop_window
+        chop_tail = unit.raw_length() - chop_start - chop_width
         pattern = []
         if chop_start:
             pattern.append((None, chop_start))
-        pattern.append(("chop", chop_window))
+        pattern.append(("chop", chop_width))
         if chop_tail:
             pattern.append((None, chop_tail))
         united = unit.union(Block(block.name + "-CHOP", pattern))
@@ -462,16 +460,16 @@ class ODMRPGMixin(object):
 
             if self._pd_chop:
                 chop_delay = timing.nonneg_num("chop_delay")
-                chop_window = timing.pos_num("chop_window")
+                chop_width = timing.pos_num("chop_width")
                 laser_width_ticks = round(laser_width * freq)
                 mw_delay_ticks = round(mw_delay * freq)
                 chop_delay_ticks = round(chop_delay * freq)
-                chop_window_ticks = round(chop_window * freq)
-                if chop_window_ticks < 1:
-                    raise ParamError("timing.chop_window must be at least one PG tick.")
-                if chop_delay_ticks + chop_window_ticks > laser_width_ticks + mw_delay_ticks:
+                chop_width_ticks = round(chop_width * freq)
+                if chop_width_ticks < 1:
+                    raise ParamError("timing.chop_width must be at least one PG tick.")
+                if chop_delay_ticks + chop_width_ticks > laser_width_ticks + mw_delay_ticks:
                     raise ParamError(
-                        "timing.chop_delay + timing.chop_window must not exceed "
+                        "timing.chop_delay + timing.chop_width must not exceed "
                         "timing.laser_width + timing.mw_delay after PG rounding."
                     )
 
@@ -703,7 +701,7 @@ class ODMRPGMixin(object):
         burst_num,
         mw_offset,
         chop_delay=0,
-        chop_window=0,
+        chop_width=0,
     ):
         min_len = self._minimum_block_length
 
@@ -743,7 +741,7 @@ class ODMRPGMixin(object):
         self._adjust_block(main, -1)
 
         if self._pd_chop:
-            main = self._add_chop(main, mw_width + laser_delay, chop_delay, chop_window)
+            main = self._add_chop(main, mw_width + laser_delay, chop_delay, chop_width)
 
         return self._finalize_blocks(Blocks([init, main, final]), mw_offset)
 
@@ -760,7 +758,7 @@ class ODMRPGMixin(object):
         burst_num,
         mw_offset,
         chop_delay=0,
-        chop_window=0,
+        chop_width=0,
     ):
         min_len = self._minimum_block_length
 
@@ -831,8 +829,8 @@ class ODMRPGMixin(object):
 
         if self._pd_chop:
             laser_start = mw_width + laser_delay
-            main = self._add_chop(main, laser_start, chop_delay, chop_window)
-            main_bg = self._add_chop(main_bg, laser_start, chop_delay, chop_window)
+            main = self._add_chop(main, laser_start, chop_delay, chop_width)
+            main_bg = self._add_chop(main_bg, laser_start, chop_delay, chop_width)
 
         return self._finalize_blocks(
             Blocks([init, main, final, init_bg, main_bg, final_bg]), mw_offset
@@ -851,9 +849,9 @@ class ODMRPGMixin(object):
         mw_offset = round(freq * params["timing"].get("mw_offset", 0.0))
         if self._pd_chop:
             chop_delay = round(freq * params["timing"]["chop_delay"])
-            chop_window = round(freq * params["timing"]["chop_window"])
+            chop_width = round(freq * params["timing"]["chop_width"])
         else:
-            chop_delay = chop_window = 0
+            chop_delay = chop_width = 0
 
         if trigger_width < 1:
             self.logger.error("trigger_width must be at least one PG tick.")
@@ -875,7 +873,7 @@ class ODMRPGMixin(object):
                 burst_num,
                 mw_offset,
                 chop_delay,
-                chop_window,
+                chop_width,
             )
         else:
             blocks = self._make_blocks_pulse_apd_nobg(
@@ -889,7 +887,7 @@ class ODMRPGMixin(object):
                 burst_num,
                 mw_offset,
                 chop_delay,
-                chop_window,
+                chop_width,
             )
 
         return self._configure_blocks(blocks, freq, trigger_type)

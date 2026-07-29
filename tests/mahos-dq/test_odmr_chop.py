@@ -42,7 +42,7 @@ def _pulse_params(background=False):
             "mw_offset": 0.0,
             "burst_num": 3,
             "chop_delay": 12e-9,
-            "chop_window": 4e-9,
+            "chop_width": 4e-9,
         },
     }
 
@@ -89,7 +89,7 @@ def test_chop_parameter_dictionary_is_opt_in_for_apd():
 
     assert "chop_delay" not in legacy["timing"]
     assert chopped["timing"]["chop_delay"] == 0.0
-    assert chopped["timing"]["chop_window"] == 100e-9
+    assert chopped["timing"]["chop_width"] == 100e-9
     assert "chop_delay" not in analog["timing"]
 
 
@@ -127,7 +127,7 @@ def test_chop_validation_allows_detector_window_after_laser_edge():
 def test_chop_validation_rejects_subtick_and_unit_overrun():
     builder = _Builder()
     params = _pulse_params()
-    params["timing"]["chop_window"] = 0.4e-9
+    params["timing"]["chop_width"] = 0.4e-9
 
     success, message, _ = builder.validate_pulse_params(params)
 
@@ -205,7 +205,7 @@ def test_cw_apd_holds_chop_high_for_entire_pg_cycle(background):
     assert all(chop)
 
 
-def test_apd_count_rate_uses_chop_window_only_when_enabled():
+def test_apd_count_rate_uses_chop_width_only_when_enabled():
     params = _pulse_params()
     builder = _Builder(pd_chop=True)
     legacy = _Builder(pd_chop=False)

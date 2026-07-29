@@ -290,8 +290,8 @@ class SweeperBase(Worker):
                         SI_prefix=True,
                         doc="delay from laser onset to counter chop onset",
                     )
-                    timing["chop_window"] = P.FloatParam(
-                        self.conf.get("chop_window", 100e-9),
+                    timing["chop_width"] = P.FloatParam(
+                        self.conf.get("chop_width", 100e-9),
                         1e-9,
                         1e-3,
                         unit="s",
@@ -403,8 +403,8 @@ class SweeperOverlay(SweeperBase):
         SinglePhotonCounter chop window. Exposed for pulse mode when the target overlay has
         ``pd_chop`` enabled.
     :type sweeper.chop_delay: float
-    :param sweeper.chop_window: (default: 100e-9) width of the SinglePhotonCounter chop window.
-    :type sweeper.chop_window: float
+    :param sweeper.chop_width: (default: 100e-9) width of the SinglePhotonCounter chop window.
+    :type sweeper.chop_width: float
 
     :param sweeper.start: (default param) start frequency in Hz.
     :type sweeper.start: float
@@ -750,8 +750,8 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :param sweeper.chop_delay: (default: 0.0) delay from commanded laser onset to the
         SinglePhotonCounter chop window.
     :type sweeper.chop_delay: float
-    :param sweeper.chop_window: (default: 100e-9) width of the SinglePhotonCounter chop window.
-    :type sweeper.chop_window: float
+    :param sweeper.chop_width: (default: 100e-9) width of the SinglePhotonCounter chop window.
+    :type sweeper.chop_width: float
     :param sweeper.pd.hardware_average: (default param: True) use Spectrum hardware averaging
         for trace bursts. This parameter is exposed only for Spectrum trace mode.
     :type sweeper.pd.hardware_average: bool
