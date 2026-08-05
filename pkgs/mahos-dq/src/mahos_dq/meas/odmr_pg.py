@@ -12,8 +12,7 @@ from __future__ import annotations
 
 import math
 
-from mahos.msgs.inst.pg_msgs import Block, Blocks, TriggerType
-from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.msgs.inst.pg_msgs import Block, Blocks, TriggerType, PulsePattern
 from mahos.util.param import ParamAccessor, ParamError
 from mahos.util.unit import SI_format
 from mahos_dq.meas.podmr_generator import generator_kernel as K

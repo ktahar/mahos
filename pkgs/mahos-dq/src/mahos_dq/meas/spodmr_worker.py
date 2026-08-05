@@ -13,7 +13,7 @@ from __future__ import annotations
 import numpy as np
 
 from mahos_dq.msgs.spodmr_msgs import SPODMRData, MWMode, is_sweepN, is_CPlike, is_correlation
-from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.msgs.inst.pg_msgs import PulsePattern
 from mahos.msgs import param_msgs as P
 from mahos.inst.sg_interface import SGInterface
 from mahos.inst.pg_interface import PGInterface, Block, Blocks, BlockSeq

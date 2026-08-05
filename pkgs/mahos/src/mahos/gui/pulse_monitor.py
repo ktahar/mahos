@@ -18,7 +18,7 @@ from mahos.gui.common_widget import ClientTopWidget
 from mahos.gui.pulse_monitor_client import QPulseClient
 
 from mahos.node.node import local_conf, split_name, NAME_DELIM
-from mahos.msgs.pulse_msgs import PulsePattern
+from mahos.msgs.inst.pg_msgs import PulsePattern
 
 
 Policy = QtWidgets.QSizePolicy.Policy

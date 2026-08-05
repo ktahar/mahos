@@ -275,7 +275,7 @@ class ParamTable(QtWidgets.QTableWidget):
         default_i = param.options().index(param.default())
 
         for o in param.options():
-            widget.addItem(str(o))
+            widget.addItem(f"{o:_d}" if isinstance(param, P.IntChoiceParam) else str(o))
 
         def set_(i):
             param.set(param.options()[i])
@@ -399,7 +399,7 @@ class ParamTable(QtWidgets.QTableWidget):
             w.setChecked(val)
         elif isinstance(param, (P.EnumParam, P.StrChoiceParam, P.IntChoiceParam)):
             w: QtWidgets.QComboBox
-            i = w.findText(str(val))
+            i = w.findText(f"{val:_d}" if isinstance(param, P.IntChoiceParam) else str(val))
             if i >= 0:
                 w.setCurrentIndex(i)
         else:

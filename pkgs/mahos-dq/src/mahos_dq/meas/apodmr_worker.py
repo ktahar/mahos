@@ -9,22 +9,25 @@ Worker for Analog-PD Pulse ODMR.
 """
 
 from __future__ import annotations
+import typing as T
 import time
 import math
 
 import numpy as np
 
 from mahos.msgs import param_msgs as P
-from mahos.msgs.pulse_msgs import PulsePattern
-from mahos.inst.fg_interface import FGInterface
-from mahos.inst.pg_interface import PGInterface, Block, Blocks
+from mahos.msgs.inst.pg_msgs import PulsePattern
+from mahos.inst.pg_interface import Block, Blocks
 from mahos.inst.pd_interface import PDInterface
 from mahos.inst.daq_interface import ClockSourceInterface
-from mahos.meas.common_worker import Worker
-from mahos.inst.sg_interface import SGInterface
-from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos_dq.meas.podmr_generator import generator_kernel as K
-from mahos_dq.meas.podmr_worker import Bounds, Pulser as PODMRPulser, PODMRDataOperator
+from mahos_dq.meas.podmr_worker import (
+    CommonPulserBase,
+    SGPGPulserBase,
+    AWGPulserBase,
+    PODMRDataOperator,
+    remove_analog_channels,
+)
 from mahos_dq.msgs.apodmr_msgs import APODMRData, MWMode
 from mahos_dq.util.segments import round_segment_samples_up
 
@@ -41,13 +44,14 @@ class APODMRDataOperator(PODMRDataOperator):
     def set_instrument_params(
         self,
         data: APODMRData,
-        samples_per_trace,
-        sample_period,
-        pg_freq,
-        length,
-        offsets,
-        pd_rate,
-        mw_modes,
+        samples_per_trace: int,
+        sample_period: float,
+        pg_freq: float,
+        length: int,
+        offsets: list[int],
+        pd_rate: float,
+        mw_modes: T.Sequence[MWMode],
+        extra: dict | None = None,
     ):
         if "instrument" in data.params:
             return
@@ -63,6 +67,8 @@ class APODMRDataOperator(PODMRDataOperator):
         else:
             data.params["instrument"]["offsets"] = offsets
         data.params["instrument"]["mw_modes"] = [MWMode.parse(m).name for m in mw_modes]
+        if extra is not None:
+            data.params["instrument"].update(extra)
 
     def append_record(self, data: APODMRData, traces: np.ndarray):
         traces = np.asarray(traces, dtype=np.float64)
@@ -311,27 +317,10 @@ class APODMRBlockBuilder(object):
         return True
 
 
-class Pulser(PODMRPulser):
-    """Worker for APODMR using PG-triggered, AnalogPD traces."""
-
+class APODMRPulserBase(CommonPulserBase):
     def __init__(self, cli, logger, conf: dict):
-        Worker.__init__(self, cli, logger, conf)
-        self.load_conf_preset(cli)
+        super().__init__(cli, logger, conf)
 
-        self.sgs = {"sg": SGInterface(cli, "sg")}
-        _default_channels = [{"sg": "sg"}]
-        for i in range(1, 10):
-            name = f"sg{i}"
-            if name in cli.insts():
-                self.sgs[name] = SGInterface(cli, name)
-                _default_channels.append({"sg": name})
-
-        self.mw_modes = tuple(
-            MWMode.parse(m) for m in self.conf.get("mw_modes", (0,) * len(self.sgs))
-        )
-        self.mw_channels = self.conf.get("mw_channels", _default_channels)
-
-        self.pg = PGInterface(cli, "pg")
         self._pd_spectrum = self.conf.get("pd_spectrum", False)
         if self._pd_spectrum:
             self.clock = None
@@ -339,36 +328,12 @@ class Pulser(PODMRPulser):
             self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
         self.pd_names = self.conf.get("pd_names", ["pd0"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
-        if "fg" in cli:
-            self.fg = FGInterface(cli, "fg")
-        else:
-            self.fg = None
-        self.add_instruments(self.pg, self.fg, self.clock, *self.pds, *self.sgs.values())
+        self.add_instruments(self.clock, *self.pds)
 
-        self.length = self.offsets = self.freq = None
-        self.trace_count = None
-        self.samples_per_trace = None
-
-        self.check_required_conf(
-            ["pd_trigger", "block_base", "pg_freq", "reduce_start_divisor", "minimum_block_length"]
-        )
+        self.check_required_conf(["pd_trigger"])
         self._pd_trigger = self.conf["pd_trigger"]
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
-        self._quick_resume = self.conf.get("quick_resume", True)
-        self._start_delay = self._conf_nonneg_num("start_delay", 0.5)
 
-        self.generators = make_generators(
-            freq=self.conf["pg_freq"],
-            reduce_start_divisor=self.conf["reduce_start_divisor"],
-            split_fraction=self.conf.get("split_fraction", 4),
-            minimum_block_length=self.conf["minimum_block_length"],
-            block_base=self.conf["block_base"],
-            mw_modes=self.mw_modes,
-            iq_amplitude=self.conf.get("iq_amplitude", 0.0),
-            channel_remap=self.conf.get("channel_remap"),
-            generators=self.conf.get("generators"),
-            print_fn=self.logger.info,
-        )
         self.builder = APODMRBlockBuilder(
             self.conf["minimum_block_length"],
             self.conf["block_base"],
@@ -379,10 +344,122 @@ class Pulser(PODMRPulser):
 
         self.data = APODMRData()
         self.op = APODMRDataOperator()
-        self.bounds = Bounds()
-        self.pulse_pattern = None
+
+        self.trace_count = None
+        self.samples_per_trace = None
+
         self._analysis_warned = False
         self._acquisition_failed = False
+
+    def _pd_rate_param(self):
+        rate = self.conf.get("pd_rate", 2e6)
+        if isinstance(rate, (tuple, list)) and isinstance(rate[0], int):
+            return P.IntChoiceParam(rate[0], rate, doc="PD sampling rate")
+        elif isinstance(rate, int):
+            return P.IntParam(
+                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
+            )
+        elif isinstance(rate, float):
+            return P.FloatParam(
+                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
+            )
+        raise TypeError("conf['pd_rate'] has invalid type.")
+
+    def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
+        d = super().get_param_dict(label)
+        if d is None:
+            return None
+        if "head" in d["plot"]["taumode"].options():
+            taumodes = tuple(m for m in d["plot"]["taumode"].options() if m != "head")
+            d["plot"]["taumode"] = P.StrChoiceParam("raw", taumodes)
+
+        # Since divide_block is TODO and not implemented, default it to False anyway.
+        if "divide_block" in d:
+            d["divide_block"] = P.BoolParam(False)
+        # remove unused params
+        if "timebin" in d:
+            del d["timebin"]
+        if "interval" in d:
+            del d["interval"]
+        if "multi_histogram" in d:
+            del d["multi_histogram"]
+
+        d["hardware_sweep_limit"] = P.BoolParam(
+            False,
+            doc=(
+                "stop detector acquisition at the exact sweep limit in hardware; requires "
+                "sweeps divisible by sweeps_per_record; acquisition is aborted if the detector "
+                "software queue discards a record"
+            ),
+        )
+
+        # set defaults which won't result in marker out-of-bounds
+        d["plot"]["sigdelay"].set(200e-9)
+        d["plot"]["sigwidth"].set(300e-9)
+        d["plot"]["refdelay"].set(1000e-9)
+        d["plot"]["refwidth"].set(500e-9)
+
+        d["roi_head"] = P.FloatParam(
+            self.conf.get("roi_head", 20e-9),
+            0.0,
+            10e6,
+            unit="s",
+            doc="margin at head of sampled trace and trigger-to-laser offset",
+        )
+        d["roi_tail"] = P.FloatParam(
+            self.conf.get("roi_tail", 100e-9),
+            0.0,
+            10e6,
+            unit="s",
+            doc="margin at tail of sampled trace",
+        )
+        d["sweeps_per_record"] = P.IntParam(
+            self.conf.get("sweeps_per_record", 10),
+            1,
+            1000000,
+            doc="number of sweeps accumulated in one stored raw trace record",
+        )
+        d["max_records"] = P.IntParam(
+            self.conf.get("max_records", 1),
+            0,
+            100000000,
+            doc="maximum number of raw trace records to retain (0 for unlimited)",
+        )
+        d["burst_num"] = P.IntParam(
+            self.conf.get("burst_num", 1),
+            1,
+            1000000,
+            doc="number of burst (repeated shots per sweep point)",
+        )
+        d["point_init_delay"] = P.FloatParam(
+            self.conf.get("point_init_delay", 0.0),
+            0.0,
+            1.0,
+            unit="s",
+            SI_prefix=True,
+            doc="dark delay before the initialization laser for each sweep point",
+        )
+        d["pd"] = P.ParamDict()
+        d["pd"]["rate"] = self._pd_rate_param()
+        lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
+        d["pd"]["buffer_size_coeff"] = P.IntParam(
+            self.conf.get("buffer_size_coeff", 20),
+            1,
+            10_000,
+            doc="ratio of requested buffer size to record data size",
+        )
+        d["pd"]["bounds"] = [
+            P.FloatParam(lb, -10.0, +10.0, doc="PD voltage lower bound"),
+            P.FloatParam(ub, -10.0, +10.0, doc="PD voltage upper bound"),
+        ]
+        d["pd"]["drop_first"] = P.IntParam(0, 0, 100, doc="drop first N records to stabilize")
+        if self._pd_spectrum:
+            d["pd"]["hardware_average"] = P.BoolParam(True, doc="use hardware block averaging")
+        d["pd"]["eos_deadtime"] = P.FloatParam(
+            200e-9, 0.0, 1.0, unit="s", SI_prefix=True, doc="end-of-sample deadtime"
+        )
+
+        return d
 
     def _sweeps_per_record(self, params: dict) -> int:
         return int(params.get("sweeps_per_record", 1))
@@ -432,83 +509,40 @@ class Pulser(PODMRPulser):
         )
         return blocks, freq, laser_timing, trigger_timing, trace_length_ticks
 
-    def validate_params(
-        self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
-    ) -> bool:
-        params = P.unwrap(params)
-        if not self._validate_sweep_params(params):
+    def _init_inst(self, params: dict) -> bool:
+        if not self._init_generator_inst(params):
             return False
-        d = APODMRData(params, label)
-        try:
-            blocks, freq, _, _, _ = self.generate_blocks(d)
-        except (ValueError, KeyError) as e:
-            self.logger.error(f"Invalid params for {label}: {e}")
+        if not self._init_fg(params):
+            self.logger.error("Error initializing FG.")
             return False
-        offsets = self.pg.validate_blocks(blocks, freq)
-        return offsets is not None
+        return True
 
-    def init_pg(self, params: dict) -> bool:
-        if not (self.pg.stop() and self.pg.clear()):
-            self.logger.error("Error stopping PG.")
-            return False
-
-        try:
-            blocks, self.freq, laser_timing, trigger_timing, trace_length_ticks = (
-                self.generate_blocks()
-            )
-        except (ValueError, KeyError) as e:
-            self.logger.error(f"Invalid params for {self.data.label}: {e}")
-            return False
-        pd_rate = params["pd"]["rate"]
-        sample_period = 1.0 / pd_rate
+    def _set_samples_per_trace(self, pd_rate: float, trace_length_ticks: int) -> bool:
         self.samples_per_trace = max(1, int(round(trace_length_ticks / self.freq * pd_rate)))
-        if self._pd_spectrum:
-            granularity = self.conf.get("pd_segment_granularity", 16)
-            offset = self.conf.get("pd_segment_offset", 0)
-            try:
-                adjusted = round_segment_samples_up(
-                    self.samples_per_trace, granularity=granularity
-                )
-                adjusted -= offset
-            except ValueError:
-                self.logger.exception("failed to round samples_per_trace to segment granularity")
-                return False
-            if adjusted != self.samples_per_trace:
-                self.logger.info(
-                    "PD samples_per_trace adjusted: "
-                    f"{self.samples_per_trace} to {adjusted} (granularity = {granularity} "
-                    f"offset = {offset})"
-                )
-            self.samples_per_trace = adjusted
-            trace_length_ticks = int(np.ceil(self.samples_per_trace * self.freq / pd_rate))
-            if not self.builder.check_sample_duration(trace_length_ticks):
-                self.logger.error(
-                    "trace window overlaps the next trigger; reduce margins or pulse rate"
-                )
-                return False
-        self.trace_count = len(laser_timing)
+        if not self._pd_spectrum:
+            return True
 
-        self.op.set_laser_timing(self.data, np.array(laser_timing) / self.freq)
-        self.op.set_trace_laser_timing(self.data, params["roi_head"])
-        self.op.set_trigger_timing(self.data, np.array(trigger_timing) / self.freq)
-        self.pulse_pattern = PulsePattern(blocks, self.freq, markers=trigger_timing)
-
-        if not (self.pg.configure_blocks(blocks, self.freq) and self.pg.get_opc()):
-            self.logger.error("Error configuring PG.")
+        granularity = self.conf.get("pd_segment_granularity", 16)
+        offset = self.conf.get("pd_segment_offset", 0)
+        try:
+            adjusted = round_segment_samples_up(self.samples_per_trace, granularity=granularity)
+            adjusted -= offset
+        except ValueError:
+            self.logger.exception("failed to round samples_per_trace to segment granularity")
             return False
-
-        self.length = self.pg.get_length()
-        self.offsets = self.pg.get_offsets()
-        self.op.set_instrument_params(
-            self.data,
-            self.samples_per_trace,
-            sample_period,
-            self.freq,
-            self.length,
-            self.offsets,
-            pd_rate,
-            self.mw_modes,
-        )
+        if adjusted != self.samples_per_trace:
+            self.logger.info(
+                "PD samples_per_trace adjusted: "
+                f"{self.samples_per_trace} to {adjusted} (granularity = {granularity} "
+                f"offset = {offset})"
+            )
+        self.samples_per_trace = adjusted
+        trace_length_ticks = int(np.ceil(self.samples_per_trace * self.freq / pd_rate))
+        if not self.builder.check_sample_duration(trace_length_ticks):
+            self.logger.error(
+                "trace window overlaps the next trigger; reduce margins or pulse rate"
+            )
+            return False
         return True
 
     def init_start_pds(self, remaining_records: int | None) -> bool:
@@ -568,19 +602,6 @@ class Pulser(PODMRPulser):
             and all([pd.start() for pd in self.pds])
         ):
             self.logger.error("Error starting PDs.")
-            return False
-
-        return True
-
-    def init_inst(self, params: dict) -> bool:
-        if not self.init_sg(params):
-            self.logger.error("Error initializing SG.")
-            return False
-        if not self.init_fg(params):
-            self.logger.error("Error initializing FG.")
-            return False
-        if not self.init_pg(params):
-            self.logger.error("Error initializing PG.")
             return False
 
         return True
@@ -701,30 +722,14 @@ class Pulser(PODMRPulser):
 
         if quick_resume:
             self.logger.info("Quick resume enabled: skipping initial inst configurations.")
-        if not quick_resume and not self.init_inst(self.data.params):
+        if not quick_resume and not self._init_inst(self.data.params):
             return self.fail_with_release("Error initializing instruments.")
         # PD/clock configuration is always refreshed on each start, even with quick resume.
         if not self.init_start_pds(remaining_records):
             return self.fail_with_release("Error initializing or starting PDs.")
 
-        success = self.start_sg(self.data.params)
-        if self._fg_enabled(self.data.params):
-            success &= self.fg.set_output(True)
-
-        time.sleep(self._start_delay)
-
-        success &= self.pg.start()
-
-        if not success:
-            self.pg.stop()
-            if self._fg_enabled(self.data.params):
-                self.fg.set_output(False)
-            self.stop_sg()
-            for pd in self.pds:
-                pd.stop()
-            if self.clock is not None:
-                self.clock.stop()
-            return self.fail_with_release("Error starting pulser.")
+        if not self._start_inst():
+            return False
 
         if resume:
             self.data.resume()
@@ -733,6 +738,26 @@ class Pulser(PODMRPulser):
             self.data.start()
             self.logger.info("Started pulser.")
         return True
+
+    def stop(self) -> bool:
+        if not self.data.running:
+            return False
+
+        success = self._stop_generator_inst()
+        success &= all([pd.stop() for pd in self.pds]) and all([pd.release() for pd in self.pds])
+        if self.clock is not None:
+            success &= self.clock.stop() and self.clock.release()
+        if self._fg_enabled(self.data.params):
+            success &= self.fg.set_output(False)
+        if self.fg is not None:
+            success &= self.fg.release()
+
+        self.data.finalize()
+        if success:
+            self.logger.info("Stopped pulser.")
+        else:
+            self.logger.error("Error stopping pulser.")
+        return success
 
     def is_finished(self) -> bool:
         if not self.data.has_params():
@@ -751,139 +776,374 @@ class Pulser(PODMRPulser):
             return True
         return False
 
-    def stop(self) -> bool:
-        if not self.data.running:
-            return False
-
-        success = self.pg.stop() and self.pg.release() and self.stop_sg()
-        success &= all([pd.stop() for pd in self.pds]) and all([pd.release() for pd in self.pds])
-        if self.clock is not None:
-            success &= self.clock.stop() and self.clock.release()
-        if self._fg_enabled(self.data.params):
-            success &= self.fg.set_output(False)
-        if self.fg is not None:
-            success &= self.fg.release()
-
-        self.data.finalize()
-        if success:
-            self.logger.info("Stopped pulser.")
-        else:
-            self.logger.error("Error stopping pulser.")
-        return success
-
-    def _pd_rate_param(self):
-        rate = self.conf.get("pd_rate", 2e6)
-        if isinstance(rate, (tuple, list)) and isinstance(rate[0], int):
-            return P.IntChoiceParam(rate[0], rate, doc="PD sampling rate")
-        elif isinstance(rate, int):
-            return P.IntParam(
-                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
-            )
-        elif isinstance(rate, float):
-            return P.FloatParam(
-                rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
-            )
-        raise TypeError("conf['pd_rate'] has invalid type.")
-
-    def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
-        d = super().get_param_dict(label)
-        if d is None:
-            return None
-        if "head" in d["plot"]["taumode"].options():
-            taumodes = tuple(m for m in d["plot"]["taumode"].options() if m != "head")
-            d["plot"]["taumode"] = P.StrChoiceParam("raw", taumodes)
-
-        # Since divide_block is TODO and not implemented, default it to False anyway.
-        if "divide_block" in d:
-            d["divide_block"] = P.BoolParam(False)
-        # remove unused params
-        if "timebin" in d:
-            del d["timebin"]
-        if "interval" in d:
-            del d["interval"]
-
-        d["hardware_sweep_limit"] = P.BoolParam(
-            False,
-            doc=(
-                "stop detector acquisition at the exact sweep limit in hardware; requires "
-                "sweeps divisible by sweeps_per_record; acquisition is aborted if the detector "
-                "software queue discards a record"
-            ),
-        )
-
-        # set defaults which won't result in marker out-of-bounds
-        d["plot"]["sigdelay"].set(200e-9)
-        d["plot"]["sigwidth"].set(300e-9)
-        d["plot"]["refdelay"].set(1000e-9)
-        d["plot"]["refwidth"].set(500e-9)
-
-        d["roi_head"] = P.FloatParam(
-            self.conf.get("roi_head", 20e-9),
-            0.0,
-            10e6,
-            unit="s",
-            doc="margin at head of sampled trace and trigger-to-laser offset",
-        )
-        d["roi_tail"] = P.FloatParam(
-            self.conf.get("roi_tail", 100e-9),
-            0.0,
-            10e6,
-            unit="s",
-            doc="margin at tail of sampled trace",
-        )
-        d["sweeps_per_record"] = P.IntParam(
-            self.conf.get("sweeps_per_record", 10),
-            1,
-            1000000,
-            doc="number of sweeps accumulated in one stored raw trace record",
-        )
-        d["max_records"] = P.IntParam(
-            self.conf.get("max_records", 1),
-            0,
-            100000000,
-            doc="maximum number of raw trace records to retain (0 for unlimited)",
-        )
-        d["burst_num"] = P.IntParam(
-            self.conf.get("burst_num", 1),
-            1,
-            1000000,
-            doc="number of burst (repeated shots per sweep point)",
-        )
-        d["point_init_delay"] = P.FloatParam(
-            self.conf.get("point_init_delay", 0.0),
-            0.0,
-            1.0,
-            unit="s",
-            SI_prefix=True,
-            doc="dark delay before the initialization laser for each sweep point",
-        )
-        d["pd"] = P.ParamDict()
-        d["pd"]["rate"] = self._pd_rate_param()
-        lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
-        d["pd"]["buffer_size_coeff"] = P.IntParam(
-            self.conf.get("buffer_size_coeff", 20),
-            1,
-            10_000,
-            doc="ratio of requested buffer size to record data size",
-        )
-        d["pd"]["bounds"] = [
-            P.FloatParam(lb, -10.0, +10.0, doc="PD voltage lower bound"),
-            P.FloatParam(ub, -10.0, +10.0, doc="PD voltage upper bound"),
-        ]
-        d["pd"]["drop_first"] = P.IntParam(0, 0, 100, doc="drop first N records to stabilize")
-        if self._pd_spectrum:
-            d["pd"]["hardware_average"] = P.BoolParam(True, doc="use hardware block averaging")
-        d["pd"]["eos_deadtime"] = P.FloatParam(
-            200e-9, 0.0, 1.0, unit="s", SI_prefix=True, doc="end-of-sample deadtime"
-        )
-
-        return d
-
     def work(self):
         return self.update()
 
     def data_msg(self) -> APODMRData:
         return self.data
 
-    def pulse_msg(self) -> PulsePattern | None:
-        return self.pulse_pattern
+
+class Pulser(SGPGPulserBase, APODMRPulserBase):
+    """Worker for APODMR using SG + PG signal source.
+
+    :param pulser.start_delay: (sec.) delay before starting PG output. (default: 0.5)
+    :type pulser.start_delay: float
+    :param pulser.quick_resume: default value of quick_resume.
+        If True, it skips instrument configurations on resume.
+    :type pulser.quick_resume: bool
+    :param pulser.mw_modes: mw phase control modes for each channel.
+        QPSK (0) is 4-phase control using IQ modulation at SG and a switch.
+        Ext2Phase (1) is 2-phase control using external 90-deg splitter and two switches.
+        ArbPhase (2) is arbitrary phase control using IQ modulation at SG
+        (Analog output (AWG) is required for PG).
+    :type pulser.mw_modes: tuple[str | int]
+    :param pulser.iq_amplitude: (only for mw_mode ArbPhase (2)) amplitude of analog IQ signal in V.
+    :type pulser.iq_amplitude: float
+    :param pulser.split_fraction: (default: 4) fraction factor (F) to split the free period
+        for MW phase modulation. the period (T) is split into (T // F, T - T // F) and MW phase
+        is switched at T // F. Thus, larger F results in "quicker start" of the phase
+        modulation (depending on hardware, but its response may be a bit slow).
+    :type pulser.split_fraction: int
+    :param pulser.pg_freq: (has preset) pulse generator frequency
+    :type pulser.pg_freq: float
+    :param pulser.reduce_start_divisor: (has preset) the divisor on start of reducing frequency
+        reduce is done first by this value, and then repeated by 10.
+    :type pulser.reduce_start_divisor: int
+    :param pulser.minimum_block_length: (has preset) minimum block length in generated blocks
+    :type pulser.minimum_block_length: int
+    :param pulser.block_base: (has preset) block base granularity of pulse generator.
+    :type pulser.block_base: int
+    :param pulser.divide_block: (has preset) Default value of divide_block.
+    :type pulser.divide_block: bool
+    :param pulser.sg_freq: default value of sg frequency
+    :type pulser.sg_freq: float
+    :param pulser.channel_remap: mapping to fix default channel names.
+    :type pulser.channel_remap: dict[str | int, str | int]
+    :param pulser.mw_channels: Optional SG channel identifiers for MW outputs.
+        The elements should have form {"sg": "sg1", ch: 1}.
+    :type pulser.mw_channels: list[dict[str, str | int]]
+    :param pulser.generators: Optional user generator registry mapping method labels to
+        ``[module_name, class_name]``.
+        These classes are loaded at worker initialization and can add or override methods.
+    :type pulser.generators: dict[str, tuple[str, str]]
+
+    :param pulser.pd_names: (default: ["pd0"]) PD names in target.servers.
+    :type pulser.pd_names: list[str]
+    :param pulser.clock_name: (default: ``"clock"``) Clock source instrument name.
+    :type pulser.clock_name: str
+    :param pulser.pd_trigger: DAQ terminal name for PD trigger.
+    :type pulser.pd_trigger: str
+    :param pulser.pd_data_transfer: Optional DAQ transfer mode label.
+    :type pulser.pd_data_transfer: str
+    :param pulser.pd_spectrum: (default: False) set True if PD is Spectrum_AnalogIn-based.
+    :type pulser.pd_spectrum: bool
+    :param pulser.pd_segment_granularity: (default: 16) logical post-trigger sample
+        granularity for Spectrum PD segments.
+    :type pulser.pd_segment_granularity: int
+    :param pulser.pd_segment_offset: (default: 0) sample offset subtracted after Spectrum
+        segment rounding.
+    :type pulser.pd_segment_offset: int
+    :param pulser.buffer_size_coeff: Buffer size coefficient multiplied by trace length.
+    :type pulser.buffer_size_coeff: int
+    :param pulser.roi_head: (default: 20e-9) default margin at head of sampled trace
+        and trigger-to-laser offset.
+    :type pulser.roi_head: float
+    :param pulser.roi_tail: (default: 100e-9) default margin at tail of sampled trace.
+    :type pulser.roi_tail: float
+    :param pulser.sweeps_per_record: (default: 10) default number of sweeps accumulated in one
+        stored raw trace record.
+    :type pulser.sweeps_per_record: int
+    :param pulser.burst_num: (default: 1) default number of burst (repeated shots per sweep point).
+    :type pulser.burst_num: int
+    :param pulser.max_records: (default: 1) default maximum number of retained raw trace records.
+        Set to 0 for unlimited retention.
+    :type pulser.max_records: int
+    :param pulser.point_init_delay: (default: 0.0) default dark delay before the initialization
+        laser for each sweep point. A positive value enables per-point initialization blocks.
+    :type pulser.point_init_delay: float
+    :param pulser.pd_rate: (default: 2e6) default PD sampling rate in Hz.
+    :type pulser.pd_rate: float
+    :param pulser.pd_bounds: (default: ``(-10.0, 10.0)``) default PD voltage bounds.
+    :type pulser.pd_bounds: tuple[float, float]
+
+    """
+
+    def validate_params(
+        self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
+    ) -> bool:
+        params = P.unwrap(params)
+        if not self._validate_sweep_params(params):
+            return False
+        d = APODMRData(params, label)
+        try:
+            blocks, freq, _, _, _ = self.generate_blocks(d)
+        except (ValueError, KeyError) as e:
+            self.logger.error(f"Invalid params for {label}: {e}")
+            return False
+        offsets = self.pg.validate_blocks(blocks, freq)
+        return offsets is not None
+
+    def _init_pg(self, params: dict) -> bool:
+        if not (self.pg.stop() and self.pg.clear()):
+            self.logger.error("Error stopping PG.")
+            return False
+
+        try:
+            blocks, self.freq, laser_timing, trigger_timing, trace_length_ticks = (
+                self.generate_blocks()
+            )
+        except (ValueError, KeyError):
+            self.logger.exception(f"Invalid params for {self.data.label}")
+            return False
+
+        pd_rate = params["pd"]["rate"]
+        sample_period = 1.0 / pd_rate
+        if not self._set_samples_per_trace(pd_rate, trace_length_ticks):
+            return False
+        self.trace_count = len(laser_timing)
+        self.op.set_laser_timing(self.data, np.array(laser_timing) / self.freq)
+        self.op.set_trace_laser_timing(self.data, params["roi_head"])
+        self.op.set_trigger_timing(self.data, np.array(trigger_timing) / self.freq)
+        self.pulse_pattern = PulsePattern(blocks, self.freq, markers=trigger_timing)
+
+        if not (self.pg.configure_blocks(blocks, self.freq) and self.pg.get_opc()):
+            self.logger.error("Error configuring PG.")
+            return False
+
+        self.length = self.pg.get_length()
+        self.offsets = self.pg.get_offsets()
+        self.op.set_instrument_params(
+            self.data,
+            self.samples_per_trace,
+            sample_period,
+            self.freq,
+            self.length,
+            self.offsets,
+            pd_rate,
+            self.mw_modes,
+        )
+        return True
+
+    def _start_inst(self) -> bool:
+        success = self._start_sg(self.data.params)
+        if self._fg_enabled(self.data.params):
+            success &= self.fg.set_output(True)
+
+        time.sleep(self._start_delay)
+
+        if success and self.pg.start():
+            return True
+
+        # fail: stop and release everything
+        self.pg.stop()
+        if self._fg_enabled(self.data.params):
+            self.fg.set_output(False)
+        self._stop_sg()
+        for pd in self.pds:
+            pd.stop()
+        if self.clock is not None:
+            self.clock.stop()
+        return self.fail_with_release("Error starting pulser.")
+
+    def _stop_generator_inst(self) -> bool:
+        return self.pg.stop() and self.pg.release() and self._stop_sg()
+
+
+class AWGPulser(AWGPulserBase, APODMRPulserBase):
+    """Worker for APODMR using AWG as signal source.
+
+    :param pulser.start_delay: (sec.) delay before starting AWG output. (default: 0.5)
+    :type pulser.start_delay: float
+    :param pulser.quick_resume: default value of quick_resume.
+        If True, it skips instrument configurations on resume.
+    :type pulser.quick_resume: bool
+    :param pulser.split_fraction: (default: 4) fraction factor (F) to split the free period
+        for MW phase modulation. the period (T) is split into (T // F, T - T // F) and MW phase
+        is switched at T // F. Thus, larger F results in "quicker start" of the phase
+        modulation (depending on hardware, but its response may be a bit slow).
+    :type pulser.split_fraction: int
+    :param pulser.minimum_block_length: (has preset) minimum block length in generated blocks
+    :type pulser.minimum_block_length: int
+    :param pulser.block_base: (has preset) block base granularity of pulse generator.
+    :type pulser.block_base: int
+    :param pulser.divide_block: (has preset) Default value of divide_block.
+    :type pulser.divide_block: bool
+    :param pulser.awg_rate: default value of AWG sampling frequency
+    :type pulser.awg_rate: float | int | list[int]
+    :param pulser.awg_file_dir: (optional) writer-side directory for shared HDF5 waveform files.
+    :type pulser.awg_file_dir: str
+    :param pulser.remove_awg_file: (default: True) remove each HDF5 transport file after the
+        synchronous AWG configure attempt.
+    :type pulser.remove_awg_file: bool
+    :param pulser.awg_freq: default value of AWG-generated MW frequency
+    :type pulser.awg_freq: float
+    :param pulser.awg_monitor_max_samples: (default: 10_000_000) maximum source prefix length
+        inspected for the AWG monitor preview.
+    :type pulser.awg_monitor_max_samples: int
+    :param pulser.awg_monitor_max_points: (default: 500_000) maximum reduced analog points
+        published per AWG channel.
+    :type pulser.awg_monitor_max_points: int
+    :param pulser.channel_remap: mapping to fix default channel names.
+    :type pulser.channel_remap: dict[str | int, str | int]
+    :param pulser.mw_channels: Mapping from MW tone source index (``freq``, ``freq1``, ...)
+        to physical AWG channel. Keys must be contiguous starting at 0. Up to two distinct
+        physical channels are supported.
+    :type pulser.mw_channels: dict[int, int]
+    :param pulser.generators: Optional user generator registry mapping method labels to
+        ``[module_name, class_name]``.
+        These classes are loaded at worker initialization and can add or override methods.
+    :type pulser.generators: dict[str, tuple[str, str]]
+
+    :param pulser.pd_names: (default: ["pd0"]) PD names in target.servers.
+    :type pulser.pd_names: list[str]
+    :param pulser.clock_name: (default: ``"clock"``) Clock source instrument name.
+    :type pulser.clock_name: str
+    :param pulser.pd_trigger: DAQ terminal name for PD trigger.
+    :type pulser.pd_trigger: str
+    :param pulser.pd_data_transfer: Optional DAQ transfer mode label.
+    :type pulser.pd_data_transfer: str
+    :param pulser.pd_spectrum: (default: False) set True if PD is Spectrum_AnalogIn-based.
+    :type pulser.pd_spectrum: bool
+    :param pulser.pd_segment_granularity: (default: 16) logical post-trigger sample
+        granularity for Spectrum PD segments.
+    :type pulser.pd_segment_granularity: int
+    :param pulser.pd_segment_offset: (default: 0) sample offset subtracted after Spectrum
+        segment rounding.
+    :type pulser.pd_segment_offset: int
+    :param pulser.buffer_size_coeff: Buffer size coefficient multiplied by trace length.
+    :type pulser.buffer_size_coeff: int
+    :param pulser.roi_head: (default: 20e-9) default margin at head of sampled trace
+        and trigger-to-laser offset.
+    :type pulser.roi_head: float
+    :param pulser.roi_tail: (default: 100e-9) default margin at tail of sampled trace.
+    :type pulser.roi_tail: float
+    :param pulser.sweeps_per_record: (default: 10) default number of sweeps accumulated in one
+        stored raw trace record.
+    :type pulser.sweeps_per_record: int
+    :param pulser.burst_num: (default: 1) default number of burst (repeated shots per sweep point).
+    :type pulser.burst_num: int
+    :param pulser.max_records: (default: 1) default maximum number of retained raw trace records.
+        Set to 0 for unlimited retention.
+    :type pulser.max_records: int
+    :param pulser.point_init_delay: (default: 0.0) default dark delay before the initialization
+        laser for each sweep point. A positive value enables per-point initialization blocks.
+    :type pulser.point_init_delay: float
+    :param pulser.pd_rate: (default: 2e6) default PD sampling rate in Hz.
+    :type pulser.pd_rate: float
+    :param pulser.pd_bounds: (default: ``(-10.0, 10.0)``) default PD voltage bounds.
+    :type pulser.pd_bounds: tuple[float, float]
+
+    """
+
+    def validate_params(
+        self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
+    ) -> bool:
+        params = P.unwrap(params)
+        awg_bounds = self._get_awg_bounds()
+        if awg_bounds is None:
+            return False
+        if not self._validate_sweep_params(params):
+            return False
+        if not self._validate_file_transport(params, awg_bounds):
+            return False
+        d = APODMRData(params, label)
+        try:
+            self.make_generators(self.awg.get_digital_rate(params["awg"]["rate"]))
+            blocks, freq, _, _, _ = self.generate_blocks(d)
+        except (ValueError, KeyError):
+            self.logger.exception(f"Invalid params for {label}")
+            return False
+        try:
+            num_mw = self.generators[label].num_mw()
+            tones = self.make_mw_tones(num_mw, params)
+            ret = self.renderer.render(blocks, freq, tones, num_mw, params, awg_bounds)
+            self.logger.info(f"AWG rendering success: {ret}")
+            return True
+        except (ValueError, KeyError):
+            self.logger.exception(f"Invalid params for {label}")
+            return False
+
+    def _init_generator_inst(self, params: dict) -> bool:
+        self.awg_waveform = None
+        awg_bounds = self._get_awg_bounds()
+        if awg_bounds is None:
+            return False
+        if not self._validate_file_transport(params, awg_bounds):
+            return False
+        if not self.awg.stop():
+            self.logger.error("Error stopping AWG.")
+            return False
+        try:
+            self.make_generators(self.awg.get_digital_rate(params["awg"]["rate"]))
+            blocks, self.freq, laser_timing, trigger_timing, trace_length_ticks = (
+                self.generate_blocks()
+            )
+        except (ValueError, KeyError):
+            self.logger.exception(f"Invalid params for {self.data.label}")
+            return False
+        try:
+            num_mw = self.generators[self.data.label].num_mw()
+            tones = self.make_mw_tones(num_mw, params)
+            self.renderer.render(blocks, self.freq, tones, num_mw, params, awg_bounds)
+            self.logger.info("AWG rendering success.")
+        except (ValueError, KeyError):
+            self.logger.exception(f"Invalid params for {self.data.label}")
+            return False
+
+        pd_rate = params["pd"]["rate"]
+        sample_period = 1.0 / pd_rate
+        if not self._set_samples_per_trace(pd_rate, trace_length_ticks):
+            return False
+        self.trace_count = len(laser_timing)
+        self.op.set_laser_timing(self.data, np.array(laser_timing) / self.freq)
+        self.op.set_trace_laser_timing(self.data, params["roi_head"])
+        self.op.set_trigger_timing(self.data, np.array(trigger_timing) / self.freq)
+        pulse_blocks = remove_analog_channels(blocks, blocks.analog_channels())
+        self.pulse_pattern = PulsePattern(pulse_blocks, self.freq, markers=trigger_timing)
+
+        if not self.renderer.upload(file_transport=params["awg"].get("file_transport", False)):
+            return False
+        self.awg_waveform = self.renderer.waveform_msg(
+            trigger_timing,
+            self.freq,
+            max_samples=self._awg_monitor_max_samples,
+            max_points=self._awg_monitor_max_points,
+        )
+        inst_extra = {"awg": self.renderer.get_meta_data()}
+
+        # set ideal PG-specific meta data
+        self.length = blocks.total_length()
+        self.offsets = []
+        self.op.set_instrument_params(
+            self.data,
+            self.samples_per_trace,
+            sample_period,
+            self.freq,
+            self.length,
+            self.offsets,
+            pd_rate,
+            self.mw_modes,
+            inst_extra,
+        )
+        return True
+
+    def _start_inst(self) -> bool:
+        if self._fg_enabled(self.data.params):
+            success = self.fg.set_output(True)
+        else:
+            success = True
+
+        time.sleep(self._start_delay)
+
+        if success and self.awg.start():
+            return True
+
+        # fail: stop and release everything
+        self.awg.stop()
+        if self._fg_enabled(self.data.params):
+            self.fg.set_output(False)
+        for pd in self.pds:
+            pd.stop()
+        if self.clock is not None:
+            self.clock.stop()
+        return self.fail_with_release("Error starting pulser.")

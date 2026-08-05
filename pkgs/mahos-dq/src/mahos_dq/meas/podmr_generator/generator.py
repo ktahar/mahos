@@ -111,7 +111,7 @@ class PatternGenerator(object):
         return self.mw_modes[0]
 
     def mode_has_4phase(self, ch=None) -> bool:
-        return self.mode(ch) in (MWMode.QPSK, MWMode.ArbPhase)
+        return self.mode(ch) in (MWMode.QPSK, MWMode.ArbPhase, MWMode.AWG)
 
     def _need_p270(self) -> bool:
         return any(m == MWMode.Ext2Phase for m in self.mw_modes)
@@ -1084,8 +1084,8 @@ class RDDGenerator(PatternGenerator):
         reduce_start_divisor: int,
         fix_base_width: int | None,
     ):
-        if self.mode() != MWMode.ArbPhase:
-            raise ValueError("MW mode must be ArbPhase.")
+        if self.mode() not in (MWMode.ArbPhase, MWMode.AWG):
+            raise ValueError("MW mode must be ArbPhase or AWG.")
 
         p90, p180, Nconst, readY = [
             pulse_params[k] for k in ["90pulse", "180pulse", "Nconst", "readY"]
@@ -2623,14 +2623,14 @@ def make_generators(
     if len(mw_modes) > 1:
         # add sequences using multiple mw channels here
         generators["drabi"] = DRabiGenerator(*args)
-        if all(m in (MWMode.QPSK, MWMode.ArbPhase) for m in mw_modes[:2]):
+        if all(m in (MWMode.QPSK, MWMode.ArbPhase, MWMode.AWG) for m in mw_modes[:2]):
             generators["dq2ramsey"] = DQ2RamseyGenerator(*args)
             generators["dq4ramsey"] = DQ4RamseyGenerator(*args)
     if all(m == MWMode.Ext2Phase for m in mw_modes):
         # these methods requires 4 phases (x, y, x_inv, y_inv) and unavailable in 2-phase mode.
         for key in ["xy16", "xy16N", "ddgate", "ddgateN"]:
             del generators[key]
-    if any(m == MWMode.ArbPhase for m in mw_modes):
+    if any(m in (MWMode.ArbPhase, MWMode.AWG) for m in mw_modes):
         # Randomized DD. no rcpmg because it is equivalent to rcp.
         generators["rcp"] = RDDGenerator(*args, method="cp")
         generators["rxy4"] = RDDGenerator(*args, method="xy4")

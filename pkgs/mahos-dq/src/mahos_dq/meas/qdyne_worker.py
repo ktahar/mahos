@@ -19,8 +19,7 @@ import numpy as np
 from mahos.util.timer import IntervalTimer, StopWatch
 from mahos.util.io import load_h5
 from mahos.msgs import param_msgs as P
-from mahos.msgs.pulse_msgs import PulsePattern
-from mahos.msgs.inst.pg_msgs import Block, Blocks
+from mahos.msgs.inst.pg_msgs import Block, Blocks, PulsePattern
 from mahos.msgs.inst.tdc_msgs import RawEvents, ChannelStatus
 from mahos_dq.msgs.qdyne_msgs import QdyneData, MWMode, TDCStatus
 from mahos.inst.sg_interface import SGInterface

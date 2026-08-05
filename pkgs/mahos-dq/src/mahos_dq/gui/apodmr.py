@@ -248,6 +248,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             [
                 ("power", self.powerBox),
                 ("freq", self.freqBox, 1e-6),
+                ("nomw", self.nomwBox),
                 ("sweeps_per_record", self.sweepsPerRecordBox),
                 ("burst_num", self.burstNumBox),
                 ("max_records", self.maxRecordsBox),
@@ -279,6 +280,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
                 [
                     ("power1", self.power1Box),
                     ("freq1", self.freq1Box, 1e-6),
+                    ("nomw1", self.nomw1Box),
                 ],
             )
         apply_widgets(
@@ -413,6 +415,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
     def update_state(self, state: BinaryState, last_state: BinaryState):
         for w in (
             self.startButton,
+            self.validateButton,
             self.saveButton,
             self.exportButton,
             self.exportaltButton,

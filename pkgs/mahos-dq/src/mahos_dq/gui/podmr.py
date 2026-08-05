@@ -14,6 +14,7 @@ import os
 import time
 from datetime import datetime
 import uuid
+from functools import partial
 
 import numpy as np
 import pyqtgraph as pg
@@ -41,6 +42,7 @@ from mahos.util.plot import colors_tab20_pair
 from mahos.util.timer import seconds_to_hms
 from mahos.util.math_phys import round_halfint, round_evenint
 from mahos.util.conv import real_fft
+from mahos.util.unit import SI_format, dBm_to_Vpeak
 
 
 Policy = QtWidgets.QSizePolicy.Policy
@@ -922,8 +924,6 @@ class PODMRWidgetBase(ClientWidget):
         self.cli.statusUpdated.disconnect(self.init_with_status)
 
         self._pg_freq = status.pg_freq
-        self.pgfreqLabel.setText(f"PG freq: {self._pg_freq * 1e-9:.2f} GHz")
-        self.update_timing_box_step()
 
         self.methodBox.clear()
         methods = P.filter_out_label_prefix("fit", self.cli.get_param_dict_labels())
@@ -940,6 +940,7 @@ class PODMRWidgetBase(ClientWidget):
         self.switch_method()
 
         self.cli.stateUpdated.connect(self.update_state)
+        self.cli.statusUpdated.connect(self.update_status)
         self.cli.dataUpdated.connect(self.update_data)
         self.cli.bufferUpdated.connect(self.update_buffer)
         self.cli.stopped.connect(self.finalize)
@@ -948,6 +949,7 @@ class PODMRWidgetBase(ClientWidget):
 
     def init_connection(self):
         self.startButton.clicked.connect(self.request_start)
+        self.validateButton.clicked.connect(self.request_validate)
         self.stopButton.clicked.connect(self.request_stop)
         self.saveButton.clicked.connect(self.save_data)
         self.exportButton.clicked.connect(self.export_data)
@@ -965,6 +967,8 @@ class PODMRWidgetBase(ClientWidget):
             w.valueChanged.connect(self.update_stop)
         for w in (self.NstartBox, self.NstepBox, self.NnumBox):
             w.valueChanged.connect(self.update_Nstop)
+        self.powerBox.valueChanged.connect(partial(self.update_volt_label, self.voltLabel))
+        self.power1Box.valueChanged.connect(partial(self.update_volt_label, self.volt1Label))
 
         self._method_handler = ParamDictComboBoxHandler(self.methodBox)
         self.methodBox.currentIndexChanged.connect(self.switch_method)
@@ -1003,6 +1007,7 @@ class PODMRWidgetBase(ClientWidget):
             [
                 ("power", self.powerBox),
                 ("freq", self.freqBox, 1e-6),
+                ("nomw", self.nomwBox),
                 ("interval", self.intervalBox, 1e3),
                 ("timebin", self.binBox, 1e9),
                 ("sweeps", self.sweepsBox),
@@ -1027,6 +1032,7 @@ class PODMRWidgetBase(ClientWidget):
                 [
                     ("power1", self.power1Box),
                     ("freq1", self.freq1Box, 1e-6),
+                    ("nomw1", self.nomw1Box),
                 ],
             )
         apply_widgets(
@@ -1069,6 +1075,11 @@ class PODMRWidgetBase(ClientWidget):
         Nstop = self.NstartBox.value() + self.NstepBox.value() * (self.NnumBox.value() - 1)
         self.NstopLabel.setText(f"stop: {Nstop:d}")
 
+    def update_volt_label(self, widget, power_dBm: float):
+        imp = 50
+        Vp = SI_format(dBm_to_Vpeak(power_dBm, imp), suffix="Vp")
+        widget.setText(f"{Vp} ({imp} Ω)")
+
     def switch_fg(self):
         disabled = self.fg_disableButton.isChecked()
         for w in (self.fg_waveBox, self.fg_freqBox, self.fg_amplBox):
@@ -1089,6 +1100,8 @@ class PODMRWidgetBase(ClientWidget):
         if params is None:
             return
         self._params = params
+        self.update_timing_freq_label()
+        self.update_timing_box_step()
         self.update_cond_widgets()
         self._apply_sg1(self._params)
         pp = P.ParamDict(
@@ -1100,6 +1113,8 @@ class PODMRWidgetBase(ClientWidget):
         )
         if "pd" in self._params:
             pp["pd"] = self._params["pd"]
+        if "awg" in self._params:
+            pp["awg"] = self._params["awg"]
         self.paramTable.update_contents(pp)
         self.reset_partial_modes(self._params["partial"].maximum())
         self.reset_plot_modes(
@@ -1275,6 +1290,10 @@ class PODMRWidgetBase(ClientWidget):
         if "pd" in p:
             for k, v in p["pd"].items():
                 self.paramTable.apply_value("pd." + k, v)
+        # optional awg params
+        if "awg" in p:
+            for k, v in p["awg"].items():
+                self.paramTable.apply_value("awg." + k, v)
 
     def apply_meas_widgets(self):
         p = self.data.params
@@ -1392,6 +1411,8 @@ class PODMRWidgetBase(ClientWidget):
             params["pulse"]["270pulse"] = self.t270pulseBox.value() * 1e-9
         if "pd" in pt:
             params["pd"] = pt["pd"]
+        if "awg" in pt:
+            params["awg"] = pt["awg"]
 
     def get_params(self) -> tuple[dict, str]:
         label = self.methodBox.currentText()
@@ -1487,12 +1508,20 @@ class PODMRWidgetBase(ClientWidget):
 
     def request_start(self):
         self.round_timing_box_values()
+        self.start()
 
-        if self.validate_pulse():
-            self.start()
-
-    def validate_pulse(self):
-        return self.cli.validate(*self.get_params())
+    def request_validate(self):
+        self.round_timing_box_values()
+        if self.cli.validate(*self.get_params()):
+            QtWidgets.QMessageBox.information(
+                self, "Pulse validation", "Pulse parameters are valid."
+            )
+        else:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Pulse validation failed",
+                "Pulse parameters are invalid. See the log for details.",
+            )
 
     def start(self):
         """start the measurement."""
@@ -1681,6 +1710,7 @@ class PODMRWidgetBase(ClientWidget):
     def update_state(self, state: BinaryState, last_state: BinaryState):
         for w in (
             self.startButton,
+            self.validateButton,
             self.saveButton,
             self.exportButton,
             self.exportaltButton,
@@ -1715,10 +1745,18 @@ class PODMRWidgetBase(ClientWidget):
 
         self._update_state_common(state, last_state)
 
+    def update_status(self, status: PODMRStatus):
+        if status.pg_freq != self._pg_freq:
+            self._pg_freq = status.pg_freq
+            self.update_timing_freq_label()
+
     # helper functions
 
     def has_fg(self):
         return self._has_fg
+
+    def is_awg_mode(self) -> bool:
+        return self._params is not None and "awg" in self._params
 
     def timing_boxes(self):
         return (
@@ -1737,8 +1775,15 @@ class PODMRWidgetBase(ClientWidget):
             self.t270pulseBox,
         )
 
+    def update_timing_freq_label(self):
+        name = "AWG digital rate" if self.is_awg_mode() else "PG freq"
+        f = SI_format(self._pg_freq, precision=4, suffix="Hz")
+        self.pgfreqLabel.setText(f"{name}: {f}")
+
     def update_timing_box_step(self):
-        if round(self._pg_freq) == round(2.0e9):
+        if self.is_awg_mode():
+            step = 0.1
+        elif round(self._pg_freq) == round(2.0e9):
             step = 0.5
         elif round(self._pg_freq) == round(1.0e9):
             step = 1.0
@@ -1753,6 +1798,9 @@ class PODMRWidgetBase(ClientWidget):
 
     def round_timing_box_values(self):
         """check and round values of QDoubleSpinBox for timing parameters."""
+
+        if self.is_awg_mode():
+            return
 
         if round(self._pg_freq) == round(2.0e9):
             _round = round_halfint
