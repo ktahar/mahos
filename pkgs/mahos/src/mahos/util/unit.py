@@ -104,3 +104,26 @@ def SI_format(x, precision=3, suffix="", space=True, error=None, min_val=1e-25, 
                 use_unicode=use_unicode,
             ),
         )
+
+
+def dBm_to_Vpeak(power_dBm: float, impedance: float = 50.0) -> float:
+    """Convert sine power in dBm (into `impedance`) to zero-to-peak voltage.
+
+    ``V_pk = sqrt(2 * Z * P)`` with ``P = 1 mW * 10**(power_dbm / 10)``.
+    Examples (50 Ohm): 0 dBm -> 0.3162 V peak; -10 dBm -> 0.100 V peak.
+
+    """
+
+    if impedance <= 0.0:
+        raise ValueError(f"impedance must be positive: {impedance}")
+    return math.sqrt(2.0 * impedance * 1e-3 * 10.0 ** (power_dBm / 10.0))
+
+
+def Vpeak_to_dBm(Vpeak: float, impedance: float = 50.0) -> float:
+    """Inverse of :func:`dBm_to_Vpeak`: zero-to-peak sine voltage -> dBm."""
+
+    if Vpeak <= 0.0:
+        raise ValueError(f"volt_peak must be positive: {Vpeak}")
+    if impedance <= 0.0:
+        raise ValueError(f"impedance must be positive: {impedance}")
+    return 10.0 * math.log10(Vpeak**2 / (2.0 * impedance) / 1e-3)
