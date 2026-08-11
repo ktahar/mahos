@@ -105,29 +105,34 @@ def _infer_adaptive_min_step(param: P.NumberParam) -> float | int | None:
     return min_step
 
 
+def _apply_bounds(p: P.NumberParam, widget: QtWidgets.QWidget, coeff: float):
+    mn = p.minimum() * coeff if p.minimum() is not None else None
+    mx = p.maximum() * coeff if p.maximum() is not None else None
+    if isinstance(widget, QtWidgets.QSpinBox) and isinstance(p, P.FloatParam):
+        mn = round(mn) if mn is not None else None
+        mx = round(mx) if mx is not None else None
+    if mn is not None:
+        widget.setMinimum(mn)
+    elif isinstance(widget, QtWidgets.QSpinBox):
+        # unbounded (C++ INT_MIN is the smallest lower bound)
+        widget.setMinimum(-2_147_483_648)
+    elif isinstance(widget, QtWidgets.QDoubleSpinBox):
+        widget.setMinimum(-math.inf)
+    if mx is not None:
+        widget.setMaximum(mx)
+    elif isinstance(widget, QtWidgets.QSpinBox):
+        # unbounded (C++ INT_MAX is the largest upper bound)
+        widget.setMaximum(2_147_483_647)
+    elif isinstance(widget, QtWidgets.QDoubleSpinBox):
+        widget.setMaximum(math.inf)
+
+
 def _apply(p: P.Param, widget: QtWidgets.QWidget, coeff: float):
     if isinstance(p, P.NumberParam):
-        mn = p.minimum() * coeff if p.minimum() is not None else None
-        mx = p.maximum() * coeff if p.maximum() is not None else None
+        _apply_bounds(p, widget, coeff)
         v = p.some_value() * coeff
         if isinstance(widget, QtWidgets.QSpinBox) and isinstance(p, P.FloatParam):
-            mn = round(mn) if mn is not None else None
-            mx = round(mx) if mx is not None else None
             v = round(v)
-        if mn is not None:
-            widget.setMinimum(mn)
-        elif isinstance(widget, QtWidgets.QSpinBox):
-            # unbounded (C++ INT_MIN is the smallest lower bound)
-            widget.setMinimum(-2_147_483_648)
-        elif isinstance(widget, QtWidgets.QDoubleSpinBox):
-            widget.setMinimum(-math.inf)
-        if mx is not None:
-            widget.setMaximum(mx)
-        elif isinstance(widget, QtWidgets.QSpinBox):
-            # unbounded (C++ INT_MAX is the largest upper bound)
-            widget.setMaximum(2_147_483_647)
-        elif isinstance(widget, QtWidgets.QDoubleSpinBox):
-            widget.setMaximum(math.inf)
         widget.setValue(v)
         if isinstance(widget, SpinBox):
             opts = dict(
@@ -164,6 +169,30 @@ def apply_widgets(
                 _apply(p, w, coeff)
         else:
             _apply(params[name], widget, coeff)
+
+
+def apply_widget_bounds(
+    params: P.ParamDict[str, P.PDValue],
+    name_widgets: list[tuple[str, QtWidgets.QWidget | list[QtWidgets.QWidget], float | None]],
+):
+    """Apply numeric parameter bounds to widgets without changing their values."""
+
+    for nwc in name_widgets:
+        if len(nwc) == 3:
+            name, widget, coeff = nwc
+            if coeff is None:
+                coeff = 1
+        elif len(nwc) == 2:
+            name, widget = nwc
+            coeff = 1
+        if name not in params:
+            continue
+        if isinstance(params[name], (list, tuple)):
+            for p, w in zip(params[name], widget):
+                if isinstance(p, P.NumberParam):
+                    _apply_bounds(p, w, coeff)
+        elif isinstance(params[name], P.NumberParam):
+            _apply_bounds(params[name], widget, coeff)
 
 
 def set_enabled(params: dict, name_widgets: list[tuple[str, QtWidgets.QWidget]]):

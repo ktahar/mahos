@@ -35,7 +35,12 @@ from mahos.node.global_params import GlobalParamsClient
 from mahos.gui.gui_node import GUINode
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
-from mahos.gui.param import ParamDictComboBoxHandler, set_enabled, apply_widgets
+from mahos.gui.param import (
+    ParamDictComboBoxHandler,
+    set_enabled,
+    apply_widgets,
+    apply_widget_bounds,
+)
 from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
 from mahos.node.node import local_conf, join_name
 from mahos.util.plot import colors_tab20_pair
@@ -1104,6 +1109,14 @@ class PODMRWidgetBase(ClientWidget):
         self.update_timing_box_step()
         self.update_cond_widgets()
         self._apply_sg1(self._params)
+        apply_widget_bounds(
+            self._params["pulse"],
+            [
+                ("90pulse", self.t90pulseBox, 1e9),
+                ("180pulse", self.t180pulseBox, 1e9),
+                ("270pulse", self.t270pulseBox, 1e9),
+            ],
+        )
         pp = P.ParamDict(
             pulse={
                 k: v

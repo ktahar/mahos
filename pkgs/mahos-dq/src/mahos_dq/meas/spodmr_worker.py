@@ -960,13 +960,13 @@ class Pulser(Worker):
 
     def _get_param_dict_pulse(self, label: str, d: dict):
         ## common_pulses
-        d["laser_delay"] = P.FloatParam(45e-9, 0.0, 1e-4)
-        d["laser_width"] = P.FloatParam(3e-6, 1e-9, 1e-4)
-        d["mw_delay"] = P.FloatParam(1e-6, 0.0, 1e-4)
+        d["laser_delay"] = P.FloatParam(0.0, 0.0, 1e-3)
+        d["laser_width"] = P.FloatParam(3e-6, 1e-9, 1e-3)
+        d["mw_delay"] = P.FloatParam(1e-6, 0.0, 1e-3)
         # local offset applied within each unit PODMR pulse sequence (not whole SPODMR sequence)
         d["mw_offset"] = P.FloatParam(0.0, -1e-4, 1e-4)
         # below are unused
-        # d["base_width"] = P.FloatParam(320e-9, 1e-9, 1e-4)
+        # d["base_width"] = P.FloatParam(8e-9, 1e-9, 1e-4)
         # d["trigger_width"] = P.FloatParam(20e-9, 1e-9, 1e-6)
         # d["init_delay"] = P.FloatParam(0.0, 0.0, 1e-6)
         # d["final_delay"] = P.FloatParam(5e-6, 0.0, 1e-4)

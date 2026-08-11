@@ -794,10 +794,10 @@ class CommonPulserBase(Worker, ConfAccessorMixin, ABC):
         num_pattern = self.generators[label].num_pattern()
 
         ## common_pulses
-        d["base_width"] = P.FloatParam(320e-9, 1e-9, 1e-4)
-        d["laser_delay"] = P.FloatParam(45e-9, 0.0, 1e-4)
-        d["laser_width"] = P.FloatParam(3e-6, 1e-9, 1e-4)
-        d["mw_delay"] = P.FloatParam(1e-6, 0.0, 1e-4)
+        d["base_width"] = P.FloatParam(8e-9, 1e-9, 1e-4)
+        d["laser_delay"] = P.FloatParam(0.0, 0.0, 1e-3)
+        d["laser_width"] = P.FloatParam(3e-6, 1e-9, 1e-3)
+        d["mw_delay"] = P.FloatParam(1e-6, 0.0, 1e-3)
         d["trigger_width"] = P.FloatParam(20e-9, 1e-9, 1e-6)
         d["init_delay"] = P.FloatParam(0.0, 0.0, 1e-6)
         d["final_delay"] = P.FloatParam(5e-6, 0.0, 1e-4)
@@ -816,9 +816,9 @@ class CommonPulserBase(Worker, ConfAccessorMixin, ABC):
             d["Nnum"] = P.IntParam(50, 1, 10000)
             d["Nstep"] = P.IntParam(1, 1, 10000)
         else:
-            d["start"] = P.FloatParam(1.0e-9, 1.0e-9, 1.0e-3)
+            d["start"] = P.FloatParam(1e-9, 1e-9, 1e-3)
             d["num"] = P.IntParam(50, 1, 10000)
-            d["step"] = P.FloatParam(1.0e-9, 1.0e-9, 1.0e-3)
+            d["step"] = P.FloatParam(1e-9, 1e-9, 1e-3)
             d["log"] = P.BoolParam(False)
 
         return d
@@ -896,10 +896,10 @@ class CommonPulserBase(Worker, ConfAccessorMixin, ABC):
             "taumode": P.StrChoiceParam("raw", taumodes),
             "logX": P.BoolParam(False),
             "logY": P.BoolParam(False),
-            "sigdelay": P.FloatParam(200e-9, 0.0, 10e-6),
-            "sigwidth": P.FloatParam(300e-9, 1e-9, 10e-6),
-            "refdelay": P.FloatParam(2200e-9, 1e-9, 100e-6),
-            "refwidth": P.FloatParam(2400e-9, 1e-9, 10e-6),
+            "sigdelay": P.FloatParam(200e-9, 0.0, 1e-3),
+            "sigwidth": P.FloatParam(300e-9, 1e-9, 1e-3),
+            "refdelay": P.FloatParam(2200e-9, 1e-9, 1e-3),
+            "refwidth": P.FloatParam(2400e-9, 1e-9, 1e-3),
             "refmode": P.StrChoiceParam("subtract", ("subtract", "divide", "ignore")),
             "refaverage": P.BoolParam(False),
             "flipY": P.BoolParam(False),

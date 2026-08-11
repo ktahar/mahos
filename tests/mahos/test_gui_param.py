@@ -13,7 +13,11 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from mahos.gui.Qt import QtCore, QtWidgets
-from mahos.gui.param import ParamDictComboBoxHandler, _infer_adaptive_min_step
+from mahos.gui.param import (
+    ParamDictComboBoxHandler,
+    _infer_adaptive_min_step,
+    apply_widget_bounds,
+)
 from mahos.msgs.param_msgs import FloatParam, IntParam, ParamDict
 
 
@@ -59,6 +63,20 @@ def test_param_dict_combo_box_handler_clears_failed_initial_selection(qtbot):
 
     assert handler.get(lambda label: None) is None
     assert combo_box.currentIndex() == -1
+
+
+def test_apply_widget_bounds_retains_value(qtbot):
+    widget = QtWidgets.QDoubleSpinBox()
+    qtbot.addWidget(widget)
+    widget.setRange(-100.0, 100.0)
+    widget.setValue(20.0)
+
+    params = ParamDict(pulse=FloatParam(10e-9, 1e-9, 1e-3))
+    apply_widget_bounds(params, [("pulse", widget, 1e9)])
+
+    assert widget.minimum() == 1.0
+    assert widget.maximum() == 1e6
+    assert widget.value() == 20.0
 
 
 def test_infer_adaptive_min_step():

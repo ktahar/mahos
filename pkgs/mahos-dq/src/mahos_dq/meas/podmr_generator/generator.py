@@ -276,7 +276,7 @@ class T1Generator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -348,7 +348,7 @@ class FIDGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -359,7 +359,7 @@ class FIDGenerator(PatternGenerator):
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
-                1e-6,
+                1e-3,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
@@ -455,7 +455,7 @@ class SpinEchoGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -465,7 +465,7 @@ class SpinEchoGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             -1e-9,
             -1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -476,7 +476,7 @@ class SpinEchoGenerator(PatternGenerator):
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
-                1e-6,
+                1e-3,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
@@ -585,7 +585,7 @@ class TRSEGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -595,7 +595,7 @@ class TRSEGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             -1e-9,
             -1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -606,7 +606,7 @@ class TRSEGenerator(PatternGenerator):
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
-                1e-6,
+                1e-3,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
@@ -721,7 +721,7 @@ class DDGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -731,7 +731,7 @@ class DDGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             -1e-9,
             -1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -742,7 +742,7 @@ class DDGenerator(PatternGenerator):
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
-                1e-6,
+                1e-3,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
@@ -1047,7 +1047,7 @@ class RDDGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1057,7 +1057,7 @@ class RDDGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             -1e-9,
             -1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1198,7 +1198,7 @@ class DDNGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1208,7 +1208,7 @@ class DDNGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             -1e-9,
             -1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1219,7 +1219,7 @@ class DDNGenerator(PatternGenerator):
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
-                1e-6,
+                1e-3,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
@@ -1435,7 +1435,7 @@ class SEHalfPiSweepGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1524,7 +1524,7 @@ class SpinLockGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1538,7 +1538,7 @@ class SpinLockGenerator(PatternGenerator):
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
-                1e-6,
+                1e-3,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
@@ -1641,7 +1641,7 @@ class XY8CorrelationGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1651,7 +1651,7 @@ class XY8CorrelationGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             -1e-9,
             -1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1662,7 +1662,7 @@ class XY8CorrelationGenerator(PatternGenerator):
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
-                1e-6,
+                1e-3,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
@@ -1808,7 +1808,7 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1818,7 +1818,7 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             -1e-9,
             -1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -1829,7 +1829,7 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
             pd["270pulse"] = P.FloatParam(
                 -1e-9,
                 -1e-9,
-                1e-6,
+                1e-3,
                 unit="s",
                 SI_prefix=True,
                 step=1e-9,
@@ -2021,7 +2021,7 @@ class DDGateGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -2031,7 +2031,7 @@ class DDGateGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             -1e-9,
             -1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -2159,7 +2159,7 @@ class DDNGateGenerator(DDGateGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -2169,7 +2169,7 @@ class DDNGateGenerator(DDGateGenerator):
         pd["180pulse"] = P.FloatParam(
             -1e-9,
             -1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -2294,7 +2294,7 @@ class DRabiGenerator(PatternGenerator):
         pd["180pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -2384,7 +2384,7 @@ class DQ2RamseyGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,
@@ -2470,7 +2470,7 @@ class DQ4RamseyGenerator(PatternGenerator):
         pd["90pulse"] = P.FloatParam(
             10e-9,
             1e-9,
-            1e-6,
+            1e-3,
             unit="s",
             SI_prefix=True,
             step=1e-9,

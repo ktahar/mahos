@@ -588,10 +588,10 @@ class Pulser(Worker, ConfAccessorMixin):
 
     def _get_param_dict_pulse(self, label: str, d: dict):
         ## common_pulses
-        d["base_width"] = P.FloatParam(320e-9, 0.5e-9, 1e-4, unit="s", SI_prefix=True)
-        d["laser_delay"] = P.FloatParam(45e-9, 0.0, 1e-4, unit="s", SI_prefix=True)
-        d["laser_width"] = P.FloatParam(3e-6, 1e-9, 1e-4, unit="s", SI_prefix=True)
-        d["mw_delay"] = P.FloatParam(1e-6, 0.0, 1e-4, unit="s", SI_prefix=True)
+        d["base_width"] = P.FloatParam(8e-9, 0.5e-9, 1e-4, unit="s", SI_prefix=True)
+        d["laser_delay"] = P.FloatParam(0.0, 0.0, 1e-3, unit="s", SI_prefix=True)
+        d["laser_width"] = P.FloatParam(3e-6, 1e-9, 1e-3, unit="s", SI_prefix=True)
+        d["mw_delay"] = P.FloatParam(1e-6, 0.0, 1e-3, unit="s", SI_prefix=True)
         d["trigger_width"] = P.FloatParam(20e-9, 1e-9, 1e-6, unit="s", SI_prefix=True)
         ### global mw offset
         d["mw_offset"] = P.FloatParam(0.0, -1e-4, 1e-4, unit="s", SI_prefix=True)

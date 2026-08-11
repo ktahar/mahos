@@ -230,7 +230,7 @@
                <string> MHz</string>
               </property>
               <property name="decimals">
-               <number>4</number>
+               <number>6</number>
               </property>
               <property name="maximum">
                <double>10000.000000000000000</double>
@@ -331,7 +331,7 @@
                <string> MHz</string>
               </property>
               <property name="decimals">
-               <number>4</number>
+               <number>6</number>
               </property>
               <property name="minimum">
                <double>1.000000000000000</double>
@@ -557,6 +557,9 @@
            <layout class="QGridLayout" name="gridLayout_6">
             <item row="1" column="2">
              <widget class="QDoubleSpinBox" name="finaldelayBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>Final delay: </string>
               </property>
@@ -579,6 +582,9 @@
             </item>
             <item row="0" column="0">
              <widget class="QDoubleSpinBox" name="basewidthBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>Base width: </string>
               </property>
@@ -604,6 +610,9 @@
               <property name="toolTip">
                <string>Delay between MW pattern end and laser pulse start</string>
               </property>
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>Laser delay: </string>
               </property>
@@ -626,6 +635,9 @@
             </item>
             <item row="0" column="2">
              <widget class="QDoubleSpinBox" name="lwidthBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>Laser width: </string>
               </property>
@@ -648,6 +660,9 @@
             </item>
             <item row="1" column="0">
              <widget class="QDoubleSpinBox" name="trigwidthBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>Trigger width: </string>
               </property>
@@ -676,6 +691,9 @@
               <property name="toolTip">
                <string>Global offset (delay) for all MW channels</string>
               </property>
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>MW offset: </string>
               </property>
@@ -697,6 +715,9 @@
              <widget class="QDoubleSpinBox" name="mdelayBox">
               <property name="toolTip">
                <string>Delay between laser pulse end and MW pattern start</string>
+              </property>
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
               </property>
               <property name="prefix">
                <string>MW delay: </string>
@@ -720,6 +741,9 @@
             </item>
             <item row="1" column="4">
              <widget class="QDoubleSpinBox" name="pointinitdelayBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>Point init delay: </string>
               </property>
@@ -739,6 +763,9 @@
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="initdelayBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>Init delay: </string>
               </property>
@@ -774,6 +801,9 @@
             </item>
             <item row="0" column="4">
              <widget class="QDoubleSpinBox" name="stepBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>step: </string>
               </property>
@@ -806,6 +836,9 @@
             </item>
             <item row="0" column="3">
              <widget class="QSpinBox" name="numBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="suffix">
                <string/>
               </property>
@@ -825,6 +858,9 @@
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="startBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>start: </string>
               </property>
@@ -847,6 +883,9 @@
             </item>
             <item row="1" column="4">
              <widget class="QSpinBox" name="NstepBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="suffix">
                <string/>
               </property>
@@ -883,6 +922,9 @@
             </item>
             <item row="1" column="1">
              <widget class="QSpinBox" name="NstartBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="suffix">
                <string/>
               </property>
@@ -899,6 +941,9 @@
             </item>
             <item row="1" column="3">
              <widget class="QSpinBox" name="NnumBox">
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="suffix">
                <string/>
               </property>
@@ -949,6 +994,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="showGroupSeparator" stdset="0">
+                 <bool>true</bool>
+                </property>
                 <property name="prefix">
                  <string>90 pulse: </string>
                 </property>
@@ -976,6 +1024,9 @@
                 </property>
                 <property name="toolTip">
                  <string>negative value implies 90 pulse x 2</string>
+                </property>
+                <property name="showGroupSeparator" stdset="0">
+                 <bool>true</bool>
                 </property>
                 <property name="prefix">
                  <string>180 pulse: </string>
@@ -1007,6 +1058,9 @@
                 </property>
                 <property name="toolTip">
                  <string>negative value implies 90 pulse x 3</string>
+                </property>
+                <property name="showGroupSeparator" stdset="0">
+                 <bool>true</bool>
                 </property>
                 <property name="prefix">
                  <string>270 pulse: </string>
@@ -1082,6 +1136,9 @@
                 <width>140</width>
                 <height>0</height>
                </size>
+              </property>
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
               </property>
               <property name="prefix">
                <string>ref width: </string>
@@ -1228,6 +1285,9 @@
                 <height>0</height>
                </size>
               </property>
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
+              </property>
               <property name="prefix">
                <string>sig delay: </string>
               </property>
@@ -1264,6 +1324,9 @@
                 <width>140</width>
                 <height>0</height>
                </size>
+              </property>
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
               </property>
               <property name="prefix">
                <string>ref delay: </string>
@@ -1388,6 +1451,9 @@
                 <width>160</width>
                 <height>0</height>
                </size>
+              </property>
+              <property name="showGroupSeparator" stdset="0">
+               <bool>true</bool>
               </property>
               <property name="prefix">
                <string>sig width: </string>
