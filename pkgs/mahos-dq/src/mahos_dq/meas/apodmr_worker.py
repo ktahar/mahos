@@ -517,33 +517,40 @@ class APODMRPulserBase(CommonPulserBase):
             return False
         return True
 
-    def _set_samples_per_trace(self, pd_rate: float, trace_length_ticks: int) -> bool:
-        self.samples_per_trace = max(1, int(round(trace_length_ticks / self.freq * pd_rate)))
+    def _samples_per_trace(
+        self, pd_rate: float, trace_length_ticks: int, freq: float
+    ) -> int | None:
+        samples_per_trace = max(1, int(round(trace_length_ticks / freq * pd_rate)))
         if not self._pd_spectrum:
-            return True
+            return samples_per_trace
 
         granularity = self.conf.get("pd_segment_granularity", 16)
         offset = self.conf.get("pd_segment_offset", 0)
         try:
-            adjusted = round_segment_samples_up(self.samples_per_trace, granularity=granularity)
+            adjusted = round_segment_samples_up(samples_per_trace, granularity=granularity)
             adjusted -= offset
         except ValueError:
             self.logger.exception("failed to round samples_per_trace to segment granularity")
-            return False
-        if adjusted != self.samples_per_trace:
+            return None
+        if adjusted <= 0:
+            self.logger.error(
+                "adjusted samples_per_trace is too short; increase laser_width or ROI window"
+            )
+            return None
+        if adjusted != samples_per_trace:
             self.logger.info(
                 "PD samples_per_trace adjusted: "
-                f"{self.samples_per_trace} to {adjusted} (granularity = {granularity} "
+                f"{samples_per_trace} to {adjusted} (granularity = {granularity} "
                 f"offset = {offset})"
             )
-        self.samples_per_trace = adjusted
-        trace_length_ticks = int(np.ceil(self.samples_per_trace * self.freq / pd_rate))
+        samples_per_trace = adjusted
+        trace_length_ticks = int(np.ceil(samples_per_trace * freq / pd_rate))
         if not self.builder.check_sample_duration(trace_length_ticks):
             self.logger.error(
                 "trace window overlaps the next trigger; reduce margins or pulse rate"
             )
-            return False
-        return True
+            return None
+        return samples_per_trace
 
     def init_start_pds(self, remaining_records: int | None) -> bool:
         params = self.data.get_params()
@@ -876,9 +883,12 @@ class Pulser(SGPGPulserBase, APODMRPulserBase):
             return False
         d = APODMRData(params, label)
         try:
-            blocks, freq, _, _, _ = self.generate_blocks(d)
+            blocks, freq, _, _, trace_length_ticks = self.generate_blocks(d)
+            pd_rate = params["pd"]["rate"]
         except (ValueError, KeyError) as e:
             self.logger.error(f"Invalid params for {label}: {e}")
+            return False
+        if self._samples_per_trace(pd_rate, trace_length_ticks, freq) is None:
             return False
         offsets = self.pg.validate_blocks(blocks, freq)
         return offsets is not None
@@ -898,8 +908,11 @@ class Pulser(SGPGPulserBase, APODMRPulserBase):
 
         pd_rate = params["pd"]["rate"]
         sample_period = 1.0 / pd_rate
-        if not self._set_samples_per_trace(pd_rate, trace_length_ticks):
+        spt = self._samples_per_trace(pd_rate, trace_length_ticks, self.freq)
+        if spt is None:
             return False
+        else:
+            self.samples_per_trace = spt
         self.trace_count = len(laser_timing)
         self.op.set_laser_timing(self.data, np.array(laser_timing) / self.freq)
         self.op.set_trace_laser_timing(self.data, params["roi_head"])
@@ -1049,9 +1062,12 @@ class AWGPulser(AWGPulserBase, APODMRPulserBase):
         d = APODMRData(params, label)
         try:
             self.make_generators(self.awg.get_digital_rate(params["awg"]["rate"]))
-            blocks, freq, _, _, _ = self.generate_blocks(d)
+            blocks, freq, _, _, trace_length_ticks = self.generate_blocks(d)
+            pd_rate = params["pd"]["rate"]
         except (ValueError, KeyError):
             self.logger.exception(f"Invalid params for {label}")
+            return False
+        if self._samples_per_trace(pd_rate, trace_length_ticks, freq) is None:
             return False
         try:
             num_mw = self.generators[label].num_mw()
@@ -1092,8 +1108,11 @@ class AWGPulser(AWGPulserBase, APODMRPulserBase):
 
         pd_rate = params["pd"]["rate"]
         sample_period = 1.0 / pd_rate
-        if not self._set_samples_per_trace(pd_rate, trace_length_ticks):
+        spt = self._samples_per_trace(pd_rate, trace_length_ticks, self.freq)
+        if spt is None:
             return False
+        else:
+            self.samples_per_trace = spt
         self.trace_count = len(laser_timing)
         self.op.set_laser_timing(self.data, np.array(laser_timing) / self.freq)
         self.op.set_trace_laser_timing(self.data, params["roi_head"])
