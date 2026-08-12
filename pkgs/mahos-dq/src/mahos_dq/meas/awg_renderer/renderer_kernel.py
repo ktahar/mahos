@@ -15,7 +15,7 @@ forms of :class:`AWGInterface <mahos.inst.awg_interface.AWGInterface>`:
 Block-channel interpretation
 ----------------------------
 
-- ``laser``, ``trigger`` (any name in ``RenderParams.digital_channels``)
+- ``trigger``, ``laser`` (any name in ``RenderParams.digital_channels``)
   become digital outputs.
 - Per MW tone k (:class:`MWTone`): digital channel ``mw``/``mw1`` gates the
   tone on/off; ``AnalogChannel("mw_phase"/"mw1_phase", value)`` sets its
@@ -142,7 +142,7 @@ class RenderParams:
     num_logical_mw: int = 1
     load_impedance: float = 50.0
     phase_degree: bool = True
-    digital_channels: tuple[str, ...] = ("laser", "trigger")
+    digital_channels: tuple[str, ...] = ("trigger", "laser")
     drop_channels: tuple[str, ...] = ("sync",)
     amplitude_mV: dict[int, float] | None = None
 
