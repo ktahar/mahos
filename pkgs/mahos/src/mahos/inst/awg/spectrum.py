@@ -1103,7 +1103,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
     :type trigger_termination_50: bool
     :param markers: mapping marker name to a route with ``line`` (XIO line index)
         and ``source`` (physical analog channel carrying the embedded bit). The default is
-        ``{"laser": {"line": 0, "source": 0}, "trigger": {"line": 1, "source": 0}}``.
+        ``{"trigger": {"line": 0, "source": 0}, "laser": {"line": 1, "source": 0}}``.
         A integer value is interpreted as an XIO line sourced from channel 0.
         Every configured source channel must be active when uploading a waveform.
     :type markers: dict[str, dict[str, int] | int]
@@ -1168,8 +1168,8 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         raw_markers = self.conf.get(
             "markers",
             {
-                "laser": {"line": 0, "source": 0},
-                "trigger": {"line": 1, "source": 0},
+                "trigger": {"line": 0, "source": 0},
+                "laser": {"line": 1, "source": 0},
             },
         )
         self.markers = self._parse_marker_routes(raw_markers)
