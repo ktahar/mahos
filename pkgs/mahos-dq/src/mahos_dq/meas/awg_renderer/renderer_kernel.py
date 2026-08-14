@@ -31,7 +31,7 @@ Conventions
 
 - Carrier synthesis uses the global-time LO model (phase-coherent) by default: each
   physical analog output is the sum of its assigned tones,
-  ``rf_c(t) = sum_k on_k(t) * a_k * cos(2 pi f_k t + phi_k(t))``, with ``t``
+  ``mw_c(t) = sum_k on_k(t) * a_k * sin(2 pi f_k t + phi_k(t))``, with ``t``
   the global sample time. With ``RenderParams.local_phase``, each tone instead
   uses time relative to the first rendered sample of every contiguous high interval
   of its MW gate. Tone amplitudes come from ``power`` in dBm via the
@@ -430,7 +430,7 @@ def _render_pattern(
                     t = (sample_indices - state.origin) / rate
                 else:
                     t = sample_indices / rate
-                analog[tone.awg_channel][sl] += frac * np.cos(2.0 * math.pi * tone.freq * t + phi)
+                analog[tone.awg_channel][sl] += frac * np.sin(2.0 * math.pi * tone.freq * t + phi)
         s_prev = s_next
 
     if s_prev != n:  # defensive; n is computed from the same rounding
