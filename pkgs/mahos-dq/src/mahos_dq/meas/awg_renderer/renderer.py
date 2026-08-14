@@ -179,8 +179,8 @@ class AWGRenderer(object):
         """Render `blocks` and validate against the instrument bounds.
 
         :param pg_freq: logical time base of the blocks in Hz.
-        :param params: ``freq``/``power`` (+ optional ``freq1``/``power1``) in
-            Hz/dBm, optional ``nomw``.
+        :param params: measurement parameters including ``awg.rate`` and optional
+            ``awg.local_phase``.
         :returns: render meta-data dict (also accessible through :meth:`get_meta_data`).
         :raises ValueError: on inconsistent params, amplitude limit or memory
             violation, or sequence-form incompatibility.
@@ -203,6 +203,7 @@ class AWGRenderer(object):
             analog_channels=self.channels,
             num_logical_mw=num_logical_mw,
             load_impedance=bounds["load_impedance"],
+            local_phase=params["awg"].get("local_phase", False),
         )
         self._validate_tone_freqs(rate, tones)
 

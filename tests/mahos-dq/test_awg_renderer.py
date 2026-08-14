@@ -105,6 +105,82 @@ def test_render_flat_synthesizes_phase_coherent_tone_and_digital_track():
     assert result.max_rounding_error_sec == 0.0
 
 
+def test_render_flat_resets_local_phase_at_each_mw_pulse():
+    blocks = Blocks(
+        [
+            Block(
+                "pulses",
+                [
+                    (("mw", A("mw_phase", 30.0)), 2),
+                    (None, 1),
+                    (("mw", A("mw_phase", 30.0)), 2),
+                ],
+            )
+        ]
+    )
+    params = K.RenderParams(
+        tones=[K.MWTone("mw", "mw_phase", freq=1.0, power=-10.0)],
+        local_phase=True,
+    )
+
+    result = K.render_flat(blocks, pg_freq=10.0, rate=10.0, params=params, granularity=(1, 1))
+
+    pulse = np.cos(2.0 * np.pi * np.arange(2) / 10.0 + np.pi / 6.0)
+    np.testing.assert_allclose(result.analog[0], [pulse[0], pulse[1], 0.0, *pulse], atol=1e-15)
+
+
+def test_render_flat_keeps_local_carrier_contiguous_across_blocks_and_phase_changes():
+    blocks = Blocks(
+        [
+            Block("first", [(("mw", A("mw_phase", 0.0)), 2)]),
+            Block("second", [(("mw", A("mw_phase", 90.0)), 2)]),
+        ]
+    )
+    params = K.RenderParams(
+        tones=[K.MWTone("mw", "mw_phase", freq=1.0, power=-10.0)],
+        local_phase=True,
+    )
+
+    result = K.render_flat(blocks, pg_freq=8.0, rate=8.0, params=params, granularity=(1, 1))
+
+    expected = np.concatenate(
+        (
+            np.cos(2.0 * np.pi * np.arange(2) / 8.0),
+            np.cos(2.0 * np.pi * np.arange(2, 4) / 8.0 + np.pi / 2.0),
+        )
+    )
+    np.testing.assert_allclose(result.analog[0], expected, atol=1e-15)
+
+
+def test_render_flat_resets_logical_mw_tones_independently():
+    blocks = Blocks(
+        [
+            Block(
+                "two_tones",
+                [
+                    (("mw", A("mw_phase", 0.0)), 1),
+                    (("mw", "mw1", A("mw_phase", 0.0), A("mw1_phase", 0.0)), 2),
+                ],
+            )
+        ]
+    )
+    params = K.RenderParams(
+        tones=[
+            K.MWTone("mw", "mw_phase", freq=1.0, power=-10.0, awg_channel=0),
+            K.MWTone("mw1", "mw1_phase", freq=1.0, power=-10.0, awg_channel=1),
+        ],
+        analog_channels=(0, 1),
+        num_logical_mw=2,
+        local_phase=True,
+    )
+
+    result = K.render_flat(blocks, pg_freq=8.0, rate=8.0, params=params, granularity=(1, 1))
+
+    phase = 2.0 * np.pi * np.arange(3) / 8.0
+    np.testing.assert_allclose(result.analog[0], np.cos(phase), atol=1e-15)
+    np.testing.assert_allclose(result.analog[1], [0.0, 1.0, np.cos(np.pi / 4.0)], atol=1e-15)
+
+
 def test_render_flat_supports_two_physical_channels_and_logical_mw_channels():
     blocks = Blocks(
         [

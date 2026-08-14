@@ -29,10 +29,12 @@ Block-channel interpretation
 Conventions
 -----------
 
-- Carrier synthesis uses the global-time LO model (phase-coherent): each
+- Carrier synthesis uses the global-time LO model (phase-coherent) by default: each
   physical analog output is the sum of its assigned tones,
   ``rf_c(t) = sum_k on_k(t) * a_k * cos(2 pi f_k t + phi_k(t))``, with ``t``
-  the global sample time. Tone amplitudes come from ``power`` in dBm via the
+  the global sample time. With ``RenderParams.local_phase``, each tone instead
+  uses time relative to the first rendered sample of every contiguous high interval
+  of its MW gate. Tone amplitudes come from ``power`` in dBm via the
   configured load impedance: ``V_k = dBm_to_mVpeak(power_k)``. The card
   amplitude of each output should be set to :func:`required_amplitude_mV`
   (the sum of tone peaks assigned to that output); pass the values actually
@@ -129,6 +131,8 @@ class RenderParams:
     :ivar num_logical_mw: Number of logical MW channels.
     :ivar load_impedance: Ohm, for dBm -> voltage conversion.
     :ivar phase_degree: if True (False), phase AnalogChannel values are in degrees (radians).
+    :ivar local_phase: reset each tone's carrier phase on the first rendered sample of every
+        contiguous high interval of its logical MW gate.
     :ivar digital_channels: block channels routed to digital outputs.
     :ivar drop_channels: block channels to discard silently (e.g. ``sync``).
     :ivar amplitude_mV: mapping physical output channel to the full-scale card
@@ -142,6 +146,7 @@ class RenderParams:
     num_logical_mw: int = 1
     load_impedance: float = 50.0
     phase_degree: bool = True
+    local_phase: bool = False
     digital_channels: tuple[str, ...] = ("trigger", "laser")
     drop_channels: tuple[str, ...] = ("sync",)
     amplitude_mV: dict[int, float] | None = None
@@ -168,6 +173,14 @@ class FlatResult:
         """Digital tracks as compact RLE lists (value, n_samples) for cheap transport."""
 
         return {name: rle_encode(track) for name, track in self.digital.items()}
+
+
+@dataclass
+class _ToneState:
+    """Keeps Tone's active state and current sampling point origin for local-phase rendering."""
+
+    active: bool = False
+    origin: int = 0
 
 
 def rle_encode(track: np.ndarray) -> list[tuple[bool, int]]:
@@ -243,6 +256,8 @@ def _as_blocks(blocks: Blocks[Block] | T.Sequence[Block]) -> list[Block]:
 
 def _validate_channels(blocks: list[Block], params: RenderParams):
     analog_channels = _analog_channels(params)
+    if not isinstance(params.local_phase, (bool, np.bool_)):
+        raise TypeError(f"local_phase must be a bool: {params.local_phase!r}")
     if (
         isinstance(params.num_logical_mw, bool)
         or not isinstance(params.num_logical_mw, int)
@@ -359,6 +374,7 @@ def _render_pattern(
     params: RenderParams,
     fractions: list[float],
     block: Block,
+    tone_states: list[_ToneState],
     t0_pg: int = 0,
 ) -> tuple[dict[int, np.ndarray], dict[str, np.ndarray], float]:
     """Render one pulse pattern into analog outputs, digital tracks, and max error.
@@ -402,10 +418,18 @@ def _render_pattern(
         for ch in params.digital_channels:
             if ch in channels:
                 tracks[ch][sl] = True
-        t = (start_sample + np.arange(s_prev, s_next, dtype=np.float64)) / rate
-        for tone, frac in zip(params.tones, fractions):
-            if frac > 0.0 and tone.channel in channels:
+        sample_indices = start_sample + np.arange(s_prev, s_next, dtype=np.float64)
+        for tone, state, frac in zip(params.tones, tone_states, fractions):
+            on = tone.channel in channels
+            if on and not state.active:
+                state.origin = start_sample + s_prev
+            state.active = on
+            if frac > 0.0 and on:
                 phi = _tone_phase(block, tone, channels, params.phase_degree)
+                if params.local_phase:
+                    t = (sample_indices - state.origin) / rate
+                else:
+                    t = sample_indices / rate
                 analog[tone.awg_channel][sl] += frac * np.cos(2.0 * math.pi * tone.freq * t + phi)
         s_prev = s_next
 
@@ -464,6 +488,7 @@ def render_flat(
     }
     track_parts: dict[str, list[np.ndarray]] = {ch: [] for ch in params.digital_channels}
     max_err = 0.0
+    tone_states = [_ToneState() for _ in params.tones]
 
     t_pg = 0  # global cumulative pg samples
     s0 = 0  # global cumulative AWG samples
@@ -473,7 +498,16 @@ def render_flat(
         t_pg += b.total_length()
         s1 = round(t_pg * ratio)
         a, tracks, err = _render_pattern(
-            b.total_pattern(), s0, s1 - s0, rate, ratio, params, fractions, b, t0_pg=t0
+            b.total_pattern(),
+            s0,
+            s1 - s0,
+            rate,
+            ratio,
+            params,
+            fractions,
+            b,
+            tone_states,
+            t0_pg=t0,
         )
         max_err = max(max_err, err)
         for channel, output in a.items():

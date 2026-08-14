@@ -1662,6 +1662,10 @@ class AWGPulserBase(CommonPulserBase):
 
         params["awg"] = P.ParamDict(
             rate=self._awg_rate_param(awg_bounds),
+            local_phase=P.BoolParam(
+                False,
+                doc="Reset the carrier phase at the beginning of each MW pulse",
+            ),
             file_transport=P.BoolParam(
                 False, doc="Transport the rendered AWG waveform through a shared HDF5 file"
             ),
