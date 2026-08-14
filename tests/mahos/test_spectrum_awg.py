@@ -103,12 +103,12 @@ def test_configure_immediate_waveform_and_lifecycle(awg):
     assert awg.get("offsets") == [0]
     info = awg.get("waveform_info")
     assert info["analog_channels"] == [0]
-    assert info["marker_bits"] == {"laser": 15, "trigger": 14}
-    assert info["marker_lines"] == {"laser": 0, "trigger": 1}
+    assert info["marker_bits"] == {"trigger": 15, "laser": 14}
+    assert info["marker_lines"] == {"trigger": 0, "laser": 1}
 
     _, markers = unpack_waveform(awg._core.last_upload["samples"][0], n_markers=2)
-    np.testing.assert_array_equal(markers[0], laser)
-    np.testing.assert_array_equal(markers[1], np.zeros(64, dtype=bool))
+    np.testing.assert_array_equal(markers[0], np.zeros(64, dtype=bool))
+    np.testing.assert_array_equal(markers[1], laser)
 
     assert awg.get("finished")
     assert awg.start()
@@ -226,7 +226,7 @@ def test_configure_waveforms_file(tmp_path):
         assert inst._core.last_upload["loops"] == 3
         _, markers = unpack_waveform(inst._core.last_upload["samples"][0], n_markers=2)
         expected = np.repeat([False, True, False], [16, 16, 32])
-        np.testing.assert_array_equal(markers[0], expected)
+        np.testing.assert_array_equal(markers[1], expected)
 
         assert not inst.configure({"file_name": "../waveforms.h5", "rate": 5e9}, "waveforms_file")
         assert not inst.configure({"file_name": r"..\waveforms.h5", "rate": 5e9}, "waveforms_file")
@@ -246,8 +246,8 @@ def test_bounds_report_waveform_capabilities(awg):
     assert bounds["amplitude_mV"] == (1, 100)
     assert bounds["granularity"] == (8, 8)
     assert bounds["digital_lines"] == {
-        "laser": {"line": 0, "source": 0},
-        "trigger": {"line": 1, "source": 0},
+        "trigger": {"line": 0, "source": 0},
+        "laser": {"line": 1, "source": 0},
     }
     assert bounds["digital_min_duration"] == 4e-9
     assert not bounds["has_sequence_mode"]
