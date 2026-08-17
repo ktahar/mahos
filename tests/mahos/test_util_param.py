@@ -24,6 +24,9 @@ def test_param_accessor():
         "rate": 1.5,
         "zero_float": 0.0,
         "nested": {},
+        "integers": [0, np.int32(1)],
+        "positive_integers": (1, np.int64(2)),
+        "positive_numbers": [1, np.float32(2.0)],
         "numbers": [1, 2.0],
         "bounds": [-1.0, 1.0],
         "levels": (3, 2, 1),
@@ -43,7 +46,12 @@ def test_param_accessor():
     assert p.nonneg_num("offset") == 0
     assert "nested" in p
     assert p.get("nested") == {}
+    assert p.integers("integers") is params["integers"]
+    assert p.pos_integers("positive_integers") is params["positive_integers"]
+    assert p.nonneg_integers("integers") is params["integers"]
     assert p.numbers("numbers") is params["numbers"]
+    assert p.pos_numbers("positive_numbers") is params["positive_numbers"]
+    assert p.nonneg_numbers("numbers") is params["numbers"]
     assert p.ascending_numbers("bounds") is params["bounds"]
     assert p.descending_numbers("levels") is params["levels"]
     assert p.int("missing", 3) == 3
@@ -76,6 +84,11 @@ def test_param_accessor():
         ("float", float("inf")),
         ("pos_float", 0.0),
         ("nonneg_float", -1.0),
+        ("integers", [1, 2.0]),
+        ("pos_integers", [1, 0]),
+        ("nonneg_integers", [0, -1]),
+        ("pos_numbers", [1.0, 0]),
+        ("nonneg_numbers", [0, -1.0]),
     ],
 )
 def test_param_accessor_rejects_invalid_numbers(method, value):

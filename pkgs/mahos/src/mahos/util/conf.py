@@ -141,6 +141,66 @@ class ConfAccessorMixin(object):
         return V.check_nonneg_num(v, key)
 
     @T.overload
+    def _conf_integers(self, key: str, length: int | None = None) -> V.IntegerSequence: ...
+
+    @T.overload
+    def _conf_integers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.IntegerSequence,
+    ) -> V.IntegerSequence: ...
+
+    def _conf_integers(
+        self,
+        key: str,
+        length: int | None = None,
+        default: object = _MISSING,
+    ) -> V.IntegerSequence:
+        v = self._conf_get(key, default)
+        return V.check_integers(v, length, key)
+
+    @T.overload
+    def _conf_pos_integers(self, key: str, length: int | None = None) -> V.IntegerSequence: ...
+
+    @T.overload
+    def _conf_pos_integers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.IntegerSequence,
+    ) -> V.IntegerSequence: ...
+
+    def _conf_pos_integers(
+        self,
+        key: str,
+        length: int | None = None,
+        default: object = _MISSING,
+    ) -> V.IntegerSequence:
+        v = self._conf_get(key, default)
+        return V.check_pos_integers(v, length, key)
+
+    @T.overload
+    def _conf_nonneg_integers(self, key: str, length: int | None = None) -> V.IntegerSequence: ...
+
+    @T.overload
+    def _conf_nonneg_integers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.IntegerSequence,
+    ) -> V.IntegerSequence: ...
+
+    def _conf_nonneg_integers(
+        self,
+        key: str,
+        length: int | None = None,
+        default: object = _MISSING,
+    ) -> V.IntegerSequence:
+        v = self._conf_get(key, default)
+        return V.check_nonneg_integers(v, length, key)
+
+    @T.overload
     def _conf_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
 
     @T.overload
@@ -159,6 +219,46 @@ class ConfAccessorMixin(object):
     ) -> V.NumberSequence:
         v = self._conf_get(key, default)
         return V.check_numbers(v, length, key)
+
+    @T.overload
+    def _conf_pos_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
+
+    @T.overload
+    def _conf_pos_numbers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
+
+    def _conf_pos_numbers(
+        self,
+        key: str,
+        length: int | None = None,
+        default: object = _MISSING,
+    ) -> V.NumberSequence:
+        v = self._conf_get(key, default)
+        return V.check_pos_numbers(v, length, key)
+
+    @T.overload
+    def _conf_nonneg_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
+
+    @T.overload
+    def _conf_nonneg_numbers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
+
+    def _conf_nonneg_numbers(
+        self,
+        key: str,
+        length: int | None = None,
+        default: object = _MISSING,
+    ) -> V.NumberSequence:
+        v = self._conf_get(key, default)
+        return V.check_nonneg_numbers(v, length, key)
 
     @T.overload
     def _conf_ascending_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...

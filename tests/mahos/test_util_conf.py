@@ -60,12 +60,29 @@ def test_conf_accessor_preserves_numpy_scalar():
 
 
 def test_conf_accessor_number_sequences():
+    integers = [np.int32(0), 1]
+    positive_integers = (np.int64(1), 2)
     numbers = [np.int32(1), 2.0]
+    positive_numbers = (np.float32(1.0), 2)
     ascending = [1, np.float32(2.0)]
     descending = (2.0, np.int64(1))
-    owner = ConfOwner({"numbers": numbers, "ascending": ascending, "descending": descending})
+    owner = ConfOwner(
+        {
+            "integers": integers,
+            "positive_integers": positive_integers,
+            "numbers": numbers,
+            "positive_numbers": positive_numbers,
+            "ascending": ascending,
+            "descending": descending,
+        }
+    )
 
+    assert owner._conf_integers("integers", 2) is integers
+    assert owner._conf_pos_integers("positive_integers", 2) is positive_integers
+    assert owner._conf_nonneg_integers("integers", 2) is integers
     assert owner._conf_numbers("numbers", 2) is numbers
+    assert owner._conf_pos_numbers("positive_numbers", 2) is positive_numbers
+    assert owner._conf_nonneg_numbers("numbers", 2) is numbers
     assert owner._conf_ascending_numbers("ascending", 2) is ascending
     assert owner._conf_descending_numbers("descending", 2) is descending
     default = [0, 1]
@@ -75,6 +92,8 @@ def test_conf_accessor_number_sequences():
         ConfOwner({"values": [2, 1]})._conf_ascending_numbers("values", 2)
     with pytest.raises(ValidationError, match=r"values\[1\] must be finite number"):
         ConfOwner({"values": [1, float("inf")]})._conf_numbers("values", 2)
+    with pytest.raises(ValidationError, match=r"values\[1\] must be positive int"):
+        ConfOwner({"values": [1, 0]})._conf_pos_integers("values", 2)
 
 
 def test_preset_loader_exact_match():

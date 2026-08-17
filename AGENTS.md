@@ -33,6 +33,17 @@ variables, `PascalCase` for classes, and `UPPER_CASE` for constants.
 Generated UI code in `pkgs/mahos/src/mahos/gui/ui` and `pkgs/mahos-dq/src/mahos_dq/gui/ui`
 is excluded from formatting and linting.
 
+## Input Validation
+
+- Prefer the shared validation APIs over adding local helpers for common type, finiteness,
+  sign, sequence, and ordering checks.
+- For standalone values, use `import mahos.util.validation as V` and the module-level
+  `V.check_*()` functions.
+- For static configuration in `self.conf`, inherit from `ConfAccessorMixin` and use its
+  `_conf_*()` methods.
+- For dynamic parameter mappings, use `ParamAccessor` and its validated access methods.
+- Keep domain-specific constraints and cross-field validation in the domain code.
+
 ## Docstrings
 
 - Write all docstrings in reStructuredText (reST).

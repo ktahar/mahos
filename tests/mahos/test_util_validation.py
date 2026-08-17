@@ -78,7 +78,12 @@ def test_validation_error_message():
 @pytest.mark.parametrize(
     ("checker", "value"),
     [
+        (V.check_integers, [1, np.int32(2)]),
+        (V.check_pos_integers, (1, np.uint32(2))),
+        (V.check_nonneg_integers, [np.int64(0), 1]),
         (V.check_numbers, [1, np.float32(2.0)]),
+        (V.check_pos_numbers, (1, np.float32(2.0))),
+        (V.check_nonneg_numbers, [np.int32(0), 1.0]),
         (V.check_ascending_numbers, (1, np.float32(2.0))),
         (V.check_descending_numbers, [np.int32(2), 1]),
     ],
@@ -90,8 +95,17 @@ def test_check_number_sequence_preserves_value(checker, value):
 @pytest.mark.parametrize(
     ("checker", "value", "match"),
     [
+        (V.check_integers, [1, 2.0], r"bounds\[1\] must be int"),
+        (V.check_pos_integers, [1, 0], r"bounds\[1\] must be positive int"),
+        (V.check_nonneg_integers, [1, -1], r"bounds\[1\] must be non-negative int"),
         (V.check_numbers, [1], "list or tuple of 2 numbers"),
         (V.check_numbers, [1, float("inf")], r"bounds\[1\] must be finite number"),
+        (V.check_pos_numbers, [1, 0.0], r"bounds\[1\] must be positive finite number"),
+        (
+            V.check_nonneg_numbers,
+            [1, -1.0],
+            r"bounds\[1\] must be non-negative finite number",
+        ),
         (V.check_ascending_numbers, [1, 1], "strictly ascending numbers"),
         (V.check_descending_numbers, [1, 2], "strictly descending numbers"),
     ],

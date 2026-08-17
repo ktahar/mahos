@@ -19,6 +19,8 @@ from __future__ import annotations
 import math
 import decimal
 
+import mahos.util.validation as V
+
 SI_PREFIXES = "yzafpnµm kMGTPEZY"
 SI_PREFIXES_ASCII = "yzafpnum kMGTPEZY"
 
@@ -114,16 +116,14 @@ def dBm_to_Vpeak(power_dBm: float, impedance: float = 50.0) -> float:
 
     """
 
-    if impedance <= 0.0:
-        raise ValueError(f"impedance must be positive: {impedance}")
+    V.check_num(power_dBm, "power_dBm")
+    V.check_pos_num(impedance, "impedance")
     return math.sqrt(2.0 * impedance * 1e-3 * 10.0 ** (power_dBm / 10.0))
 
 
 def Vpeak_to_dBm(Vpeak: float, impedance: float = 50.0) -> float:
     """Inverse of :func:`dBm_to_Vpeak`: zero-to-peak sine voltage -> dBm."""
 
-    if Vpeak <= 0.0:
-        raise ValueError(f"volt_peak must be positive: {Vpeak}")
-    if impedance <= 0.0:
-        raise ValueError(f"impedance must be positive: {impedance}")
+    V.check_pos_num(Vpeak, "volt_peak")
+    V.check_pos_num(impedance, "impedance")
     return 10.0 * math.log10(Vpeak**2 / (2.0 * impedance) / 1e-3)

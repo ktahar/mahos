@@ -11,12 +11,13 @@ Parameter validation and access utilities.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Callable, overload
+from typing import Any, Callable, TypeVar, overload
 
 import mahos.util.validation as V
 
 
 _MISSING = object()
+_SequenceT = TypeVar("_SequenceT")
 
 
 class ParamError(V.ValidationError):
@@ -50,13 +51,13 @@ class ParamAccessor:
         except V.ValidationError as e:
             raise ParamError(str(e)) from None
 
-    def _numbers(
+    def _sequence(
         self,
-        validator: Callable[[V.NumberSequence, int | None, str], V.NumberSequence],
+        validator: Callable[[Any, int | None, str], _SequenceT],
         key: str,
         length: int | None,
         default: object = _MISSING,
-    ) -> V.NumberSequence:
+    ) -> _SequenceT:
         path, value = self._get(key, default)
         try:
             return validator(value, length, path)
@@ -204,6 +205,60 @@ class ParamAccessor:
         return self._validate(V.check_nonneg_num, value, path)
 
     @overload
+    def integers(self, key: str, length: int | None = None) -> V.IntegerSequence: ...
+
+    @overload
+    def integers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.IntegerSequence,
+    ) -> V.IntegerSequence: ...
+
+    def integers(
+        self, key: str, length: int | None = None, default: object = _MISSING
+    ) -> V.IntegerSequence:
+        """Return a list or tuple of integers without conversion, rejecting booleans."""
+
+        return self._sequence(V.check_integers, key, length, default)
+
+    @overload
+    def pos_integers(self, key: str, length: int | None = None) -> V.IntegerSequence: ...
+
+    @overload
+    def pos_integers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.IntegerSequence,
+    ) -> V.IntegerSequence: ...
+
+    def pos_integers(
+        self, key: str, length: int | None = None, default: object = _MISSING
+    ) -> V.IntegerSequence:
+        """Return positive integers without conversion, rejecting booleans."""
+
+        return self._sequence(V.check_pos_integers, key, length, default)
+
+    @overload
+    def nonneg_integers(self, key: str, length: int | None = None) -> V.IntegerSequence: ...
+
+    @overload
+    def nonneg_integers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.IntegerSequence,
+    ) -> V.IntegerSequence: ...
+
+    def nonneg_integers(
+        self, key: str, length: int | None = None, default: object = _MISSING
+    ) -> V.IntegerSequence:
+        """Return non-negative integers without conversion, rejecting booleans."""
+
+        return self._sequence(V.check_nonneg_integers, key, length, default)
+
+    @overload
     def numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
 
     @overload
@@ -219,7 +274,43 @@ class ParamAccessor:
     ) -> V.NumberSequence:
         """Return a list or tuple of finite numbers without conversion."""
 
-        return self._numbers(V.check_numbers, key, length, default)
+        return self._sequence(V.check_numbers, key, length, default)
+
+    @overload
+    def pos_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
+
+    @overload
+    def pos_numbers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
+
+    def pos_numbers(
+        self, key: str, length: int | None = None, default: object = _MISSING
+    ) -> V.NumberSequence:
+        """Return positive finite numbers without conversion, rejecting booleans."""
+
+        return self._sequence(V.check_pos_numbers, key, length, default)
+
+    @overload
+    def nonneg_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
+
+    @overload
+    def nonneg_numbers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
+
+    def nonneg_numbers(
+        self, key: str, length: int | None = None, default: object = _MISSING
+    ) -> V.NumberSequence:
+        """Return non-negative finite numbers without conversion, rejecting booleans."""
+
+        return self._sequence(V.check_nonneg_numbers, key, length, default)
 
     @overload
     def ascending_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
@@ -237,7 +328,7 @@ class ParamAccessor:
     ) -> V.NumberSequence:
         """Return strictly ascending finite numbers without conversion."""
 
-        return self._numbers(V.check_ascending_numbers, key, length, default)
+        return self._sequence(V.check_ascending_numbers, key, length, default)
 
     @overload
     def descending_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
@@ -255,7 +346,7 @@ class ParamAccessor:
     ) -> V.NumberSequence:
         """Return strictly descending finite numbers without conversion."""
 
-        return self._numbers(V.check_descending_numbers, key, length, default)
+        return self._sequence(V.check_descending_numbers, key, length, default)
 
     @overload
     def child(self, key: str) -> "ParamAccessor": ...
