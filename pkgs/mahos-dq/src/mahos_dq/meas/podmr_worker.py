@@ -1504,43 +1504,33 @@ class Pulser(SGPGPulserBase, PODMRPulserBase):
 
 
 class AWGPulserBase(CommonPulserBase):
-    def _validate_mw_channels(self):
-        raw_mw_channels = self.conf.get("mw_channels", {0: 0, 1: 0})
-        self.mw_channels = {}
-
-        if not isinstance(raw_mw_channels, dict):
-            raise ValueError("mw_channels must map source indices to physical AWG channels.")
-
-        for raw_source, physical in raw_mw_channels.items():
-            if isinstance(raw_source, (bool, np.bool_)):
-                raise ValueError(f"invalid mw_channels source index: {raw_source!r}")
-            if isinstance(raw_source, (int, np.integer)):
-                source = int(raw_source)
-            elif isinstance(raw_source, str):
-                try:
-                    source = int(raw_source)
-                except ValueError:
-                    raise ValueError(f"invalid mw_channels source index: {raw_source!r}") from None
-                if raw_source != str(source):
-                    raise ValueError(
-                        f"mw_channels source index must be a canonical integer string: "
-                        f"{raw_source!r}"
-                    )
-            else:
-                raise ValueError(f"invalid mw_channels source index: {raw_source!r}")
-            source = int(V.check_nonneg_int(source, "mw_channels source index"))
-            physical = V.check_nonneg_int(physical, f"physical AWG channel for source {source}")
-            if source in self.mw_channels:
-                raise ValueError(
-                    f"duplicate mw_channels source index after normalization: {source}"
-                )
-            self.mw_channels[source] = int(physical)
-        expected_sources = set(range(len(self.mw_channels)))
-        if set(self.mw_channels) != expected_sources:
-            raise ValueError(
-                f"mw_channels keys must be contiguous source indices "
-                f"{sorted(expected_sources)}: {sorted(self.mw_channels)}"
+    def _parse_mw_channels(self) -> dict[int, int]:
+        raw = self.conf.get("mw_channels", {0: 0, 1: 0})
+        if not isinstance(raw, dict):
+            raise V.ValidationError(
+                "mw_channels must map source indices to physical AWG channels."
             )
+        if any(
+            isinstance(source, (bool, np.bool_)) or not isinstance(source, (str, int, np.integer))
+            for source in raw
+        ):
+            raise V.ValidationError("mw_channels keys must be integer strings or integers.")
+        try:
+            sources = {source: int(source) for source in raw}
+        except ValueError:
+            raise V.ValidationError(
+                "mw_channels keys must be integer strings or integers."
+            ) from None
+        channels = {
+            sources[source]: int(V.check_nonneg_int(physical, f"mw_channels[{source!r}]"))
+            for source, physical in raw.items()
+        }
+
+        if len(channels) != len(raw) or set(channels) != set(range(len(channels))):
+            raise V.ValidationError("mw_channels keys must be contiguous starting at 0.")
+        if any(physical not in (0, 1) for physical in channels.values()):
+            raise V.ValidationError("mw_channels values must be 0 or 1.")
+        return channels
 
     def _init(self, cli):
         self._load_conf_preset(cli)
@@ -1548,14 +1538,12 @@ class AWGPulserBase(CommonPulserBase):
         self.awg = AWGInterface(cli, "awg")
         self.add_instruments(self.awg)
 
-        self._validate_mw_channels()
+        self.mw_channels = self._parse_mw_channels()
         self.awg_channels = tuple(sorted(set(self.mw_channels.values())))
         if not (1 <= len(self.awg_channels) <= 2):
             raise ValueError(
                 f"mw_channels must select one or two physical outputs: {self.mw_channels}"
             )
-        if any(channel not in (0, 1) for channel in self.awg_channels):
-            raise ValueError(f"physical AWG channels must be 0 or 1: {self.awg_channels}")
 
         self.renderer = AWGRenderer(
             self.awg,
