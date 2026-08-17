@@ -596,6 +596,16 @@
               </property>
              </spacer>
             </item>
+            <item row="6" column="3">
+             <widget class="QCheckBox" name="roundTimingBox">
+              <property name="text">
+               <string>round timing</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -1903,6 +1913,7 @@
   <tabstop>divideblockBox</tabstop>
   <tabstop>methodBox</tabstop>
   <tabstop>partialBox</tabstop>
+  <tabstop>roundTimingBox</tabstop>
   <tabstop>basewidthBox</tabstop>
   <tabstop>ldelayBox</tabstop>
   <tabstop>lwidthBox</tabstop>

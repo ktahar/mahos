@@ -12,34 +12,15 @@ from __future__ import annotations
 
 import numpy as np
 
-from mahos.msgs.common_msgs import BinaryState, Status
-
-# just for re-export: MWMode, ValidateReq, and UpdatePlotParamsReq
+# classes other than PODMRData are just for re-export
 from mahos_dq.msgs.podmr_msgs import (  # noqa: F401
     PODMRData,
     MWMode,
     ValidateReq,
+    GetTimingInfoReq,
+    TimingInfo,
     UpdatePlotParamsReq,
 )
-
-
-class APODMRStatus(Status):
-    """Status message for APODMR measurements.
-
-    :ivar state: Measurement state (IDLE/ACTIVE).
-    :ivar pg_freq: Pulse generator frequency used by the current sequence.
-
-    """
-
-    def __init__(self, state: BinaryState, pg_freq: float):
-        self.state = state
-        self.pg_freq = pg_freq
-
-    def __repr__(self):
-        return f"APODMRStatus({self.state}, {self.pg_freq * 1e-9:.2f} GHz)"
-
-    def __str__(self):
-        return f"APODMR({self.state.name}, {self.pg_freq * 1e-9:.2f} GHz)"
 
 
 class APODMRData(PODMRData):

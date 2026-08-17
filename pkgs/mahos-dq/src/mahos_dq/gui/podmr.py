@@ -9,6 +9,7 @@ GUI frontend of Pulse ODMR.
 """
 
 from __future__ import annotations
+import math
 import typing as T
 import os
 import time
@@ -27,10 +28,10 @@ from mahos_dq.gui.ui.podmr_nmr_table import Ui_NMRTable
 from mahos_dq.gui.ui.podmr_autosave import Ui_PODMRAutoSave
 from mahos_dq.gui.podmr_client import QPODMRClient
 
-from mahos.msgs.common_msgs import BinaryState
+from mahos.msgs.common_msgs import BinaryStatus, BinaryState
 from mahos.msgs.common_meas_msgs import Buffer
 from mahos.msgs import param_msgs as P
-from mahos_dq.msgs.podmr_msgs import PODMRStatus, PODMRData
+from mahos_dq.msgs.podmr_msgs import PODMRData, TimingInfo
 from mahos.node.global_params import GlobalParamsClient
 from mahos.gui.gui_node import GUINode
 from mahos.gui.common_widget import ClientWidget
@@ -45,12 +46,20 @@ from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
 from mahos.node.node import local_conf, join_name
 from mahos.util.plot import colors_tab20_pair
 from mahos.util.timer import seconds_to_hms
-from mahos.util.math_phys import round_halfint, round_evenint
 from mahos.util.conv import real_fft
 from mahos.util.unit import SI_format, dBm_to_Vpeak
 
 
 Policy = QtWidgets.QSizePolicy.Policy
+
+
+def decimals_for_period(period_ns: float, minimum: int = 1, maximum: int = 6) -> int:
+    """Return display precision sufficient for a clock period in nanoseconds."""
+
+    for decimals in range(minimum, maximum + 1):
+        if math.isclose(round(period_ns, decimals), period_ns, rel_tol=1e-6, abs_tol=1e-9):
+            return decimals
+    return maximum
 
 
 class QNumTableWidgetItem(QtWidgets.QTableWidgetItem):
@@ -861,7 +870,8 @@ class PODMRWidgetBase(ClientWidget):
         self._finalizing = False
         self._has_fg = False
         self._found_sg1 = False
-        self._pg_freq = None
+        self._timing_info: TimingInfo | None = None
+        self._timing_params_key = None
         self._params = None
         self._meas_state = BinaryState.IDLE
 
@@ -922,13 +932,11 @@ class PODMRWidgetBase(ClientWidget):
         self.fg_buttons = QtWidgets.QButtonGroup(parent=self)
         set_group(self.fg_buttons, 0, [b for b, l in self.get_fg_mode_dict()])
 
-    def init_with_status(self, status: PODMRStatus):
+    def init_with_status(self, status: BinaryStatus):
         """initialize widget after receiving first status."""
 
         # only once.
         self.cli.statusUpdated.disconnect(self.init_with_status)
-
-        self._pg_freq = status.pg_freq
 
         self.methodBox.clear()
         methods = P.filter_out_label_prefix("fit", self.cli.get_param_dict_labels())
@@ -945,7 +953,6 @@ class PODMRWidgetBase(ClientWidget):
         self.switch_method()
 
         self.cli.stateUpdated.connect(self.update_state)
-        self.cli.statusUpdated.connect(self.update_status)
         self.cli.dataUpdated.connect(self.update_data)
         self.cli.bufferUpdated.connect(self.update_buffer)
         self.cli.stopped.connect(self.finalize)
@@ -978,6 +985,7 @@ class PODMRWidgetBase(ClientWidget):
         self._method_handler = ParamDictComboBoxHandler(self.methodBox)
         self.methodBox.currentIndexChanged.connect(self.switch_method)
         self.partialBox.currentIndexChanged.connect(self.switch_partial)
+        self.paramTable.paramsChanged.connect(self.update_timing_info)
 
         self._wire_plot_widgets(True)
         self.plotenableBox.toggled.connect(self.update_plot_enable)
@@ -1074,11 +1082,11 @@ class PODMRWidgetBase(ClientWidget):
 
     def update_stop(self):
         stop = self.startBox.value() + self.stepBox.value() * (self.numBox.value() - 1)
-        self.stopLabel.setText(f"stop: {stop:.1f} ns")
+        self.stopLabel.setText(f"stop: {stop:_.1f} ns")
 
     def update_Nstop(self):
         Nstop = self.NstartBox.value() + self.NstepBox.value() * (self.NnumBox.value() - 1)
-        self.NstopLabel.setText(f"stop: {Nstop:d}")
+        self.NstopLabel.setText(f"stop: {Nstop:_d}")
 
     def update_volt_label(self, widget, power_dBm: float):
         imp = 50
@@ -1105,8 +1113,6 @@ class PODMRWidgetBase(ClientWidget):
         if params is None:
             return
         self._params = params
-        self.update_timing_freq_label()
-        self.update_timing_box_step()
         self.update_cond_widgets()
         self._apply_sg1(self._params)
         apply_widget_bounds(
@@ -1129,6 +1135,7 @@ class PODMRWidgetBase(ClientWidget):
         if "awg" in self._params:
             pp["awg"] = self._params["awg"]
         self.paramTable.update_contents(pp)
+        self.update_timing_info(force=True)
         self.reset_partial_modes(self._params["partial"].maximum())
         self.reset_plot_modes(
             self._params["plot"]["plotmode"].options(),
@@ -1520,12 +1527,15 @@ class PODMRWidgetBase(ClientWidget):
         self.cli.stop()
 
     def request_start(self):
-        self.round_timing_box_values()
-        self.start()
+        result = self.prepare_timing_params()
+        if result is not None:
+            self.start(*result)
 
     def request_validate(self):
-        self.round_timing_box_values()
-        if self.cli.validate(*self.get_params()):
+        result = self.prepare_timing_params()
+        if result is None:
+            return
+        if self.cli.validate(*result):
             QtWidgets.QMessageBox.information(
                 self, "Pulse validation", "Pulse parameters are valid."
             )
@@ -1536,10 +1546,9 @@ class PODMRWidgetBase(ClientWidget):
                 "Pulse parameters are invalid. See the log for details.",
             )
 
-    def start(self):
+    def start(self, params: dict, label: str):
         """start the measurement."""
 
-        params, label = self.get_params()
         title = "Continue?"
         body = (
             "Continue with current data?"
@@ -1752,16 +1761,12 @@ class PODMRWidgetBase(ClientWidget):
             self.initdelayBox,
             self.finaldelayBox,
             self.moffsetBox,
+            self.roundTimingBox,
             self.paramTable,
         ):
             w.setEnabled(state == BinaryState.IDLE)
 
         self._update_state_common(state, last_state)
-
-    def update_status(self, status: PODMRStatus):
-        if status.pg_freq != self._pg_freq:
-            self._pg_freq = status.pg_freq
-            self.update_timing_freq_label()
 
     # helper functions
 
@@ -1788,45 +1793,77 @@ class PODMRWidgetBase(ClientWidget):
             self.t270pulseBox,
         )
 
+    def timing_params_key(self):
+        """Return the parameters that can affect timing information."""
+
+        label = self.methodBox.currentText()
+        params = P.unwrap(self.paramTable.params())
+        awg_rate = params.get("awg", {}).get("rate")
+        return label, awg_rate
+
+    def update_timing_info(self, force: bool = False) -> TimingInfo | None:
+        """Fetch timing information and update timing controls when necessary."""
+
+        # The current non-AWG backend derives TimingInfo solely from its static pg_freq
+        # configuration. Reuse a successful result to avoid requests while the node is busy.
+        # Remove this short-circuit if non-AWG timing becomes parameter-dependent.
+        if not self.is_awg_mode() and self._timing_info is not None:
+            return self._timing_info
+
+        key = self.timing_params_key()
+        if not force and key == self._timing_params_key:
+            return self._timing_info
+
+        params, label = self.get_params()
+        self._timing_params_key = key
+        self._timing_info = self.cli.get_timing_info(params, label)
+        self.update_timing_freq_label()
+        self.update_timing_box_step()
+        return self._timing_info
+
     def update_timing_freq_label(self):
         name = "AWG digital rate" if self.is_awg_mode() else "PG freq"
-        f = SI_format(self._pg_freq, precision=4, suffix="Hz")
-        self.pgfreqLabel.setText(f"{name}: {f}")
+        if self._timing_info is None:
+            self.pgfreqLabel.setText(f"{name}: Unknown")
+            return
+
+        freq = SI_format(self._timing_info.pg_freq, precision=4, suffix="Hz")
+        period = SI_format(self._timing_info.period, precision=4, suffix="s")
+        self.pgfreqLabel.setText(f"{name}: {freq} ({period} period)")
 
     def update_timing_box_step(self):
-        if self.is_awg_mode():
-            step = 0.1
-        elif round(self._pg_freq) == round(2.0e9):
-            step = 0.5
-        elif round(self._pg_freq) == round(1.0e9):
-            step = 1.0
-        elif round(self._pg_freq) == round(0.5e9):
-            step = 2.0
-        else:
-            print(f"Cannot determine timing box step with PG freq {self._pg_freq * 1e-9:.2f} GHz")
-            step = 1.0
+        if self._timing_info is None:
+            return
 
+        step = self._timing_info.period * 1e9
+        decimals = decimals_for_period(step)
         for b in self.timing_boxes():
+            b.setDecimals(max(b.decimals(), decimals))
             b.setSingleStep(step)
 
     def round_timing_box_values(self):
-        """check and round values of QDoubleSpinBox for timing parameters."""
+        """Round timing parameters to the current digital clock period."""
 
-        if self.is_awg_mode():
+        if not self.roundTimingBox.isChecked() or self._timing_info is None:
             return
 
-        if round(self._pg_freq) == round(2.0e9):
-            _round = round_halfint
-        elif round(self._pg_freq) == round(1.0e9):
-            _round = round
-        elif round(self._pg_freq) == round(0.5e9):
-            _round = round_evenint
-        else:
-            print(f"Cannot determine round method with PG freq {self._pg_freq * 1e-9:.2f} GHz")
-            _round = round
-
+        period_ns = self._timing_info.period * 1e9
         for b in self.timing_boxes():
-            b.setValue(_round(b.value()))
+            b.setValue(round(b.value() / period_ns) * period_ns)
+
+    def prepare_timing_params(self) -> tuple[dict, str] | None:
+        """Fetch timing information, optionally round values, and rebuild parameters."""
+
+        if self.update_timing_info(force=True) is None:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Timing information unavailable",
+                "Failed to determine the digital timing resolution.",
+            )
+            return None
+
+        self.round_timing_box_values()
+        return self.get_params()
 
     def set_method(self, method: str):
         i = self.methodBox.findText(method)

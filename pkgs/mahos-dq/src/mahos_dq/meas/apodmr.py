@@ -10,7 +10,7 @@ Logic and instrument control part of Analog-PD Pulse ODMR.
 
 from __future__ import annotations
 
-from mahos.msgs.common_msgs import Reply, Request, StateReq, BinaryState
+from mahos.msgs.common_msgs import Reply, Request, StateReq, BinaryStatus, BinaryState
 from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
 from mahos.msgs.common_meas_msgs import Buffer
 from mahos.msgs.param_msgs import GetParamDictLabelsReq, GetParamDictReq
@@ -20,9 +20,10 @@ from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
 from mahos.meas.common_worker import DummyWorker, Switch
 from mahos_dq.msgs import apodmr_msgs
 from mahos_dq.msgs.apodmr_msgs import (
-    APODMRStatus,
     APODMRData,
     ValidateReq,
+    GetTimingInfoReq,
+    TimingInfo,
     UpdatePlotParamsReq,
 )
 from mahos_dq.meas.apodmr_worker import Pulser, AWGPulser, APODMRDataOperator
@@ -48,6 +49,10 @@ class APODMRClient(BasicMeasClient):
     def validate(self, params: dict, label: str) -> bool:
         rep = self.req.request(ValidateReq(params, label))
         return rep.success
+
+    def get_timing_info(self, params: dict, label: str) -> TimingInfo | None:
+        rep = self.req.request(GetTimingInfoReq(params, label))
+        return rep.ret
 
 
 class APODMR(BasicMeasNode):
@@ -140,7 +145,7 @@ class APODMR(BasicMeasNode):
                 return Reply(False, "Failed to start worker.", ret=self.state)
 
         self.state = msg.state
-        self.status_pub.publish(APODMRStatus(state=self.state, pg_freq=self.worker.pg_freq()))
+        self.status_pub.publish(BinaryStatus(state=self.state))
         return Reply(True)
 
     def update_plot_params(self, msg: UpdatePlotParamsReq) -> Reply:
@@ -202,11 +207,20 @@ class APODMR(BasicMeasNode):
     def validate(self, msg: ValidateReq) -> Reply:
         return Reply(self.worker.validate_params(msg.params, msg.label))
 
+    def get_timing_info(self, msg: GetTimingInfoReq) -> Reply:
+        """Get timing info for given measurement params."""
+
+        ret = self.worker.get_timing_info(msg.params, msg.label)
+        success = ret is not None
+        return Reply(success=success, ret=ret)
+
     def handle_req(self, msg: Request) -> Reply:
         if isinstance(msg, UpdatePlotParamsReq):
             return self.update_plot_params(msg)
         elif isinstance(msg, ValidateReq):
             return self.validate(msg)
+        elif isinstance(msg, GetTimingInfoReq):
+            return self.get_timing_info(msg)
         else:
             return Reply(False, "Invalid message type")
 
@@ -229,7 +243,7 @@ class APODMR(BasicMeasNode):
             self.worker.work()
 
     def _publish(self, publish_data: bool, publish_other: bool):
-        self.status_pub.publish(APODMRStatus(state=self.state, pg_freq=self.worker.pg_freq()))
+        self.status_pub.publish(BinaryStatus(state=self.state))
         if publish_data:
             self.data_pub.publish(self.worker.data_msg())
         if publish_other:

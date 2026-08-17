@@ -10,17 +10,18 @@ Logic and instrument control part of Pulse ODMR.
 
 from __future__ import annotations
 
-from mahos.msgs.common_msgs import Reply, Request, StateReq, BinaryState
+from mahos.msgs.common_msgs import Reply, Request, StateReq, BinaryStatus, BinaryState
 from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
 from mahos.msgs.common_meas_msgs import Buffer
 from mahos.msgs.param_msgs import GetParamDictLabelsReq, GetParamDictReq
 from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
 from mahos_dq.msgs import podmr_msgs
 from mahos_dq.msgs.podmr_msgs import (
-    PODMRStatus,
     PODMRData,
     UpdatePlotParamsReq,
     ValidateReq,
+    GetTimingInfoReq,
+    TimingInfo,
     DiscardReq,
     FindLaserTimingReq,
     ClearLaserTimingReq,
@@ -53,6 +54,10 @@ class PODMRClient(BasicMeasClient):
     def validate(self, params: dict, label: str) -> bool:
         rep = self.req.request(ValidateReq(params, label))
         return rep.success
+
+    def get_timing_info(self, params: dict, label: str) -> TimingInfo | None:
+        rep = self.req.request(GetTimingInfoReq(params, label))
+        return rep.ret
 
     def discard(self) -> bool:
         rep = self.req.request(DiscardReq())
@@ -163,7 +168,7 @@ class PODMR(BasicMeasNode):
 
         self.state = msg.state
         # publish changed state immediately to prevent StateManager from missing the change
-        self.status_pub.publish(PODMRStatus(state=self.state, pg_freq=self.worker.pg_freq()))
+        self.status_pub.publish(BinaryStatus(state=self.state))
         return Reply(True)
 
     def update_plot_params(self, msg: UpdatePlotParamsReq) -> Reply:
@@ -231,6 +236,13 @@ class PODMR(BasicMeasNode):
 
         return Reply(self.worker.validate_params(msg.params, msg.label))
 
+    def get_timing_info(self, msg: GetTimingInfoReq) -> Reply:
+        """Get timing info for given measurement params."""
+
+        ret = self.worker.get_timing_info(msg.params, msg.label)
+        success = ret is not None
+        return Reply(success=success, ret=ret)
+
     def discard(self, msg: DiscardReq) -> Reply:
         """Discard the data."""
 
@@ -255,6 +267,8 @@ class PODMR(BasicMeasNode):
             return self.update_plot_params(msg)
         elif isinstance(msg, ValidateReq):
             return self.validate(msg)
+        elif isinstance(msg, GetTimingInfoReq):
+            return self.get_timing_info(msg)
         elif isinstance(msg, DiscardReq):
             return self.discard(msg)
         elif isinstance(msg, FindLaserTimingReq):
@@ -283,7 +297,7 @@ class PODMR(BasicMeasNode):
             self.worker.work()
 
     def _publish(self, publish_data: bool, publish_other: bool):
-        self.status_pub.publish(PODMRStatus(state=self.state, pg_freq=self.worker.pg_freq()))
+        self.status_pub.publish(BinaryStatus(state=self.state))
         if publish_data:
             self.data_pub.publish(self.worker.data_msg())
         if publish_other:

@@ -27,6 +27,7 @@ from mahos_dq.msgs.podmr_msgs import (
     is_CPlike,
     is_correlation,
     MWMode,
+    TimingInfo,
 )
 from mahos.msgs.inst.pg_msgs import AnalogChannel, PulsePattern
 from mahos.msgs.inst.tdc_msgs import ChannelStatus
@@ -665,7 +666,9 @@ class CommonPulserBase(Worker, ConfAccessorMixin, ABC):
     def _stop_generator_inst(self) -> bool: ...
 
     @abstractmethod
-    def pg_freq(self) -> float: ...
+    def get_timing_info(
+        self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
+    ) -> TimingInfo | None: ...
 
     @abstractmethod
     def validate_params(
@@ -1313,8 +1316,12 @@ class SGPGPulserBase(CommonPulserBase):
 
         return True
 
-    def pg_freq(self) -> float:
-        return self.conf["pg_freq"]
+    def get_timing_info(
+        self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
+    ) -> TimingInfo | None:
+        pg_freq = self.conf["pg_freq"]
+        period = 1.0 / pg_freq
+        return TimingInfo(pg_freq=pg_freq, period=period)
 
     @abstractmethod
     def _init_pg(self, params: dict) -> bool: ...
@@ -1574,8 +1581,24 @@ class AWGPulserBase(CommonPulserBase):
         self._pg_freq = 0.0
         self.make_generators(self.awg.get_digital_rate(awg_rate))
 
-    def pg_freq(self) -> float:
-        return self._pg_freq
+    def get_timing_info(
+        self, params: P.ParamDict[str, P.PDValue] | dict[str, P.RawPDValue], label: str
+    ) -> TimingInfo | None:
+        try:
+            params = P.unwrap(params)
+            awg_rate = params["awg"]["rate"]
+            pg_freq = self.awg.get_digital_rate(awg_rate)
+            if pg_freq is not None:
+                if math.isfinite(pg_freq) and pg_freq > 0.0:
+                    period = 1.0 / pg_freq
+                    return TimingInfo(pg_freq=pg_freq, period=period)
+                else:
+                    self.logger.error(f"Digital rate from AWG is invalid: {pg_freq}.")
+            else:
+                self.logger.error("Failed to get digital rate from AWG.")
+        except KeyError:
+            self.logger.exception("Invalid params to get timing info:")
+        return None
 
     def make_generators(self, pg_freq: float | None):
         if pg_freq == self._pg_freq:
