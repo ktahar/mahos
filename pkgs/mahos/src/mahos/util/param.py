@@ -11,14 +11,15 @@ Parameter validation and access utilities.
 from __future__ import annotations
 
 from collections.abc import Mapping
-import math
-from typing import Any, overload
+from typing import Any, Callable, overload
+
+import mahos.util.validation as V
 
 
 _MISSING = object()
 
 
-class ParamError(ValueError):
+class ParamError(V.ValidationError):
     """Error raised for a missing or invalid parameter."""
 
 
@@ -43,24 +44,24 @@ class ParamAccessor:
     def _raise_invalid(self, path: str, expected: str, value: Any) -> None:
         raise ParamError(f"{path} must be {expected}. Got {type(value).__name__}: {value!r}")
 
-    def _numbers(
-        self, key: str, length: int, default: object = _MISSING
-    ) -> tuple[float | int, ...]:
-        if length <= 0:
-            raise ValueError(f"length must be positive. Got {length}")
-        path, value = self._get(key, default)
-        if not isinstance(value, (list, tuple)) or len(value) != length:
-            self._raise_invalid(path, f"list or tuple of {length} numbers", value)
+    def _validate(self, validator: Callable[[Any, str], Any], value: Any, path: str) -> Any:
+        try:
+            return validator(value, path)
+        except V.ValidationError as e:
+            raise ParamError(str(e)) from None
 
-        numbers = []
-        for i, elem in enumerate(value):
-            elem_path = f"{path}[{i}]"
-            if isinstance(elem, bool) or not isinstance(elem, (float, int)):
-                self._raise_invalid(elem_path, "finite number", elem)
-            if isinstance(elem, float) and not math.isfinite(elem):
-                self._raise_invalid(elem_path, "finite number", elem)
-            numbers.append(elem)
-        return tuple(numbers)
+    def _numbers(
+        self,
+        validator: Callable[[V.NumberSequence, int | None, str], V.NumberSequence],
+        key: str,
+        length: int | None,
+        default: object = _MISSING,
+    ) -> V.NumberSequence:
+        path, value = self._get(key, default)
+        try:
+            return validator(value, length, path)
+        except V.ValidationError as e:
+            raise ParamError(str(e)) from None
 
     def __contains__(self, key: object) -> bool:
         return key in self._params
@@ -69,6 +70,18 @@ class ParamAccessor:
         """Return an unvalidated parameter value."""
 
         return self._params.get(key, default)
+
+    @overload
+    def bool(self, key: str) -> V.Boolean: ...
+
+    @overload
+    def bool(self, key: str, default: V.Boolean) -> V.Boolean: ...
+
+    def bool(self, key: str, default: object = _MISSING) -> V.Boolean:
+        """Return a boolean parameter."""
+
+        path, value = self._get(key, default)
+        return self._validate(V.check_bool, value, path)
 
     @overload
     def str(self, key: str) -> str: ...
@@ -80,169 +93,169 @@ class ParamAccessor:
         """Return a string parameter."""
 
         path, value = self._get(key, default)
-        if not isinstance(value, str):
-            self._raise_invalid(path, "str", value)
-        return value
+        return self._validate(V.check_str, value, path)
 
     @overload
-    def bool(self, key: str) -> bool: ...
+    def int(self, key: str) -> V.Integer: ...
 
     @overload
-    def bool(self, key: str, default: bool) -> bool: ...
+    def int(self, key: str, default: V.Integer) -> V.Integer: ...
 
-    def bool(self, key: str, default: object = _MISSING) -> bool:
-        """Return a boolean parameter."""
-
-        path, value = self._get(key, default)
-        if not isinstance(value, bool):
-            self._raise_invalid(path, "bool", value)
-        return value
-
-    @overload
-    def int(self, key: str) -> int: ...
-
-    @overload
-    def int(self, key: str, default: int) -> int: ...
-
-    def int(self, key: str, default: object = _MISSING) -> int:
+    def int(self, key: str, default: object = _MISSING) -> V.Integer:
         """Return an integer parameter, rejecting booleans."""
 
         path, value = self._get(key, default)
-        if isinstance(value, bool) or not isinstance(value, int):
-            self._raise_invalid(path, "int", value)
-        return value
+        return self._validate(V.check_int, value, path)
 
     @overload
-    def pos_int(self, key: str) -> int: ...
+    def pos_int(self, key: str) -> V.Integer: ...
 
     @overload
-    def pos_int(self, key: str, default: int) -> int: ...
+    def pos_int(self, key: str, default: V.Integer) -> V.Integer: ...
 
-    def pos_int(self, key: str, default: object = _MISSING) -> int:
+    def pos_int(self, key: str, default: object = _MISSING) -> V.Integer:
         """Return a positive integer parameter, rejecting booleans."""
 
         path, value = self._get(key, default)
-        if isinstance(value, bool) or not isinstance(value, int):
-            self._raise_invalid(path, "positive int", value)
-        if value <= 0:
-            self._raise_invalid(path, "positive int", value)
-        return value
+        return self._validate(V.check_pos_int, value, path)
 
     @overload
-    def nonneg_int(self, key: str) -> int: ...
+    def nonneg_int(self, key: str) -> V.Integer: ...
 
     @overload
-    def nonneg_int(self, key: str, default: int) -> int: ...
+    def nonneg_int(self, key: str, default: V.Integer) -> V.Integer: ...
 
-    def nonneg_int(self, key: str, default: object = _MISSING) -> int:
+    def nonneg_int(self, key: str, default: object = _MISSING) -> V.Integer:
         """Return a non-negative integer parameter, rejecting booleans."""
 
         path, value = self._get(key, default)
-        if isinstance(value, bool) or not isinstance(value, int):
-            self._raise_invalid(path, "non-negative int", value)
-        if value < 0:
-            self._raise_invalid(path, "non-negative int", value)
-        return value
+        return self._validate(V.check_nonneg_int, value, path)
 
     @overload
-    def num(self, key: str) -> float | int: ...
+    def float(self, key: str) -> V.Float: ...
 
     @overload
-    def num(self, key: str, default: float | int) -> float | int: ...
+    def float(self, key: str, default: V.Float) -> V.Float: ...
 
-    def num(self, key: str, default: object = _MISSING) -> float | int:
+    def float(self, key: str, default: object = _MISSING) -> V.Float:
+        """Return a finite floating-point parameter."""
+
+        path, value = self._get(key, default)
+        return self._validate(V.check_float, value, path)
+
+    @overload
+    def pos_float(self, key: str) -> V.Float: ...
+
+    @overload
+    def pos_float(self, key: str, default: V.Float) -> V.Float: ...
+
+    def pos_float(self, key: str, default: object = _MISSING) -> V.Float:
+        """Return a positive finite floating-point parameter."""
+
+        path, value = self._get(key, default)
+        return self._validate(V.check_pos_float, value, path)
+
+    @overload
+    def nonneg_float(self, key: str) -> V.Float: ...
+
+    @overload
+    def nonneg_float(self, key: str, default: V.Float) -> V.Float: ...
+
+    def nonneg_float(self, key: str, default: object = _MISSING) -> V.Float:
+        """Return a non-negative finite floating-point parameter."""
+
+        path, value = self._get(key, default)
+        return self._validate(V.check_nonneg_float, value, path)
+
+    @overload
+    def num(self, key: str) -> V.Number: ...
+
+    @overload
+    def num(self, key: str, default: V.Number) -> V.Number: ...
+
+    def num(self, key: str, default: object = _MISSING) -> V.Number:
         """Return a finite numeric parameter, rejecting booleans."""
 
         path, value = self._get(key, default)
-        if isinstance(value, bool) or not isinstance(value, (float, int)):
-            self._raise_invalid(path, "finite number", value)
-        if isinstance(value, float) and not math.isfinite(value):
-            self._raise_invalid(path, "finite number", value)
-        return value
+        return self._validate(V.check_num, value, path)
 
     @overload
-    def pos_num(self, key: str) -> float | int: ...
+    def pos_num(self, key: str) -> V.Number: ...
 
     @overload
-    def pos_num(self, key: str, default: float | int) -> float | int: ...
+    def pos_num(self, key: str, default: V.Number) -> V.Number: ...
 
-    def pos_num(self, key: str, default: object = _MISSING) -> float | int:
+    def pos_num(self, key: str, default: object = _MISSING) -> V.Number:
         """Return a positive finite numeric parameter, rejecting booleans."""
 
         path, value = self._get(key, default)
-        if (
-            isinstance(value, bool)
-            or not isinstance(value, (float, int))
-            or isinstance(value, float)
-            and not math.isfinite(value)
-        ):
-            self._raise_invalid(path, "positive finite number", value)
-        if value <= 0:
-            self._raise_invalid(path, "positive finite number", value)
-        return value
+        return self._validate(V.check_pos_num, value, path)
 
     @overload
-    def nonneg_num(self, key: str) -> float | int: ...
+    def nonneg_num(self, key: str) -> V.Number: ...
 
     @overload
-    def nonneg_num(self, key: str, default: float | int) -> float | int: ...
+    def nonneg_num(self, key: str, default: V.Number) -> V.Number: ...
 
-    def nonneg_num(self, key: str, default: object = _MISSING) -> float | int:
+    def nonneg_num(self, key: str, default: object = _MISSING) -> V.Number:
         """Return a non-negative finite numeric parameter, rejecting booleans."""
 
         path, value = self._get(key, default)
-        if (
-            isinstance(value, bool)
-            or not isinstance(value, (float, int))
-            or isinstance(value, float)
-            and not math.isfinite(value)
-        ):
-            self._raise_invalid(path, "non-negative finite number", value)
-        if value < 0:
-            self._raise_invalid(path, "non-negative finite number", value)
-        return value
+        return self._validate(V.check_nonneg_num, value, path)
 
     @overload
-    def ascending_numbers(self, key: str, length: int) -> tuple[float | int, ...]: ...
+    def numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
+
+    @overload
+    def numbers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
+
+    def numbers(
+        self, key: str, length: int | None = None, default: object = _MISSING
+    ) -> V.NumberSequence:
+        """Return a list or tuple of finite numbers without conversion."""
+
+        return self._numbers(V.check_numbers, key, length, default)
+
+    @overload
+    def ascending_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
 
     @overload
     def ascending_numbers(
         self,
         key: str,
-        length: int,
-        default: list[float | int] | tuple[float | int, ...],
-    ) -> tuple[float | int, ...]: ...
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
 
     def ascending_numbers(
-        self, key: str, length: int, default: object = _MISSING
-    ) -> tuple[float | int, ...]:
-        """Return a fixed-length sequence of strictly ascending finite numbers."""
+        self, key: str, length: int | None = None, default: object = _MISSING
+    ) -> V.NumberSequence:
+        """Return strictly ascending finite numbers without conversion."""
 
-        numbers = self._numbers(key, length, default)
-        if any(a >= b for a, b in zip(numbers, numbers[1:])):
-            self._raise_invalid(self._path(key), "strictly ascending numbers", numbers)
-        return numbers
+        return self._numbers(V.check_ascending_numbers, key, length, default)
 
     @overload
-    def descending_numbers(self, key: str, length: int) -> tuple[float | int, ...]: ...
+    def descending_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
 
     @overload
     def descending_numbers(
         self,
         key: str,
-        length: int,
-        default: list[float | int] | tuple[float | int, ...],
-    ) -> tuple[float | int, ...]: ...
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
 
     def descending_numbers(
-        self, key: str, length: int, default: object = _MISSING
-    ) -> tuple[float | int, ...]:
-        """Return a fixed-length sequence of strictly descending finite numbers."""
+        self, key: str, length: int | None = None, default: object = _MISSING
+    ) -> V.NumberSequence:
+        """Return strictly descending finite numbers without conversion."""
 
-        numbers = self._numbers(key, length, default)
-        if any(a <= b for a, b in zip(numbers, numbers[1:])):
-            self._raise_invalid(self._path(key), "strictly descending numbers", numbers)
-        return numbers
+        return self._numbers(V.check_descending_numbers, key, length, default)
 
     @overload
     def child(self, key: str) -> "ParamAccessor": ...

@@ -8,9 +8,11 @@ Tests for mahos.util.param.
 
 """
 
+import numpy as np
 import pytest
 
 from mahos.util.param import ParamAccessor, ParamError
+from mahos.util.validation import ValidationError
 
 
 def test_param_accessor():
@@ -20,7 +22,9 @@ def test_param_accessor():
         "count": 2,
         "offset": 0,
         "rate": 1.5,
+        "zero_float": 0.0,
         "nested": {},
+        "numbers": [1, 2.0],
         "bounds": [-1.0, 1.0],
         "levels": (3, 2, 1),
     }
@@ -31,14 +35,20 @@ def test_param_accessor():
     assert p.int("count") == 2
     assert p.pos_int("count") == 2
     assert p.nonneg_int("offset") == 0
+    assert p.float("rate") == 1.5
+    assert p.pos_float("rate") == 1.5
+    assert p.nonneg_float("zero_float") == 0.0
     assert p.num("rate") == 1.5
     assert p.pos_num("rate") == 1.5
     assert p.nonneg_num("offset") == 0
     assert "nested" in p
     assert p.get("nested") == {}
-    assert p.ascending_numbers("bounds", 2) == (-1.0, 1.0)
-    assert p.descending_numbers("levels", 3) == (3, 2, 1)
+    assert p.numbers("numbers") is params["numbers"]
+    assert p.ascending_numbers("bounds") is params["bounds"]
+    assert p.descending_numbers("levels") is params["levels"]
     assert p.int("missing", 3) == 3
+    default_numbers = [1, 2]
+    assert p.numbers("missing_numbers", None, default_numbers) is default_numbers
 
     with pytest.raises(ParamError, match="Required parameter missing is missing"):
         p.int("missing")
@@ -46,6 +56,8 @@ def test_param_accessor():
         p.ascending_numbers("levels", 3)
     with pytest.raises(ParamError, match=r"bounds\[1\] must be finite number"):
         ParamAccessor({"bounds": [0.0, float("inf")]}).ascending_numbers("bounds", 2)
+    with pytest.raises(ParamError, match="list or tuple of 3 numbers"):
+        p.numbers("numbers", 3)
 
 
 @pytest.mark.parametrize(
@@ -59,6 +71,11 @@ def test_param_accessor():
         ("nonneg_num", -1.0),
         ("pos_int", 0),
         ("nonneg_int", -1),
+        ("float", 1),
+        ("float", float("nan")),
+        ("float", float("inf")),
+        ("pos_float", 0.0),
+        ("nonneg_float", -1.0),
     ],
 )
 def test_param_accessor_rejects_invalid_numbers(method, value):
@@ -73,3 +90,17 @@ def test_param_accessor_nested_path():
     assert trigger.num("width") == -1.0
     with pytest.raises(ParamError, match=r"timing\.trigger\.width must be positive"):
         trigger.pos_num("width")
+
+
+def test_param_accessor_preserves_numpy_scalar():
+    value = np.float32(1.0)
+
+    assert ParamAccessor({"value": value}).float("value") is value
+    assert ParamAccessor({"value": value}).pos_num("value") is value
+    assert issubclass(ParamError, ValidationError)
+
+
+def test_param_accessor_float_default():
+    value = np.float64(1.0)
+
+    assert ParamAccessor({}).pos_float("value", value) is value

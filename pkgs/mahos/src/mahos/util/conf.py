@@ -13,7 +13,8 @@ Defines utilities for configs.
 from __future__ import annotations
 import typing as T
 import enum
-import math
+
+import mahos.util.validation as V
 
 
 _MISSING = object()
@@ -27,7 +28,17 @@ class ConfAccessorMixin(object):
             return self.conf[key]
         if default is not _MISSING:
             return default
-        raise KeyError(f"Required configuration {key} is missing.")
+        raise V.ValidationError(f"Required configuration {key} is missing.")
+
+    @T.overload
+    def _conf_bool(self, key: str) -> V.Boolean: ...
+
+    @T.overload
+    def _conf_bool(self, key: str, default: V.Boolean) -> V.Boolean: ...
+
+    def _conf_bool(self, key: str, default: object = _MISSING) -> V.Boolean:
+        v = self._conf_get(key, default)
+        return V.check_bool(v, key)
 
     @T.overload
     def _conf_str(self, key: str) -> str: ...
@@ -37,145 +48,159 @@ class ConfAccessorMixin(object):
 
     def _conf_str(self, key: str, default: object = _MISSING) -> str:
         v = self._conf_get(key, default)
-        if not isinstance(v, str):
-            raise TypeError(f"{key} must be str. Got {type(v).__name__}: {v!r}")
-        return v
+        return V.check_str(v, key)
 
     @T.overload
-    def _conf_int(self, key: str) -> int: ...
+    def _conf_int(self, key: str) -> V.Integer: ...
 
     @T.overload
-    def _conf_int(self, key: str, default: int) -> int: ...
+    def _conf_int(self, key: str, default: V.Integer) -> V.Integer: ...
 
-    def _conf_int(self, key: str, default: object = _MISSING) -> int:
+    def _conf_int(self, key: str, default: object = _MISSING) -> V.Integer:
         v = self._conf_get(key, default)
-        if isinstance(v, bool) or not isinstance(v, int):
-            raise TypeError(f"{key} must be int. Got {type(v).__name__}: {v!r}")
-        return v
+        return V.check_int(v, key)
 
     @T.overload
-    def _conf_pos_int(self, key: str) -> int: ...
+    def _conf_pos_int(self, key: str) -> V.Integer: ...
 
     @T.overload
-    def _conf_pos_int(self, key: str, default: int) -> int: ...
+    def _conf_pos_int(self, key: str, default: V.Integer) -> V.Integer: ...
 
-    def _conf_pos_int(self, key: str, default: object = _MISSING) -> int:
+    def _conf_pos_int(self, key: str, default: object = _MISSING) -> V.Integer:
         v = self._conf_get(key, default)
-        if isinstance(v, bool) or not isinstance(v, int):
-            raise TypeError(f"{key} must be int. Got {type(v).__name__}: {v!r}")
-        if v <= 0:
-            raise ValueError(f"{key} must be positive int. Got {v}")
-        return v
+        return V.check_pos_int(v, key)
 
     @T.overload
-    def _conf_nonneg_int(self, key: str) -> int: ...
+    def _conf_nonneg_int(self, key: str) -> V.Integer: ...
 
     @T.overload
-    def _conf_nonneg_int(self, key: str, default: int) -> int: ...
+    def _conf_nonneg_int(self, key: str, default: V.Integer) -> V.Integer: ...
 
-    def _conf_nonneg_int(self, key: str, default: object = _MISSING) -> int:
+    def _conf_nonneg_int(self, key: str, default: object = _MISSING) -> V.Integer:
         v = self._conf_get(key, default)
-        if isinstance(v, bool) or not isinstance(v, int):
-            raise TypeError(f"{key} must be int. Got {type(v).__name__}: {v!r}")
-        if v < 0:
-            raise ValueError(f"{key} must be non-negative int. Got {v}")
-        return v
+        return V.check_nonneg_int(v, key)
 
     @T.overload
-    def _conf_float(self, key: str) -> float: ...
+    def _conf_float(self, key: str) -> V.Float: ...
 
     @T.overload
-    def _conf_float(self, key: str, default: float) -> float: ...
+    def _conf_float(self, key: str, default: V.Float) -> V.Float: ...
 
-    def _conf_float(self, key: str, default: object = _MISSING) -> float:
+    def _conf_float(self, key: str, default: object = _MISSING) -> V.Float:
         v = self._conf_get(key, default)
-        if not isinstance(v, float):
-            raise TypeError(f"{key} must be float. Got {type(v).__name__}: {v!r}")
-        if not math.isfinite(v):
-            raise ValueError(f"{key} must be finite float. Got {v}")
-        return v
+        return V.check_float(v, key)
 
     @T.overload
-    def _conf_pos_float(self, key: str) -> float: ...
+    def _conf_pos_float(self, key: str) -> V.Float: ...
 
     @T.overload
-    def _conf_pos_float(self, key: str, default: float) -> float: ...
+    def _conf_pos_float(self, key: str, default: V.Float) -> V.Float: ...
 
-    def _conf_pos_float(self, key: str, default: object = _MISSING) -> float:
+    def _conf_pos_float(self, key: str, default: object = _MISSING) -> V.Float:
         v = self._conf_get(key, default)
-        if not isinstance(v, float):
-            raise TypeError(f"{key} must be float. Got {type(v).__name__}: {v!r}")
-        if not math.isfinite(v) or v <= 0.0:
-            raise ValueError(f"{key} must be positive finite float. Got {v}")
-        return v
+        return V.check_pos_float(v, key)
 
     @T.overload
-    def _conf_nonneg_float(self, key: str) -> float: ...
+    def _conf_nonneg_float(self, key: str) -> V.Float: ...
 
     @T.overload
-    def _conf_nonneg_float(self, key: str, default: float) -> float: ...
+    def _conf_nonneg_float(self, key: str, default: V.Float) -> V.Float: ...
 
-    def _conf_nonneg_float(self, key: str, default: object = _MISSING) -> float:
+    def _conf_nonneg_float(self, key: str, default: object = _MISSING) -> V.Float:
         v = self._conf_get(key, default)
-        if not isinstance(v, float):
-            raise TypeError(f"{key} must be float. Got {type(v).__name__}: {v!r}")
-        if not math.isfinite(v) or v < 0.0:
-            raise ValueError(f"{key} must be non-negative finite float. Got {v}")
-        return v
+        return V.check_nonneg_float(v, key)
 
     @T.overload
-    def _conf_num(self, key: str) -> float | int: ...
+    def _conf_num(self, key: str) -> V.Number: ...
 
     @T.overload
-    def _conf_num(self, key: str, default: float | int) -> float | int: ...
+    def _conf_num(self, key: str, default: V.Number) -> V.Number: ...
 
-    def _conf_num(self, key: str, default: object = _MISSING) -> float | int:
+    def _conf_num(self, key: str, default: object = _MISSING) -> V.Number:
         v = self._conf_get(key, default)
-        if isinstance(v, bool) or not isinstance(v, (float, int)):
-            raise TypeError(f"{key} must be float or int. Got {type(v).__name__}: {v!r}")
-        if isinstance(v, float) and not math.isfinite(v):
-            raise ValueError(f"{key} must be finite number. Got {v}")
-        return v
+        return V.check_num(v, key)
 
     @T.overload
-    def _conf_pos_num(self, key: str) -> float | int: ...
+    def _conf_pos_num(self, key: str) -> V.Number: ...
 
     @T.overload
-    def _conf_pos_num(self, key: str, default: float | int) -> float | int: ...
+    def _conf_pos_num(self, key: str, default: V.Number) -> V.Number: ...
 
-    def _conf_pos_num(self, key: str, default: object = _MISSING) -> float | int:
+    def _conf_pos_num(self, key: str, default: object = _MISSING) -> V.Number:
         v = self._conf_get(key, default)
-        if isinstance(v, bool) or not isinstance(v, (float, int)):
-            raise TypeError(f"{key} must be float or int. Got {type(v).__name__}: {v!r}")
-        if isinstance(v, float) and not math.isfinite(v) or v <= 0.0:
-            raise ValueError(f"{key} must be positive finite number. Got {v}")
-        return v
+        return V.check_pos_num(v, key)
 
     @T.overload
-    def _conf_nonneg_num(self, key: str) -> float | int: ...
+    def _conf_nonneg_num(self, key: str) -> V.Number: ...
 
     @T.overload
-    def _conf_nonneg_num(self, key: str, default: float | int) -> float | int: ...
+    def _conf_nonneg_num(self, key: str, default: V.Number) -> V.Number: ...
 
-    def _conf_nonneg_num(self, key: str, default: object = _MISSING) -> float | int:
+    def _conf_nonneg_num(self, key: str, default: object = _MISSING) -> V.Number:
         v = self._conf_get(key, default)
-        if isinstance(v, bool) or not isinstance(v, (float, int)):
-            raise TypeError(f"{key} must be float or int. Got {type(v).__name__}: {v!r}")
-        if isinstance(v, float) and not math.isfinite(v) or v < 0.0:
-            raise ValueError(f"{key} must be non-negative finite number. Got {v}")
-        return v
+        return V.check_nonneg_num(v, key)
 
     @T.overload
-    def _conf_bool(self, key: str) -> bool: ...
+    def _conf_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
 
     @T.overload
-    def _conf_bool(self, key: str, default: bool) -> bool: ...
+    def _conf_numbers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
 
-    def _conf_bool(self, key: str, default: object = _MISSING) -> bool:
+    def _conf_numbers(
+        self,
+        key: str,
+        length: int | None = None,
+        default: object = _MISSING,
+    ) -> V.NumberSequence:
         v = self._conf_get(key, default)
-        if not isinstance(v, bool):
-            raise TypeError(f"{key} must be bool. Got {type(v).__name__}: {v!r}")
-        return v
+        return V.check_numbers(v, length, key)
+
+    @T.overload
+    def _conf_ascending_numbers(self, key: str, length: int | None = None) -> V.NumberSequence: ...
+
+    @T.overload
+    def _conf_ascending_numbers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
+
+    def _conf_ascending_numbers(
+        self,
+        key: str,
+        length: int | None = None,
+        default: object = _MISSING,
+    ) -> V.NumberSequence:
+        v = self._conf_get(key, default)
+        return V.check_ascending_numbers(v, length, key)
+
+    @T.overload
+    def _conf_descending_numbers(
+        self, key: str, length: int | None = None
+    ) -> V.NumberSequence: ...
+
+    @T.overload
+    def _conf_descending_numbers(
+        self,
+        key: str,
+        length: int | None,
+        default: V.NumberSequence,
+    ) -> V.NumberSequence: ...
+
+    def _conf_descending_numbers(
+        self,
+        key: str,
+        length: int | None = None,
+        default: object = _MISSING,
+    ) -> V.NumberSequence:
+        v = self._conf_get(key, default)
+        return V.check_descending_numbers(v, length, key)
 
 
 class PresetLoader(object):
