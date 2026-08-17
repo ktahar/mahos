@@ -51,6 +51,16 @@ class ConfAccessorMixin(object):
         return V.check_str(v, key)
 
     @T.overload
+    def _conf_nonempty_str(self, key: str) -> str: ...
+
+    @T.overload
+    def _conf_nonempty_str(self, key: str, default: str) -> str: ...
+
+    def _conf_nonempty_str(self, key: str, default: object = _MISSING) -> str:
+        v = self._conf_get(key, default)
+        return V.check_nonempty_str(v, key)
+
+    @T.overload
     def _conf_int(self, key: str) -> V.Integer: ...
 
     @T.overload

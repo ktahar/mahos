@@ -62,6 +62,14 @@ def check_str(value: str, name: str = "") -> str:
     return value
 
 
+def check_nonempty_str(value: str, name: str = "") -> str:
+    """Return a non-empty string without conversion, or raise :class:`ValidationError`."""
+
+    if not isinstance(value, str) or not value:
+        _raise_invalid(value, name, "non-empty str", "A string value")
+    return value
+
+
 def check_int(value: Integer, name: str = "") -> Integer:
     """Return an integer value without conversion, rejecting booleans."""
 

@@ -20,6 +20,7 @@ import mahos.util.validation as V
         (V.check_bool, True),
         (V.check_bool, np.bool_(True)),
         (V.check_str, "value"),
+        (V.check_nonempty_str, "value"),
         (V.check_int, 1),
         (V.check_int, np.int32(1)),
         (V.check_pos_int, np.int64(1)),
@@ -43,6 +44,7 @@ def test_check_preserves_value(checker, value):
     [
         (V.check_bool, 1),
         (V.check_str, None),
+        (V.check_nonempty_str, ""),
         (V.check_int, True),
         (V.check_int, np.bool_(True)),
         (V.check_pos_int, 0),

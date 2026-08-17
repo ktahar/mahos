@@ -97,6 +97,18 @@ class ParamAccessor:
         return self._validate(V.check_str, value, path)
 
     @overload
+    def nonempty_str(self, key: str) -> str: ...
+
+    @overload
+    def nonempty_str(self, key: str, default: str) -> str: ...
+
+    def nonempty_str(self, key: str, default: object = _MISSING) -> str:
+        """Return a non-empty string parameter."""
+
+        path, value = self._get(key, default)
+        return self._validate(V.check_nonempty_str, value, path)
+
+    @overload
     def int(self, key: str) -> V.Integer: ...
 
     @overload

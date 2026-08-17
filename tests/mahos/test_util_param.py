@@ -18,6 +18,7 @@ from mahos.util.validation import ValidationError
 def test_param_accessor():
     params = {
         "name": "test",
+        "empty_name": "",
         "enabled": True,
         "count": 2,
         "offset": 0,
@@ -34,6 +35,7 @@ def test_param_accessor():
     p = ParamAccessor(params)
 
     assert p.str("name") == "test"
+    assert p.nonempty_str("name") == "test"
     assert p.bool("enabled") is True
     assert p.int("count") == 2
     assert p.pos_int("count") == 2
@@ -60,6 +62,8 @@ def test_param_accessor():
 
     with pytest.raises(ParamError, match="Required parameter missing is missing"):
         p.int("missing")
+    with pytest.raises(ParamError, match="empty_name must be non-empty str"):
+        p.nonempty_str("empty_name")
     with pytest.raises(ParamError, match="strictly ascending"):
         p.ascending_numbers("levels", 3)
     with pytest.raises(ParamError, match=r"bounds\[1\] must be finite number"):

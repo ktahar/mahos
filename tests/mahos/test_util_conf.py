@@ -35,10 +35,11 @@ class ConfOwner(ConfAccessorMixin):
 
 
 def test_conf_accessor_mixin():
-    owner = ConfOwner({"count": 2, "rate": 1.5})
+    owner = ConfOwner({"count": 2, "rate": 1.5, "label": "test", "empty_name": ""})
 
     assert owner._conf_pos_int("count") == 2
     assert owner._conf_pos_num("rate") == 1.5
+    assert owner._conf_nonempty_str("label") == "test"
     assert owner._conf_bool("enabled", True) is True
     with pytest.raises(ValidationError, match="Required configuration name is missing"):
         owner._conf_str("name")
@@ -52,6 +53,8 @@ def test_conf_accessor_mixin():
 
     with pytest.raises(ValidationError, match="count must be int"):
         ConfOwner({"count": "2"})._conf_int("count")
+    with pytest.raises(ValidationError, match="empty_name must be non-empty str"):
+        owner._conf_nonempty_str("empty_name")
 
 
 def test_conf_accessor_preserves_numpy_scalar():
