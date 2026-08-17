@@ -20,6 +20,7 @@ from mahos.msgs.inst.pg_msgs import PulsePattern
 from mahos.inst.pg_interface import Block, Blocks
 from mahos.inst.pd_interface import PDInterface
 from mahos.inst.daq_interface import ClockSourceInterface
+import mahos.util.validation as V
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from mahos_dq.meas.podmr_worker import (
     CommonPulserBase,
@@ -353,17 +354,23 @@ class APODMRPulserBase(CommonPulserBase):
 
     def _pd_rate_param(self):
         rate = self.conf.get("pd_rate", 2e6)
-        if isinstance(rate, (tuple, list)) and isinstance(rate[0], int):
-            return P.IntChoiceParam(rate[0], rate, doc="PD sampling rate")
-        elif isinstance(rate, int):
+        if isinstance(rate, (tuple, list)):
+            rates = self._conf_pos_integers("pd_rate")
+            if not rates:
+                raise V.ValidationError("pd_rate must not be empty.")
+            return P.IntChoiceParam(rates[0], rates, doc="PD sampling rate")
+        elif isinstance(rate, (int, np.integer)):
+            rate = self._conf_pos_int("pd_rate", int(rate))
             return P.IntParam(
                 rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
             )
-        elif isinstance(rate, float):
+        elif isinstance(rate, (float, np.floating)):
+            rate = self._conf_pos_float("pd_rate", float(rate))
             return P.FloatParam(
                 rate, 1e3, 1e9, unit="Hz", SI_prefix=True, digit=9, doc="PD sampling rate"
             )
-        raise TypeError("conf['pd_rate'] has invalid type.")
+        V.check_num(rate, "pd_rate")
+        raise AssertionError("unreachable")
 
     def get_param_dict(self, label: str) -> P.ParamDict[str, P.PDValue] | None:
         d = super().get_param_dict(label)
@@ -400,39 +407,39 @@ class APODMRPulserBase(CommonPulserBase):
         d["plot"]["refwidth"].set(500e-9)
 
         d["roi_head"] = P.FloatParam(
-            self.conf.get("roi_head", 20e-9),
+            self._conf_nonneg_num("roi_head", 20e-9),
             0.0,
             10e6,
             unit="s",
             doc="margin at head of sampled trace and trigger-to-laser offset",
         )
         d["roi_tail"] = P.FloatParam(
-            self.conf.get("roi_tail", 100e-9),
+            self._conf_nonneg_num("roi_tail", 100e-9),
             0.0,
             10e6,
             unit="s",
             doc="margin at tail of sampled trace",
         )
         d["sweeps_per_record"] = P.IntParam(
-            self.conf.get("sweeps_per_record", 10),
+            self._conf_pos_int("sweeps_per_record", 10),
             1,
             1000000,
             doc="number of sweeps accumulated in one stored raw trace record",
         )
         d["max_records"] = P.IntParam(
-            self.conf.get("max_records", 1),
+            self._conf_nonneg_int("max_records", 1),
             0,
             100000000,
             doc="maximum number of raw trace records to retain (0 for unlimited)",
         )
         d["burst_num"] = P.IntParam(
-            self.conf.get("burst_num", 1),
+            self._conf_pos_int("burst_num", 1),
             1,
             1000000,
             doc="number of burst (repeated shots per sweep point)",
         )
         d["point_init_delay"] = P.FloatParam(
-            self.conf.get("point_init_delay", 0.0),
+            self._conf_nonneg_num("point_init_delay", 0.0),
             0.0,
             1.0,
             unit="s",
@@ -441,9 +448,9 @@ class APODMRPulserBase(CommonPulserBase):
         )
         d["pd"] = P.ParamDict()
         d["pd"]["rate"] = self._pd_rate_param()
-        lb, ub = self.conf.get("pd_bounds", (-10.0, 10.0))
+        lb, ub = self._conf_ascending_numbers("pd_bounds", 2, (-10.0, 10.0))
         d["pd"]["buffer_size_coeff"] = P.IntParam(
-            self.conf.get("buffer_size_coeff", 20),
+            self._conf_pos_int("buffer_size_coeff", 20),
             1,
             10_000,
             doc="ratio of requested buffer size to record data size",
@@ -524,8 +531,8 @@ class APODMRPulserBase(CommonPulserBase):
         if not self._pd_spectrum:
             return samples_per_trace
 
-        granularity = self.conf.get("pd_segment_granularity", 16)
-        offset = self.conf.get("pd_segment_offset", 0)
+        granularity = self._conf_pos_int("pd_segment_granularity", 16)
+        offset = self._conf_int("pd_segment_offset", 0)
         try:
             adjusted = round_segment_samples_up(samples_per_trace, granularity=granularity)
             adjusted -= offset

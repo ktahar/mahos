@@ -12,7 +12,6 @@ from __future__ import annotations
 import typing as T
 import time
 import copy
-import math
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
@@ -38,6 +37,8 @@ from mahos.inst.tdc_interface import TDCInterface
 from mahos.inst.awg_interface import AWGInterface
 from mahos.inst.fg_interface import FGInterface
 from mahos.util.conf import ConfAccessorMixin, PresetLoader
+from mahos.util.param import ParamAccessor
+import mahos.util.validation as V
 from mahos.meas.common_worker import Worker
 from mahos.node.log import DummyLogger
 
@@ -1527,14 +1528,8 @@ class AWGPulserBase(CommonPulserBase):
                     )
             else:
                 raise ValueError(f"invalid mw_channels source index: {raw_source!r}")
-            if source < 0:
-                raise ValueError(f"mw_channels source index must be non-negative: {source}")
-            if isinstance(physical, (bool, np.bool_)) or not isinstance(
-                physical, (int, np.integer)
-            ):
-                raise ValueError(
-                    f"physical AWG channel for source {source} must be an integer: {physical!r}"
-                )
+            source = int(V.check_nonneg_int(source, "mw_channels source index"))
+            physical = V.check_nonneg_int(physical, f"physical AWG channel for source {source}")
             if source in self.mw_channels:
                 raise ValueError(
                     f"duplicate mw_channels source index after normalization: {source}"
@@ -1577,7 +1572,11 @@ class AWGPulserBase(CommonPulserBase):
 
         awg_rate = self.conf.get("awg_rate", 10e9)
         if isinstance(awg_rate, (tuple, list)):
-            awg_rate = awg_rate[0]
+            rates = self._conf_pos_integers("awg_rate")
+            if not rates:
+                raise V.ValidationError("awg_rate must not be empty.")
+            awg_rate = rates[0]
+        awg_rate = V.check_pos_num(awg_rate, "awg_rate")
         self._pg_freq = 0.0
         self.make_generators(self.awg.get_digital_rate(awg_rate))
 
@@ -1586,17 +1585,18 @@ class AWGPulserBase(CommonPulserBase):
     ) -> TimingInfo | None:
         try:
             params = P.unwrap(params)
-            awg_rate = params["awg"]["rate"]
+            awg_rate = ParamAccessor(params).child("awg").pos_num("rate")
             pg_freq = self.awg.get_digital_rate(awg_rate)
             if pg_freq is not None:
-                if math.isfinite(pg_freq) and pg_freq > 0.0:
+                try:
+                    V.check_pos_num(pg_freq, "Digital rate from AWG")
                     period = 1.0 / pg_freq
                     return TimingInfo(pg_freq=pg_freq, period=period)
-                else:
-                    self.logger.error(f"Digital rate from AWG is invalid: {pg_freq}.")
+                except V.ValidationError as e:
+                    self.logger.error(str(e))
             else:
                 self.logger.error("Failed to get digital rate from AWG.")
-        except KeyError:
+        except (KeyError, ValueError):
             self.logger.exception("Invalid params to get timing info:")
         return None
 
@@ -1604,8 +1604,7 @@ class AWGPulserBase(CommonPulserBase):
         if pg_freq == self._pg_freq:
             return self.generators
 
-        if not isinstance(pg_freq, (float, int)) or not math.isfinite(pg_freq) or pg_freq <= 0.0:
-            raise ValueError(f"invalid pg_freq: {pg_freq}")
+        pg_freq = V.check_pos_num(pg_freq, "pg_freq")
 
         self.generators = make_generators(
             freq=pg_freq,
@@ -1651,20 +1650,26 @@ class AWGPulserBase(CommonPulserBase):
     def _awg_rate_param(self, awg_bounds: dict):
         mn, mx = awg_bounds["sample_rate"]
         rate = self.conf.get("awg_rate", 10e9)
-        if isinstance(rate, (tuple, list)) and isinstance(rate[0], int):
-            return P.IntChoiceParam(rate[0], rate, doc="AWG sampling rate")
-        elif isinstance(rate, int):
+        if isinstance(rate, (tuple, list)):
+            rates = self._conf_pos_integers("awg_rate")
+            if not rates:
+                raise V.ValidationError("awg_rate must not be empty.")
+            return P.IntChoiceParam(rates[0], rates, doc="AWG sampling rate")
+        elif isinstance(rate, (int, np.integer)):
+            rate = self._conf_pos_int("awg_rate", int(rate))
             r = min(max(rate, mn), mx)
             return P.IntParam(
                 r, mn, mx, unit="Hz", SI_prefix=True, digit=9, doc="AWG sampling rate"
             )
-        elif isinstance(rate, float):
+        elif isinstance(rate, (float, np.floating)):
+            rate = self._conf_pos_float("awg_rate", float(rate))
             r = min(max(rate, mn), mx)
             return P.FloatParam(
                 r, mn, mx, unit="Hz", SI_prefix=True, digit=9, doc="AWG sampling rate"
             )
 
-        raise TypeError("conf['awg_rate'] has invalid type.")
+        V.check_num(rate, "awg_rate")
+        raise AssertionError("unreachable")
 
     def _add_generator_params(self, params: P.ParamDict) -> bool:
         del params["enable_reduce"]

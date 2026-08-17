@@ -59,27 +59,15 @@ import numpy as np
 
 from mahos.msgs.inst.pg_msgs import Block, Blocks
 from mahos.util.unit import dBm_to_Vpeak
-
-
-def _is_finite_number(value) -> bool:
-    return (
-        not isinstance(value, (bool, np.bool_))
-        and isinstance(value, (int, float, np.integer, np.floating))
-        and math.isfinite(value)
-    )
+import mahos.util.validation as V
 
 
 def dBm_to_mVpeak(power_dBm: float, impedance: float = 50.0) -> float:
-    if not _is_finite_number(power_dBm):
-        raise ValueError(f"power must be a finite number: {power_dBm!r}")
-    if not _is_finite_number(impedance) or impedance <= 0.0:
-        raise ValueError(f"load_impedance must be a positive finite number: {impedance!r}")
     try:
         peak = 1e3 * dBm_to_Vpeak(power_dBm, impedance)
-    except OverflowError as exc:
-        raise ValueError(f"power is too large to render: {power_dBm}") from exc
-    if not math.isfinite(peak):
-        raise ValueError(f"power produces a non-finite peak voltage: {power_dBm}")
+    except OverflowError as e:
+        raise ValueError(f"power is too large to render: {power_dBm}") from e
+    V.check_num(peak, "peak voltage")
     return peak
 
 
@@ -103,22 +91,11 @@ class MWTone:
     awg_channel: int = 0
 
     def __post_init__(self):
-        if isinstance(self.channel, str) and not self.channel:
-            raise ValueError("tone channel must be non-empty")
-        if not isinstance(self.channel, str):
-            raise TypeError(f"tone channel must be a string: {self.channel!r}")
-        if isinstance(self.phase_channel, str) and not self.phase_channel:
-            raise ValueError("tone phase_channel must be non-empty")
-        if not isinstance(self.phase_channel, str):
-            raise TypeError(f"tone phase_channel must be a string: {self.phase_channel!r}")
-        if not _is_finite_number(self.freq) or self.freq <= 0.0:
-            raise ValueError(f"tone frequency must be a positive finite number: {self.freq!r}")
-        if not _is_finite_number(self.power):
-            raise ValueError(f"tone power must be a finite number: {self.power!r}")
-        if isinstance(self.awg_channel, bool) or not isinstance(self.awg_channel, int):
-            raise TypeError(f"awg_channel must be an integer: {self.awg_channel!r}")
-        if self.awg_channel < 0:
-            raise ValueError(f"awg_channel must be non-negative: {self.awg_channel}")
+        V.check_nonempty_str(self.channel, "tone channel")
+        V.check_nonempty_str(self.phase_channel, "tone phase_channel")
+        V.check_pos_num(self.freq, "tone frequency")
+        V.check_num(self.power, "tone power")
+        V.check_nonneg_int(self.awg_channel, "awg_channel")
 
 
 @dataclass
@@ -200,10 +177,10 @@ def _analog_channels(params: RenderParams) -> tuple[int, ...]:
     channels = tuple(params.analog_channels)
     if not (1 <= len(channels) <= 2):
         raise ValueError(f"analog_channels must contain one or two channels: {channels}")
-    if any(isinstance(channel, bool) or not isinstance(channel, int) for channel in channels):
-        raise TypeError(f"analog_channels must contain integers: {channels}")
-    if len(set(channels)) != len(channels) or any(channel < 0 for channel in channels):
-        raise ValueError(f"analog_channels must be unique and non-negative: {channels}")
+    for i, channel in enumerate(channels):
+        V.check_nonneg_int(channel, f"analog_channels[{i}]")
+    if len(set(channels)) != len(channels):
+        raise ValueError(f"analog_channels must be unique: {channels}")
     return channels
 
 
@@ -215,10 +192,7 @@ def required_amplitude_mV(params: RenderParams) -> dict[int, float]:
 
     """
 
-    if not _is_finite_number(params.load_impedance) or params.load_impedance <= 0.0:
-        raise ValueError(
-            f"load_impedance must be a positive finite number: {params.load_impedance!r}"
-        )
+    V.check_pos_num(params.load_impedance, "load_impedance")
     amplitudes = {channel: 0.0 for channel in _analog_channels(params)}
     for tone in params.tones:
         if tone.awg_channel not in amplitudes:
@@ -235,8 +209,7 @@ def _as_blocks(blocks: Blocks[Block] | T.Sequence[Block]) -> list[Block]:
     if not lst:
         raise ValueError("blocks must be non-empty.")
     for b in lst:
-        if isinstance(b.Nrep, bool) or not isinstance(b.Nrep, (int, np.integer)) or b.Nrep < 1:
-            raise ValueError(f"block {b.name!r} Nrep must be a positive integer: {b.Nrep!r}")
+        V.check_pos_int(b.Nrep, f"block {b.name!r} Nrep")
         if not b.pattern:
             raise ValueError(f"block {b.name!r} pattern must be non-empty")
         for _, duration in b.pattern:
@@ -256,14 +229,8 @@ def _as_blocks(blocks: Blocks[Block] | T.Sequence[Block]) -> list[Block]:
 
 def _validate_channels(blocks: list[Block], params: RenderParams):
     analog_channels = _analog_channels(params)
-    if not isinstance(params.local_phase, (bool, np.bool_)):
-        raise TypeError(f"local_phase must be a bool: {params.local_phase!r}")
-    if (
-        isinstance(params.num_logical_mw, bool)
-        or not isinstance(params.num_logical_mw, int)
-        or params.num_logical_mw < 1
-    ):
-        raise ValueError(f"num_logical_mw must be a positive integer: {params.num_logical_mw!r}")
+    V.check_bool(params.local_phase, "local_phase")
+    V.check_pos_int(params.num_logical_mw, "num_logical_mw")
 
     logical_mw = {}
     for i in range(params.num_logical_mw):
@@ -316,18 +283,16 @@ def _fractions(params: RenderParams) -> tuple[dict[int, float], list[float]]:
                 f"amplitude_mV keys {sorted(params.amplitude_mV)} do not match "
                 f"analog_channels {channels}"
             )
-        for channel, amplitude in params.amplitude_mV.items():
-            if not _is_finite_number(amplitude):
-                raise ValueError(f"CH{channel} amplitude_mV must be finite: {amplitude!r}")
-        amplitudes = {channel: float(params.amplitude_mV[channel]) for channel in channels}
+        amplitudes = {
+            channel: float(
+                V.check_nonneg_num(params.amplitude_mV[channel], f"CH{channel} amplitude_mV")
+            )
+            for channel in channels
+        }
 
     for channel in channels:
         amplitude = amplitudes[channel]
         peak_sum = required[channel]
-        if not _is_finite_number(amplitude) or amplitude < 0.0:
-            raise ValueError(
-                f"CH{channel} amplitude_mV must be non-negative and finite: {amplitude}"
-            )
         if peak_sum > 0.0 and amplitude <= 0.0:
             raise ValueError(f"CH{channel} amplitude_mV is 0 but tones are active")
         if amplitude > 0.0 and peak_sum > amplitude * (1.0 + 1e-9):
@@ -345,23 +310,15 @@ def _fractions(params: RenderParams) -> tuple[dict[int, float], list[float]]:
 
 
 def _sample_ratio(pg_freq: float, rate: float) -> Fraction:
-    if (
-        not _is_finite_number(pg_freq)
-        or pg_freq <= 0.0
-        or not _is_finite_number(rate)
-        or rate <= 0.0
-    ):
-        raise ValueError(f"pg_freq and rate must be positive and finite: {pg_freq}, {rate}")
+    V.check_pos_num(pg_freq, "pg_freq")
+    V.check_pos_num(rate, "rate")
     pg, rt = int(round(pg_freq)), int(round(rate))
     return Fraction(rt, pg)
 
 
 def _tone_phase(block: Block, tone: MWTone, channels, degree: bool) -> float:
     phi = block.analog_value(tone.phase_channel, channels)
-    if not _is_finite_number(phi):
-        raise ValueError(
-            f"block {block.name!r} has a non-finite phase on {tone.phase_channel!r}: {phi!r}"
-        )
+    V.check_num(phi, f"block {block.name!r} phase on {tone.phase_channel!r}")
     return math.radians(phi) if degree else float(phi)
 
 
@@ -474,14 +431,7 @@ def render_flat(
     _validate_channels(blocks, params)
     amplitudes, fractions = _fractions(params)
     ratio = _sample_ratio(pg_freq, rate)
-    if not isinstance(granularity, (tuple, list)) or len(granularity) != 2:
-        raise ValueError(f"granularity must be a (minimum, step) pair: {granularity!r}")
-    if any(
-        isinstance(value, bool) or not isinstance(value, (int, np.integer)) or value <= 0
-        for value in granularity
-    ):
-        raise ValueError(f"granularity values must be positive integers: {granularity!r}")
-    mn, step = int(granularity[0]), int(granularity[1])
+    mn, step = map(int, V.check_pos_integers(granularity, 2, "granularity"))
 
     analog_parts: dict[int, list[np.ndarray]] = {
         channel: [] for channel in _analog_channels(params)

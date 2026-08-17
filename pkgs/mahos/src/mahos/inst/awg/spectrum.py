@@ -31,6 +31,8 @@ from mahos.msgs import param_msgs as P
 from mahos.msgs.inst.awg_msgs import TriggerType
 from mahos.util.unit import dBm_to_Vpeak, Vpeak_to_dBm
 from mahos.util.conf import ConfAccessorMixin
+from mahos.util.param import ParamAccessor
+import mahos.util.validation as V
 
 
 @dataclass
@@ -57,8 +59,7 @@ class Waveform:
     segments: list[tuple[str, int, int]] = field(default_factory=list)
 
     def __post_init__(self):
-        if self.sample_rate <= 0.0:
-            raise ValueError(f"sample_rate must be positive: {self.sample_rate}")
+        V.check_pos_num(self.sample_rate, "sample_rate")
 
         self.analog = np.asarray(
             self.analog, dtype=np.float64
@@ -403,13 +404,15 @@ class Spectrum_AWG_Core(object):
 
         """
 
+        sample_rate = V.check_pos_num(sample_rate, "sample_rate")
+        mode = V.check_str(mode, "clock mode").lower()
         card = self._require_card()
         spcm = self._import_spcm()
         clock = spcm.Clock(card)
-        mode = mode.lower()
         if mode in ("internal", "int", "intpll"):
             clock.mode(spcm.SPC_CM_INTPLL)
         elif mode in ("ext_ref", "extref", "external_reference", "reference"):
+            ref_clock_freq = V.check_pos_num(ref_clock_freq, "ref_clock_freq")
             clock.mode(spcm.SPC_CM_EXTREFCLOCK)
             clock.reference_clock(int(round(ref_clock_freq)))
             try:
@@ -432,6 +435,7 @@ class Spectrum_AWG_Core(object):
         return actual
 
     def _validate_amplitude(self, amplitude_mV: int | float) -> int:
+        V.check_num(amplitude_mV, "amplitude_mV")
         amplitude_mV = int(round(amplitude_mV))
         if not (1 <= amplitude_mV <= self.amp_limit_mV):
             raise ValueError(
@@ -484,7 +488,9 @@ class Spectrum_AWG_Core(object):
 
         card = self._require_card()
         spcm = self._import_spcm()
-        active = sorted(set(int(ch) for ch in channels))
+        active = sorted(
+            set(int(V.check_nonneg_int(ch, f"channels[{i}]")) for i, ch in enumerate(channels))
+        )
         available = range(int(card.num_channels()))
         if not active or len(active) > 2 or any(ch not in available for ch in active):
             raise ValueError(
@@ -506,7 +512,7 @@ class Spectrum_AWG_Core(object):
     def set_amplitude(self, channel: int, amplitude_mV: int | float) -> int:
         """Set amplitude if `channel` is active and return the requested or actual value."""
 
-        channel = int(channel)
+        channel = int(V.check_nonneg_int(channel, "channel"))
         amplitude_mV = self._validate_amplitude(amplitude_mV)
         if self._channels is None:
             return amplitude_mV
@@ -533,13 +539,14 @@ class Spectrum_AWG_Core(object):
 
         """
 
-        if not isinstance(edge, bool):
-            raise TypeError(f"edge must be bool, got {type(edge).__name__}: {edge!r}")
+        V.check_bool(edge, "edge")
+        V.check_str(source, "trigger source")
         card = self._require_card()
         spcm = self._import_spcm()
         trigger = spcm.Trigger(card)
         source = source.lower()
         if source in ("ext0", "external", "external0"):
+            V.check_num(level, "trigger level")
             trigger.or_mask(spcm.SPC_TMASK_EXT0)
             trigger.and_mask(spcm.SPC_TMASK_NONE)
             trigger.ext0_mode(spcm.SPC_TM_POS if edge else spcm.SPC_TM_NEG)
@@ -568,6 +575,9 @@ class Spectrum_AWG_Core(object):
         card = self._require_card()
         spcm = self._import_spcm()
         for x_index, (source, bit) in line_to_source_bit.items():
+            V.check_nonneg_int(x_index, "marker X line")
+            V.check_nonneg_int(source, f"marker X{x_index} source channel")
+            V.check_nonneg_int(bit, f"marker X{x_index} sample bit")
             if not (0 <= int(source) < int(card.num_channels())):
                 raise ValueError(f"invalid marker source channel: {source}")
             if not (0 <= int(bit) <= 15):
@@ -588,7 +598,7 @@ class Spectrum_AWG_Core(object):
             "singlerestart": spcm.SPC_REP_STD_SINGLERESTART,
             "single": spcm.SPC_REP_STD_SINGLE,
         }
-        key = replay_mode.lower()
+        key = V.check_str(replay_mode, "replay_mode").lower()
         if key not in modes:
             raise ValueError(f"unsupported replay mode: {replay_mode} (use {self.REPLAY_MODES})")
         return modes[key]
@@ -614,7 +624,7 @@ class Spectrum_AWG_Core(object):
         arrays = {}
         lengths = set()
         for channel, data in samples.items():
-            channel = int(channel)
+            channel = int(V.check_nonneg_int(channel, "sample channel"))
             data = np.ascontiguousarray(data)
             if data.dtype != np.int16 or data.ndim != 1:
                 raise ValueError(
@@ -651,7 +661,7 @@ class Spectrum_AWG_Core(object):
 
         self.stop()
         card.card_mode(self._card_mode(replay_mode))
-        card.loops(int(loops))
+        card.loops(int(V.check_nonneg_int(loops, "loops")))
 
         self._transfer = spcm.DataTransfer(card)
         self._transfer.memory_size(n)
@@ -847,19 +857,13 @@ class Dummy_AWG_Core(object):
     ) -> int:
         # emulate M5i.63xx clock: base 10 GS/s divided by powers of two
         base = 10e9
-        req = float(sample_rate)
-        if not np.isfinite(req) or req <= 0.0:
-            raise ValueError(f"sample_rate must be a positive finite value: {sample_rate}")
+        req = float(V.check_pos_num(sample_rate, "sample_rate"))
 
-        mode = mode.lower()
+        mode = V.check_str(mode, "clock mode").lower()
         if mode in ("internal", "int", "intpll"):
             pass
         elif mode in ("ext_ref", "extref", "external_reference", "reference"):
-            ref_clock_freq = float(ref_clock_freq)
-            if not np.isfinite(ref_clock_freq) or ref_clock_freq <= 0.0:
-                raise ValueError(
-                    f"ref_clock_freq must be a positive finite value: {ref_clock_freq}"
-                )
+            ref_clock_freq = float(V.check_pos_num(ref_clock_freq, "ref_clock_freq"))
         else:
             raise ValueError(f"unsupported clock mode: {mode}")
 
@@ -879,6 +883,7 @@ class Dummy_AWG_Core(object):
         return actual
 
     def _validate_amplitude(self, amplitude_mV: int | float) -> int:
+        V.check_num(amplitude_mV, "amplitude_mV")
         amplitude_mV = int(round(amplitude_mV))
         if not (1 <= amplitude_mV <= self.amp_limit_mV):
             raise ValueError(
@@ -889,7 +894,9 @@ class Dummy_AWG_Core(object):
     def configure_channels(
         self, channels, amplitudes_mV: dict[int, int], filter_=None, stop_level="zero"
     ) -> dict[int, int]:
-        active = sorted(set(int(ch) for ch in channels))
+        active = sorted(
+            set(int(V.check_nonneg_int(ch, f"channels[{i}]")) for i, ch in enumerate(channels))
+        )
         invalid = any(not (0 <= channel < self.num_channels) for channel in active)
         if not active or len(active) > 2 or invalid:
             raise ValueError(
@@ -914,7 +921,7 @@ class Dummy_AWG_Core(object):
         return actual
 
     def set_amplitude(self, channel: int, amplitude_mV: int | float) -> int:
-        channel = int(channel)
+        channel = int(V.check_nonneg_int(channel, "channel"))
         if not (0 <= channel < self.num_channels):
             raise ValueError(f"invalid analog channel: {channel}")
         amplitude_mV = self._validate_amplitude(amplitude_mV)
@@ -930,13 +937,10 @@ class Dummy_AWG_Core(object):
         edge: bool = True,
         termination_50: bool = False,
     ) -> bool:
-        if not isinstance(edge, bool):
-            raise TypeError(f"edge must be bool, got {type(edge).__name__}: {edge!r}")
-        source = source.lower()
+        V.check_bool(edge, "edge")
+        source = V.check_str(source, "trigger source").lower()
         if source in ("ext0", "external", "external0"):
-            level = float(level)
-            if not np.isfinite(level):
-                raise ValueError(f"trigger level must be finite: {level}")
+            level = float(V.check_num(level, "trigger level"))
         elif source not in ("software", "soft", "none", ""):
             raise ValueError(f"unsupported trigger source: {source}")
         self.config["trigger"] = {
@@ -951,9 +955,9 @@ class Dummy_AWG_Core(object):
         routes = {}
         num_lines = int(self.card_info()["num_xio_lines"])
         for line, (source, bit) in line_to_source_bit.items():
-            line = int(line)
-            source = int(source)
-            bit = int(bit)
+            line = int(V.check_nonneg_int(line, "marker X line"))
+            source = int(V.check_nonneg_int(source, f"marker X{line} source channel"))
+            bit = int(V.check_nonneg_int(bit, f"marker X{line} sample bit"))
             if not (0 <= line < num_lines):
                 raise ValueError(f"invalid marker X line: {line}")
             if not (0 <= source < self.num_channels):
@@ -966,7 +970,7 @@ class Dummy_AWG_Core(object):
     REPLAY_MODES = Spectrum_AWG_Core.REPLAY_MODES
 
     def _validate_replay_mode(self, replay_mode: str) -> str:
-        key = replay_mode.lower()
+        key = V.check_str(replay_mode, "replay_mode").lower()
         if key not in self.REPLAY_MODES:
             raise ValueError(f"unsupported replay mode: {replay_mode} (use {self.REPLAY_MODES})")
         return key
@@ -974,7 +978,10 @@ class Dummy_AWG_Core(object):
     def upload_samples(self, samples, replay_mode="singlerestart", loops=0) -> int:
         if not samples or len(samples) > 2:
             raise ValueError("samples must contain one or two physical channels")
-        samples = {int(channel): np.ascontiguousarray(data) for channel, data in samples.items()}
+        samples = {
+            int(V.check_nonneg_int(channel, "sample channel")): np.ascontiguousarray(data)
+            for channel, data in samples.items()
+        }
         if any(data.dtype != np.int16 or data.ndim != 1 for data in samples.values()):
             raise ValueError("each channel must contain a 1-D int16 sample array")
         active = self.config.get("channels", {}).get("active")
@@ -1001,9 +1008,7 @@ class Dummy_AWG_Core(object):
                 f"exceeding card memory {memory_samples:_d}"
             )
         replay_mode = self._validate_replay_mode(replay_mode)
-        loops = int(loops)
-        if loops < 0:
-            raise ValueError(f"loops must be nonnegative: {loops}")
+        loops = int(V.check_nonneg_int(loops, "loops"))
 
         self.stop()
         self._uploaded_samples = n
@@ -1174,7 +1179,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         )
         self.markers = self._parse_marker_routes(raw_markers)
 
-        self.load_impedance = float(self._conf_pos_num("load_impedance", 50.0))
+        self.load_impedance = self._conf_pos_num("load_impedance", 50.0)
         self._stop_level = self._conf_str("stop_level", "zero")
         self._filter = None if self.conf.get("filter") is None else self._conf_int("filter")
         raw_file_transport_dir = self.conf.get("file_transport_dir")
@@ -1188,14 +1193,14 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
                 f"file_transport_dir {self._file_transport_dir!r} does not exist "
                 "or is not a directory"
             )
-        self.digital_min_duration = float(self._conf_nonneg_num("digital_min_duration", 4e-9))
+        self.digital_min_duration = self._conf_nonneg_num("digital_min_duration", 4e-9)
         self._hardware_trigger = {
-            "level": float(self._conf_num("trigger_level", 1.0)),
+            "level": self._conf_num("trigger_level", 1.0),
             "termination_50": self._conf_bool("trigger_termination_50", False),
         }
         self._clock_conf = {
             "mode": self._conf_str("clock_mode", "internal"),
-            "ref_clock_freq": float(self._conf_pos_num("ref_clock_freq", 10e6)),
+            "ref_clock_freq": self._conf_pos_num("ref_clock_freq", 10e6),
             "clock_output": self._conf_bool("clock_output", False),
         }
 
@@ -1218,7 +1223,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         }
 
         self.sample_rate = self._core.configure_clock(
-            float(self._conf_pos_num("sample_rate", 312.5e6)), **self._clock_conf
+            self._conf_pos_num("sample_rate", 312.5e6), **self._clock_conf
         )
         self._core.configure_trigger(source="none")
 
@@ -1237,21 +1242,14 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
     def _parse_amplitudes(raw, analog_channels: tuple[int, ...]) -> dict[int, int]:
         """Normalize strictly typed per-channel amplitude configuration."""
 
-        def validate(value, label: str) -> int:
-            if isinstance(value, bool) or not isinstance(value, int):
-                raise TypeError(f"{label} must be int. Got {type(value).__name__}: {value!r}")
-            return value
-
         if not isinstance(raw, dict):
-            amplitude = validate(raw, "amplitude_mV")
+            amplitude = V.check_int(raw, "amplitude_mV")
             return {channel: amplitude for channel in analog_channels}
 
         normalized = {}
         for key, value in raw.items():
-            if isinstance(key, bool):
-                raise TypeError(f"amplitude_mV channel must be int or str, got bool: {key!r}")
-            if isinstance(key, int):
-                channel = key
+            if isinstance(key, (int, np.integer)) and not isinstance(key, (bool, np.bool_)):
+                channel = int(V.check_int(key, "amplitude_mV channel"))
             elif isinstance(key, str) and key in {str(ch) for ch in analog_channels}:
                 channel = int(key)
             else:
@@ -1264,7 +1262,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
                 )
             if channel in normalized:
                 raise ValueError(f"duplicate amplitude_mV configuration for channel {channel}")
-            normalized[channel] = validate(value, f"amplitude_mV[{key!r}]")
+            normalized[channel] = V.check_int(value, f"amplitude_mV[{key!r}]")
 
         return {channel: normalized.get(channel, 100) for channel in analog_channels}
 
@@ -1286,14 +1284,8 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
                 line, source = value
             else:
                 line, source = value, 0
-            if isinstance(line, bool) or not isinstance(line, int):
-                raise TypeError(
-                    f"marker {name!r} line must be int, got {type(line).__name__}: {line!r}"
-                )
-            if isinstance(source, bool) or not isinstance(source, int):
-                raise TypeError(
-                    f"marker {name!r} source must be int, got {type(source).__name__}: {source!r}"
-                )
+            V.check_int(line, f"marker {name!r} line")
+            V.check_int(source, f"marker {name!r} source")
             route = MarkerRoute(line, source)
             markers[str(name)] = route
 
@@ -1324,6 +1316,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
     def _set_rate(self, rate: float | int | None, force: bool = False) -> bool:
         if rate is None:
             return self.fail_with("param 'rate' (sample rate in Hz) must be given.")
+        rate = V.check_pos_num(rate, "rate")
         rate = int(round(rate))
         if force or rate != self.sample_rate:
             self.sample_rate = self._core.configure_clock(rate, **self._clock_conf)
@@ -1341,12 +1334,11 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
 
         """
 
-        self._trigger_type = self._norm_trigger_type(params.get("trigger_type"))
-        n_runs = params.get("n_runs")
-        if n_runs is not None and (
-            not isinstance(n_runs, (int, np.integer)) or isinstance(n_runs, bool) or n_runs < 1
-        ):
-            raise ValueError(f"n_runs must be >= 1 or None (infinite): {n_runs}")
+        p = ParamAccessor(params)
+        self._trigger_type = self._norm_trigger_type(p.get("trigger_type"))
+        n_runs = p.get("n_runs")
+        if n_runs is not None:
+            n_runs = p.pos_int("n_runs")
         loops = 0 if n_runs is None else int(n_runs)
 
         if self._trigger_type == TriggerType.IMMEDIATE:
@@ -1361,7 +1353,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             # start() arms; each ext0 edge replays the pattern once.
             self._core.configure_trigger(
                 source="ext0",
-                level=float(params.get("trigger_level", self._hardware_trigger["level"])),
+                level=p.num("trigger_level", self._hardware_trigger["level"]),
                 edge=True if self._trigger_type == TriggerType.HARDWARE_RISING else False,
                 termination_50=self._hardware_trigger["termination_50"],
             )
@@ -1374,12 +1366,9 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
 
         if isinstance(value, (bool, np.bool_)):
             return bool(value)
-        if isinstance(value, (int, np.integer)) and not isinstance(value, bool):
-            if int(value) in (0, 1):
-                return bool(value)
-        elif isinstance(value, (float, np.floating)):
-            if np.isfinite(value) and float(value) in (0.0, 1.0):
-                return bool(value)
+        V.check_num(value, f"digital channel {name!r} level")
+        if value in (0, 1):
+            return bool(value)
         raise ValueError(f"digital channel {name!r}: level must be bool, 0, or 1; got {value!r}")
 
     @staticmethod
@@ -1406,16 +1395,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
                     )
                 level, count = run
                 levels.append(Spectrum_AWG._digital_level(name, level))
-                if isinstance(count, bool) or not isinstance(count, (int, np.integer)):
-                    raise ValueError(
-                        f"digital channel {name!r}: RLE n_samples must be an integer; "
-                        f"got {count!r}"
-                    )
-                count = int(count)
-                if count < 0:
-                    raise ValueError(
-                        f"digital channel {name!r}: RLE n_samples must be >= 0; got {count}"
-                    )
+                count = int(V.check_nonneg_int(count, f"digital channel {name!r} RLE n_samples"))
                 counts.append(count)
 
             total = sum(counts)

@@ -26,6 +26,8 @@ import numpy as np
 from mahos.inst.awg_interface import AWGInterface
 from mahos.inst.awg_file import save_waveforms
 from mahos.node.log import DummyLogger
+from mahos.util.param import ParamAccessor
+import mahos.util.validation as V
 import mahos_dq.meas.awg_renderer.renderer_kernel as K
 from mahos.msgs.inst.pg_msgs import Block, Blocks
 from mahos.msgs.inst.awg_msgs import TriggerType, AWGWaveform
@@ -83,11 +85,9 @@ class AWGRenderer(object):
         remove_transport_file: bool = True,
     ):
         self.awg = awg
-        raw_channels = (channels,) if isinstance(channels, int) else tuple(channels)
-        if any(
-            isinstance(channel, bool) or not isinstance(channel, int) for channel in raw_channels
-        ):
-            raise TypeError(f"channels must contain integers: {raw_channels}")
+        raw_channels = (channels,) if isinstance(channels, (int, np.integer)) else tuple(channels)
+        for i, channel in enumerate(raw_channels):
+            V.check_int(channel, f"channels[{i}]")
         self.channels = tuple(sorted(set(raw_channels)))
         if not (1 <= len(self.channels) <= 2):
             raise ValueError(f"channels must contain one or two unique outputs: {raw_channels}")
@@ -108,20 +108,9 @@ class AWGRenderer(object):
 
     def _validate_tone_freqs(self, rate: float | int, tones: list[K.MWTone]):
         for tone in tones:
-            f = tone.freq
-            if not (math.isfinite(f) and 0.0 < f < rate / 2.0):
+            f = V.check_pos_num(tone.freq, f"freq of {tone.channel}")
+            if f >= rate / 2.0:
                 raise ValueError(f"freq of {tone.channel} ({f}) is invalid.")
-
-    @staticmethod
-    def _positive_finite(name: str, value) -> float:
-        if (
-            isinstance(value, bool)
-            or not isinstance(value, (int, float))
-            or not math.isfinite(value)
-            or value <= 0.0
-        ):
-            raise ValueError(f"{name} must be a positive finite number: {value!r}")
-        return float(value)
 
     @staticmethod
     def _validate_digital_min_duration(
@@ -131,13 +120,7 @@ class AWGRenderer(object):
 
         if min_duration is None:
             return
-        if (
-            isinstance(min_duration, bool)
-            or not isinstance(min_duration, (int, float))
-            or not math.isfinite(min_duration)
-            or min_duration < 0.0
-        ):
-            raise ValueError(f"invalid digital_min_duration: {min_duration}")
+        min_duration = V.check_nonneg_num(min_duration, "digital_min_duration")
 
         min_samples = int(math.ceil(min_duration * rate - 1e-12))
         for name, track in digital.items():
@@ -161,7 +144,7 @@ class AWGRenderer(object):
                     )
 
     def _validate_rate(self, rate: float, bounds: dict) -> float:
-        rate = self._positive_finite("AWG rate", rate)
+        rate = V.check_pos_num(rate, "AWG rate")
         mn, mx = bounds["sample_rate"]
         if not (mn <= rate <= mx):
             raise ValueError(f"sample rate is out of bounds: {rate}")
@@ -190,8 +173,9 @@ class AWGRenderer(object):
         self._pending = None
         self._uploaded = False
 
-        rate = self._validate_rate(params["awg"]["rate"], bounds)
-        pg_freq = self._positive_finite("PG frequency", pg_freq)
+        awg_params = ParamAccessor(params).child("awg")
+        rate = self._validate_rate(awg_params.pos_num("rate"), bounds)
+        pg_freq = V.check_pos_num(pg_freq, "PG frequency")
         available = tuple(bounds["analog_channels"])
         unavailable = [channel for channel in self.channels if channel not in available]
         if unavailable:
@@ -203,7 +187,7 @@ class AWGRenderer(object):
             analog_channels=self.channels,
             num_logical_mw=num_logical_mw,
             load_impedance=bounds["load_impedance"],
-            local_phase=params["awg"].get("local_phase", False),
+            local_phase=awg_params.bool("local_phase", False),
         )
         self._validate_tone_freqs(rate, tones)
 
@@ -211,10 +195,8 @@ class AWGRenderer(object):
         # exact per-tone dBm powers after normalization.
         amplitudes_mV = {}
         required = K.required_amplitude_mV(rp)
-        amp_bounds = bounds["amplitude_mV"]
-        if not isinstance(amp_bounds, (tuple, list)) or len(amp_bounds) != 2:
-            raise ValueError(f"invalid amplitude_mV bounds: {amp_bounds!r}")
-        amp_max = self._positive_finite("maximum AWG amplitude", amp_bounds[1])
+        amp_bounds = V.check_numbers(bounds["amplitude_mV"], 2, "amplitude_mV bounds")
+        amp_max = V.check_pos_num(amp_bounds[1], "maximum AWG amplitude")
         for channel, requested in required.items():
             amplitude_mV = int(math.ceil(requested - 1e-9)) if requested > 0.0 else 0
             if amplitude_mV > amp_max:
@@ -229,8 +211,8 @@ class AWGRenderer(object):
 
         gran = bounds["granularity"]
         mem = bounds["memory_samples"]
-        if mem is not None and (isinstance(mem, bool) or not isinstance(mem, int) or mem <= 0):
-            raise ValueError(f"memory_samples must be a positive integer or None: {mem!r}")
+        if mem is not None:
+            V.check_pos_int(mem, "memory_samples")
 
         n = K.flat_samples_estimate(blocks, pg_freq, rate)
         total = n * len(self.channels)
@@ -373,11 +355,11 @@ class AWGRenderer(object):
 
         if self._pending is None or not self._uploaded:
             raise RuntimeError("Call upload() successfully before waveform_msg().")
-        if max_samples <= 0:
-            raise ValueError("max_samples must be positive.")
+        V.check_pos_int(max_samples, "max_samples")
+        V.check_pos_int(max_points, "max_points")
         if max_points < 2:
             raise ValueError("max_points must be at least 2.")
-        marker_freq = self._positive_finite("marker frequency", marker_freq)
+        marker_freq = V.check_pos_num(marker_freq, "marker frequency")
 
         res, _, amplitudes_mV, rate = self._pending
         preview_samples = min(res.actual_samples, max_samples)
