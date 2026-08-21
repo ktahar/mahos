@@ -161,7 +161,7 @@ class MCL_USB_Attenuator(Instrument, ConfAccessorMixin):
         )
 
     def configure(self, params: dict, label: str = "") -> bool:
-        params = params.unwrap()
+        params = P.unwrap(params)
         if "attenuation" not in params:
             return self.fail_with("must contain attenuation")
         return self.set_attenuation(params["attenuation"])
