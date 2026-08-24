@@ -618,12 +618,12 @@ class Spectrum_AnalogIn(Instrument):
         return True
 
     def _reset_card(self):
-        """Reset the card state."""
+        """Stop and reset the card state."""
 
         self.stop()
         self._mode = self.Mode.UNCONFIGURED
         card = self._open_card()
-        # re-defer these objects for safety before reset.
+        # de-refer these objects for safety before reset.
         self._transfer = None
         self._channels = None
         card.reset()
@@ -960,6 +960,16 @@ class Spectrum_AnalogIn(Instrument):
         self._mode = self.Mode.UNCONFIGURED
         self.logger.debug("Stopped Spectrum_AnalogIn.")
         return True
+
+    def reset(self, label: str = "") -> bool:
+        if self.is_closed():
+            return False
+        try:
+            self._reset_card()
+            return True
+        except Exception:
+            self.logger.exception("error in reset().")
+            return False
 
     def close_resources(self):
         self.stop()

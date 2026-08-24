@@ -116,7 +116,7 @@ def test_configure_immediate_waveform_and_lifecycle(awg):
     assert not awg.get("finished")
     assert awg.stop()
     assert awg.get("finished")
-    assert awg.set("clear")
+    assert awg.reset()
     assert awg.get("length") == 0
     assert awg.get("offsets") == []
 

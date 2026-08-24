@@ -301,7 +301,10 @@ class Spectrum_AWG_Core(object):
         fnc = self._card.get_i(spcm.SPC_FNCTYPE)
         if fnc != spcm.SPCM_TYPE_AO:
             self.logger.warning(f"card function type is {fnc}, expected AO ({spcm.SPCM_TYPE_AO})")
-        self._card.timeout(0)  # disable driver timeout; we never block on WAITREADY
+
+        # disable driver timeout; we never block on WAITREADY
+        self._card.timeout(0)
+
         self.logger.info(f"Opened Spectrum AWG: {self.card_info()}")
         return self
 
@@ -766,20 +769,20 @@ class Spectrum_AWG_Core(object):
         card.set_i(spcm.SPC_M2CMD, spcm.M2CMD_CARD_FORCETRIGGER)
 
     def reset(self):
-        """Stop and reset the card registers to defaults."""
+        """Stop and reset the card state."""
 
+        self.stop()
         card = self._require_card()
-        spcm = self._import_spcm()
-        self.stop()
-        card.set_i(spcm.SPC_M2CMD, spcm.M2CMD_CARD_RESET)
-        self._uploaded_samples = 0
-
-    def clear(self):
-        """Stop output and clear the uploaded-waveform bookkeeping."""
-
-        self.stop()
-        self._uploaded_samples = 0
+        # de-refer these objects for safety before reset.
+        self._channels = None
         self._transfer = None
+        card.reset()
+        # reset bookkeeping attributes
+        self._uploaded_samples = 0
+
+        # disable driver timeout; we never block on WAITREADY
+        # this looks like the default, but do this explicitly, just in case
+        card.timeout(0)
 
 
 class Dummy_AWG_Core(object):
@@ -1061,11 +1064,7 @@ class Dummy_AWG_Core(object):
         self.stop()
         self._uploaded_samples = 0
         self.last_upload = {}
-
-    def clear(self):
-        self.stop()
-        self._uploaded_samples = 0
-        self.last_upload = {}
+        self.config = {}
 
 
 class Spectrum_AWG(Instrument, ConfAccessorMixin):
@@ -1143,7 +1142,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
 
     - ``start()``: arm (each trigger replays the pattern once in singlerestart).
     - ``stop()``: stop replay.
-    - ``set("trigger")``: force one trigger. ``set("clear")``: stop and clear.
+    - ``set("trigger")``: force one trigger.
       ``set("amplitude", (channel, mv))``. ``set("power", (channel, dBm))``:
       amplitude from dBm via load_impedance.
     - ``get("opc")``, ``get("status")``, ``get("info")``, ``get("sample_rate")``,
@@ -1181,7 +1180,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
 
         self.load_impedance = self._conf_pos_num("load_impedance", 50.0)
         self._stop_level = self._conf_str("stop_level", "zero")
-        self._filter = None if self.conf.get("filter") is None else self._conf_int("filter")
+        self._filter = None if self.conf.get("filter") is None else int(self._conf_int("filter"))
         raw_file_transport_dir = self.conf.get("file_transport_dir")
         self._file_transport_dir = (
             os.path.abspath(os.path.expanduser(raw_file_transport_dir))
@@ -1214,12 +1213,12 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
                 f"{self.markers}"
             )
 
-        self.amplitude_mV = self._parse_amplitudes(
+        amplitudes = self._parse_amplitudes(
             self.conf.get("amplitude_mV", 100), self.analog_channels
         )
         self.amplitude_mV = {
             channel: self._core.set_amplitude(channel, amplitude)
-            for channel, amplitude in self.amplitude_mV.items()
+            for channel, amplitude in amplitudes.items()
         }
 
         self.sample_rate = self._core.configure_clock(
@@ -1306,20 +1305,11 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             return TriggerType(tt)
         raise ValueError(f"invalid trigger_type: {tt!r}")
 
-    def close_resources(self):
-        if getattr(self, "_core", None) is not None:
-            self._core.close()
-
     def _granularity(self) -> tuple[int, int]:
         return self._core.memory_granularity()
 
-    def _set_rate(self, rate: float | int | None, force: bool = False) -> bool:
-        if rate is None:
-            return self.fail_with("param 'rate' (sample rate in Hz) must be given.")
-        rate = V.check_pos_num(rate, "rate")
-        rate = int(round(rate))
-        if force or rate != self.sample_rate:
-            self.sample_rate = self._core.configure_clock(rate, **self._clock_conf)
+    def _set_rate(self, rate: int) -> bool:
+        self.sample_rate = self._core.configure_clock(rate, **self._clock_conf)
         if rate != self.sample_rate:
             return self.fail_with(
                 f"sample rate {rate:_d} Hz is not realizable (card: {self.sample_rate:_d} Hz);"
@@ -1327,18 +1317,16 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             )
         return True
 
-    def _apply_trigger_type(self, params: dict) -> tuple[str, int]:
-        """Configure trigger per the plan API semantics (AWGInterface.configure_waveforms).
+    def _configure_trigger(
+        self, trigger_type: TriggerType, n_runs: int | None, level: float
+    ) -> tuple[str, int]:
+        """Configure trigger from AWGInterface API semantics.
 
         :returns: (replay_mode, loops) to use for the upload.
 
         """
 
-        p = ParamAccessor(params)
-        self._trigger_type = self._norm_trigger_type(p.get("trigger_type"))
-        n_runs = p.get("n_runs")
-        if n_runs is not None:
-            n_runs = p.pos_int("n_runs")
+        self._trigger_type = trigger_type
         loops = 0 if n_runs is None else int(n_runs)
 
         if self._trigger_type == TriggerType.IMMEDIATE:
@@ -1353,7 +1341,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             # start() arms; each ext0 edge replays the pattern once.
             self._core.configure_trigger(
                 source="ext0",
-                level=p.num("trigger_level", self._hardware_trigger["level"]),
+                level=level,
                 edge=True if self._trigger_type == TriggerType.HARDWARE_RISING else False,
                 termination_50=self._hardware_trigger["termination_50"],
             )
@@ -1512,6 +1500,11 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         if len(lengths) != 1:
             return self.fail_with(f"analog channel sample lengths differ: {sorted(lengths)}")
         n = lengths.pop()
+        mn, step = self._granularity()
+        if n < mn or n % step:
+            return self.fail_with(
+                f"sample count {n} violates memory granularity (min {mn}, step {step})"
+            )
 
         digital = params.get("digital")
         if digital is None:
@@ -1536,27 +1529,17 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
                 f"active channels are {channels}"
             )
 
-        actual_amplitudes = self._core.configure_channels(
-            channels,
-            self.amplitude_mV,
-            filter_=self._filter,
-            stop_level=self._stop_level,
-        )
-        self.amplitude_mV.update(actual_amplitudes)
-        # The available sample-rate range can depend on the number of active channels.
-        # Re-apply the requested rate after changing the channel-enable mask even when it
-        # is numerically equal to the previously configured rate.
-        if not self._set_rate(params.get("rate"), force=True):
-            return False
-        mn, step = self._granularity()
-        if n < mn or n % step:
-            return self.fail_with(
-                f"sample count {n} violates memory granularity (min {mn}, step {step})"
-            )
+        p = ParamAccessor(params)
+        rate = int(round(p.pos_num("rate")))
+        trigger_type = self._norm_trigger_type(p.get("trigger_type"))
+        n_runs = p.get("n_runs")
+        if n_runs is not None:
+            n_runs = int(p.pos_int("n_runs"))
+        trigger_level = float(p.num("trigger_level", self._hardware_trigger["level"]))
 
         waveforms = {
             channel: Waveform(
-                sample_rate=self.sample_rate,
+                sample_rate=rate,
                 analog=arrays[channel],
                 markers={
                     name: track
@@ -1566,7 +1549,25 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             )
             for channel in channels
         }
-        replay, loops = self._apply_trigger_type(params)
+        # pre-check the waveform size to fail fast before modifying the card state.
+        if not self._check_upload_size(waveforms[channels[0]].n_samples(), len(waveforms)):
+            return False
+
+        # reset before starting actual card state modification.
+        self._reset()
+
+        actual_amplitudes = self._core.configure_channels(
+            channels,
+            self.amplitude_mV,
+            filter_=self._filter,
+            stop_level=self._stop_level,
+        )
+        self.amplitude_mV.update(actual_amplitudes)
+
+        if not self._set_rate(rate):
+            return False
+
+        replay, loops = self._configure_trigger(trigger_type, n_runs, trigger_level)
         return self._upload(waveforms, replay, loops, "waveforms", offsets=[0])
 
     def _configure_sequence(self, params: dict) -> bool:
@@ -1601,7 +1602,21 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
     def _configure_cw(self, params: dict) -> bool:
         return self.fail_with("CW mode (DDS) is not supported yet.")
 
+    def _reset(self):
+        """Reset core (card) state and bookkeeping attributes."""
+
+        try:
+            self._core.reset()
+        finally:
+            self._length = 0
+            self._offsets = []
+            self._wave_info = {}
+
     # Standard API
+
+    def close_resources(self):
+        if getattr(self, "_core", None) is not None:
+            self._core.close()
 
     def configure(self, params: dict, label: str = "") -> bool:
         if self.is_closed():
@@ -1646,26 +1661,22 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         if self.is_closed():
             return False
         try:
-            self._core.reset()
-            self._length = 0
-            self._offsets = []
-            self._wave_info = {}
+            self._reset()
             return True
         except Exception:
             self.logger.exception("error in reset().")
             return False
 
     def shutdown(self) -> bool:
-        """Safe stop for power-off: stop replay (output falls to the stop level,
-        default zero), clear the pattern, and close the card."""
+        """Safe stop for power-off.
+
+        stop replay, reset the card state, clear the pattern, and close the card.
+
+        """
 
         try:
             if not self._closed:
-                self._core.stop()
-                self._core.clear()
-                self._length = 0
-                self._offsets = []
-                self._wave_info = {}
+                self._reset()
         except Exception:
             self.logger.exception("error while stopping during shutdown().")
         self.close()
@@ -1678,12 +1689,6 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         key = key.lower()
         if key == "trigger":
             self._core.force_trigger()
-            return True
-        elif key == "clear":
-            self._core.clear()
-            self._length = 0
-            self._offsets = []
-            self._wave_info = {}
             return True
         elif key == "amplitude":
             if not isinstance(value, (tuple, list)) or len(value) != 2:

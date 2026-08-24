@@ -144,11 +144,6 @@ class AWGInterface(InstrumentInterface):
             label="sequence",
         )
 
-    def clear(self) -> bool:
-        """Clear the configured waveform / sequence and stop output."""
-
-        return self.set("clear")
-
     def trigger(self) -> bool:
         """Issue software trigger (one replay when armed)."""
 
