@@ -303,6 +303,7 @@ class Spectrum_AWG_Core(object):
             self.logger.warning(f"card function type is {fnc}, expected AO ({spcm.SPCM_TYPE_AO})")
 
         # disable driver timeout; we never block on WAITREADY
+        # this looks like the default, but do this explicitly, just in case
         self._card.timeout(0)
 
         self.logger.info(f"Opened Spectrum AWG: {self.card_info()}")
@@ -1082,10 +1083,6 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
     :type mock_num_channels: int
     :param verbose: (default: False) enable verbose output from the ``spcm`` card object.
     :type verbose: bool
-    :param sample_rate: (default: 312.5e6) requested sample rate in Hz. The
-        M5i.63xx supports base rate / 2^n; the actual rate is read back and
-        used for waveform building (get("sample_rate")).
-    :type sample_rate: float
     :param amplitude_mV: (default: 100) output amplitude, zero-to-peak into 50 Ohm.
         An integer applies to every analog channel; a mapping sets values by physical
         channel index.
@@ -1203,7 +1200,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             "clock_output": self._conf_bool("clock_output", False),
         }
 
-        # Open the card and apply configuration that is independent of active analog channels.
+        # Open the card and discover capabilities.
         self._core.open()
         info = self._core.card_info()
         self.analog_channels = tuple(range(int(info["num_channels"])))
@@ -1213,6 +1210,15 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
                 f"{self.markers}"
             )
 
+        # bookkeeping of the last configure()
+        self._trigger_type: TriggerType = TriggerType.IMMEDIATE
+        self._length: int = 0
+        self._sample_rate: int = 0
+        self._offsets: list[int] = []
+        self._wave_info: dict = {}
+
+        # Reset the card state and set amplitude only (that's managed independently of configure).
+        self._reset()
         amplitudes = self._parse_amplitudes(
             self.conf.get("amplitude_mV", 100), self.analog_channels
         )
@@ -1221,19 +1227,8 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             for channel, amplitude in amplitudes.items()
         }
 
-        self.sample_rate = self._core.configure_clock(
-            self._conf_pos_num("sample_rate", 312.5e6), **self._clock_conf
-        )
-        self._core.configure_trigger(source="none")
-
-        # bookkeeping of the last configure()
-        self._trigger_type: TriggerType = TriggerType.IMMEDIATE
-        self._length: int = 0
-        self._offsets: list[int] = []
-        self._wave_info: dict = {}
-
         self.logger.info(
-            f"initialized ({'mock' if self._mock else 'spcm'}): rate {self.sample_rate:_.0f} Hz, "
+            f"initialized ({'mock' if self._mock else 'spcm'}): "
             f"amplitudes {self.amplitude_mV} mV, markers {self.markers}."
         )
 
@@ -1309,10 +1304,10 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         return self._core.memory_granularity()
 
     def _set_rate(self, rate: int) -> bool:
-        self.sample_rate = self._core.configure_clock(rate, **self._clock_conf)
-        if rate != self.sample_rate:
+        sample_rate = self._core.configure_clock(rate, **self._clock_conf)
+        if rate != sample_rate:
             return self.fail_with(
-                f"sample rate {rate:_d} Hz is not realizable (card: {self.sample_rate:_d} Hz);"
+                f"sample rate {rate:_d} Hz is not realizable (card: {sample_rate:_d} Hz);"
                 "valid rates are base rate / 2^n (see get('bounds'))."
             )
         return True
@@ -1432,6 +1427,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
     def _upload(
         self,
         waveforms: dict[int, Waveform],
+        rate: int,
         replay_mode: str,
         loops: int,
         label: str,
@@ -1446,12 +1442,13 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         )
         n = int(info["n_samples"])
         self._length = n
+        self._sample_rate = rate
         self._offsets = [0] if offsets is None else list(offsets)
         self._wave_info = {
             "label": label,
             "n_samples": n,
-            "duration": n / self.sample_rate,
-            "sample_rate": self.sample_rate,
+            "duration": n / rate,
+            "sample_rate": rate,
             "replay_mode": replay_mode,
             "loops": loops,
             "analog_channels": sorted(waveforms),
@@ -1463,7 +1460,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         if extra:
             self._wave_info.update(extra)
         self.logger.info(
-            f"configured '{label}': {n:_d} samples ({n / self.sample_rate * 1e6:.2f} us), "
+            f"configured '{label}': {n:_d} samples ({n / rate * 1e6:.2f} us), "
             f"replay = {replay_mode}, loops = {loops}."
         )
         return True
@@ -1568,7 +1565,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             return False
 
         replay, loops = self._configure_trigger(trigger_type, n_runs, trigger_level)
-        return self._upload(waveforms, replay, loops, "waveforms", offsets=[0])
+        return self._upload(waveforms, rate, replay, loops, "waveforms", offsets=[0])
 
     def _configure_sequence(self, params: dict) -> bool:
         return self.fail_with("Sequence mode is not supported yet.")
@@ -1609,6 +1606,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             self._core.reset()
         finally:
             self._length = 0
+            self._sample_rate = 0
             self._offsets = []
             self._wave_info = {}
 
@@ -1762,7 +1760,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         elif key == "info":
             return self._core.card_info()
         elif key == "sample_rate":
-            return float(self.sample_rate)
+            return float(self._sample_rate)
         elif key == "waveform_info":
             return dict(self._wave_info)
         elif key == "finished":

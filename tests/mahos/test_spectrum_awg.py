@@ -23,7 +23,6 @@ def awg():
         "awg",
         {
             "mock": True,
-            "sample_rate": 5e9,
             "memory_granularity": 8,
             "amplitude_mV": {0: 100, 1: 80},
         },
@@ -146,7 +145,6 @@ def test_configure_two_channels_routes_markers_to_their_sources():
         "awg",
         {
             "mock": True,
-            "sample_rate": 5e9,
             "memory_granularity": 8,
             "markers": {
                 "laser": {"line": 0, "source": 0},
@@ -203,7 +201,6 @@ def test_configure_waveforms_file(tmp_path):
         "awg",
         {
             "mock": True,
-            "sample_rate": 5e9,
             "memory_granularity": 8,
             "file_transport_dir": str(tmp_path),
         },

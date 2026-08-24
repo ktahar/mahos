@@ -165,9 +165,22 @@ class AWGInterface(InstrumentInterface):
         return self.get("opc", delay)
 
     def get_length(self) -> int:
-        """Get total logical sample length (after sequence expansion) of last configure()."""
+        """Get total logical sample length of last configure().
+
+        Zero means no active configuration.
+
+        """
 
         return self.get("length")
+
+    def get_sample_rate(self) -> float:
+        """Get sampling rate of last configure().
+
+        Zero means no active configuration.
+
+        """
+
+        return self.get("sample_rate")
 
     def get_offsets(self) -> list[int]:
         """Get sample offsets of the sequence steps (or [0] for flat waveforms)."""
