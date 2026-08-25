@@ -44,6 +44,15 @@ def make_pd_rate_param(conf: dict, *, pd_trace: bool = False):
     raise TypeError("conf['pd_rate'] has invalid type.")
 
 
+def make_pd_buffer_size_coeff_param(conf: dict):
+    return P.IntParam(
+        conf.get("buffer_size_coeff", 20),
+        1,
+        10_000,
+        doc="ratio of requested buffer size to callback data size",
+    )
+
+
 def make_pd_param_dict(
     conf: dict, *, pd_trace: bool = False, has_hardware_average: bool = False
 ) -> P.ParamDict[str, P.PDValue]:
@@ -51,12 +60,7 @@ def make_pd_param_dict(
 
     d = P.ParamDict()
     d["rate"] = make_pd_rate_param(conf, pd_trace=pd_trace)
-    d["buffer_size_coeff"] = P.IntParam(
-        conf.get("buffer_size_coeff", 20),
-        1,
-        10_000,
-        doc="ratio of requested buffer size to callback data size",
-    )
+    d["buffer_size_coeff"] = make_pd_buffer_size_coeff_param(conf)
     lb, ub = conf.get("pd_bounds", (-10.0, 10.0))
     lower_doc = "lower bound of expected voltage"
     upper_doc = "upper bound of expected voltage"

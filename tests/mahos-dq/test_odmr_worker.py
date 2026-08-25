@@ -337,6 +337,7 @@ def test_overlay_pd_wrappers_apply_point_policy_without_starting():
     params_apd = {
         "background": True,
         "timing": {"time_window": 2e-6},
+        "pd": {"buffer_size_coeff": 3, "dummy_points": 2},
     }
     pd_apd = _PD()
     sweeper_apd = ODMRSweeperPG.__new__(ODMRSweeperPG)
@@ -347,11 +348,13 @@ def test_overlay_pd_wrappers_apply_point_policy_without_starting():
 
     assert sweeper_apd.configure_apd(params_apd, "cw")
     assert pd_apd.params["cb_samples"] == 2
-    assert pd_apd.params["drop_first"] == 0
+    assert pd_apd.params["buffer_size"] == 6
+    assert pd_apd.params["drop_first"] == 2
     assert not pd_apd.started
 
     params_analog = _analog_params()
     params_analog["background"] = True
+    params_analog["pd"]["dummy_points"] = 2
     clock = _Clock()
     pd_analog = _PD()
     sweeper_analog = ODMRSweeperPG.__new__(ODMRSweeperPG)
@@ -366,6 +369,22 @@ def test_overlay_pd_wrappers_apply_point_policy_without_starting():
 
     assert sweeper_analog.configure_analog_pd(params_analog, "cw")
     assert pd_analog.params["cb_samples"] == 2
-    assert pd_analog.params["drop_first"] == 0
+    assert pd_analog.params["drop_first"] == 2
     assert not clock.started
     assert not pd_analog.started
+
+
+def test_overlay_dummy_points_must_fit_detector_buffer():
+    sweeper = ODMRSweeperPG.__new__(ODMRSweeperPG)
+    sweeper._closed = True
+    sweeper.conf = {"buffer_size_coeff": 5}
+    params = {"pd": {"dummy_points": 3, "buffer_size_coeff": 3}}
+
+    assert sweeper.validate(params, "cw") == (True, "", "")
+
+    params["pd"]["dummy_points"] = 4
+    success, message, summary = sweeper.validate(params, "cw")
+
+    assert not success
+    assert message == "pd.dummy_points (4) must not exceed pd.buffer_size_coeff (3)."
+    assert summary == ""

@@ -19,12 +19,14 @@ from mahos.msgs import param_msgs as P
 from mahos.msgs.inst.pg_msgs import TriggerType
 from mahos.util.queue import RollingQueue
 from mahos.util.conf import ConfAccessorMixin, PresetLoader
+from mahos.util.param import ParamAccessor, ParamError
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
 from mahos_dq.meas.odmr_sg import configure_modulation
 from mahos_dq.meas.odmr_pd import (
     configure_analog_pds,
     configure_apds,
     configure_trace_pds,
+    make_pd_buffer_size_coeff_param,
     make_pd_param_dict,
     reduce_traces,
     sum_pd_blocks,
@@ -418,7 +420,15 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             time.sleep(self._pg_wait_interval)
         return self.fail_with("PG hasn't finished operation.")
 
-    def sweep_loop_async(self, ev: threading.Event):
+    def sweep_loop_async(self, ev: threading.Event, dummy_points: int):
+        for i in range(dummy_points):
+            self.sg.set_freq_CW(self.start_f)
+            self.pg.trigger()
+            if not self._wait_pg(ev):
+                self.logger.info("Quitting sweep loop.")
+                return
+            self.logger.info(f"Dummy excitation #{i + 1}")
+
         while True:
             for f in self.freqs:
                 if not self._reserve_inflight(ev):
@@ -434,7 +444,15 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
                     self.logger.info("Quitting sweep loop.")
                     return
 
-    def sweep_loop_sync(self, ev: threading.Event):
+    def sweep_loop_sync(self, ev: threading.Event, dummy_points: int):
+        for i in range(dummy_points):
+            self.sg.set_freq_CW(self.start_f)
+            self.pg.trigger()
+            if not self._wait_pg(ev):
+                self.logger.info("Quitting sweep loop.")
+                return
+            self.logger.info(f"Dummy excitation #{i + 1}")
+
         while True:
             for f in self.freqs:
                 self.sg.set_freq_CW(f)
@@ -472,10 +490,15 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             return self.get_pd_param_dict(False)
         elif label == "pd_trace" and self._pd_trace:
             return self.get_pd_param_dict(True)
+        self.logger.error(f"Unknown param dict label: {label}")
 
     def configure(self, params: dict, label: str = "") -> bool:
         if not self.check_required_params(params, ("start", "stop", "num", "power", "delay")):
             return False
+
+        success, message = self.validate_pd_params(params)
+        if not success:
+            return self.fail_with(message)
 
         self._set_attrs(params)
         self.params = params
@@ -529,10 +552,15 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
         time.sleep(self._start_delay)
 
         self._stop_ev = threading.Event()
+        dummy_points = ParamAccessor(self.params).child("pd", {}).nonneg_int("dummy_points", 0)
         if self._pd_async:
-            self._thread = threading.Thread(target=self.sweep_loop_async, args=(self._stop_ev,))
+            self._thread = threading.Thread(
+                target=self.sweep_loop_async, args=(self._stop_ev, dummy_points)
+            )
         else:
-            self._thread = threading.Thread(target=self.sweep_loop_sync, args=(self._stop_ev,))
+            self._thread = threading.Thread(
+                target=self.sweep_loop_sync, args=(self._stop_ev, dummy_points)
+            )
         self._thread.start()
 
         self.running = True
@@ -569,13 +597,34 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
     def validate(self, params: dict, label: str) -> tuple[bool, str, str]:
         """Validate parameters using this overlay's hardware configuration.
 
-        Only pulse mode params are validated here.
+        Pulse-generator parameters are validated only in pulse mode.
 
         """
 
+        success, message = self.validate_pd_params(params)
+        if not success:
+            return False, message, ""
         if label == "pulse":
             return self.validate_pulse_params(params)
         return True, "", ""
+
+    def validate_pd_params(self, params: dict) -> tuple[bool, str]:
+        """Validate detector parameters shared by all measurement modes."""
+
+        try:
+            pd = ParamAccessor(params).child("pd", {})
+            dummy_points = pd.nonneg_int("dummy_points", 0)
+            buffer_size_coeff = pd.pos_int(
+                "buffer_size_coeff", self._conf_pos_int("buffer_size_coeff", 20)
+            )
+            if dummy_points > buffer_size_coeff:
+                raise ParamError(
+                    f"pd.dummy_points ({dummy_points}) must not exceed "
+                    f"pd.buffer_size_coeff ({buffer_size_coeff})."
+                )
+            return True, ""
+        except (KeyError, TypeError, ValueError) as e:
+            return False, str(e)
 
     def get(self, key: str, args=None, label: str = ""):
         if key == "point":
@@ -597,14 +646,20 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             self.logger.error(f"unknown get() key: {key}")
             return None
 
-    def get_pd_param_dict(self, pd_trace: bool = False) -> P.ParamDict[str, P.PDValue] | None:
+    def get_pd_param_dict(self, pd_trace: bool = False) -> P.ParamDict[str, P.PDValue]:
+        dummy_points = P.IntParam(0, 0, 100, doc="number of dummy excitations to stabilize")
         if not self._pd_analog:
-            return None
-        return make_pd_param_dict(
+            return P.ParamDict(
+                buffer_size_coeff=make_pd_buffer_size_coeff_param(self.conf),
+                dummy_points=dummy_points,
+            )
+        pd = make_pd_param_dict(
             self.conf,
             pd_trace=pd_trace,
             has_hardware_average=pd_trace and self._pd_spectrum,
         )
+        pd["dummy_points"] = dummy_points
+        return pd
 
     def get_capability(self) -> dict[str, bool]:
         """Return detector and pulse-generation capabilities."""
@@ -628,17 +683,23 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             return all([pd.start() for pd in self.pds])
 
     def configure_apd(self, params: dict, label: str) -> bool:
+        p = ParamAccessor(params)
+        pd = p.child("pd", {})
+        buffer_size_coeff = pd.pos_int("buffer_size_coeff", self.conf.get("buffer_size_coeff", 20))
         return configure_apds(
             self.pds,
             self._pd_clock,
             self.apd_time_window(params, label),
-            2 if params.get("background", False) else 1,
-            self.conf.get("buffer_size_coeff", 20),
-            0,
+            2 if p.bool("background", False) else 1,
+            buffer_size_coeff,
+            pd.nonneg_int("dummy_points", 0),
         )
 
     def configure_analog_pd(self, params: dict, label: str) -> bool:
-        point_count = 2 if params.get("background", False) else 1
+        p = ParamAccessor(params)
+        pd = p.child("pd", {})
+        point_count = 2 if p.bool("background", False) else 1
+        drop_first = pd.nonneg_int("dummy_points", 0)
         if label == "pulse" and self._pd_trace:
             self._samples_per_trace = configure_trace_pds(
                 self.clock,
@@ -648,7 +709,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
                 self.conf,
                 self._pd_spectrum,
                 point_count,
-                0,
+                drop_first,
                 self._pd_data_transfer,
                 self.logger,
             )
@@ -662,7 +723,7 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             self.conf,
             self._pd_spectrum,
             point_count,
-            0,
+            drop_first,
             self._pd_data_transfer,
             self.logger,
         )
