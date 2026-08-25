@@ -19,6 +19,7 @@ from mahos.msgs.common_msgs import BinaryState
 from mahos.node.node import local_conf, join_name
 from mahos.gui.gui_node import GUINode
 from mahos.gui.dialog import load_dialog
+import mahos.util.validation as V
 
 from mahos_dq.gui.ui.apodmr import Ui_APODMR
 from mahos_dq.gui.apodmr_client import QAPODMRClient
@@ -420,6 +421,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             self.exportButton,
             self.exportaltButton,
             self.loadButton,
+            self.enableresumeBox,
             self.quickresumeBox,
             self.freqBox,
             self.powerBox,
@@ -461,6 +463,7 @@ class APODMRMainWindow(QtWidgets.QMainWindow):
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
+        enable_resume = V.check_bool(lconf.get("enable_resume", True), "enable_resume")
 
         self.plot = PlotWidget(parent=self)
         self.alt_plot = AltPlotWidget(parent=self)
@@ -469,6 +472,7 @@ class APODMRMainWindow(QtWidgets.QMainWindow):
             gconf,
             target["apodmr"],
             target["gparams"],
+            enable_resume,
             self.plot,
             self.alt_plot,
             self.raw_plot,
@@ -513,6 +517,8 @@ class APODMRGUI(GUINode):
     :type target.apodmr: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
     :type target.gparams: tuple[str, str] | str
+    :param enable_resume: (default: True) Initial state of "Enable resume" CheckBox.
+    :type enable_resume: bool
 
     """
 

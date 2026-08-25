@@ -25,6 +25,7 @@ from mahos_dq.gui.spodmr_client import QSPODMRClient
 from mahos.msgs.common_msgs import BinaryState
 from mahos.msgs.common_meas_msgs import Buffer
 from mahos.msgs import param_msgs as P
+import mahos.util.validation as V
 from mahos_dq.msgs.spodmr_msgs import SPODMRData, SPODMRStatus
 from mahos.node.global_params import GlobalParamsClient
 from mahos.gui.gui_node import GUINode
@@ -438,6 +439,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         gconf: dict,
         name,
         gparams_name,
+        enable_resume: bool,
         plot: PlotWidget,
         alt_plot: AltPlotWidget,
         context,
@@ -454,6 +456,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         self._pg_freq = None
         self._params = None
 
+        self.enableresumeBox.setChecked(enable_resume)
         self.init_radiobuttons()
         self.init_widgets()
         self.plot = plot
@@ -988,7 +991,11 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             "Continue with current data?"
             + " Press No to clear current data and start a new measurement."
         )
-        if self.data.can_resume(params, label) and Qt.question_yn(self, title, body):
+        if (
+            self.enableresumeBox.isChecked()
+            and self.data.can_resume(params, label)
+            and Qt.question_yn(self, title, body)
+        ):
             params["resume"] = True
             params["ident"] = self.data.ident
         else:
@@ -1077,6 +1084,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
             self.exportButton,
             self.exportaltButton,
             self.loadButton,
+            self.enableresumeBox,
             self.quickresumeBox,
             self.freqBox,
             self.powerBox,
@@ -1218,6 +1226,7 @@ class SPODMRMainWindow(QtWidgets.QMainWindow):
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
+        enable_resume = V.check_bool(lconf.get("enable_resume", True), "enable_resume")
 
         self.plot = PlotWidget(parent=self)
         self.alt_plot = AltPlotWidget(parent=self)
@@ -1225,6 +1234,7 @@ class SPODMRMainWindow(QtWidgets.QMainWindow):
             gconf,
             target["spodmr"],
             target["gparams"],
+            enable_resume,
             self.plot,
             self.alt_plot,
             context,
@@ -1260,6 +1270,8 @@ class SPODMRGUI(GUINode):
     :type target.spodmr: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
     :type target.gparams: tuple[str, str] | str
+    :param enable_resume: (default: True) Initial state of "Enable resume" CheckBox.
+    :type enable_resume: bool
 
     """
 

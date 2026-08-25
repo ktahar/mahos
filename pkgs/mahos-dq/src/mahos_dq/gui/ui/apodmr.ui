@@ -80,11 +80,21 @@
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>20</width>
+           <width>10</width>
            <height>20</height>
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="enableresumeBox">
+         <property name="text">
+          <string>Enable resume</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QCheckBox" name="quickresumeBox">
@@ -103,7 +113,7 @@
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>20</width>
+           <width>10</width>
            <height>20</height>
           </size>
          </property>
@@ -1745,6 +1755,7 @@
   <tabstop>exportButton</tabstop>
   <tabstop>exportaltButton</tabstop>
   <tabstop>loadButton</tabstop>
+  <tabstop>enableresumeBox</tabstop>
   <tabstop>quickresumeBox</tabstop>
   <tabstop>tabWidget</tabstop>
   <tabstop>sweepsBox</tabstop>

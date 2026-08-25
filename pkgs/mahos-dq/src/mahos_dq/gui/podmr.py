@@ -31,6 +31,7 @@ from mahos_dq.gui.podmr_client import QPODMRClient
 from mahos.msgs.common_msgs import BinaryStatus, BinaryState
 from mahos.msgs.common_meas_msgs import Buffer
 from mahos.msgs import param_msgs as P
+import mahos.util.validation as V
 from mahos_dq.msgs.podmr_msgs import PODMRData, TimingInfo
 from mahos.node.global_params import GlobalParamsClient
 from mahos.gui.gui_node import GUINode
@@ -856,6 +857,7 @@ class PODMRWidgetBase(ClientWidget):
         gconf: dict,
         name,
         gparams_name,
+        enable_resume: bool,
         plot: PlotWidget,
         alt_plot: AltPlotWidget,
         raw_plot: RawPlotWidget,
@@ -875,6 +877,7 @@ class PODMRWidgetBase(ClientWidget):
         self._params = None
         self._meas_state = BinaryState.IDLE
 
+        self.enableresumeBox.setChecked(enable_resume)
         self.init_radiobuttons()
         self.tabWidget.setCurrentIndex(0)
         self.plot = plot
@@ -1554,7 +1557,11 @@ class PODMRWidgetBase(ClientWidget):
             "Continue with current data?"
             + " Press No to clear current data and start a new measurement."
         )
-        if self.data.can_resume(params, label) and Qt.question_yn(self, title, body):
+        if (
+            self.enableresumeBox.isChecked()
+            and self.data.can_resume(params, label)
+            and Qt.question_yn(self, title, body)
+        ):
             params["resume"] = True
             params["ident"] = self.data.ident
         else:
@@ -1737,6 +1744,7 @@ class PODMRWidgetBase(ClientWidget):
             self.exportButton,
             self.exportaltButton,
             self.loadButton,
+            self.enableresumeBox,
             self.quickresumeBox,
             self.binBox,
             self.freqBox,
@@ -1966,6 +1974,7 @@ class PODMRMainWindow(QtWidgets.QMainWindow):
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
+        enable_resume = V.check_bool(lconf.get("enable_resume", True), "enable_resume")
 
         self.plot = PlotWidget(parent=self)
         self.alt_plot = AltPlotWidget(parent=self)
@@ -1974,6 +1983,7 @@ class PODMRMainWindow(QtWidgets.QMainWindow):
             gconf,
             target["podmr"],
             target["gparams"],
+            enable_resume,
             self.plot,
             self.alt_plot,
             self.raw_plot,
@@ -2021,6 +2031,8 @@ class PODMRGUI(GUINode):
     :type target.podmr: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
     :type target.gparams: tuple[str, str] | str
+    :param enable_resume: (default: True) Initial state of "Enable resume" CheckBox.
+    :type enable_resume: bool
 
     """
 

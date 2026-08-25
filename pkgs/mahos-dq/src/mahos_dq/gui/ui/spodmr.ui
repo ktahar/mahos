@@ -64,6 +64,16 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="enableresumeBox">
+         <property name="text">
+          <string>Enable resume</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QCheckBox" name="quickresumeBox">
          <property name="text">
           <string>Quick resume</string>
@@ -1308,6 +1318,7 @@
   <tabstop>exportButton</tabstop>
   <tabstop>exportaltButton</tabstop>
   <tabstop>loadButton</tabstop>
+  <tabstop>enableresumeBox</tabstop>
   <tabstop>quickresumeBox</tabstop>
   <tabstop>tabWidget</tabstop>
   <tabstop>sweepsBox</tabstop>
