@@ -1549,7 +1549,7 @@ class AWGPulserBase(CommonPulserBase):
             self.awg,
             channels=self.awg_channels,
             logger=self.logger,
-            file_transport_dir=self.conf.get("awg_file_dir"),
+            file_transport_dir=self._conf_str("file_transport_dir", ""),
             remove_transport_file=self._conf_bool("remove_awg_file", True),
         )
         self.mw_modes = (MWMode.AWG,) * len(self.mw_channels)
@@ -1682,17 +1682,15 @@ class AWGPulserBase(CommonPulserBase):
                 False,
                 doc="Reset the carrier phase at the beginning of each MW pulse",
             ),
-            file_transport=P.BoolParam(
-                False, doc="Transport the rendered AWG waveform through a shared HDF5 file"
-            ),
+            file_transport=P.BoolParam(False, doc="Send AWG waveform via the file transport"),
         )
         return True
 
     def _validate_file_transport(self, params: dict, awg_bounds: dict) -> bool:
         if not params["awg"].get("file_transport", False):
             return True
-        if self.renderer.file_transport_dir is None:
-            self.logger.error("awg.file_transport requires pulser.awg_file_dir.")
+        if not self.renderer.has_file_transport():
+            self.logger.error("awg.file_transport requires pulser.file_transport_dir.")
             return False
         if not awg_bounds.get("file_transport", False):
             self.logger.error("AWG instrument does not have file_transport_dir configured.")
@@ -1754,8 +1752,9 @@ class AWGPulser(AWGPulserBase, PODMRPulserBase):
     :type pulser.divide_block: bool
     :param pulser.awg_rate: default value of AWG sampling frequency
     :type pulser.awg_rate: float | int | list[int]
-    :param pulser.awg_file_dir: (optional) writer-side directory for shared HDF5 waveform files.
-    :type pulser.awg_file_dir: str
+    :param pulser.file_transport_dir: (optional) writer-side directory for shared HDF5 waveform
+        files.
+    :type pulser.file_transport_dir: str
     :param pulser.remove_awg_file: (default: True) remove each HDF5 transport file after the
         synchronous AWG configure attempt.
     :type pulser.remove_awg_file: bool

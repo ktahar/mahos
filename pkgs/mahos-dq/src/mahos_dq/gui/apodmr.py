@@ -478,6 +478,7 @@ class APODMRMainWindow(QtWidgets.QMainWindow):
             self.raw_plot,
             context,
             parent=self,
+            file_transport_dir=lconf.get("file_transport_dir"),
         )
 
         self.setWindowTitle(f"MAHOS.APODMRGUI ({join_name(target['apodmr'])})")
@@ -519,6 +520,8 @@ class APODMRGUI(GUINode):
     :type target.gparams: tuple[str, str] | str
     :param enable_resume: (default: True) Initial state of "Enable resume" CheckBox.
     :type enable_resume: bool
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
 
     """
 

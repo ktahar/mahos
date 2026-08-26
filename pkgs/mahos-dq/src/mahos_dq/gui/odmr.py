@@ -508,6 +508,8 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         plot: PlotWidget,
         context,
         parent=None,
+        file_transport_dir=None,
+        confocal_file_transport_dir=None,
     ):
         ClientWidget.__init__(self, parent)
         self.setupUi(self)
@@ -517,12 +519,19 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         self.plot = plot
         self.data = ODMRData()
 
-        self.cli = QODMRClient(gconf, name, context=context, parent=self)
+        self.cli = QODMRClient(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
         if confocal_name:
-            self.confocal_cli = ConfocalIORequester(gconf, confocal_name, context=context)
+            self.confocal_cli = ConfocalIORequester(
+                gconf,
+                confocal_name,
+                context=context,
+                file_transport_dir=confocal_file_transport_dir,
+            )
         else:
             self.confocal_cli = None
 
@@ -847,6 +856,8 @@ class ODMRMainWindow(QtWidgets.QMainWindow):
             self.plot,
             context,
             parent=self,
+            file_transport_dir=lconf.get("file_transport_dir"),
+            confocal_file_transport_dir=lconf.get("confocal_file_transport_dir"),
         )
 
         self.setWindowTitle(f"MAHOS.ODMRGUI ({join_name(target['odmr'])})")
@@ -876,6 +887,11 @@ class ODMRGUI(GUINode):
     :type target.gparams: tuple[str, str] | str
     :param target.confocal: Optional Confocal node used for view export on save.
     :type target.confocal: tuple[str, str] | str
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
+    :param confocal_file_transport_dir: Optional GUI-side directory for shared file transport
+        with the auxiliary Confocal node.
+    :type confocal_file_transport_dir: str
 
     """
 

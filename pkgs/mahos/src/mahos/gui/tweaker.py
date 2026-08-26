@@ -26,12 +26,23 @@ from mahos.gui.Qt import QtWidgets
 class TweakerWidget(ClientTopWidget, Ui_TweakerWidget):
     """Top widget for TweakerGUI."""
 
-    def __init__(self, gconf: dict, name, gparams_name, verbose, context, parent=None):
+    def __init__(
+        self,
+        gconf: dict,
+        name,
+        gparams_name,
+        verbose,
+        context,
+        parent=None,
+        file_transport_dir=None,
+    ):
         ClientTopWidget.__init__(self, parent)
         self.setupUi(self)
         self.setWindowTitle(f"MAHOS.TweakerGUI ({join_name(name)})")
 
-        self.cli = QTweakerClient(gconf, name, context=context, parent=self)
+        self.cli = QTweakerClient(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
@@ -180,6 +191,8 @@ class TweakerGUI(GUINode):
     :type target.gparams: tuple[str, str] | str
     :param verbose: Show warning dialogs when RPC requests fail.
     :type verbose: bool
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
 
     """
 
@@ -187,4 +200,11 @@ class TweakerGUI(GUINode):
         lconf = local_conf(gconf, name)
         target = lconf["target"]
         verbose = lconf.get("verbose", True)
-        return TweakerWidget(gconf, target["tweaker"], target["gparams"], verbose, context)
+        return TweakerWidget(
+            gconf,
+            target["tweaker"],
+            target["gparams"],
+            verbose,
+            context,
+            file_transport_dir=lconf.get("file_transport_dir"),
+        )

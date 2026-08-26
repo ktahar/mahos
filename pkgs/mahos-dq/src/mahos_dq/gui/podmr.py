@@ -863,6 +863,7 @@ class PODMRWidgetBase(ClientWidget):
         raw_plot: RawPlotWidget,
         context,
         parent=None,
+        file_transport_dir=None,
     ):
         ClientWidget.__init__(self, parent)
         self.setup_measurement_ui()
@@ -886,7 +887,9 @@ class PODMRWidgetBase(ClientWidget):
 
         self.data = self.DATA_CLASS()
 
-        self.cli = self.CLIENT_CLASS(gconf, name, context=context, parent=self)
+        self.cli = self.CLIENT_CLASS(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
@@ -1989,6 +1992,7 @@ class PODMRMainWindow(QtWidgets.QMainWindow):
             self.raw_plot,
             context,
             parent=self,
+            file_transport_dir=lconf.get("file_transport_dir"),
         )
 
         self.setWindowTitle(f"MAHOS.PODMRGUI ({join_name(target['podmr'])})")
@@ -2033,6 +2037,8 @@ class PODMRGUI(GUINode):
     :type target.gparams: tuple[str, str] | str
     :param enable_resume: (default: True) Initial state of "Enable resume" CheckBox.
     :type enable_resume: bool
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
 
     """
 

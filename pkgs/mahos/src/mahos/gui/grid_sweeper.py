@@ -197,6 +197,7 @@ class GridSweeperWidget(ClientTopWidget):
         gparams_name,
         context,
         parent=None,
+        file_transport_dir=None,
     ):
         ClientTopWidget.__init__(self, parent)
 
@@ -204,7 +205,9 @@ class GridSweeperWidget(ClientTopWidget):
         self.init_ui()
         self.setWindowTitle(f"MAHOS.GridSweeperGUI ({join_name(name)})")
 
-        self.cli = QGridSweeperClient(gconf, name, context=context, parent=self)
+        self.cli = QGridSweeperClient(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
 
@@ -432,14 +435,18 @@ class GridSweeperGUI(GUINode):
     :type target.grid_sweeper: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
     :type target.gparams: tuple[str, str] | str
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
 
     """
 
     def init_widget(self, gconf: dict, name, context):
-        target = local_conf(gconf, name)["target"]
+        lconf = local_conf(gconf, name)
+        target = lconf["target"]
         return GridSweeperWidget(
             gconf,
             target["grid_sweeper"],
             target["gparams"],
             context,
+            file_transport_dir=lconf.get("file_transport_dir"),
         )

@@ -17,9 +17,7 @@ Behavior:
 from __future__ import annotations
 
 import math
-import os
 import typing as T
-import uuid
 
 import numpy as np
 
@@ -27,6 +25,7 @@ from mahos.inst.awg_interface import AWGInterface
 from mahos.inst.awg_file import save_waveforms
 from mahos.node.log import DummyLogger
 from mahos.util.param import ParamAccessor
+from mahos.util.file_transport import SharedFileTransport
 import mahos.util.validation as V
 import mahos_dq.meas.awg_renderer.renderer_kernel as K
 from mahos.msgs.inst.pg_msgs import Block, Blocks
@@ -81,7 +80,7 @@ class AWGRenderer(object):
         awg: AWGInterface,
         channels: T.Iterable[int] | int = (0,),
         logger=None,
-        file_transport_dir: str | None = None,
+        file_transport_dir: str = "",
         remove_transport_file: bool = True,
     ):
         self.awg = awg
@@ -92,19 +91,17 @@ class AWGRenderer(object):
         if not (1 <= len(self.channels) <= 2):
             raise ValueError(f"channels must contain one or two unique outputs: {raw_channels}")
         self.logger = logger or DummyLogger()
-        self.file_transport_dir = (
-            os.path.abspath(os.path.expanduser(file_transport_dir)) if file_transport_dir else None
+        self._file_transport = (
+            SharedFileTransport(file_transport_dir) if file_transport_dir else None
         )
-        if self.file_transport_dir is not None and not os.path.isdir(self.file_transport_dir):
-            raise FileNotFoundError(
-                f"AWG file transport directory {self.file_transport_dir!r} "
-                "does not exist or is not a directory"
-            )
         self.remove_transport_file = bool(remove_transport_file)
         self._pending: tuple | None = None
         self._uploaded = False
         #: render / upload metadata of the last render()/upload()
         self._meta: dict = {}
+
+    def has_file_transport(self) -> bool:
+        return self._file_transport is not None
 
     def _validate_tone_freqs(self, rate: float | int, tones: list[K.MWTone]):
         for tone in tones:
@@ -309,15 +306,14 @@ class AWGRenderer(object):
     ) -> bool:
         """Write an atomic transport file and synchronously configure the AWG from it."""
 
-        if self.file_transport_dir is None:
-            return self.fail_with("AWG file transport directory is not configured.")
+        if self._file_transport is None:
+            return self.fail_with("AWG file transport is not configured.")
 
-        file_name = f"mahos_awg_{uuid.uuid4().hex}.h5"
-        final_path = os.path.join(self.file_transport_dir, file_name)
-        temporary_path = final_path + ".tmp"
+        transport = self._file_transport
+        file_name = transport.new_name("awg")
+        final_path = transport.resolve(file_name)
         try:
-            save_waveforms(temporary_path, analog, digital)
-            os.replace(temporary_path, final_path)
+            transport.publish(file_name, lambda path: save_waveforms(path, analog, digital))
             return self.awg.configure_waveforms_file(
                 file_name,
                 rate,
@@ -328,18 +324,9 @@ class AWGRenderer(object):
             self.logger.exception(f"Failed AWG file transport using {final_path}.")
             return False
         finally:
-            self._remove_transport_path(temporary_path)
             if self.remove_transport_file:
-                self._remove_transport_path(final_path)
-
-    def _remove_transport_path(self, path: str):
-        """Best-effort removal for a temporary or completed transport file."""
-
-        try:
-            if os.path.exists(path):
-                os.remove(path)
-        except OSError:
-            self.logger.exception(f"Failed to remove AWG transport file {path}.")
+                if not transport.remove(file_name):
+                    self.logger.error(f"Failed to remove AWG transport file {final_path}.")
 
     def get_meta_data(self) -> dict:
         return self._meta

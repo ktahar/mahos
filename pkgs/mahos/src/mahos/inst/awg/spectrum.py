@@ -18,7 +18,6 @@ This currently exposes two classes for Spectrum Instrumentation's AWG.
 from __future__ import annotations
 
 import logging
-import os
 import time
 import typing as T
 from dataclasses import dataclass, field
@@ -32,6 +31,7 @@ from mahos.msgs.inst.awg_msgs import TriggerType
 from mahos.util.unit import dBm_to_Vpeak, Vpeak_to_dBm
 from mahos.util.conf import ConfAccessorMixin
 from mahos.util.param import ParamAccessor
+from mahos.util.file_transport import SharedFileTransport
 import mahos.util.validation as V
 
 
@@ -1178,17 +1178,10 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         self.load_impedance = self._conf_pos_num("load_impedance", 50.0)
         self._stop_level = self._conf_str("stop_level", "zero")
         self._filter = None if self.conf.get("filter") is None else int(self._conf_int("filter"))
-        raw_file_transport_dir = self.conf.get("file_transport_dir")
-        self._file_transport_dir = (
-            os.path.abspath(os.path.expanduser(raw_file_transport_dir))
-            if raw_file_transport_dir
-            else None
+        file_transport_dir = self._conf_str("file_transport_dir", "")
+        self._file_transport = (
+            SharedFileTransport(file_transport_dir) if file_transport_dir else None
         )
-        if self._file_transport_dir is not None and not os.path.isdir(self._file_transport_dir):
-            raise FileNotFoundError(
-                f"file_transport_dir {self._file_transport_dir!r} does not exist "
-                "or is not a directory"
-            )
         self.digital_min_duration = self._conf_nonneg_num("digital_min_duration", 4e-9)
         self._hardware_trigger = {
             "level": self._conf_num("trigger_level", 1.0),
@@ -1577,20 +1570,13 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             "waveforms_file",
         ):
             return False
-        if self._file_transport_dir is None:
-            return self.fail_with("file_transport_dir is not configured")
+        if self._file_transport is None:
+            return self.fail_with("file_transport is not configured")
         file_name = params.get("file_name")
-        if (
-            not isinstance(file_name, str)
-            or not file_name
-            or file_name in (".", "..")
-            or "/" in file_name
-            or "\\" in file_name
-            or os.path.basename(file_name) != file_name
-        ):
+        try:
+            path = self._file_transport.resolve(file_name)
+        except ValueError:
             return self.fail_with(f"file_name must be a basename: {file_name!r}")
-
-        path = os.path.join(self._file_transport_dir, file_name)
         analog, digital = load_waveforms(path)
         waveform_params = {key: value for key, value in params.items() if key != "file_name"}
         waveform_params.update(analog=analog, digital=digital)
@@ -1738,7 +1724,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             },
             "trigger_types": [t.name for t in TriggerType],
             "has_sequence_mode": bool(info.get("has_sequence_mode", False)),
-            "file_transport": self._file_transport_dir is not None,
+            "file_transport": self._file_transport is not None,
             "digital_min_duration": self.digital_min_duration,
         }
 

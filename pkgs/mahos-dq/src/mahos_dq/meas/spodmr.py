@@ -250,7 +250,7 @@ class SPODMR(BasicMeasNode):
             return Reply(False)
         else:
             if msg.to_buffer:
-                self.buffer.append((msg.file_name, data))
+                self.buffer.append((msg.buffer_name, data))
             else:
                 if self.state == BinaryState.ACTIVE:
                     return Reply(False, "Cannot load data when active.")

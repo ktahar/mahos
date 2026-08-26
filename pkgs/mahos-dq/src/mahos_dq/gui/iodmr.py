@@ -322,7 +322,9 @@ class ODMRHistoryImageView(QtWidgets.QWidget):
 class IODMRMainWindow(ClientMainWindow):
     """MainWindow with ConfocalWidget and traceView."""
 
-    def __init__(self, gconf: dict, name, gparams_name, context, parent=None):
+    def __init__(
+        self, gconf: dict, name, gparams_name, context, parent=None, file_transport_dir=None
+    ):
         ClientMainWindow.__init__(self, parent)
 
         self.conf = local_conf(gconf, name)
@@ -339,7 +341,9 @@ class IODMRMainWindow(ClientMainWindow):
 
         self.init_menu()
 
-        self.cli = QIODMRClient(gconf, name, context=context, parent=self)
+        self.cli = QIODMRClient(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
@@ -532,9 +536,18 @@ class IODMRGUI(GUINode):
     :type target.iodmr: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
     :type target.gparams: tuple[str, str] | str
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
 
     """
 
     def init_widget(self, gconf: dict, name, context):
-        target = local_conf(gconf, name)["target"]
-        return IODMRMainWindow(gconf, target["iodmr"], target["gparams"], context)
+        lconf = local_conf(gconf, name)
+        target = lconf["target"]
+        return IODMRMainWindow(
+            gconf,
+            target["iodmr"],
+            target["gparams"],
+            context,
+            file_transport_dir=lconf.get("file_transport_dir"),
+        )

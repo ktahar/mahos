@@ -92,8 +92,18 @@ class AxisWidgets(object):
 class PosTweakerWidget(ClientTopWidget):
     """Top widget for PosTweakerGUI"""
 
-    def __init__(self, gconf: dict, name, gparams_name, fontsize, decimals, context):
-        ClientTopWidget.__init__(self)
+    def __init__(
+        self,
+        gconf: dict,
+        name,
+        gparams_name,
+        fontsize,
+        decimals,
+        context,
+        parent=None,
+        file_transport_dir=None,
+    ):
+        ClientTopWidget.__init__(self, parent)
         self.setWindowTitle(f"MAHOS.PosTweakerGUI ({join_name(name)})")
 
         self._fontsize = fontsize
@@ -102,7 +112,9 @@ class PosTweakerWidget(ClientTopWidget):
         self._group_name = "__" + name + "__"
         self._refresh_timer = OneshotTimer(1.0)
 
-        self.cli = QPosTweakerClient(gconf, name, context=context)
+        self.cli = QPosTweakerClient(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
@@ -303,6 +315,8 @@ class PosTweakerGUI(GUINode):
     :type fontsize: int
     :param decimals: Number of decimal digits for target and step spin boxes.
     :type decimals: int
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
 
     """
 
@@ -312,5 +326,11 @@ class PosTweakerGUI(GUINode):
         fontsize = lconf.get("fontsize", 26)
         decimals = lconf.get("decimals", 3)
         return PosTweakerWidget(
-            gconf, target["pos_tweaker"], target["gparams"], fontsize, decimals, context
+            gconf,
+            target["pos_tweaker"],
+            target["gparams"],
+            fontsize,
+            decimals,
+            context,
+            file_transport_dir=lconf.get("file_transport_dir"),
         )

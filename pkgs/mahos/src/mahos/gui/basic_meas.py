@@ -99,7 +99,16 @@ class PlotWidget(QtWidgets.QWidget):
 
 
 class BasicMeasWidget(ClientWidget, Ui_BasicMeas):
-    def __init__(self, gconf: dict, name, gparams_name, plot: PlotWidget, context, parent=None):
+    def __init__(
+        self,
+        gconf: dict,
+        name,
+        gparams_name,
+        plot: PlotWidget,
+        context,
+        parent=None,
+        file_transport_dir=None,
+    ):
         ClientWidget.__init__(self, parent)
         self.setupUi(self)
 
@@ -108,7 +117,9 @@ class BasicMeasWidget(ClientWidget, Ui_BasicMeas):
         self.plot = plot
         self.data = BasicMeasData()
 
-        self.cli = QBasicMeasClient(gconf, name, context=context, parent=self)
+        self.cli = QBasicMeasClient(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
@@ -265,7 +276,13 @@ class BasicMeasMainWindow(QtWidgets.QMainWindow):
 
         self.plot = PlotWidget(parent=self)
         self.meas = BasicMeasWidget(
-            gconf, target["meas"], target["gparams"], self.plot, context, parent=self
+            gconf,
+            target["meas"],
+            target["gparams"],
+            self.plot,
+            context,
+            parent=self,
+            file_transport_dir=lconf.get("file_transport_dir"),
         )
 
         self.setWindowTitle(f"MAHOS.BasicMeasGUI ({join_name(target['meas'])})")
@@ -293,6 +310,8 @@ class BasicMeasGUI(GUINode):
     :type target.meas: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
     :type target.gparams: tuple[str, str] | str
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
 
     """
 

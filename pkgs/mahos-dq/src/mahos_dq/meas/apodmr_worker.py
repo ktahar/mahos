@@ -990,8 +990,9 @@ class AWGPulser(AWGPulserBase, APODMRPulserBase):
     :type pulser.divide_block: bool
     :param pulser.awg_rate: default value of AWG sampling frequency
     :type pulser.awg_rate: float | int | list[int]
-    :param pulser.awg_file_dir: (optional) writer-side directory for shared HDF5 waveform files.
-    :type pulser.awg_file_dir: str
+    :param pulser.file_transport_dir: (optional) writer-side directory for shared HDF5 waveform
+        files.
+    :type pulser.file_transport_dir: str
     :param pulser.remove_awg_file: (default: True) remove each HDF5 transport file after the
         synchronous AWG configure attempt.
     :type pulser.remove_awg_file: bool

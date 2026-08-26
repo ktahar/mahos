@@ -31,7 +31,9 @@ from mahos.util.timer import FPSCounter
 class CameraWidget(ClientTopWidget, Ui_Camera):
     """Top widget for Camera."""
 
-    def __init__(self, gconf: dict, name, gparams_name, context, parent=None):
+    def __init__(
+        self, gconf: dict, name, gparams_name, context, parent=None, file_transport_dir=None
+    ):
         ClientTopWidget.__init__(self, parent)
         self.setupUi(self)
         self.setWindowTitle(f"MAHOS.CameraGUI ({join_name(name)})")
@@ -44,7 +46,9 @@ class CameraWidget(ClientTopWidget, Ui_Camera):
         self._finalizing = False
         self.fps_counter = FPSCounter()
 
-        self.cli = QCameraClient(gconf, name, context=context, parent=self)
+        self.cli = QCameraClient(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
@@ -213,9 +217,18 @@ class CameraGUI(GUINode):
     :type target.camera: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
     :type target.gparams: tuple[str, str] | str
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
 
     """
 
     def init_widget(self, gconf: dict, name, context):
-        target = local_conf(gconf, name)["target"]
-        return CameraWidget(gconf, target["camera"], target["gparams"], context)
+        lconf = local_conf(gconf, name)
+        target = lconf["target"]
+        return CameraWidget(
+            gconf,
+            target["camera"],
+            target["gparams"],
+            context,
+            file_transport_dir=lconf.get("file_transport_dir"),
+        )

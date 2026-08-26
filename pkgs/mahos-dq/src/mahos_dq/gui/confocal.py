@@ -1240,6 +1240,8 @@ class ConfocalWidget(ClientWidget, Ui_Confocal):
         move_interval_ms,
         context,
         parent=None,
+        file_transport_dir=None,
+        tracker_file_transport_dir=None,
     ):
         ClientWidget.__init__(self, parent)
         self.setupUi(self)
@@ -1255,11 +1257,17 @@ class ConfocalWidget(ClientWidget, Ui_Confocal):
         self._move_interval_ms = move_interval_ms
         self._track_save_dir = ""
 
-        self.cli = QConfocalClient(gconf, name, context=context, parent=self)
+        self.cli = QConfocalClient(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.tracker_cli = QConfocalTrackerClient(
-            gconf, tracker_name, context=context, parent=self
+            gconf,
+            tracker_name,
+            context=context,
+            parent=self,
+            file_transport_dir=tracker_file_transport_dir,
         )
         self.tracker_cli.stateUpdated.connect(self.update_tracker_state)
 
@@ -2161,7 +2169,17 @@ class traceView(ClientWidget, Ui_traceView):
 
     MAX_CHANNELS = 9
 
-    def __init__(self, gconf: dict, name, gparams_name, labels, context, cli=None, parent=None):
+    def __init__(
+        self,
+        gconf: dict,
+        name,
+        gparams_name,
+        labels,
+        context,
+        cli=None,
+        parent=None,
+        file_transport_dir=None,
+    ):
         ClientWidget.__init__(self, parent)
         self.setupUi(self)
 
@@ -2173,7 +2191,13 @@ class traceView(ClientWidget, Ui_traceView):
         self.graphicsView.setCentralItem(self.pi)
 
         if cli is None:
-            self.cli = QTracerClient(gconf, name, context=context, parent=self)
+            self.cli = QTracerClient(
+                gconf,
+                name,
+                context=context,
+                parent=self,
+                file_transport_dir=file_transport_dir,
+            )
         else:
             self.cli = cli
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
@@ -2421,6 +2445,8 @@ class ConfocalMainWindow(QtWidgets.QMainWindow):
         )
         move_interval_ms = lconf.get("move_interval_ms", 10)
         labels = lconf.get("labels", [])
+        file_transport_dir = lconf.get("file_transport_dir")
+        tracker_file_transport_dir = lconf.get("tracker_file_transport_dir")
 
         self.confocal = ConfocalWidget(
             gconf,
@@ -2433,9 +2459,17 @@ class ConfocalMainWindow(QtWidgets.QMainWindow):
             move_interval_ms,
             context,
             parent=self,
+            file_transport_dir=file_transport_dir,
+            tracker_file_transport_dir=tracker_file_transport_dir,
         )
         self.traceView = traceView(
-            gconf, target["confocal"], target["gparams"], labels, context, parent=self
+            gconf,
+            target["confocal"],
+            target["gparams"],
+            labels,
+            context,
+            parent=self,
+            file_transport_dir=file_transport_dir,
         )
 
         self.setWindowTitle(f"MAHOS.ConfocalGUI ({join_name(target['confocal'])})")
@@ -2484,7 +2518,14 @@ class TraceWidget(QtWidgets.QWidget):
         lconf = local_conf(gconf, name)
         target = lconf["target"]
         labels = lconf.get("labels", [])
-        self.cli = QTraceNodeClient(gconf, target["trace"], context=context, parent=self)
+        file_transport_dir = lconf.get("file_transport_dir")
+        self.cli = QTraceNodeClient(
+            gconf,
+            target["trace"],
+            context=context,
+            parent=self,
+            file_transport_dir=file_transport_dir,
+        )
 
         self.traceView = traceView(
             gconf, target["trace"], target["gparams"], labels, context, cli=self.cli, parent=self
@@ -2547,6 +2588,11 @@ class ConfocalGUI(GUINode):
     :type move_interval_ms: int
     :param labels: PD channel labels for trace display.
     :type labels: list[str]
+    :param file_transport_dir: Optional GUI-side directory for Confocal file transport.
+    :type file_transport_dir: str
+    :param tracker_file_transport_dir: Optional GUI-side directory for ConfocalTracker file
+        transport.
+    :type tracker_file_transport_dir: str
 
     """
 
@@ -2563,6 +2609,8 @@ class TraceGUI(GUINode):
     :type target.gparams: tuple[str, str] | str
     :param labels: PD channel labels for trace display.
     :type labels: list[str]
+    :param file_transport_dir: Optional GUI-side directory for TraceNode file transport.
+    :type file_transport_dir: str
 
     """
 

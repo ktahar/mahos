@@ -444,6 +444,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         alt_plot: AltPlotWidget,
         context,
         parent=None,
+        file_transport_dir=None,
     ):
         ClientWidget.__init__(self, parent)
         self.setupUi(self)
@@ -464,7 +465,9 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
 
         self.data = SPODMRData()
 
-        self.cli = QSPODMRClient(gconf, name, context=context, parent=self)
+        self.cli = QSPODMRClient(
+            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+        )
         self.cli.statusUpdated.connect(self.init_with_status)
 
         self.gparams_cli = GlobalParamsClient(gconf, gparams_name, context=context)
@@ -1239,6 +1242,7 @@ class SPODMRMainWindow(QtWidgets.QMainWindow):
             self.alt_plot,
             context,
             parent=self,
+            file_transport_dir=lconf.get("file_transport_dir"),
         )
 
         self.setWindowTitle(f"MAHOS.SPODMRGUI ({join_name(target['spodmr'])})")
@@ -1272,6 +1276,8 @@ class SPODMRGUI(GUINode):
     :type target.gparams: tuple[str, str] | str
     :param enable_resume: (default: True) Initial state of "Enable resume" CheckBox.
     :type enable_resume: bool
+    :param file_transport_dir: Optional GUI-side directory for shared file transport.
+    :type file_transport_dir: str
 
     """
 
