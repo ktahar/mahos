@@ -217,10 +217,8 @@ def init_logger(gconf, my_name, log_name, context: Context):
     my_conf = local_conf(gconf, my_name)
     log_conf = local_conf(gconf, log_name)
 
-    if "log_level" in my_conf:
-        level = _str_to_log_level[my_conf["log_level"].upper()]
-    else:
-        level = logging.INFO
+    level_name = str(get_value(gconf, my_conf, "log_level", "INFO"))
+    level = _str_to_log_level[level_name.upper()]
 
     joined_name = join_name(my_name)
     handler = context.add_pub_handler(log_conf["xsub_endpoint"], root_topic=joined_name)
