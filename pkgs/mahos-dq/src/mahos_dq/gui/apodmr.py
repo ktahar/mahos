@@ -449,6 +449,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             self.pointinitdelayBox,
             self.finaldelayBox,
             self.moffsetBox,
+            self.roundTimingBox,
             self.paramTable,
         ):
             w.setEnabled(state == BinaryState.IDLE)
