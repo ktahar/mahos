@@ -19,7 +19,7 @@ from mahos.gui.Qt import QtCore, QtGui, QtWidgets
 from mahos.gui.client import QBasicMeasClient
 from mahos.gui.common_widget import ClientTopWidget, SpinBox
 from mahos.gui.dialog import export_dialog, load_dialog, save_dialog
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.param import apply_widgets
 from mahos.msgs.common_msgs import BinaryState, BinaryStatus
 from mahos.msgs.sweeper_msgs import SweeperData
@@ -186,9 +186,11 @@ class SweeperWidget(ClientTopWidget):
         gparams_name,
         context,
         parent=None,
+        logger=None,
         file_transport_dir=None,
     ):
         ClientTopWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         self.conf = local_conf(gconf, name)
         self.init_ui(self._xy_labels_from_conf())
@@ -310,7 +312,7 @@ class SweeperWidget(ClientTopWidget):
                 ],
             )
         else:
-            print("[ERROR] Failed to get param dict")
+            self.logger.error("Failed to get param dict.")
 
         self.update_state(status.state, last_state=BinaryState.IDLE)
         self.cli.stateUpdated.connect(self.update_state)
@@ -400,6 +402,10 @@ class SweeperWidget(ClientTopWidget):
 class SweeperGUI(GUINode):
     """GUINode for SweeperWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.sweeper: Target Sweeper node full name.
     :type target.sweeper: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -417,5 +423,6 @@ class SweeperGUI(GUINode):
             target["sweeper"],
             target["gparams"],
             context,
+            logger=self.logger,
             file_transport_dir=lconf.get("file_transport_dir"),
         )

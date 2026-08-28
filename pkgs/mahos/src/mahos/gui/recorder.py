@@ -22,7 +22,7 @@ from mahos.gui.recorder_client import QRecorderClient
 from mahos.msgs.common_msgs import BinaryState, BinaryStatus
 from mahos.msgs.recorder_msgs import RecorderData
 from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.param import ParamDictComboBoxHandler
 from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
@@ -250,8 +250,9 @@ class RecorderWidget(ClientWidget, Ui_Recorder):
 class RecorderMainWindow(QtWidgets.QMainWindow):
     """MainWindow with RecorderWidget and PlotWidget."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
@@ -288,6 +289,10 @@ class RecorderMainWindow(QtWidgets.QMainWindow):
 class RecorderGUI(GUINode):
     """GUINode for Recorder using RecorderMainWindow.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.recorder: Target Recorder node full name.
     :type target.recorder: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -298,4 +303,4 @@ class RecorderGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return RecorderMainWindow(gconf, name, context)
+        return RecorderMainWindow(gconf, name, context, logger=self.logger)

@@ -23,7 +23,7 @@ from mahos.msgs.common_meas_msgs import Buffer
 from mahos.msgs.common_meas_msgs import BasicMeasData
 from mahos.msgs.param_msgs import filter_out_label_prefix
 from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
 from mahos.gui.param import ParamDictComboBoxHandler
@@ -268,8 +268,9 @@ class BasicMeasWidget(ClientWidget, Ui_BasicMeas):
 class BasicMeasMainWindow(QtWidgets.QMainWindow):
     """MainWindow with BasicMeasWidget and PlotWidget."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
@@ -306,6 +307,10 @@ class BasicMeasMainWindow(QtWidgets.QMainWindow):
 class BasicMeasGUI(GUINode):
     """GUINode for BasicMeasNode using BasicMeasWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.meas: Target BasicMeas node full name.
     :type target.meas: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -316,4 +321,4 @@ class BasicMeasGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return BasicMeasMainWindow(gconf, name, context)
+        return BasicMeasMainWindow(gconf, name, context, logger=self.logger)

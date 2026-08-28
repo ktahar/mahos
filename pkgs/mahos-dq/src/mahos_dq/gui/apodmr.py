@@ -17,7 +17,7 @@ from mahos.gui.Qt import QtCore, QtGui, QtWidgets
 from mahos.gui.param import apply_widgets
 from mahos.msgs.common_msgs import BinaryState
 from mahos.node.node import local_conf, join_name
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.dialog import load_dialog
 import mahos.util.validation as V
 
@@ -48,8 +48,9 @@ class APODMRAutoSaveWidget(PODMRAutoSaveWidget):
 class APODMRRawPlotWidget(QtWidgets.QWidget):
     """Raw-trace plot widget for APODMR aggregated AnalogPD traces."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, logger=None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         self.init_widgets()
         self.update_font_size()
@@ -198,8 +199,8 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
     def refresh(self, data: APODMRData):
         try:
             self.plot_raw(data)
-        except TypeError as e:
-            print("Error in plot_raw " + repr(e))
+        except TypeError:
+            self.logger.exception("Failed to plot raw data.")
 
     def update_font_size(self):
         font = QtGui.QFont()
@@ -458,16 +459,17 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
 class APODMRMainWindow(QtWidgets.QMainWindow):
     """MainWindow with APODMRWidget and plot docks."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
         enable_resume = V.check_bool(lconf.get("enable_resume", True), "enable_resume")
 
-        self.plot = PlotWidget(parent=self)
-        self.alt_plot = AltPlotWidget(parent=self)
-        self.raw_plot = APODMRRawPlotWidget(parent=self)
+        self.plot = PlotWidget(parent=self, logger=self.logger)
+        self.alt_plot = AltPlotWidget(parent=self, logger=self.logger)
+        self.raw_plot = APODMRRawPlotWidget(parent=self, logger=self.logger)
         self.apodmr = APODMRWidget(
             gconf,
             target["apodmr"],
@@ -478,6 +480,7 @@ class APODMRMainWindow(QtWidgets.QMainWindow):
             self.raw_plot,
             context,
             parent=self,
+            logger=self.logger,
             file_transport_dir=lconf.get("file_transport_dir"),
         )
 
@@ -514,6 +517,10 @@ class APODMRMainWindow(QtWidgets.QMainWindow):
 class APODMRGUI(GUINode):
     """GUINode for Analog-PD Pulse ODMR using APODMRWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.apodmr: Target APODMR node full name.
     :type target.apodmr: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -526,4 +533,4 @@ class APODMRGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return APODMRMainWindow(gconf, name, context)
+        return APODMRMainWindow(gconf, name, context, logger=self.logger)

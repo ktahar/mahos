@@ -34,7 +34,7 @@ from mahos.msgs import param_msgs as P
 import mahos.util.validation as V
 from mahos_dq.msgs.podmr_msgs import PODMRData, TimingInfo
 from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
 from mahos.gui.param import (
@@ -98,8 +98,9 @@ class PODMRFitWidget(FitWidget):
 
 
 class PlotWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, logger=None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self._auto_range = True
 
         self.init_ui()
@@ -152,8 +153,8 @@ class PlotWidget(QtWidgets.QWidget):
             try:
                 x = data.get_xdata()
                 xfit = data.get_fit_xdata()
-            except ValueError as e:
-                print("Error getting xdata: " + repr(e))
+            except ValueError:
+                self.logger.exception("Failed to get x data for analyzed plot.")
                 continue
 
             try:
@@ -161,8 +162,8 @@ class PlotWidget(QtWidgets.QWidget):
                 if y0 is None:
                     return
                 yfit = data.get_fit_ydata()
-            except ValueError as e:
-                print("Error getting ydata: " + repr(e))
+            except ValueError:
+                self.logger.exception("Failed to get y data for analyzed plot.")
                 continue
 
             if fitdisp and (xfit is not None) and (yfit is not None):
@@ -211,9 +212,8 @@ class PlotWidget(QtWidgets.QWidget):
     def refresh(self, data_list, data: PODMRData):
         try:
             self.plot_analyzed(data_list)
-        except TypeError as e:
-            # import sys, traceback; traceback.print_tb(sys.exc_info()[2])
-            print("Error in plot_analyzed " + repr(e))
+        except TypeError:
+            self.logger.exception("Failed to plot analyzed data.")
 
         self.update_label(data)
 
@@ -238,8 +238,9 @@ class PlotWidget(QtWidgets.QWidget):
 
 
 class AltPlotWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, logger=None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         self.init_ui()
         self.init_view()
@@ -323,8 +324,8 @@ class AltPlotWidget(QtWidgets.QWidget):
         for data, _, c in data_list:
             try:
                 x = data.get_xdata()
-            except ValueError as e:
-                print("Error getting xdata: " + repr(e))
+            except ValueError:
+                self.logger.exception("Failed to get x data for alternate plot.")
                 continue
             if len(x) == 1:
                 continue
@@ -332,8 +333,8 @@ class AltPlotWidget(QtWidgets.QWidget):
                 y0, y1 = data.get_ydata()
                 if y0 is None:
                     return
-            except ValueError as e:
-                print("Error getting ydata: " + repr(e))
+            except ValueError:
+                self.logger.exception("Failed to get y data for alternate plot.")
                 continue
 
             f, S0 = self.real_fft(x, y0)
@@ -365,9 +366,8 @@ class AltPlotWidget(QtWidgets.QWidget):
 
         try:
             self.plot_fft(data_list)
-        except TypeError as e:
-            # import sys, traceback; traceback.print_tb(sys.exc_info()[2])
-            print("Error in plot_fft " + repr(e))
+        except TypeError:
+            self.logger.exception("Failed to plot FFT data.")
 
         self.update_label(data)
 
@@ -394,8 +394,9 @@ class AltPlotWidget(QtWidgets.QWidget):
 
 
 class RawPlotWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, logger=None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         self.init_widgets()
         self.update_font_size()
@@ -603,9 +604,8 @@ class RawPlotWidget(QtWidgets.QWidget):
     def refresh(self, data: PODMRData):
         try:
             self.plot_raw(data)
-        except TypeError as e:
-            # import sys, traceback; traceback.print_tb(sys.exc_info()[2])
-            print("Error in plot_raw " + repr(e))
+        except TypeError:
+            self.logger.exception("Failed to plot raw data.")
 
     def update_font_size(self):
         font = QtGui.QFont()
@@ -863,9 +863,11 @@ class PODMRWidgetBase(ClientWidget):
         raw_plot: RawPlotWidget,
         context,
         parent=None,
+        logger=None,
         file_transport_dir=None,
     ):
         ClientWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self.setup_measurement_ui()
 
         self.conf = local_conf(gconf, name)
@@ -1402,7 +1404,7 @@ class PODMRWidgetBase(ClientWidget):
         if "plot" in self.data.params:
             p = self.data.params["plot"]
         else:
-            print("params['plot'] is not found.")
+            self.logger.error("params['plot'] is not found.")
             p = {}
 
         # avoid sending many requests
@@ -1881,21 +1883,21 @@ class PODMRWidgetBase(ClientWidget):
         if i >= 0:
             self.methodBox.setCurrentIndex(i)
         else:
-            print(f"[ERROR] unknown method: {method}")
+            self.logger.error(f"Unknown method: {method}")
 
     def set_plot_mode(self, mode: str):
         i = self.plotmodeBox.findText(mode)
         if i >= 0:
             self.plotmodeBox.setCurrentIndex(i)
         else:
-            print(f"[ERROR] unknown plot mode: {mode}")
+            self.logger.error(f"Unknown plot mode: {mode}")
 
     def set_tau_mode(self, mode: str):
         i = self.taumodeBox.findText(mode)
         if i >= 0:
             self.taumodeBox.setCurrentIndex(i)
         else:
-            print(f"[ERROR] unknown tau mode: {mode}")
+            self.logger.error(f"Unknown tau mode: {mode}")
 
     def reset_tau_modes(self, modes: list[str]):
         prev_mode = self.taumodeBox.currentText()
@@ -1952,7 +1954,7 @@ class PODMRWidgetBase(ClientWidget):
         if i >= 0:
             self.refmodeBox.setCurrentIndex(i)
         else:
-            print(f"[ERROR] unknown ref mode: {mode}")
+            self.logger.error(f"Unknown ref mode: {mode}")
 
     def get_fg_mode_dict(self):
         return [
@@ -1972,16 +1974,17 @@ class PODMRWidget(PODMRWidgetBase, Ui_PODMR):
 class PODMRMainWindow(QtWidgets.QMainWindow):
     """MainWindow with PODMRWidget and PlotWidget."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
         enable_resume = V.check_bool(lconf.get("enable_resume", True), "enable_resume")
 
-        self.plot = PlotWidget(parent=self)
-        self.alt_plot = AltPlotWidget(parent=self)
-        self.raw_plot = RawPlotWidget(parent=self)
+        self.plot = PlotWidget(parent=self, logger=self.logger)
+        self.alt_plot = AltPlotWidget(parent=self, logger=self.logger)
+        self.raw_plot = RawPlotWidget(parent=self, logger=self.logger)
         self.podmr = PODMRWidget(
             gconf,
             target["podmr"],
@@ -1992,6 +1995,7 @@ class PODMRMainWindow(QtWidgets.QMainWindow):
             self.raw_plot,
             context,
             parent=self,
+            logger=self.logger,
             file_transport_dir=lconf.get("file_transport_dir"),
         )
 
@@ -2031,6 +2035,10 @@ class PODMRMainWindow(QtWidgets.QMainWindow):
 class PODMRGUI(GUINode):
     """GUINode for Pulse ODMR using PODMRWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.podmr: Target PODMR node full name.
     :type target.podmr: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -2043,4 +2051,4 @@ class PODMRGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return PODMRMainWindow(gconf, name, context)
+        return PODMRMainWindow(gconf, name, context, logger=self.logger)

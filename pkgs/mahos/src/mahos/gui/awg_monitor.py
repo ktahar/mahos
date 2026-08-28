@@ -10,7 +10,7 @@ import pyqtgraph as pg
 from mahos.gui.Qt import QtCore, QtWidgets
 from mahos.gui.awg_monitor_client import QAWGClient
 from mahos.gui.common_widget import ClientTopWidget
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.msgs.inst.awg_msgs import AWGWaveform
 from mahos.node.node import NAME_DELIM, local_conf, split_name
 
@@ -52,8 +52,9 @@ def _rle_steps(runs: list[tuple[bool, int]], stop: int) -> tuple[np.ndarray, np.
 class AWGMonitorWidget(ClientTopWidget):
     """Top widget for :class:`AWGMonitor`."""
 
-    def __init__(self, gconf: dict, name, context):
-        ClientTopWidget.__init__(self)
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
+        ClientTopWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self.conf = local_conf(gconf, name)
         self.targets = _targets(self.conf)
         self.clis = [QAWGClient(gconf, target, context=context) for target in self.targets]
@@ -345,6 +346,10 @@ class AWGMonitorWidget(ClientTopWidget):
 class AWGMonitor(GUINode):
     """GUINode that visualizes bounded AWG waveform previews.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.awg: Target AWG-waveform publisher node name(s).
     :type target.awg: str | tuple[str, str] | list[str]
     :param colormap: PyQtGraph colormap name used for traces.
@@ -353,4 +358,4 @@ class AWGMonitor(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return AWGMonitorWidget(gconf, name, context)
+        return AWGMonitorWidget(gconf, name, context, logger=self.logger)

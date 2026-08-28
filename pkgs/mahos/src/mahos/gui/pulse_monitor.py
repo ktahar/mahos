@@ -13,7 +13,7 @@ import pyqtgraph as pg
 
 from mahos.gui.Qt import QtCore, QtWidgets
 
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientTopWidget
 from mahos.gui.pulse_monitor_client import QPulseClient
 
@@ -27,8 +27,9 @@ Policy = QtWidgets.QSizePolicy.Policy
 class PulseMonitorWidget(ClientTopWidget):
     """Top widget for PulseMonitor"""
 
-    def __init__(self, gconf: dict, name, context):
-        ClientTopWidget.__init__(self)
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
+        ClientTopWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         self.conf = local_conf(gconf, name)
         targets = self.conf["target"]["pulse"]
@@ -279,7 +280,7 @@ class PulseMonitorWidget(ClientTopWidget):
         a_channels, a_patterns = self.plottable_all_a(self.pulse.blocks, max_len)
 
         if not d_channels and not a_channels:
-            print("[ERROR] empty pulse pattern")
+            self.logger.error("Empty pulse pattern.")
             return
 
         self.plot.clearPlots()
@@ -334,6 +335,10 @@ class PulseMonitor(GUINode):
     The node instantiates :class:`PulseMonitorWidget`, subscribes to pulse updates,
     and renders digital/analog channels with optional marker-based regions.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.pulse: Target pulse publisher node name(s).
     :type target.pulse: str | tuple[str, str] | list[str]
     :param colormap: PyQtGraph colormap name used for channel traces.
@@ -342,4 +347,4 @@ class PulseMonitor(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return PulseMonitorWidget(gconf, name, context)
+        return PulseMonitorWidget(gconf, name, context, logger=self.logger)

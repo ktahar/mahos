@@ -28,7 +28,7 @@ from mahos.msgs import param_msgs as P
 import mahos.util.validation as V
 from mahos_dq.msgs.spodmr_msgs import SPODMRData, SPODMRStatus
 from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
 from mahos.gui.param import (
@@ -64,8 +64,9 @@ class SPODMRFitWidget(FitWidget):
 
 
 class PlotWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, logger=None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         self.init_ui()
         self.init_view()
@@ -147,8 +148,8 @@ class PlotWidget(QtWidgets.QWidget):
             try:
                 x = data.get_xdata()
                 xfit = data.get_fit_xdata()
-            except ValueError as e:
-                print("Error getting xdata: " + repr(e))
+            except ValueError:
+                self.logger.exception("Failed to get x data for analyzed plot.")
                 continue
 
             try:
@@ -160,8 +161,8 @@ class PlotWidget(QtWidgets.QWidget):
                 if y0 is None:
                     return
                 yfit = data.get_fit_ydata()
-            except ValueError as e:
-                print("Error getting ydata: " + repr(e))
+            except ValueError:
+                self.logger.exception("Failed to get y data for analyzed plot.")
                 continue
 
             plot_fit = show_fit and (xfit is not None) and (yfit is not None)
@@ -200,24 +201,21 @@ class PlotWidget(QtWidgets.QWidget):
     def refresh_all(self, data_list: list[tuple[SPODMRData, bool, str]], data: SPODMRData):
         try:
             self.update_plot(data_list)
-        except TypeError as e:
-            # import sys, traceback; traceback.print_tb(sys.exc_info()[2])
-            print("Error in update_plot " + repr(e))
+        except TypeError:
+            self.logger.exception("Failed to update plot.")
 
         try:
             self.update_image(data)
-        except TypeError as e:
-            # import sys, traceback; traceback.print_tb(sys.exc_info()[2])
-            print("Error in update_image " + repr(e))
+        except TypeError:
+            self.logger.exception("Failed to update image.")
 
         self.update_label(data)
 
     def refresh_plot(self, data_list: list[tuple[SPODMRData, bool, str]]):
         try:
             self.update_plot(data_list)
-        except TypeError as e:
-            # import sys, traceback; traceback.print_tb(sys.exc_info()[2])
-            print("Error in update_plot " + repr(e))
+        except TypeError:
+            self.logger.exception("Failed to update plot.")
 
     def update_label(self, data: SPODMRData):
         if not data.has_params():
@@ -263,8 +261,9 @@ class PlotWidget(QtWidgets.QWidget):
 
 
 class AltPlotWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, logger=None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         self.init_ui()
         self.init_view()
@@ -359,8 +358,8 @@ class AltPlotWidget(QtWidgets.QWidget):
         for data, _, c in data_list:
             try:
                 x = data.get_xdata()
-            except ValueError as e:
-                print("Error getting xdata: " + repr(e))
+            except ValueError:
+                self.logger.exception("Failed to get x data for alternate plot.")
                 continue
             if len(x) == 1:
                 continue
@@ -368,8 +367,8 @@ class AltPlotWidget(QtWidgets.QWidget):
                 y0, y1 = data.get_ydata(last_n=self.lastnBox.value())
                 if y0 is None:
                     return
-            except ValueError as e:
-                print("Error getting ydata: " + repr(e))
+            except ValueError:
+                self.logger.exception("Failed to get y data for alternate plot.")
                 continue
 
             f, S0 = self.real_fft(x, y0)
@@ -401,9 +400,8 @@ class AltPlotWidget(QtWidgets.QWidget):
 
         try:
             self.plot_fft(data_list)
-        except TypeError as e:
-            # import sys, traceback; traceback.print_tb(sys.exc_info()[2])
-            print("Error in plot_fft " + repr(e))
+        except TypeError:
+            self.logger.exception("Failed to plot FFT data.")
 
     def refresh_all(self, data_list: list[tuple[SPODMRData, bool, str]], data: SPODMRData):
         self.refresh_plot(data_list)
@@ -444,9 +442,11 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         alt_plot: AltPlotWidget,
         context,
         parent=None,
+        logger=None,
         file_transport_dir=None,
     ):
         ClientWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self.setupUi(self)
 
         self.conf = local_conf(gconf, name)
@@ -866,7 +866,7 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         if "plot" in self.data.params:
             p = self.data.params["plot"]
         else:
-            print("params['plot'] is not found.")
+            self.logger.error("params['plot'] is not found.")
             p = {}
 
         # avoid sending many requests
@@ -1158,7 +1158,9 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         elif round(self._pg_freq) == round(0.5e9):
             step = 2.0
         else:
-            print(f"Cannot determine timing box step with PG freq {self._pg_freq * 1e-9:.2f} GHz")
+            self.logger.error(
+                f"Cannot determine timing box step with PG freq {self._pg_freq * 1e-9:.2f} GHz"
+            )
             step = 1.0
 
         for b in self.timing_boxes():
@@ -1174,7 +1176,9 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         elif round(self._pg_freq) == round(0.5e9):
             _round = round_evenint
         else:
-            print(f"Cannot determine round method with PG freq {self._pg_freq * 1e-9:.2f} GHz")
+            self.logger.error(
+                f"Cannot determine round method with PG freq {self._pg_freq * 1e-9:.2f} GHz"
+            )
             _round = round
 
         for b in self.timing_boxes():
@@ -1185,21 +1189,21 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         if i >= 0:
             self.methodBox.setCurrentIndex(i)
         else:
-            print(f"[ERROR] unknown method: {method}")
+            self.logger.error(f"Unknown method: {method}")
 
     def set_plot_mode(self, mode: str):
         i = self.plotmodeBox.findText(mode)
         if i >= 0:
             self.plotmodeBox.setCurrentIndex(i)
         else:
-            print(f"[ERROR] unknown plot mode: {mode}")
+            self.logger.error(f"Unknown plot mode: {mode}")
 
     def set_tau_mode(self, mode: str):
         i = self.taumodeBox.findText(mode)
         if i >= 0:
             self.taumodeBox.setCurrentIndex(i)
         else:
-            print(f"[ERROR] unknown tau mode: {mode}")
+            self.logger.error(f"Unknown tau mode: {mode}")
 
     def reset_tau_modes(self, modes: list[str]):
         prev_mode = self.taumodeBox.currentText()
@@ -1224,15 +1228,16 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
 class SPODMRMainWindow(QtWidgets.QMainWindow):
     """MainWindow with SPODMRWidget and PlotWidget."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
         enable_resume = V.check_bool(lconf.get("enable_resume", True), "enable_resume")
 
-        self.plot = PlotWidget(parent=self)
-        self.alt_plot = AltPlotWidget(parent=self)
+        self.plot = PlotWidget(parent=self, logger=self.logger)
+        self.alt_plot = AltPlotWidget(parent=self, logger=self.logger)
         self.spodmr = SPODMRWidget(
             gconf,
             target["spodmr"],
@@ -1242,6 +1247,7 @@ class SPODMRMainWindow(QtWidgets.QMainWindow):
             self.alt_plot,
             context,
             parent=self,
+            logger=self.logger,
             file_transport_dir=lconf.get("file_transport_dir"),
         )
 
@@ -1270,6 +1276,10 @@ class SPODMRMainWindow(QtWidgets.QMainWindow):
 class SPODMRGUI(GUINode):
     """GUINode for Pulse ODMR with Slow detectors using SPODMRWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.spodmr: Target SPODMR node full name.
     :type target.spodmr: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -1282,4 +1292,4 @@ class SPODMRGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return SPODMRMainWindow(gconf, name, context)
+        return SPODMRMainWindow(gconf, name, context, logger=self.logger)

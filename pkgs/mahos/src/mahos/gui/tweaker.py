@@ -18,7 +18,7 @@ from mahos.gui.common_widget import ClientTopWidget
 from mahos.gui.tweaker_client import QTweakerClient
 from mahos.gui.param import ParamTable
 from mahos.node.node import local_conf, join_name
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.dialog import save_dialog, load_dialog
 from mahos.gui.Qt import QtWidgets
 
@@ -34,9 +34,11 @@ class TweakerWidget(ClientTopWidget, Ui_TweakerWidget):
         verbose,
         context,
         parent=None,
+        logger=None,
         file_transport_dir=None,
     ):
         ClientTopWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self.setupUi(self)
         self.setWindowTitle(f"MAHOS.TweakerGUI ({join_name(name)})")
 
@@ -185,6 +187,10 @@ class TweakerWidget(ClientTopWidget, Ui_TweakerWidget):
 class TweakerGUI(GUINode):
     """GUINode for TweakerWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.tweaker: Target Tweaker node full name.
     :type target.tweaker: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -206,5 +212,6 @@ class TweakerGUI(GUINode):
             target["gparams"],
             verbose,
             context,
+            logger=self.logger,
             file_transport_dir=lconf.get("file_transport_dir"),
         )

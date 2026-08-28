@@ -62,7 +62,7 @@ from mahos.util.plot import colors_tab20_pair
 from mahos.util.stat import simple_moving_average
 from mahos.util.timer import FPSCounter
 from mahos.util.unit import SI_scale
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
 from mahos.gui.param import apply_widgets
 from mahos.gui.common_widget import ClientWidget
@@ -1240,10 +1240,12 @@ class ConfocalWidget(ClientWidget, Ui_Confocal):
         move_interval_ms,
         context,
         parent=None,
+        logger=None,
         file_transport_dir=None,
         tracker_file_transport_dir=None,
     ):
         ClientWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self.setupUi(self)
 
         self.confocal_conf = local_conf(gconf, name)
@@ -1940,7 +1942,7 @@ class ConfocalWidget(ClientWidget, Ui_Confocal):
         if self._scan_param_dict is None:
             params = self.cli.get_param_dict("scan")
             if params is None or "mode" not in params:
-                print("[ERROR] Failed to get scan params")
+                self.logger.error("Failed to get scan params.")
                 return None
             self._scan_param_dict = params
         return self._scan_param_dict
@@ -2432,8 +2434,9 @@ class traceView(ClientWidget, Ui_traceView):
 class ConfocalMainWindow(QtWidgets.QMainWindow):
     """MainWindow with ConfocalWidget and traceView."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
@@ -2459,6 +2462,7 @@ class ConfocalMainWindow(QtWidgets.QMainWindow):
             move_interval_ms,
             context,
             parent=self,
+            logger=self.logger,
             file_transport_dir=file_transport_dir,
             tracker_file_transport_dir=tracker_file_transport_dir,
         )
@@ -2512,8 +2516,9 @@ class ConfocalMainWindow(QtWidgets.QMainWindow):
 class TraceWidget(QtWidgets.QWidget):
     """QWidget with traceView and a few buttons."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
@@ -2569,6 +2574,10 @@ class TraceWidget(QtWidgets.QWidget):
 class ConfocalGUI(GUINode):
     """GUINode for Confocal using ConfocalMainWindow.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.confocal: Target Confocal node full name.
     :type target.confocal: tuple[str, str] | str
     :param target.tracker: Target ConfocalTracker node full name.
@@ -2597,12 +2606,16 @@ class ConfocalGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return ConfocalMainWindow(gconf, name, context)
+        return ConfocalMainWindow(gconf, name, context, logger=self.logger)
 
 
 class TraceGUI(GUINode):
     """GUINode for trace-only view using TraceWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.trace: Target tracer/trace node full name.
     :type target.trace: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -2615,4 +2628,4 @@ class TraceGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return TraceWidget(gconf, name, context)
+        return TraceWidget(gconf, name, context, logger=self.logger)

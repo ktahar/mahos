@@ -25,7 +25,7 @@ from mahos.msgs.common_meas_msgs import Buffer
 from mahos_dq.msgs.hbt_msgs import HBTData
 from mahos.node.global_params import GlobalParamsClient
 from mahos_dq.meas.confocal import ConfocalIORequester
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
 from mahos.gui.param import apply_widgets
@@ -497,8 +497,9 @@ class HBTWidget(ClientWidget, Ui_HBT):
 class HBTMainWindow(QtWidgets.QMainWindow):
     """MainWindow with HBTWidget and PlotWidget."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
@@ -537,6 +538,10 @@ class HBTMainWindow(QtWidgets.QMainWindow):
 class HBTGUI(GUINode):
     """GUINode for HBT using HBTWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.hbt: Target HBT node full name.
     :type target.hbt: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -552,4 +557,4 @@ class HBTGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return HBTMainWindow(gconf, name, context)
+        return HBTMainWindow(gconf, name, context, logger=self.logger)

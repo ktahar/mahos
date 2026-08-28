@@ -17,7 +17,7 @@ from mahos.gui.Qt import QtCore, QtWidgets, QtGui, question_yn
 from mahos.msgs.pos_tweaker_msgs import PosTweakerStatus
 from mahos.node.global_params import GlobalParamsClient
 from mahos.gui.pos_tweaker_client import QPosTweakerClient
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientTopWidget
 from mahos.node.node import local_conf, join_name
 from mahos.gui.dialog import save_dialog, load_dialog
@@ -101,9 +101,11 @@ class PosTweakerWidget(ClientTopWidget):
         decimals,
         context,
         parent=None,
+        logger=None,
         file_transport_dir=None,
     ):
         ClientTopWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self.setWindowTitle(f"MAHOS.PosTweakerGUI ({join_name(name)})")
 
         self._fontsize = fontsize
@@ -307,6 +309,10 @@ class PosTweakerWidget(ClientTopWidget):
 class PosTweakerGUI(GUINode):
     """GUINode for PosTweakerWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.pos_tweaker: Target PosTweaker node full name.
     :type target.pos_tweaker: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -332,5 +338,6 @@ class PosTweakerGUI(GUINode):
             fontsize,
             decimals,
             context,
+            logger=self.logger,
             file_transport_dir=lconf.get("file_transport_dir"),
         )

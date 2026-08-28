@@ -20,7 +20,7 @@ from mahos.gui.camera_client import QCameraClient
 from mahos.msgs.common_msgs import BinaryState, BinaryStatus
 from mahos.msgs.camera_msgs import Image
 from mahos.node.global_params import GlobalParamsClient
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientTopWidget
 from mahos.gui.dialog import save_dialog, load_dialog
 from mahos.gui.param import apply_widgets
@@ -32,9 +32,17 @@ class CameraWidget(ClientTopWidget, Ui_Camera):
     """Top widget for Camera."""
 
     def __init__(
-        self, gconf: dict, name, gparams_name, context, parent=None, file_transport_dir=None
+        self,
+        gconf: dict,
+        name,
+        gparams_name,
+        context,
+        parent=None,
+        logger=None,
+        file_transport_dir=None,
     ):
         ClientTopWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self.setupUi(self)
         self.setWindowTitle(f"MAHOS.CameraGUI ({join_name(name)})")
 
@@ -213,6 +221,10 @@ class CameraWidget(ClientTopWidget, Ui_Camera):
 class CameraGUI(GUINode):
     """GUINode for Camera using CameraWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.camera: Target Camera node full name.
     :type target.camera: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -230,5 +242,6 @@ class CameraGUI(GUINode):
             target["camera"],
             target["gparams"],
             context,
+            logger=self.logger,
             file_transport_dir=lconf.get("file_transport_dir"),
         )

@@ -25,7 +25,7 @@ from mahos.msgs.common_msgs import BinaryState, BinaryStatus
 from mahos_dq.msgs.iodmr_msgs import IODMRData
 from mahos.node.global_params import GlobalParamsClient
 from mahos.util import conv
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientMainWindow
 from mahos.gui.param import apply_widgets
 from mahos.gui.dialog import save_dialog, load_dialog
@@ -38,8 +38,9 @@ Policy = QtWidgets.QSizePolicy.Policy
 class IODMRWidget(QtWidgets.QWidget, Ui_IODMR):
     """Central widget (parameter setting and commanding) for IODMR."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, logger=None):
         QtWidgets.QWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self.setupUi(self)
 
     def init_widget(self, params: dict):
@@ -48,7 +49,7 @@ class IODMRWidget(QtWidgets.QWidget, Ui_IODMR):
         self.roiBox.setChecked(False)
 
         if params is None:
-            print("[ERROR] Failed to get params.")
+            self.logger.error("Failed to get params.")
             return
 
         apply_widgets(
@@ -323,16 +324,24 @@ class IODMRMainWindow(ClientMainWindow):
     """MainWindow with ConfocalWidget and traceView."""
 
     def __init__(
-        self, gconf: dict, name, gparams_name, context, parent=None, file_transport_dir=None
+        self,
+        gconf: dict,
+        name,
+        gparams_name,
+        context,
+        parent=None,
+        logger=None,
+        file_transport_dir=None,
     ):
         ClientMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         self.conf = local_conf(gconf, name)
 
         self._finalizing = False
 
         self.data = DataStore()
-        self.cw = IODMRWidget(parent=self)
+        self.cw = IODMRWidget(parent=self, logger=self.logger)
         self.setWindowTitle(f"MAHOS.IODMRGUI ({name})")
         self.setAnimated(False)
         self.setCentralWidget(self.cw)
@@ -532,6 +541,10 @@ class IODMRMainWindow(ClientMainWindow):
 class IODMRGUI(GUINode):
     """GUINode for IODMR using IODMRWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.iodmr: Target IODMR node full name.
     :type target.iodmr: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -549,5 +562,6 @@ class IODMRGUI(GUINode):
             target["iodmr"],
             target["gparams"],
             context,
+            logger=self.logger,
             file_transport_dir=lconf.get("file_transport_dir"),
         )

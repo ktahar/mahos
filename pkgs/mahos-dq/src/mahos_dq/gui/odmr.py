@@ -32,7 +32,7 @@ from mahos_dq.meas.confocal import ConfocalIORequester
 from mahos.util import conv
 from mahos_dq.util import nv
 from mahos.util.plot import colors_tab20_pair
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
 from mahos.gui.param import ParamDictComboBoxHandler, apply_widgets
@@ -508,10 +508,12 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         plot: PlotWidget,
         context,
         parent=None,
+        logger=None,
         file_transport_dir=None,
         confocal_file_transport_dir=None,
     ):
         ClientWidget.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
         self.setupUi(self)
 
         self.conf = local_conf(gconf, name)
@@ -631,7 +633,7 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
             self.methodBox.setCurrentIndex(i)
             return True
         else:
-            print(f"[ERROR] unknown method: {method}")
+            self.logger.error(f"Unknown method: {method}")
             return False
 
     def switch_method(self):
@@ -841,8 +843,9 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
 class ODMRMainWindow(QtWidgets.QMainWindow):
     """MainWindow with ODMRWidget and PlotWidget."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
@@ -856,6 +859,7 @@ class ODMRMainWindow(QtWidgets.QMainWindow):
             self.plot,
             context,
             parent=self,
+            logger=self.logger,
             file_transport_dir=lconf.get("file_transport_dir"),
             confocal_file_transport_dir=lconf.get("confocal_file_transport_dir"),
         )
@@ -881,6 +885,10 @@ class ODMRMainWindow(QtWidgets.QMainWindow):
 class ODMRGUI(GUINode):
     """GUINode for ODMR using ODMRWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.odmr: Target ODMR node full name.
     :type target.odmr: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -896,4 +904,4 @@ class ODMRGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return ODMRMainWindow(gconf, name, context)
+        return ODMRMainWindow(gconf, name, context, logger=self.logger)

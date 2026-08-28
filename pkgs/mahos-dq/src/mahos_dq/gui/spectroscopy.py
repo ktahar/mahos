@@ -27,7 +27,7 @@ from mahos_dq.msgs.spectroscopy_msgs import SpectroscopyData, SpectroscopyStatus
 from mahos.msgs.inst.spectrometer_msgs import Temperature
 from mahos.node.global_params import GlobalParamsClient
 from mahos_dq.meas.confocal import ConfocalIORequester
-from mahos.gui.gui_node import GUINode
+from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.common_widget import ClientWidget
 from mahos.gui.fit_widget import FitWidget
 from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
@@ -455,8 +455,9 @@ class SpectroscopyWidget(ClientWidget, Ui_Spectroscopy):
 class SpectroscopyMainWindow(QtWidgets.QMainWindow):
     """MainWindow with SpectroscopyWidget and PlotWidget."""
 
-    def __init__(self, gconf: dict, name, context, parent=None):
+    def __init__(self, gconf: dict, name, context, parent=None, logger=None):
         QtWidgets.QMainWindow.__init__(self, parent)
+        self.logger = get_gui_logger(logger, self.__class__.__name__)
 
         lconf = local_conf(gconf, name)
         target = lconf["target"]
@@ -495,6 +496,10 @@ class SpectroscopyMainWindow(QtWidgets.QMainWindow):
 class SpectroscopyGUI(GUINode):
     """GUINode for Spectroscopy using SpectroscopyWidget.
 
+    :param target.log: Optional LogBroker target for formal GUI logging.
+    :type target.log: tuple[str, str] | str
+    :param log_level: (default: ``"INFO"``) Optional logging level.
+    :type log_level: str
     :param target.spectroscopy: Target Spectroscopy node full name.
     :type target.spectroscopy: tuple[str, str] | str
     :param target.gparams: Target GlobalParams node full name.
@@ -510,4 +515,4 @@ class SpectroscopyGUI(GUINode):
     """
 
     def init_widget(self, gconf: dict, name, context):
-        return SpectroscopyMainWindow(gconf, name, context)
+        return SpectroscopyMainWindow(gconf, name, context, logger=self.logger)
