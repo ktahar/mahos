@@ -339,7 +339,7 @@ def test_append_stream_samples_uses_sample_derived_stamps(monkeypatch):
     inst._stream_epoch_ns = None
     inst._stream_emitted_samples = 0
     inst._pending = [[]]
-    monkeypatch.setattr("mahos.inst.digitizer.time.time_ns", lambda: 1_000_000_000)
+    monkeypatch.setattr("mahos.inst.digitizer.spectrum.time.time_ns", lambda: 1_000_000_000)
 
     inst._note_stream_notification(12)
     inst._append_stream_samples([np.arange(12.0)])
@@ -552,7 +552,7 @@ def test_start_forces_only_software_trigger(monkeypatch, trigger_source, expecte
     inst._transfer = DummyTransfer()
     inst._mode = inst.Mode.STREAM
     inst._trigger_source = trigger_source
-    monkeypatch.setattr("mahos.inst.digitizer.threading.Thread", DummyThread)
+    monkeypatch.setattr("mahos.inst.digitizer.spectrum.threading.Thread", DummyThread)
 
     assert inst.start()
     assert inst._transfer.commands == (DummySpcm.M2CMD_DATA_STARTDMA,)
