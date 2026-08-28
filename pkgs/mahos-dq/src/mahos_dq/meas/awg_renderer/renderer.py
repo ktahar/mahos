@@ -16,6 +16,7 @@ Behavior:
 
 from __future__ import annotations
 
+import os
 import math
 import typing as T
 
@@ -268,6 +269,7 @@ class AWGRenderer(object):
             if amplitude_mV > 0 and not self.awg.set_amplitude(channel, amplitude_mV):
                 return self.fail_with(f"Failed to set CH{channel} AWG amplitude")
         transport = "file" if file_transport else "zmq"
+        self.logger.debug(f"starting {form} upload via {transport}")
         if form == "waveforms" and file_transport:
             ok = self._upload_waveforms_file(
                 res.analog,
@@ -296,6 +298,17 @@ class AWGRenderer(object):
         )
         return True
 
+    def _file_size_string(self, path: str) -> str:
+        try:
+            s = os.path.getsize(path)
+        except FileNotFoundError:
+            s = 0
+        for unit in ["Bytes", "KB", "MB", "GB", "TB"]:
+            if s < 1024.0 or unit == "TB":
+                return f"{s:.2f} {unit}"
+            s /= 1024.0
+        raise AssertionError("Unreachable")
+
     def _upload_waveforms_file(
         self,
         analog: dict[int, np.ndarray],
@@ -313,7 +326,10 @@ class AWGRenderer(object):
         file_name = transport.new_name("awg")
         final_path = transport.resolve(file_name)
         try:
+            self.logger.debug(f"writing waveforms to {final_path}")
             transport.publish(file_name, lambda path: save_waveforms(path, analog, digital))
+            size = self._file_size_string(final_path)
+            self.logger.debug(f"finished writing {size}")
             return self.awg.configure_waveforms_file(
                 file_name,
                 rate,
