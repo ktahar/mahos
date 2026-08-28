@@ -199,7 +199,7 @@ class FIDFitter(Fitter):
                 10e-6, 1e-9, 1.0, unit="s", SI_prefix=True, doc="spin-spin relaxation time"
             ),
             detuning=self.make_model_param(
-                1e6, 0.0, 1e9, unit="Hz", SI_prefix=True, doc="detuning frequency"
+                1e6, 0.0, 1e9, fixable=True, unit="Hz", SI_prefix=True, doc="detuning frequency"
             ),
         )
 
