@@ -253,7 +253,14 @@ class Node(NodeBase):
     TOPIC_TYPES = {}
 
     def __init__(self, gconf: dict, name: NodeName, context: Context | None = None):
+        self._closed = False
+        self._clients = []
+        self.ctx = None
+        self._log_handler = None
+        self._shutdown = False
+
         NodeBase.__init__(self, gconf, name)
+
         self.ctx = Context(
             context=context, poll_timeout_ms=get_value(gconf, self.conf, "poll_timeout_ms")
         )
@@ -263,10 +270,6 @@ class Node(NodeBase):
             )
         else:
             self.logger = DummyLogger(join_name(name))
-            self._log_handler = None
-        self._clients = []
-        self._closed = False
-        self._shutdown = False
 
     def __del__(self):
         self.close()
@@ -278,8 +281,10 @@ class Node(NodeBase):
             return
         self._closed = True
 
-        self.close_resources()
-        self._close_comm()
+        try:
+            self.close_resources()
+        finally:
+            self._close_comm()
 
     def close_resources(self):
         """Close custom resources."""
@@ -296,7 +301,8 @@ class Node(NodeBase):
             if self._log_handler is not None:
                 self.logger.removeHandler(self._log_handler)
                 self._log_handler = None
-            self.ctx.close()
+            if self.ctx is not None:
+                self.ctx.close()
 
     def set_shutdown(self):
         """Shutdown this node, quitting from the main loop."""
