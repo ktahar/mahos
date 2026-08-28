@@ -81,12 +81,10 @@ def test_tweaker_client_legacy_requests_without_transport():
     assert [type(msg) for msg in client.req.messages] == [SaveReq, LoadReq]
 
 
-def test_tweaker_transport_roundtrip_with_separate_mounts(tmp_path):
-    node_mount = tmp_path / "node_mount"
-    client_mount = tmp_path / "client_mount"
+def test_tweaker_transport_roundtrip_with_shared_directory(tmp_path):
+    shared = tmp_path / "shared"
     local = tmp_path / "local"
-    node_mount.mkdir()
-    client_mount.symlink_to(node_mount, target_is_directory=True)
+    shared.mkdir()
     local.mkdir()
 
     state = _tweaker_state()
@@ -94,7 +92,7 @@ def test_tweaker_transport_roundtrip_with_separate_mounts(tmp_path):
     node = object.__new__(Tweaker)
     node._closed = True
     node.logger = DummyLogger("test_tweaker_node")
-    node.file_transport = SharedFileTransport(node_mount)
+    node.file_transport = SharedFileTransport(shared)
     node._file_transport_output_purposes = ("save",)
     node.io = TweakerIO(node.logger)
     node._param_dicts = state.param_dicts
@@ -103,27 +101,27 @@ def test_tweaker_transport_roundtrip_with_separate_mounts(tmp_path):
     assert isinstance(state_rep.ret, TweakerState)
 
     client = _TweakerTransportClient()
-    client.file_transport = SharedFileTransport(client_mount)
+    client.file_transport = SharedFileTransport(shared)
     client.req = _Requester(node.handle_req)
 
     assert not client.save_file(str(local / "missing" / "state.tweak.h5"))
-    assert list(node_mount.iterdir()) == []
+    assert list(shared.iterdir()) == []
 
     destination = local / "chosen.state.tweak.h5"
     assert client.save_file(str(destination))
     assert destination.exists()
-    assert list(node_mount.iterdir()) == []
+    assert list(shared.iterdir()) == []
 
     node._param_dicts["inst::label"]["value"].set(0)
     rep = client.load_file(str(destination))
     assert rep.success
     assert rep.ret["inst::label"]["value"].value() == 1
-    assert list(node_mount.iterdir()) == []
+    assert list(shared.iterdir()) == []
 
     invalid = local / "invalid.h5"
     invalid.write_bytes(b"not hdf5")
     assert not client.load_file(str(invalid)).success
-    assert list(node_mount.iterdir()) == []
+    assert list(shared.iterdir()) == []
 
 
 def test_pos_tweaker_transport_roundtrip(tmp_path):

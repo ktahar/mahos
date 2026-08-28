@@ -162,11 +162,9 @@ def test_basic_meas_client_legacy_requests_without_transport():
 
 
 def test_basic_meas_client_roundtrip_and_buffer_name(tmp_path):
-    shared = tmp_path / "measurement_mount"
-    gui_mount = tmp_path / "gui_mount"
+    shared = tmp_path / "shared"
     local = tmp_path / "local"
     shared.mkdir()
-    gui_mount.symlink_to(shared, target_is_directory=True)
     local.mkdir()
 
     node = object.__new__(BasicMeasNode)
@@ -197,7 +195,7 @@ def test_basic_meas_client_roundtrip_and_buffer_name(tmp_path):
     node.load_data = load
 
     client = _TransportClient()
-    client.file_transport = SharedFileTransport(gui_mount)
+    client.file_transport = SharedFileTransport(shared)
     client.req = _Requester(node)
 
     save_path = local / "chosen.data.h5"

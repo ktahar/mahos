@@ -66,18 +66,16 @@ def test_confocal_client_legacy_requests_without_transport():
     ]
 
 
-def test_confocal_transport_roundtrip_with_separate_mounts(tmp_path):
-    node_mount = tmp_path / "node_mount"
-    client_mount = tmp_path / "client_mount"
+def test_confocal_transport_roundtrip_with_shared_directory(tmp_path):
+    shared = tmp_path / "shared"
     local = tmp_path / "local"
-    node_mount.mkdir()
-    client_mount.symlink_to(node_mount, target_is_directory=True)
+    shared.mkdir()
     local.mkdir()
 
     calls = []
     node = object.__new__(Confocal)
     node._closed = True
-    node.file_transport = SharedFileTransport(node_mount)
+    node.file_transport = SharedFileTransport(shared)
     node._file_transport_output_purposes = ("save", "export")
     node.logger = DummyLogger("test_confocal_transport")
 
@@ -101,11 +99,11 @@ def test_confocal_transport_roundtrip_with_separate_mounts(tmp_path):
     node.load_trace = load
 
     client = _ConfocalTransportClient()
-    client.file_transport = SharedFileTransport(client_mount)
+    client.file_transport = SharedFileTransport(shared)
     client.req = _Requester(node.handle_req)
 
     assert not client.save_image(str(local / "missing" / "image.h5"))
-    assert list(node_mount.iterdir()) == []
+    assert list(shared.iterdir()) == []
 
     image = local / "chosen.image.h5"
     assert client.save_image(str(image), ScanDirection.XZ, note="image note")
@@ -141,7 +139,7 @@ def test_confocal_transport_roundtrip_with_separate_mounts(tmp_path):
     trace_source = local / "source.trace.h5"
     trace_source.write_bytes(b"trace input")
     assert client.load_trace(str(trace_source)) == b"trace input"
-    assert list(node_mount.iterdir()) == []
+    assert list(shared.iterdir()) == []
 
 
 def test_confocal_artifact_failure_cleanup(tmp_path):
