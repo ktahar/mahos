@@ -210,6 +210,8 @@ _str_to_log_level = {
 
 
 def init_logger(gconf, my_name, log_name, context: Context):
+    """Initialize a logger and return it with its context-owned PUBHandler."""
+
     # avoid invoking logging.basicConfig() through functions such as logging.info etc.
     # 3rd party libraries could call these functions.
     logging.root.addHandler(logging.NullHandler())
@@ -225,7 +227,7 @@ def init_logger(gconf, my_name, log_name, context: Context):
     logger = logging.getLogger(joined_name)
     logger.setLevel(level)
     logger.addHandler(handler)
-    return logger
+    return logger, handler
 
 
 class Node(NodeBase):
@@ -256,9 +258,12 @@ class Node(NodeBase):
             context=context, poll_timeout_ms=get_value(gconf, self.conf, "poll_timeout_ms")
         )
         if "target" in self.conf and "log" in self.conf["target"]:
-            self.logger = init_logger(gconf, name, self.conf["target"]["log"], self.ctx)
+            self.logger, self._log_handler = init_logger(
+                gconf, name, self.conf["target"]["log"], self.ctx
+            )
         else:
             self.logger = DummyLogger(join_name(name))
+            self._log_handler = None
         self._clients = []
         self._closed = False
         self._shutdown = False
@@ -288,6 +293,9 @@ class Node(NodeBase):
             cli.close(close_ctx=False)
 
         if close_ctx:
+            if self._log_handler is not None:
+                self.logger.removeHandler(self._log_handler)
+                self._log_handler = None
             self.ctx.close()
 
     def set_shutdown(self):
