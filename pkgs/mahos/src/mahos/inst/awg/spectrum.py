@@ -1461,6 +1461,8 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
     # Public API: AWGInterface.configure_waveforms
 
     def _configure_waveforms(self, params: dict) -> bool:
+        self.logger.debug("entering configure_waveforms()")
+
         if not self._check_keys(
             params,
             ("analog", "digital", "rate", "trigger_type", "n_runs", "trigger_level"),
@@ -1558,6 +1560,8 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
             return False
 
         replay, loops = self._configure_trigger(trigger_type, n_runs, trigger_level)
+
+        self.logger.debug("starting to upload waveforms")
         return self._upload(waveforms, rate, replay, loops, "waveforms", offsets=[0])
 
     def _configure_sequence(self, params: dict) -> bool:
@@ -1578,6 +1582,7 @@ class Spectrum_AWG(Instrument, ConfAccessorMixin):
         except ValueError:
             return self.fail_with(f"file_name must be a basename: {file_name!r}")
         analog, digital = load_waveforms(path)
+        self.logger.debug(f"loaded waveforms from {path}")
         waveform_params = {key: value for key, value in params.items() if key != "file_name"}
         waveform_params.update(analog=analog, digital=digital)
         return self._configure_waveforms(waveform_params)
