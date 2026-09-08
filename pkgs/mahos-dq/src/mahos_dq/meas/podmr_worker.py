@@ -804,7 +804,7 @@ class CommonPulserBase(Worker, ConfAccessorMixin, ABC):
         d["mw_delay"] = P.FloatParam(1e-6, 0.0, 1e-3)
         d["trigger_width"] = P.FloatParam(20e-9, 1e-9, 1e-6)
         d["init_delay"] = P.FloatParam(0.0, 0.0, 1e-6)
-        d["final_delay"] = P.FloatParam(5e-6, 0.0, 1e-4)
+        d["final_delay"] = P.FloatParam(5e-6, 0.0, 1e-2)
         ### global mw offset
         d["mw_offset"] = P.FloatParam(0.0, -1e-4, 1e-4)
 
