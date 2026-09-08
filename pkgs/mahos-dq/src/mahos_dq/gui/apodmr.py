@@ -255,6 +255,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
                 ("burst_num", self.burstNumBox),
                 ("max_records", self.maxRecordsBox),
                 ("sweeps", self.sweepsBox),
+                ("save_history", self.saveHistoryBox),
                 ("hardware_sweep_limit", self.hardwareSweepLimitBox),
                 ("duration", self.durationBox),
                 ("roi_head", self.roiheadBox, 1e9),
@@ -299,6 +300,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         p = self.data.params
 
         self.sweepsBox.setValue(p.get("sweeps", 0))
+        self.saveHistoryBox.setChecked(p.get("save_history", True))
         self.hardwareSweepLimitBox.setChecked(p.get("hardware_sweep_limit", False))
         self.sweepsPerRecordBox.setValue(p.get("sweeps_per_record", 1))
         self.burstNumBox.setValue(p.get("burst_num", 1))
@@ -355,6 +357,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
         params["freq"] = self.freqBox.value() * 1e6
         params["power"] = self.powerBox.value()
         params["sweeps"] = self.sweepsBox.value()
+        params["save_history"] = self.saveHistoryBox.isChecked()
         params["hardware_sweep_limit"] = self.hardwareSweepLimitBox.isChecked()
         params["sweeps_per_record"] = self.sweepsPerRecordBox.value()
         params["burst_num"] = self.burstNumBox.value()
@@ -430,6 +433,7 @@ class APODMRWidget(PODMRWidgetBase, Ui_APODMR):
             self.methodBox,
             self.partialBox,
             self.sweepsBox,
+            self.saveHistoryBox,
             self.hardwareSweepLimitBox,
             self.sweepsPerRecordBox,
             self.burstNumBox,

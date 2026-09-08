@@ -285,13 +285,6 @@
               </item>
              </widget>
             </item>
-            <item row="1" column="1">
-             <widget class="QCheckBox" name="hardwareSweepLimitBox">
-              <property name="text">
-               <string>hardware sweep limit</string>
-              </property>
-             </widget>
-            </item>
             <item row="6" column="3">
              <widget class="QLabel" name="pgfreqLabel">
               <property name="text">
@@ -394,13 +387,6 @@
              <widget class="QLabel" name="label_5">
               <property name="text">
                <string>method</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="2">
-             <widget class="QLabel" name="sweptLabel">
-              <property name="text">
-               <string>0 swept</string>
               </property>
              </widget>
             </item>
@@ -560,6 +546,30 @@
              <widget class="QCheckBox" name="roundTimingBox">
               <property name="text">
                <string>round timing</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QLabel" name="sweptLabel">
+              <property name="text">
+               <string>0 swept</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QCheckBox" name="hardwareSweepLimitBox">
+              <property name="text">
+               <string>hardware sweep limit</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QCheckBox" name="saveHistoryBox">
+              <property name="text">
+               <string>save history</string>
               </property>
               <property name="checked">
                <bool>true</bool>
@@ -1760,6 +1770,7 @@
   <tabstop>tabWidget</tabstop>
   <tabstop>sweepsBox</tabstop>
   <tabstop>durationBox</tabstop>
+  <tabstop>saveHistoryBox</tabstop>
   <tabstop>hardwareSweepLimitBox</tabstop>
   <tabstop>burstNumBox</tabstop>
   <tabstop>sweepsPerRecordBox</tabstop>

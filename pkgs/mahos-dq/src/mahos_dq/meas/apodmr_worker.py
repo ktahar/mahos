@@ -36,6 +36,69 @@ from mahos_dq.util.segments import round_segment_samples_up
 class APODMRDataOperator(PODMRDataOperator):
     """Operations (set / get / analyze) on :class:`APODMRData`."""
 
+    def update_plot_params(self, data: APODMRData, plot_params: dict) -> bool:
+        """Update plot parameters, rebuilding history when sampled analysis windows change."""
+
+        if not data.has_params():
+            return False
+        old = data.params.get("plot", {})
+        merged = {**old, **plot_params}
+        old_indices = self.get_marker_indices(data)
+        updated = super().update_plot_params(data, merged)
+        new_indices = self.get_marker_indices(data)
+        windows_changed = not np.array_equal(old_indices, new_indices)
+        if windows_changed:
+            data.clear_history()
+            self.analyze_with_error(data)
+        return updated or windows_changed
+
+    def update_params(self, data: APODMRData, params: dict | None):
+        """Apply resume parameters without bypassing history invalidation."""
+
+        if params is None:
+            return
+        params = params.copy()
+        plot = params.pop("plot", None)
+        was_enabled = data.params.get("save_history", True)
+        data.update_params(params)
+        enabled = data.params.get("save_history", True)
+        if not enabled or enabled != was_enabled:
+            data.clear_history()
+        if plot is not None:
+            self.update_plot_params(data, plot)
+        if enabled != was_enabled:
+            self.get_marker_indices(data)
+            self.analyze_with_error(data)
+
+    def _update_history(self, data: APODMRData):
+        """Append missing retained records, rebuilding if a gap cannot be recovered."""
+
+        if not data.params.get("save_history", True) or not data.has_raw_data():
+            data.clear_history()
+            return
+        retained_start = data.records - data.retained_records()
+        end = data.history_start_record
+        if data.signal_history is not None:
+            end += len(data.signal_history)
+        if data.signal_history is None or end < retained_start:
+            data.clear_history()
+            data.history_start_record = retained_start
+            end = retained_start
+        if end == data.records:
+            return
+        means = [
+            self._analyze_record(traces, data.marker_indices)
+            for traces in data.raw_data[end - retained_start :]
+        ]
+        signals = np.stack([sig for sig, ref in means])
+        references = np.stack([ref for sig, ref in means])
+        if data.signal_history is None:
+            data.signal_history = signals
+            data.reference_history = references
+        else:
+            data.signal_history = np.concatenate((data.signal_history, signals))
+            data.reference_history = np.concatenate((data.reference_history, references))
+
     def set_trace_laser_timing(self, data: APODMRData, trace_laser_timing):
         data.trace_laser_timing = float(trace_laser_timing)
 
@@ -146,7 +209,10 @@ class APODMRDataOperator(PODMRDataOperator):
     def analyze_with_error(self, data: APODMRData) -> str | None:
         error = self._analysis_error(data)
         if error is not None:
+            data.clear_history()
             return error
+
+        self._update_history(data)
 
         N = data.num_pattern()
         traces = data.raw_data_sum / data.records
@@ -432,6 +498,10 @@ class APODMRPulserBase(CommonPulserBase):
             100000000,
             doc="maximum number of raw trace records to retain (0 for unlimited)",
         )
+        d["save_history"] = P.BoolParam(
+            True,
+            doc="retain signal and reference window means for every record",
+        )
         d["burst_num"] = P.IntParam(
             self._conf_pos_int("burst_num", 1),
             1,
@@ -710,7 +780,7 @@ class APODMRPulserBase(CommonPulserBase):
             self.data = APODMRData(params, label)
             self.op.update_axes(self.data)
         else:
-            self.data.update_params(params)
+            self.op.update_params(self.data, params)
         if not self._validate_sweep_params(self.data.params):
             return False
         remaining_records = self._remaining_records(self.data.params, self.data.records)

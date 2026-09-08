@@ -368,6 +368,7 @@ def test_apodmr(server, apodmr, server_conf, apodmr_conf):
     assert get_some(apodmr.get_status, poll_timeout_ms).state == BinaryState.IDLE
 
     params = apodmr.get_param_dict("rabi")
+    assert params["save_history"].value() is True
     assert "head" not in params["plot"]["taumode"].options()
     params["num"].set(2)
     params["sweeps"].set(4)
@@ -395,6 +396,9 @@ def test_apodmr(server, apodmr, server_conf, apodmr_conf):
     assert data.raw_data.shape[0] == 1
     assert data.retained_records() == 1
     assert data.records == 2
+    assert data.history_start_record == 0
+    assert data.signal_history.shape == (2, data.raw_data.shape[1])
+    assert data.reference_history.shape == data.signal_history.shape
     assert int(data.sweeps()) == 4
     assert int(data.records * data.get_sweeps_per_record()) == 4
     assert data.raw_data_sum is not None
