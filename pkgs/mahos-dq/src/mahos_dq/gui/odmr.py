@@ -430,7 +430,10 @@ class ODMRPeaksWidget(QtWidgets.QWidget, Ui_ODMRPeaks):
             l0.setValue(freq[i * 2] * 1e6)
             l1.setValue(freq[i * 2 + 1] * 1e6)
 
-        f_str = set([f"{f:.1f}" for f in sorted(freq)])
+        if self.sortgsBox.isChecked():
+            f_str = set([f"{f:.3f}" for f in sorted(freq)])
+        else:
+            f_str = [f"{f:.3f}" for f in freq]
         txt = ", ".join(sorted(f_str))
         self.gsEdit.setText(txt + " MHz")
 
@@ -441,7 +444,10 @@ class ODMRPeaksWidget(QtWidgets.QWidget, Ui_ODMRPeaks):
             l0.setValue(freq[i * 2] * 1e6)
             l1.setValue(freq[i * 2 + 1] * 1e6)
 
-        f_str = set([f"{f:.1f}" for f in sorted(freq)])
+        if self.sortesBox.isChecked():
+            f_str = set([f"{f:.3f}" for f in sorted(freq)])
+        else:
+            f_str = [f"{f:.3f}" for f in freq]
         txt = ", ".join(sorted(f_str))
         self.esEdit.setText(txt + " MHz")
 
