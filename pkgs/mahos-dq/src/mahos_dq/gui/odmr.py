@@ -125,9 +125,14 @@ class PlotWidget(QtWidgets.QWidget):
         hl.addWidget(self.graphicsView)
         hl.addWidget(self.histo)
 
+        hl_bottom = QtWidgets.QHBoxLayout()
+        self.label = QtWidgets.QLabel("Ready")
+        hl_bottom.addWidget(self.label)
+
         vl = QtWidgets.QVBoxLayout()
         vl.addLayout(hl0)
         vl.addLayout(hl)
+        vl.addLayout(hl_bottom)
         self.setLayout(vl)
 
     def init_view(self):
@@ -148,6 +153,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.img_plot.setLabel("bottom", "Microwave frequency", "Hz")
         self.img_plot.setLabel("left", "Number of accumulation")
 
+        self.plot.scene().sigMouseMoved.connect(self.update_pos)
         self.showimgBox.toggled.connect(self.toggle_image)
         self.normalizenBox.valueChanged.connect(self.update_normalize)
 
@@ -180,6 +186,18 @@ class PlotWidget(QtWidgets.QWidget):
         self.img.resetTransform()
         self.img.setPos(data.params["start"], 0.0)
         self.img.setTransform(QtGui.QTransform.fromScale(data.step(), 1.0))
+
+    def update_pos(self, pos):
+        if not self.plot.sceneBoundingRect().contains(pos):
+            return
+        point = self.plot.getViewBox().mapSceneToView(pos)
+        x, y = point.x(), point.y()
+        self.update_label(x, y)
+
+    def update_label(self, x, y):
+        sx = pg.siFormat(x, precision=6, suffix="Hz")
+        sy = pg.siFormat(y, precision=6, suffix=self._yunit)
+        self.label.setText(f"{sx}, {sy}")
 
     def add_error_bar(self, x, y, height, pen):
         item = pg.ErrorBarItem(x=x, y=y, height=height, pen=pen)
