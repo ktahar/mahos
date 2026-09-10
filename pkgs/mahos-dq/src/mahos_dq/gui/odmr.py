@@ -431,10 +431,10 @@ class ODMRPeaksWidget(QtWidgets.QWidget, Ui_ODMRPeaks):
             l1.setValue(freq[i * 2 + 1] * 1e6)
 
         if self.sortgsBox.isChecked():
-            f_str = set([f"{f:.3f}" for f in sorted(freq)])
+            f_str = sorted(set([f"{f:.3f}" for f in freq]))
         else:
             f_str = [f"{f:.3f}" for f in freq]
-        txt = ", ".join(sorted(f_str))
+        txt = ", ".join(f_str)
         self.gsEdit.setText(txt + " MHz")
 
         # Excited state
@@ -445,10 +445,10 @@ class ODMRPeaksWidget(QtWidgets.QWidget, Ui_ODMRPeaks):
             l1.setValue(freq[i * 2 + 1] * 1e6)
 
         if self.sortesBox.isChecked():
-            f_str = set([f"{f:.3f}" for f in sorted(freq)])
+            f_str = sorted(set([f"{f:.3f}" for f in freq]))
         else:
             f_str = [f"{f:.3f}" for f in freq]
-        txt = ", ".join(sorted(f_str))
+        txt = ", ".join(f_str)
         self.esEdit.setText(txt + " MHz")
 
     def update_B_angle_label(self):
