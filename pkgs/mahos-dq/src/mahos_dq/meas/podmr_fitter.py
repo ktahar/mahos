@@ -186,8 +186,8 @@ class SpinEchoFitter(Fitter):
         return baseline + F.Model(spinecho_exp_decay)
 
 
-def fid_decay_cos(x, A, T2s, detuning):
-    return A * (1 - np.exp(-x / T2s) * np.cos(2 * np.pi * detuning * x))
+def fid_decay_cos(x, A, T2s, detuning, phi):
+    return A * np.exp(-x / T2s) * np.cos(2 * np.pi * detuning * x + phi)
 
 
 class FIDFitter(Fitter):
@@ -200,6 +200,9 @@ class FIDFitter(Fitter):
             ),
             detuning=self.make_model_param(
                 1e6, 0.0, 1e9, fixable=True, unit="Hz", SI_prefix=True, doc="detuning frequency"
+            ),
+            phi=self.make_model_param(
+                0.0, -np.pi / 2, np.pi / 2, fixable=True, doc="initial phase"
             ),
         )
 
