@@ -34,8 +34,8 @@ class Fitter(BaseFitter):
         return xdata, y0
 
 
-def rabi_decay_cos(x, A, T, f, dt):
-    return A * np.exp(-(x - dt) / T) * np.cos(2.0 * np.pi * f * (x - dt))
+def rabi_decay_cos(x, A, T, f, dt, c, slope):
+    return c + slope * (x - dt) + A * np.exp(-(x - dt) / T) * np.cos(2.0 * np.pi * f * (x - dt))
 
 
 class RabiFitter(Fitter):
@@ -66,6 +66,14 @@ class RabiFitter(Fitter):
                 fixable=True,
                 doc="shift in time (x-axis)",
             ),
+            slope=self.make_model_param(
+                self.conf.get("slope", 0.0),
+                self.conf.get("slope_min", -1.0),
+                self.conf.get("slope_max", 1.0),
+                fixable=True,
+                fixed=True,
+                doc="linear baseline slope",
+            ),
         )
 
     def guess_fit_params(
@@ -89,11 +97,10 @@ class RabiFitter(Fitter):
             fit_params["dt"].set(0.0)
 
     def model(self, raw_params: dict[str, P.RawPDValue]) -> F.Model:
-        baseline = F.models.ConstantModel()
-        return baseline + F.Model(rabi_decay_cos)
+        return F.Model(rabi_decay_cos)
 
     def additional_msg(self, popt: P.ParamDict[str, P.FloatParam]):
-        f, dt, A, c = [popt[n].value() for n in ("f", "dt", "A", "c")]
+        f, dt, A = [popt[n].value() for n in ("f", "dt", "A")]
         p90, p180, p270 = 1 / 4 / f + dt, 1 / 2 / f + dt, 3 / 4 / f + dt
         p2p = 2 * abs(A)
         return (
