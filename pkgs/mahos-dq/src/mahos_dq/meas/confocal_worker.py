@@ -274,16 +274,21 @@ class Tracer(Worker):
             self.get_data()
 
     def _interp_stamps(self, stamps: tuple[int], last_stamp: int):
+        """Interpolate block timestamps using integer nanoseconds."""
+
         if not last_stamp:
             last_stamp = stamps[0] - self.cb_samples * round(self.time_window_sec * 1e9)
-        return np.hstack(
-            [
-                np.linspace(t1, t0, num=self.cb_samples, endpoint=False, dtype="datetime64[ns]")[
-                    ::-1
-                ]
+        # Exclude the previous block's endpoint and include the current one.
+        # Python integers avoid both float precision loss and intermediate int64 overflow.
+        return np.fromiter(
+            (
+                int(t0) + (int(t1) - int(t0)) * i // self.cb_samples
                 for t0, t1 in zip((last_stamp,) + stamps[:-1], stamps)
-            ]
-        )
+                for i in range(1, self.cb_samples + 1)
+            ),
+            dtype=np.int64,
+            count=len(stamps) * self.cb_samples,
+        ).view("datetime64[ns]")
 
     def _split_pd_data(self, data) -> list[np.ndarray]:
         """Split one PD queue item payload into trace-channel arrays."""

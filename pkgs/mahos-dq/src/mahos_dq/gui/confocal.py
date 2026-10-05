@@ -2272,7 +2272,13 @@ class traceView(ClientWidget, Ui_traceView):
         dfs = []
         for ch in range(trace.channels()):
             s, t = trace.valid_trace(ch, complex_conv=complex_conv)
-            dfs.append(pd.DataFrame(t, index=pd.DatetimeIndex(s)))
+            df = pd.DataFrame(t, index=pd.DatetimeIndex(s))
+            # Nearest alignment requires unique, ordered timestamps.
+            if not df.index.is_unique:
+                df = df.groupby(level=0, sort=True).mean()
+            elif not df.index.is_monotonic_increasing:
+                df = df.sort_index()
+            dfs.append(df)
         base_index = dfs[0].index
         # Align channels to PD0 timestamps for total trace.
         cdf = pd.concat([dfs[0]] + [df.reindex(base_index, method="nearest") for df in dfs[1:]])

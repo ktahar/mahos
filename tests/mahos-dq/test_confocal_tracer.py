@@ -42,6 +42,21 @@ def make_tracer(pd_channels):
     return tracer
 
 
+def test_tracer_interp_stamps_preserves_nanosecond_precision():
+    tracer = make_tracer([1])
+    tracer.cb_samples = 5
+    base = 1_780_000_000_000_000_000
+
+    # Absolute epoch nanoseconds lose precision with floating-point interpolation.
+    stamps = tracer._interp_stamps((base + 1_000, base + 2_000), np.int64(base))
+
+    assert stamps.dtype == np.dtype("datetime64[ns]")
+    np.testing.assert_array_equal(
+        stamps.view(np.int64) - base,
+        [200, 400, 600, 800, 1_000, 1_200, 1_400, 1_600, 1_800, 2_000],
+    )
+
+
 def test_tracer_get_data_expands_multi_channel_pd():
     stamp0 = time.time_ns()
     tracer = make_tracer([2])
