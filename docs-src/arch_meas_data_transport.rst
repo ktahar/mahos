@@ -48,9 +48,8 @@ Shutdown joins the service before closing the ZMQ context and waits for any seri
 already in progress to finish.
 
 This removes recovery serialization from the measurement thread, but does not eliminate
-CPU or memory-bandwidth contention. Publication and client reconstruction still copy
-arrays. The snapshot service exposes only committed publications, not unpublished worker
-mutations. Protocol version 3 requires matching updated clients and nodes.
+CPU or memory-bandwidth contention. Publication and client reconstruction still copy arrays.
+The snapshot service exposes only committed publications, not unpublished worker mutations.
 Clients request a snapshot on startup and after a missing revision,
 and check the latest revision about once per second even while acquisition is idle.
 Unanswered requests are retried after five seconds using the same request ID and arguments,
