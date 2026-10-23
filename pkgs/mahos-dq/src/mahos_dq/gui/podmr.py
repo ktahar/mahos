@@ -890,7 +890,12 @@ class PODMRWidgetBase(ClientWidget):
         self.data = self.DATA_CLASS()
 
         self.cli = self.CLIENT_CLASS(
-            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+            gconf,
+            name,
+            context=context,
+            parent=self,
+            file_transport_dir=file_transport_dir,
+            logger=self.logger,
         )
         self.cli.statusUpdated.connect(self.init_with_status)
 

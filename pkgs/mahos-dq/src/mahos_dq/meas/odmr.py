@@ -16,6 +16,7 @@ from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
 from mahos_dq.msgs import odmr_msgs
 from mahos_dq.msgs.odmr_msgs import ODMRData, ValidateReq
 from mahos.util.timer import IntervalTimer
+from mahos.node.data_transport import ArrayPolicy
 from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
 from mahos.meas.common_worker import DummyWorker, Switch, PulseGen_CW
 from mahos_dq.meas.odmr_worker import Sweeper, SweeperOverlay
@@ -87,6 +88,10 @@ class ODMR(BasicMeasNode):
 
     CLIENT = ODMRClient
     DATA = ODMRData
+    INCREMENTAL_ARRAYS = {
+        "data": ArrayPolicy(axis=1, mutable_tail=1),
+        "bg_data": ArrayPolicy(axis=1, mutable_tail=1),
+    }
 
     def __init__(self, gconf: dict, name, context=None):
         BasicMeasNode.__init__(self, gconf, name, context=context)

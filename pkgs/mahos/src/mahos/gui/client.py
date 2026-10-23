@@ -10,9 +10,12 @@ Base implementation for Qt client for Nodes.
 
 from __future__ import annotations
 
+import logging
+
 from mahos.gui.Qt import QtCore
 
 from mahos.node.comm import Context
+from mahos.node.log import init_topic_logger
 from mahos.node.client import init_node_client
 from mahos.node.node import join_name, get_value
 from mahos.msgs.common_msgs import Status, State, BinaryStatus, BinaryState, StateReq
@@ -29,7 +32,12 @@ class QSubWorker(QtCore.QObject):
         self._closed = False
 
     def add_handler(self, lconf: dict, topic: bytes, handler, endpoint: str = "pub_endpoint"):
-        self.ctx.add_sub(lconf[endpoint], topic, handler)
+        if endpoint == "pub_endpoint":
+            from mahos.node.data_transport import add_data_subscription
+
+            add_data_subscription(self.ctx, lconf, topic, handler)
+        else:
+            self.ctx.add_sub(lconf[endpoint], topic, handler)
 
     def close(self):
         self._closed = True
@@ -40,7 +48,15 @@ class QSubWorker(QtCore.QObject):
 
 
 class QNodeClient(QtCore.QObject):
-    """Qt-based client to use Node's function."""
+    """Qt-based client to use Node's function.
+
+    An optional parent logger supplies the logging hierarchy for client topics.
+    Without a standard logger, diagnostics use a client-named DummyLogger.
+    Incremental subscription diagnostics are queued by workers and drained by a
+    timer on the GUI thread. Close the client on that thread before closing the
+    parent logger's handlers.
+
+    """
 
     def __init__(
         self,
@@ -48,14 +64,26 @@ class QNodeClient(QtCore.QObject):
         name: NodeName,
         context: Context | None = None,
         parent: QtCore.QObject = None,
+        logger=None,
     ):
         QtCore.QObject.__init__(self, parent=parent)
         self._host, self._name, self.conf, self.ctx = init_node_client(
             gconf, name, context=context
         )
 
+        topic = f"{type(self).__name__}({self.joined_name()})"
+        prefix = logger.name if isinstance(logger, logging.Logger) else None
+        self.logger, self._full_name = init_topic_logger(topic, prefix)
+
         self._subscribers = []
         self._closed = False
+        self._log_timer = None
+        if self.conf.get("data_transport") == "incremental":
+            queue = self.ctx.set_logger(self.logger)
+            self._log_timer = QtCore.QTimer(self)
+            self._log_timer.setInterval(100)
+            self._log_timer.timeout.connect(queue.poll)
+            self._log_timer.start()
 
     def __del__(self):
         self.close()
@@ -64,11 +92,15 @@ class QNodeClient(QtCore.QObject):
         if self._closed:
             return
         self._closed = True
+        if self._log_timer is not None:
+            self._log_timer.stop()
 
         for sub, thread in self._subscribers:
             sub.close()
             thread.quit()
             thread.wait()
+        if self.ctx.log_queue is not None:
+            self.ctx.log_queue.close()
         if close_ctx:
             self.ctx.close()
 
@@ -97,12 +129,13 @@ class QReqClient(QNodeClient):
         context: Context | None = None,
         parent: QtCore.QObject = None,
         rep_endpoint="rep_endpoint",
+        logger=None,
     ):
-        QNodeClient.__init__(self, gconf, name, context=context, parent=parent)
+        QNodeClient.__init__(self, gconf, name, context=context, parent=parent, logger=logger)
         self.req = self.ctx.add_req(
             self.conf[rep_endpoint],
             timeout_ms=get_value(gconf, self.conf, "req_timeout_ms"),
-            logger=self.__class__.__name__,
+            logger=self.logger,
         )
 
 
@@ -167,8 +200,9 @@ class QStatusSubscriber(QNodeClient):
         name: NodeName,
         context: Context | None = None,
         parent: QtCore.QObject = None,
+        logger=None,
     ):
-        QNodeClient.__init__(self, gconf, name, context=context, parent=parent)
+        QNodeClient.__init__(self, gconf, name, context=context, parent=parent, logger=logger)
 
         self.sub = QStatusSubWorker(self.conf, self.ctx)
         # do signal connections here
@@ -190,9 +224,16 @@ class QStateClient(QStateReqClient):
         context: Context | None = None,
         parent: QtCore.QObject = None,
         rep_endpoint="rep_endpoint",
+        logger=None,
     ):
         QStateReqClient.__init__(
-            self, gconf, name, context=context, parent=parent, rep_endpoint=rep_endpoint
+            self,
+            gconf,
+            name,
+            context=context,
+            parent=parent,
+            rep_endpoint=rep_endpoint,
+            logger=logger,
         )
 
         self._state = None
@@ -239,9 +280,16 @@ class QBasicMeasClient(QStateReqClient, BasicMeasReqMixin, ParamDictReqMixin):
         parent: QtCore.QObject = None,
         rep_endpoint="rep_endpoint",
         file_transport_dir: str | None = None,
+        logger=None,
     ):
         QStateReqClient.__init__(
-            self, gconf, name, context=context, parent=parent, rep_endpoint=rep_endpoint
+            self,
+            gconf,
+            name,
+            context=context,
+            parent=parent,
+            rep_endpoint=rep_endpoint,
+            logger=logger,
         )
 
         self.init_file_transport(file_transport_dir)

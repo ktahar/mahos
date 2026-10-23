@@ -15,6 +15,8 @@ BasicMeasNode
 This class assumes :term:`state` of type :class:`BinaryState <mahos.msgs.common_msgs.BinaryState>` and :term:`status` of type :class:`BinaryStatus <mahos.msgs.common_msgs.BinaryStatus>`.
 It also provides additional data management features like fitting and data buffering.
 
+See :doc:`arch_meas_data_transport` for detailed notes on the data transport implementation.
+
 .. _meas-tweaker:
 
 Tweaker

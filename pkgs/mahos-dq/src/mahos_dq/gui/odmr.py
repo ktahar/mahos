@@ -546,7 +546,12 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         self.data = ODMRData()
 
         self.cli = QODMRClient(
-            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+            gconf,
+            name,
+            context=context,
+            parent=self,
+            file_transport_dir=file_transport_dir,
+            logger=self.logger,
         )
         self.cli.statusUpdated.connect(self.init_with_status)
 

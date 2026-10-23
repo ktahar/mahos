@@ -12,10 +12,12 @@ from __future__ import annotations
 import sys
 import io
 import logging
+from logging.handlers import QueueHandler
+from collections import deque
+import threading
 import traceback
 
 import zmq
-from zmq.utils.strtypes import cast_bytes
 
 TOPIC_DELIM = "->"
 TIME_DELIM = ";"
@@ -111,7 +113,7 @@ class PUBHandler(logging.Handler):
         except Exception:
             topic = ""
         try:
-            bmsg = cast_bytes(self.format(record))
+            bmsg = self.format(record).encode("utf-8")
         except Exception:
             self.handleError(record)
             return
@@ -126,7 +128,7 @@ class PUBHandler(logging.Handler):
         if topic:
             topic_list.append(topic)
 
-        btopic = cast_bytes(TOPIC_DELIM).join(cast_bytes(t) for t in topic_list)
+        btopic = TOPIC_DELIM.join(topic_list).encode("utf-8")
 
         self.socket.send_multipart([btopic, bmsg])
 
@@ -172,6 +174,107 @@ class TopicLogger(logging.Logger):
             stack_info=stack_info,
             stacklevel=stacklevel + 1,
         )
+
+
+class QueuedLogger(logging.Logger):
+    """Forward worker-thread records only from the thread that created this logger.
+
+    ``poll()`` drains a bounded queue through the destination logger. Exception text is
+    captured at enqueue time, without retaining traceback frames. On overflow new records
+    are dropped and a warning is emitted at the next drain. ``close()`` performs a final
+    drain after producers have stopped and rejects subsequent records. ``closed`` becomes
+    true after that drain, allowing parent contexts to remove their registration. Calls
+    to ``poll()`` from other threads are no-ops.
+
+    """
+
+    def __init__(self, destination):
+        super().__init__(getattr(destination, "name", "queued"), logging.DEBUG)
+        self.destination = destination
+        self.owner_thread = threading.get_ident()
+        self._records = deque()
+        self._queue_lock = threading.Lock()
+        self._dropped = 0
+        self._closing = False
+        self._closed = False
+        self._prepare = QueueHandler(None).prepare
+
+    def handle(self, record):
+        """Capture a record without invoking any destination handlers."""
+
+        with self._queue_lock:
+            if self._closing:
+                return
+        record = self._prepare(record)
+        with self._queue_lock:
+            if self._closing:
+                return
+            if len(self._records) >= 1024:
+                self._dropped += 1
+            else:
+                self._records.append(record)
+
+    def _forward(self, record):
+        if isinstance(self.destination, logging.Logger):
+            if not self.destination.isEnabledFor(record.levelno):
+                return
+            record.name = self.destination.name
+            if isinstance(self.destination, TopicLogger):
+                record.msg = self.destination._fix_msg(record.msg)
+            self.destination.handle(record)
+        else:
+            if record.levelno >= logging.ERROR:
+                method = "error"
+            elif record.levelno >= logging.WARNING:
+                method = "warning"
+            elif record.levelno >= logging.INFO:
+                method = "info"
+            else:
+                method = "debug"
+            getattr(self.destination, method)(record.getMessage())
+
+    def poll(self):
+        """Forward queued records on the owning thread, preserving their origin."""
+
+        if threading.get_ident() != self.owner_thread:
+            return
+        with self._queue_lock:
+            if self._closed:
+                return
+            records = list(self._records)
+            self._records.clear()
+            dropped, self._dropped = self._dropped, 0
+        for record in records:
+            self._forward(record)
+        if dropped:
+            self._forward(
+                logging.LogRecord(
+                    self.name,
+                    logging.WARNING,
+                    __file__,
+                    0,
+                    f"Dropped {dropped} queued log records",
+                    (),
+                    None,
+                )
+            )
+
+        with self._queue_lock:
+            self._closed = self._closing and not self._records and not self._dropped
+
+    @property
+    def closed(self) -> bool:
+        """Return whether closure and the final owning-thread drain have completed."""
+
+        with self._queue_lock:
+            return self._closed
+
+    def close(self):
+        """Stop accepting records and flush on the owner, now or at its next poll."""
+
+        with self._queue_lock:
+            self._closing = True
+        self.poll()
 
 
 class DummyLogger(object):

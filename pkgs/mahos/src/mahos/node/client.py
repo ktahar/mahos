@@ -50,9 +50,10 @@ class HandlerWrapper(object):
 
     """
 
-    def __init__(self, handler: SubHandler | list[SubHandler] | None = None):
+    def __init__(self, handler: SubHandler | list[SubHandler] | None = None, log_queue=None):
         self.lock = threading.Lock()
         self.latest_msg = None
+        self.log_queue = log_queue
 
         if handler is None:
             self.handlers = []
@@ -70,6 +71,8 @@ class HandlerWrapper(object):
             handler(self.latest_msg)
 
     def get_latest_msg(self) -> Message:
+        if self.log_queue is not None:
+            self.log_queue.poll()
         with self.lock:
             return self.latest_msg
 
@@ -87,11 +90,17 @@ class SubWorker(object):
         handler=None,
         msg_type: T.Type[Message] | None = None,
         deserial=True,
+        conf=None,
     ) -> MessageGetter:
-        hw = HandlerWrapper(handler=handler)
-        self.ctx.add_sub(
-            endpoint, topic=topic, handler=hw.handler, msg_type=msg_type, deserial=deserial
-        )
+        hw = HandlerWrapper(handler=handler, log_queue=self.ctx.log_queue)
+        if conf is not None and deserial:
+            from mahos.node.data_transport import add_data_subscription
+
+            add_data_subscription(self.ctx, conf, topic, hw.handler, msg_type)
+        else:
+            self.ctx.add_sub(
+                endpoint, topic=topic, handler=hw.handler, msg_type=msg_type, deserial=deserial
+            )
         self.handler_wrappers.append(hw)
         return hw.get_latest_msg
 
@@ -133,6 +142,10 @@ class NodeClient(object):
 
         topic = "{}({})".format(self.__class__.__name__, self.joined_name())
         self.logger, self._full_name = init_topic_logger(topic, prefix)
+        if self.conf.get("data_transport") == "incremental":
+            queue = self.ctx.set_logger(self.logger)
+            if isinstance(context, Context):
+                context.add_child_log_queue(queue)
 
         self._subscribers = []
         self._closed = False
@@ -153,6 +166,8 @@ class NodeClient(object):
         for sub, thread in self._subscribers:
             sub.close()
             thread.join()
+        if self.ctx.log_queue is not None:
+            self.ctx.log_queue.close()
         if close_ctx:
             self.ctx.close()
 
@@ -182,7 +197,15 @@ class NodeClient(object):
                 msg_type = None
             else:
                 topic, handler, msg_type = topic_handler_type
-            getters.append(subw.add_sub(self.conf[endpoint], topic, handler, msg_type))
+            getters.append(
+                subw.add_sub(
+                    self.conf[endpoint],
+                    topic,
+                    handler,
+                    msg_type,
+                    conf=self.conf if endpoint == "pub_endpoint" else None,
+                )
+            )
         self.start_subworker(subw)
         return getters
 

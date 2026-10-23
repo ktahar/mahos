@@ -11,6 +11,7 @@ Communication library for mahos Node.
 from __future__ import annotations
 import pickle
 import logging
+import threading
 import typing as T
 
 import zmq
@@ -18,7 +19,7 @@ import zmq
 from mahos.msgs.common_msgs import pickle_proto, Message, Request, Reply
 from mahos.util.typing import SubHandler, RepHandler
 
-from mahos.node.log import PUBHandler, DummyLogger
+from mahos.node.log import PUBHandler, DummyLogger, QueuedLogger
 
 
 def serialize(msg: Message | T.Any) -> bytes:
@@ -54,7 +55,7 @@ def deserialize(b: bytes, msg_type: T.Type[Message] | None) -> Message | T.Any:
 
 
 def get_logger(logger):
-    if isinstance(logger, logging.Logger):
+    if isinstance(logger, (logging.Logger, DummyLogger)):
         return logger
     elif isinstance(logger, str):
         return DummyLogger(logger)
@@ -212,6 +213,11 @@ class Context(object):
         self.broker_handlers = []
         self.pub_handlers: list[PUBHandler] = []
 
+        self.log_queue = None
+        self._child_log_queues = []
+        self._child_log_lock = threading.Lock()
+        self.poll_services = []
+        self.close_services = []
         self.poller = zmq.Poller()
         self._closed = False
 
@@ -221,6 +227,16 @@ class Context(object):
         if self._closed:
             return
         self._closed = True
+
+        for service in self.close_services + self.poll_services:
+            service.close()
+
+        # Child clients own these queues. Drain and release our registrations without
+        # closing a queue whose client may still be alive.
+        with self._child_log_lock:
+            queues, self._child_log_queues = self._child_log_queues, []
+        for queue in queues:
+            queue.poll()
 
         # Close the sockets explicitly.
         for s in tuple(self.requesters.values()) + tuple(self.publishers.values()):
@@ -401,6 +417,46 @@ class Context(object):
                 xpub.send_multipart(msg)
                 xsub_handler(msg)
 
+    def set_logger(self, logger):
+        """Configure queued logging, drained only by this calling thread."""
+
+        if self.log_queue is not None:
+            raise RuntimeError("Context logger is already configured")
+        self.log_queue = QueuedLogger(logger)
+        self.add_poll_service(self.log_queue)
+        return self.log_queue
+
+    def add_child_log_queue(self, queue: QueuedLogger):
+        """Borrow a client's log queue until that client closes and drains it."""
+
+        with self._child_log_lock:
+            if self._closed:
+                raise RuntimeError("Cannot register a log queue with a closed context")
+            if queue not in self._child_log_queues:
+                self._child_log_queues.append(queue)
+
+    def _poll_child_logs(self):
+        """Drain borrowed queues and unregister completed ones on this polling thread."""
+
+        with self._child_log_lock:
+            queues = list(self._child_log_queues)
+        for queue in queues:
+            queue.poll()
+        with self._child_log_lock:
+            self._child_log_queues[:] = [q for q in self._child_log_queues if not q.closed]
+
+    def add_close_service(self, service):
+        """Own a service that must stop before this context's sockets are closed."""
+
+        self.close_services.append(service)
+
+    def add_poll_service(self, service, socket=None):
+        """Register a nonblocking service owned and closed by this context."""
+
+        self.poll_services.append(service)
+        if socket is not None:
+            self.poller.register(socket, zmq.POLLIN)
+
     def poll(self):
         """Poll inbound sockets and call corresponding handlers."""
 
@@ -408,3 +464,6 @@ class Context(object):
         self._handle_rep(socks)
         self._handle_sub(socks)
         self._handle_broker(socks)
+        for service in self.poll_services:
+            service.poll()
+        self._poll_child_logs()
