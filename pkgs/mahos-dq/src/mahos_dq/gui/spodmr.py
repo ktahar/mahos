@@ -10,6 +10,7 @@ GUI frontend of Pulse ODMR with Slow detectors.
 
 from __future__ import annotations
 import typing as T
+import logging
 import os
 import uuid
 
@@ -479,7 +480,12 @@ class SPODMRWidget(ClientWidget, Ui_SPODMR):
         self.data = SPODMRData()
 
         self.cli = QSPODMRClient(
-            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+            gconf,
+            name,
+            context=context,
+            parent=self,
+            file_transport_dir=file_transport_dir,
+            prefix=self.logger.name if isinstance(self.logger, logging.Logger) else None,
         )
         self.cli.statusUpdated.connect(self.init_with_status)
 

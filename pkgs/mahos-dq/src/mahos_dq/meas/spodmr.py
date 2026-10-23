@@ -18,6 +18,7 @@ from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
 from mahos_dq.msgs import spodmr_msgs
 from mahos_dq.msgs.spodmr_msgs import SPODMRStatus, SPODMRData, UpdatePlotParamsReq, ValidateReq
 from mahos.util.timer import IntervalTimer
+from mahos.node.data_transport import ArrayPolicy
 from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
 from mahos.meas.common_worker import DummyWorker, Switch
 from mahos_dq.meas.podmr_fitter import PODMRFitter
@@ -149,6 +150,10 @@ class SPODMR(BasicMeasNode):
 
     CLIENT = SPODMRClient
     DATA = SPODMRData
+    INCREMENTAL_ARRAYS = {
+        "data0": ArrayPolicy(axis=1, mutable_tail=0),
+        "data1": ArrayPolicy(axis=1, mutable_tail=0),
+    }
 
     def __init__(self, gconf: dict, name, context=None):
         BasicMeasNode.__init__(self, gconf, name, context=context)

@@ -298,11 +298,13 @@ class Node(NodeBase):
             cli.close(close_ctx=False)
 
         if close_ctx:
-            if self._log_handler is not None:
-                self.logger.removeHandler(self._log_handler)
-                self._log_handler = None
-            if self.ctx is not None:
-                self.ctx.close()
+            try:
+                if self.ctx is not None:
+                    self.ctx.close()  # Join producers before detaching the log handler.
+            finally:
+                if self._log_handler is not None:
+                    self.logger.removeHandler(self._log_handler)
+                    self._log_handler = None
 
     def set_shutdown(self):
         """Shutdown this node, quitting from the main loop."""

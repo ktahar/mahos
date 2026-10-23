@@ -27,6 +27,7 @@ from mahos.inst.server import MultiInstrumentClient
 from mahos.node.node import Node, NodeName
 from mahos.node.client import NodeClient, StateClientMixin
 from mahos.node.comm import Context
+from mahos.node.data_transport import IncrementalPublisher, TransportConfig
 from mahos.meas.file_transport import FileTransportClientMixin, FileTransportNodeMixin
 from mahos.meas.tweaker import TweakSaver
 
@@ -202,17 +203,29 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
     :type target.log: str
     :param inst_remap: Optional logical-to-physical instrument name remapping.
     :type inst_remap: dict[str, str]
+    :param data_transport: Data distribution mode: ``"pubsub"`` (default) or
+        ``"incremental"``. Incremental mode requires a measurement-defined array policy.
+    :type data_transport: str
+    :param sync_endpoint: Recovery endpoint to bind when incremental mode is enabled.
+    :type sync_endpoint: str
     :param file_transport_dir: Optional measurement-side directory for client-measurement file
         transport.
     :type file_transport_dir: str
 
     """
 
+    #: ArrayPolicy values keyed by attribute name; defined by supported measurements.
+    INCREMENTAL_ARRAYS = {}
+
     #: Data type for this measurement.
     DATA = BasicMeasData
 
     def __init__(self, gconf: dict, name, context=None):
         Node.__init__(self, gconf, name, context=context)
+
+        transport = TransportConfig(self.conf)
+        if transport.mode == "incremental" and not self.INCREMENTAL_ARRAYS:
+            raise ValueError(f"{type(self).__name__} does not support incremental data transport")
 
         self.state = BinaryState.IDLE
 
@@ -235,7 +248,16 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
 
         self.add_rep()
         self.status_pub = self.add_pub(b"status")
-        self.data_pub = self.add_pub(b"data")
+        if transport.mode == "incremental":
+            self.data_pub = IncrementalPublisher(
+                self.ctx,
+                self.conf["pub_endpoint"],
+                transport.endpoint,
+                self.INCREMENTAL_ARRAYS,
+                logger=self.logger,
+            )
+        else:
+            self.data_pub = self.add_pub(b"data")
         self.buffer_pub = self.add_pub(b"buffer")
 
     def change_state(self, msg: StateReq) -> Reply:

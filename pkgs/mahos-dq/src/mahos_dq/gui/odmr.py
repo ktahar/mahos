@@ -10,6 +10,7 @@ GUI frontend of ODMR.
 
 from __future__ import annotations
 import typing as T
+import logging
 import uuid
 import os
 
@@ -535,7 +536,12 @@ class ODMRWidget(ClientWidget, Ui_ODMR):
         self.data = ODMRData()
 
         self.cli = QODMRClient(
-            gconf, name, context=context, parent=self, file_transport_dir=file_transport_dir
+            gconf,
+            name,
+            context=context,
+            parent=self,
+            file_transport_dir=file_transport_dir,
+            prefix=self.logger.name if isinstance(self.logger, logging.Logger) else None,
         )
         self.cli.statusUpdated.connect(self.init_with_status)
 

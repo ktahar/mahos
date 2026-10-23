@@ -38,6 +38,12 @@ def serialize(msg: Message | T.Any) -> bytes:
         return pickle.dumps(msg, protocol=pickle_proto)
 
 
+def serialize_pickle(msg: Message | T.Any) -> bytes:
+    """Serialize a Message or any object using pickle, ignoring custom serialization method."""
+
+    return pickle.dumps(msg, protocol=pickle_proto)
+
+
 def deserialize(b: bytes, msg_type: T.Type[Message] | None) -> Message | T.Any:
     """Deserialize a bytes to reconstruct Message or any object.
 
@@ -54,7 +60,7 @@ def deserialize(b: bytes, msg_type: T.Type[Message] | None) -> Message | T.Any:
 
 
 def get_logger(logger):
-    if isinstance(logger, logging.Logger):
+    if isinstance(logger, (logging.Logger, DummyLogger)):
         return logger
     elif isinstance(logger, str):
         return DummyLogger(logger)
@@ -212,6 +218,8 @@ class Context(object):
         self.broker_handlers = []
         self.pub_handlers: list[PUBHandler] = []
 
+        self.poll_services = []
+        self.close_services = []
         self.poller = zmq.Poller()
         self._closed = False
 
@@ -221,6 +229,9 @@ class Context(object):
         if self._closed:
             return
         self._closed = True
+
+        for service in self.close_services + self.poll_services:
+            service.close()
 
         # Close the sockets explicitly.
         for s in tuple(self.requesters.values()) + tuple(self.publishers.values()):
@@ -401,6 +412,18 @@ class Context(object):
                 xpub.send_multipart(msg)
                 xsub_handler(msg)
 
+    def add_close_service(self, service):
+        """Own a service that must stop before this context's sockets are closed."""
+
+        self.close_services.append(service)
+
+    def add_poll_service(self, service, socket=None):
+        """Register a nonblocking service owned and closed by this context."""
+
+        self.poll_services.append(service)
+        if socket is not None:
+            self.poller.register(socket, zmq.POLLIN)
+
     def poll(self):
         """Poll inbound sockets and call corresponding handlers."""
 
@@ -408,3 +431,5 @@ class Context(object):
         self._handle_rep(socks)
         self._handle_sub(socks)
         self._handle_broker(socks)
+        for service in self.poll_services:
+            service.poll()
