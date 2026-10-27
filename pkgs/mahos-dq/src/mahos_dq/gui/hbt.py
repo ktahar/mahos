@@ -17,6 +17,7 @@ from mahos.gui.Qt import QtCore, QtGui, QtWidgets
 
 import pyqtgraph as pg
 
+from mahos_dq.gui.plot import update_cursor_label
 from mahos_dq.gui.ui.hbt import Ui_HBT
 from mahos_dq.gui.hbt_client import QHBTClient
 
@@ -96,6 +97,8 @@ class PlotWidget(QtWidgets.QWidget):
         vl = QtWidgets.QVBoxLayout()
         vl.addLayout(hl)
         vl.addWidget(self.graphicsView)
+        self.label = QtWidgets.QLabel("Ready")
+        vl.addWidget(self.label)
         self.setLayout(vl)
 
     def init_view(self):
@@ -105,6 +108,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.plot = self.layout.addPlot(row=0, col=0, lockAspect=False)
 
         self.plot.showGrid(x=True, y=True)
+        self.plot.scene().sigMouseMoved.connect(self.update_pos)
         self.plot.setLabel("bottom", "Time", "s")
         self.plot.setLabel("left", "Events")
 
@@ -119,6 +123,9 @@ class PlotWidget(QtWidgets.QWidget):
         self.xfixBox.toggled.connect(self.update_xrange)
         self.xminBox.valueChanged.connect(self.update_xrange)
         self.xmaxBox.valueChanged.connect(self.update_xrange)
+
+    def update_pos(self, pos):
+        update_cursor_label(pos, self.plot, self.label)
 
     def refresh(self, data_list: list[tuple[HBTData, bool, str]], data: HBTData):
         self.update_reference(data)

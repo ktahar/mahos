@@ -18,6 +18,7 @@ import pyqtgraph as pg
 from mahos.gui import Qt
 from mahos.gui.Qt import QtCore, QtWidgets, QtGui
 
+from mahos_dq.gui.plot import update_cursor_label
 from mahos_dq.gui.ui.spectroscopy import Ui_Spectroscopy
 from mahos_dq.gui.spectroscopy_client import QSpectroscopyClient
 
@@ -112,6 +113,8 @@ class PlotWidget(QtWidgets.QWidget):
         vl = QtWidgets.QVBoxLayout()
         vl.addLayout(hl0)
         vl.addLayout(hl)
+        self.label = QtWidgets.QLabel("Ready")
+        vl.addWidget(self.label)
         self.setLayout(vl)
 
     def init_view(self):
@@ -127,12 +130,16 @@ class PlotWidget(QtWidgets.QWidget):
         self.histo.setImageItem(self.img)
 
         self.plot.showGrid(x=True, y=True)
+        self.plot.scene().sigMouseMoved.connect(self.update_pos)
         self.plot.setLabel("bottom", "Wavelength (nm)")
         self.plot.setLabel("left", "Intensity", "counts")
         self.img_plot.setLabel("bottom", "Number of Pixels")
         self.img_plot.setLabel("left", "Number of accumulation")
 
         self.showimgBox.toggled.connect(self.toggle_image)
+
+    def update_pos(self, pos):
+        update_cursor_label(pos, self.plot, self.label, xunit="nm", xsi=False)
 
     def refresh_all(
         self, data_list: list[tuple[SpectroscopyData, bool, str]], data: SpectroscopyData

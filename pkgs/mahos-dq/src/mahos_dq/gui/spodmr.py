@@ -19,6 +19,7 @@ import pyqtgraph as pg
 from mahos.gui import Qt
 from mahos.gui.Qt import QtCore, QtGui, QtWidgets
 
+from mahos_dq.gui.plot import update_cursor_label
 from mahos_dq.gui.ui.spodmr import Ui_SPODMR
 from mahos_dq.gui.spodmr_client import QSPODMRClient
 
@@ -121,6 +122,8 @@ class PlotWidget(QtWidgets.QWidget):
         vl = QtWidgets.QVBoxLayout()
         vl.addLayout(hl0)
         vl.addLayout(hl)
+        self.label = QtWidgets.QLabel("Ready")
+        vl.addWidget(self.label)
         self.setLayout(vl)
 
     def init_view(self):
@@ -136,11 +139,15 @@ class PlotWidget(QtWidgets.QWidget):
         self.histo.setImageItem(self.img)
 
         self.plot.showGrid(x=True, y=True)
+        self.plot.scene().sigMouseMoved.connect(self.update_pos)
 
         self.img_plot.setLabel("bottom", "Data point")
         self.img_plot.setLabel("left", "Number of accumulation")
 
         self.showimgBox.toggled.connect(self.toggle_image)
+
+    def update_pos(self, pos):
+        update_cursor_label(pos, self.plot, self.label)
 
     def update_plot(self, data_list: list[tuple[SPODMRData, bool, str]]):
         self.plot.clear()
@@ -322,6 +329,8 @@ class AltPlotWidget(QtWidgets.QWidget):
 
         vl.addLayout(hl0)
         vl.addWidget(self.graphicsView)
+        self.label = QtWidgets.QLabel("Ready")
+        vl.addWidget(self.label)
         self.setLayout(vl)
 
     def init_view(self):
@@ -329,9 +338,13 @@ class AltPlotWidget(QtWidgets.QWidget):
         self.graphicsView.setCentralItem(self.layout)
         self.plot = self.layout.addPlot(row=0, col=0, lockAspect=False)
         self.plot.showGrid(x=True, y=True)
+        self.plot.scene().sigMouseMoved.connect(self.update_pos)
 
         # TODO only for FFT
         self.plot.setLabel("left", "FFT spectrum")
+
+    def update_pos(self, pos):
+        update_cursor_label(pos, self.plot, self.label)
 
     def get_mode(self) -> str:
         """Get current AltPlot's mode. One of (None, FFT)."""
@@ -417,7 +430,7 @@ class AltPlotWidget(QtWidgets.QWidget):
         elif data.xunit == "Hz":
             self.plot.setLabel("bottom", "Time", "s")
         else:
-            self.plot.setLabel("bottom", "Unknown domain")
+            self.plot.setLabel("bottom", "Unknown domain", "")
         # we shouldn't reflect data's attribute directly.
         # self.plot.setLogMode(x=data.xscale == "log", y=data.yscale == "log")
 

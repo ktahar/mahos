@@ -23,6 +23,7 @@ import pyqtgraph as pg
 from mahos.gui import Qt
 from mahos.gui.Qt import QtCore, QtWidgets, QtGui
 
+from mahos_dq.gui.plot import update_cursor_label
 from mahos_dq.gui.ui.podmr import Ui_PODMR
 from mahos_dq.gui.ui.podmr_nmr_table import Ui_NMRTable
 from mahos_dq.gui.ui.podmr_autosave import Ui_PODMRAutoSave
@@ -139,6 +140,8 @@ class PlotWidget(QtWidgets.QWidget):
 
         vl.addLayout(hl0)
         vl.addWidget(self.graphicsView)
+        self.label = QtWidgets.QLabel("Ready")
+        vl.addWidget(self.label)
         self.setLayout(vl)
 
     def init_view(self):
@@ -146,6 +149,10 @@ class PlotWidget(QtWidgets.QWidget):
         self.graphicsView.setCentralItem(self.layout)
         self.plot = self.layout.addPlot(row=0, col=0, lockAspect=False)
         self.plot.showGrid(x=True, y=True)
+        self.plot.scene().sigMouseMoved.connect(self.update_pos)
+
+    def update_pos(self, pos):
+        update_cursor_label(pos, self.plot, self.label)
 
     def plot_analyzed(self, data_list):
         self.plot.clearPlots()
@@ -288,6 +295,8 @@ class AltPlotWidget(QtWidgets.QWidget):
 
         vl.addLayout(hl0)
         vl.addWidget(self.graphicsView)
+        self.label = QtWidgets.QLabel("Ready")
+        vl.addWidget(self.label)
         self.setLayout(vl)
 
     def init_view(self):
@@ -295,9 +304,13 @@ class AltPlotWidget(QtWidgets.QWidget):
         self.graphicsView.setCentralItem(self.layout)
         self.plot = self.layout.addPlot(row=0, col=0, lockAspect=False)
         self.plot.showGrid(x=True, y=True)
+        self.plot.scene().sigMouseMoved.connect(self.update_pos)
 
         # TODO only for FFT
         self.plot.setLabel("left", "FFT spectrum")
+
+    def update_pos(self, pos):
+        update_cursor_label(pos, self.plot, self.label)
 
     def get_mode(self) -> str:
         """Get current AltPlot's mode. One of (None, FFT)."""
@@ -381,7 +394,7 @@ class AltPlotWidget(QtWidgets.QWidget):
         elif data.xunit == "Hz":
             self.plot.setLabel("bottom", "Time", "s")
         else:
-            self.plot.setLabel("bottom", "Unknown domain")
+            self.plot.setLabel("bottom", "Unknown domain", "")
         # we shouldn't reflect data's attribute directly.
         # self.plot.setLogMode(x=data.xscale == "log", y=data.yscale == "log")
 
@@ -409,6 +422,7 @@ class RawPlotWidget(QtWidgets.QWidget):
         glw = pg.GraphicsLayoutWidget(parent=self)
         self.raw_plot = glw.addPlot(lockAspect=False)
         self.raw_plot.showGrid(x=True, y=True)
+        self.raw_plot.scene().sigMouseMoved.connect(self.update_pos)
         self.raw_plot.setLabel("bottom", "Time", "s")
         self.raw_plot.setLabel("left", "Events")
 
@@ -476,7 +490,12 @@ class RawPlotWidget(QtWidgets.QWidget):
         vl = QtWidgets.QVBoxLayout()
         vl.addLayout(hl)
         vl.addWidget(glw)
+        self.label = QtWidgets.QLabel("Ready")
+        vl.addWidget(self.label)
         self.setLayout(vl)
+
+    def update_pos(self, pos):
+        update_cursor_label(pos, self.raw_plot, self.label)
 
     def _show_empty(self):
         self._raw_item.setData([0, 1], [0, 0])

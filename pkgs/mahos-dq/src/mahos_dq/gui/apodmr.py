@@ -21,6 +21,7 @@ from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.dialog import load_dialog
 import mahos.util.validation as V
 
+from mahos_dq.gui.plot import update_cursor_label
 from mahos_dq.gui.ui.apodmr import Ui_APODMR
 from mahos_dq.gui.apodmr_client import QAPODMRClient
 from mahos_dq.gui.podmr import (
@@ -68,6 +69,7 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
         glw = pg.GraphicsLayoutWidget(parent=self)
         self.raw_plot = glw.addPlot(lockAspect=False)
         self.raw_plot.showGrid(x=True, y=True)
+        self.raw_plot.scene().sigMouseMoved.connect(self.update_pos)
         self.raw_plot.setLabel("bottom", "Time", "s")
         self.raw_plot.setLabel("left", "Signal")
         self.raw_plot.addLegend()
@@ -126,7 +128,12 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
         vl = QtWidgets.QVBoxLayout()
         vl.addLayout(hl)
         vl.addWidget(glw)
+        self.label = QtWidgets.QLabel("Ready")
+        vl.addWidget(self.label)
         self.setLayout(vl)
+
+    def update_pos(self, pos):
+        update_cursor_label(pos, self.raw_plot, self.label)
 
     def _clear_traces(self):
         for item in self._trace_items:
