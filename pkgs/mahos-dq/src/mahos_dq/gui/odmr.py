@@ -196,7 +196,10 @@ class PlotWidget(QtWidgets.QWidget):
 
     def update_label(self, x, y):
         sx = pg.siFormat(x, precision=6, suffix="Hz")
-        sy = pg.siFormat(y, precision=6, suffix=self._yunit)
+        if self.normalizenBox.value():
+            sy = f"{y:.6f}"
+        else:
+            sy = pg.siFormat(y, precision=6, suffix=self._yunit)
         self.label.setText(f"{sx}, {sy}")
 
     def add_error_bar(self, x, y, height, pen):
