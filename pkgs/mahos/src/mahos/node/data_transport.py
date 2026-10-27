@@ -18,6 +18,7 @@ from dataclasses import dataclass
 import numpy as np
 import zmq
 
+import mahos.node.buffer_transport as BT
 from mahos.node.comm import serialize_pickle, deserialize
 from mahos.util.conf import ConfAccessorMixin
 import mahos.util.validation as V
@@ -42,6 +43,20 @@ def check_envelope(message, length):
     return message
 
 
+def check_request(request):
+    """Validate a live-data recovery request before interpreting its arguments."""
+
+    _version, request_id, epoch, revision, snapshot = check_envelope(request, 5)
+    V.check_nonempty_str(request_id, "request ID")
+    if epoch is not None:
+        V.check_nonempty_str(epoch, "epoch")
+    V.check_nonneg_int(revision, "revision")
+    V.check_bool(snapshot, "snapshot")
+    if epoch is None and revision != 0:
+        raise ValueError("A request without an epoch must have revision zero")
+    return request_id, epoch, revision, snapshot
+
+
 def check_state(state):
     """Require an attribute-based data object, rather than a scalar or container."""
 
@@ -58,8 +73,13 @@ class TransportConfig(ConfAccessorMixin):
         self.mode = self._conf_str("data_transport", "pubsub")
         if self.mode not in ("pubsub", "incremental"):
             raise ValueError("data_transport must be 'pubsub' or 'incremental'")
+        self.buffer_mode = self._conf_str("buffer_transport", "pubsub")
+        if self.buffer_mode not in ("pubsub", "versioned"):
+            raise ValueError("buffer_transport must be 'pubsub' or 'versioned'")
         self.endpoint = (
-            self._conf_nonempty_str("sync_endpoint") if self.mode == "incremental" else None
+            self._conf_nonempty_str("sync_endpoint")
+            if self.mode == "incremental" or self.buffer_mode == "versioned"
+            else None
         )
 
 
@@ -151,12 +171,14 @@ class SnapshotService:
     This serves committed publications, never the worker's live data.
 
     Socket creation, request processing, serialization, and socket closure belong solely to
-    the service thread.  Shutdown waits for any serialization already in progress to finish.
+    the service thread. Shutdown waits for any serialization already in progress to finish.
 
-    This serializes a revision only when a snapshot is requested, and caches the most recently
-    serialized revision for reuse across clients.
+    Live-data revisions are serialized only when a snapshot is requested, caching the most
+    recently serialized revision for reuse across clients. Buffer requests share this service
+    but retrieve bounded batches of exact entry versions from a separate immutable publication.
+    No historical snapshot queue or buffer versions are stored.
     Queued duplicate requests from the same client are coalesced within bounded batches;
-    later retries still receive responses. No historical snapshot queue is maintained.
+    later retries still receive responses.
 
     """
 
@@ -164,6 +186,7 @@ class SnapshotService:
         self._context = context
         self._endpoint = endpoint
         self._latest = initial
+        self._buffer_latest = None
         self.logger = logger
 
         self._lock = threading.Lock()
@@ -185,6 +208,25 @@ class SnapshotService:
         with self._lock:
             self._latest = (epoch, revision, state)
 
+    def commit_buffer(self, manifest, entries):
+        """Commit private immutable buffer entries at the publication boundary."""
+
+        with self._lock:
+            self._buffer_latest = (manifest, entries)
+
+    @staticmethod
+    def _decode_request(payload):
+        """Dispatch wire validation and normalize requests for shared batch handling."""
+
+        request = deserialize(payload, None)
+        if isinstance(request, (tuple, list)) and request and request[0] == "buffer":
+            kind = "buffer"
+            request_id, *arguments = BT.check_request(request)
+        else:
+            kind = "live"
+            request_id, *arguments = check_request(request)
+        return request_id, (kind, tuple(arguments))
+
     def _receive_batch(self, router):
         """Drain a bounded batch, coalescing queued retries by peer and request ID."""
 
@@ -198,46 +240,55 @@ class SnapshotService:
                 if len(frames) != 2:
                     raise ValueError("Expected identity and request frames")
                 identity, payload = frames
-                request = check_envelope(deserialize(payload, None), 5)
-                _version, request_id, epoch, revision, snapshot = request
-                V.check_nonempty_str(request_id, "request ID")
-                if epoch is not None:
-                    V.check_nonempty_str(epoch, "epoch")
-                V.check_nonneg_int(revision, "revision")
-                V.check_bool(snapshot, "snapshot")
-                if epoch is None and revision != 0:
-                    raise ValueError("A request without an epoch must have revision zero")
+                request_id, arguments = self._decode_request(payload)
                 key = (identity, request_id)
-                arguments = (epoch, revision, snapshot)
                 if key in requests and requests[key] != arguments:
                     raise ValueError("Retry changed its request arguments")
                 requests[key] = arguments
             except Exception:
-                self.logger.exception("Rejected incremental recovery request")
+                self.logger.exception("Rejected recovery request")
         return requests
 
+    def _live_response(self, request_id, arguments, latest):
+        """Build live-data response frames, reusing the latest serialized snapshot."""
+
+        epoch, revision, state = latest
+        base_epoch, base_revision, snapshot = arguments
+        include_state = (
+            snapshot and state is not None and (base_epoch, base_revision) != (epoch, revision)
+        )
+        if include_state and self._cache_key != (epoch, revision):
+            # Transport serialization is independent of Message.serialize().
+            self._cache_payload = serialize_pickle(state)
+            self._cache_key = (epoch, revision)
+        header = (VERSION, request_id, epoch, revision, include_state)
+        frames = [serialize_pickle(header)]
+        if include_state:
+            frames.append(self._cache_payload)
+        return frames
+
+    @staticmethod
+    def _buffer_response(request_id, arguments, latest):
+        """Build buffer response frames from the captured committed entries."""
+
+        epoch, versions = arguments
+        return [serialize_pickle(BT.response(request_id, epoch, versions, latest))]
+
     def _serve_batch(self, router, requests):
-        """Respond from one captured publication, serializing it only when needed."""
+        """Respond from captured publications using one nonblocking send path."""
 
         with self._lock:
-            epoch, revision, state = self._latest
-        for (identity, request_id), (base_epoch, base_revision, snapshot) in requests.items():
+            live_latest = self._latest
+            buffer_latest = self._buffer_latest
+        for (identity, request_id), (kind, arguments) in requests.items():
             if self._stop.is_set():
                 break
-            include_state = (
-                snapshot and state is not None and (base_epoch, base_revision) != (epoch, revision)
-            )
-            if include_state and self._cache_key != (epoch, revision):
-                # Now, the transport owns its wire format, independently of Message.serialize().
-                payload = serialize_pickle(state)
-                self._cache_key = (epoch, revision)
-                self._cache_payload = payload
-            header = (VERSION, request_id, epoch, revision, include_state)
-            frames = [identity, serialize_pickle(header)]
-            if include_state:
-                frames.append(self._cache_payload)
+            if kind == "live":
+                frames = self._live_response(request_id, arguments, live_latest)
+            else:
+                frames = self._buffer_response(request_id, arguments, buffer_latest)
             try:
-                router.send_multipart(frames, zmq.NOBLOCK)
+                router.send_multipart([identity, *frames], zmq.NOBLOCK)
             except zmq.ZMQError as e:
                 if e.errno not in (zmq.EAGAIN, zmq.EHOSTUNREACH):
                     raise
@@ -266,7 +317,7 @@ class SnapshotService:
                     try:
                         self._serve_batch(router, self._receive_batch(router))
                     except Exception:
-                        self.logger.exception("Failed to serve incremental snapshot batch")
+                        self.logger.exception("Failed to serve recovery batch")
         finally:
             if router is not None:
                 router.close()
@@ -274,6 +325,7 @@ class SnapshotService:
             self._cache_key = None
             with self._lock:
                 self._latest = None
+                self._buffer_latest = None
 
     def close(self):
         """Stop the service and join its thread before the ZMQ context is closed."""
@@ -299,7 +351,7 @@ class IncrementalPublisher:
 
     """
 
-    def __init__(self, context, pub_endpoint, sync_endpoint, policies, logger=None):
+    def __init__(self, context, pub_endpoint, sync_endpoint, policies, service=None, logger=None):
         if not policies:
             raise ValueError("This measurement does not define incremental array policies")
         self.policies = policies
@@ -309,13 +361,14 @@ class IncrementalPublisher:
         self.state = None
         self.source = None
         self.logger = self.publisher.logger
-        self.snapshot_service = SnapshotService(
+        self.snapshot_service = service or SnapshotService(
             context.zmq_context(),
             sync_endpoint,
             (self.epoch, self.revision, self.state),
             self.logger if logger is not None else logging.getLogger(__name__),
         )
-        context.add_close_service(self.snapshot_service)
+        if service is None:
+            context.add_close_service(self.snapshot_service)
 
     def invalidate(self):
         """Start a new generation on the next publication."""
@@ -398,8 +451,8 @@ class IncrementalSubscriber:
     Updates without a matching base are discarded and trigger a snapshot request;
     this avoids an unbounded startup buffer.
     Unanswered requests are retried after five seconds using the same request ID and arguments,
-    so responses remain valid when acquisition or transfer takes longer. Duplicate responses
-    are ignored once the logical request completes.
+    so responses remain valid when acquisition or transfer takes longer.
+    Duplicate responses are ignored once the logical request completes.
     Recovery is asynchronous and does not use the client's ordinary measurement request socket.
 
     A disconnected client retains its last complete data object.
@@ -424,7 +477,7 @@ class IncrementalSubscriber:
         context.add_sub(conf["pub_endpoint"], TOPIC, self.handle_frames, deserial=False)
         context.add_poll_service(self)
 
-    def deliver(self):
+    def _deliver(self):
         """Expose an independent object so callers cannot corrupt the private replica."""
 
         self.handler(copy.deepcopy(self.state))
@@ -473,7 +526,7 @@ class IncrementalSubscriber:
         self.state = state
         self.revision = revision
         self.needs_snapshot = False
-        self.deliver()  # Application handler exceptions must propagate normally.
+        self._deliver()  # Application handler exceptions must propagate normally.
 
     def _deserialize(self, frames):
         if len(frames) not in (1, 2):
@@ -542,7 +595,7 @@ class IncrementalSubscriber:
                 self.state, self.epoch, self.revision = state, epoch, revision
                 self.needs_snapshot = False
                 self.next_query = now + 1.0
-                self.deliver()
+                self._deliver()
             elif revision and (epoch != self.epoch or revision > self.revision):
                 self.needs_snapshot = True
                 self.next_query = 0.0
@@ -576,8 +629,10 @@ class IncrementalSubscriber:
 
 
 def add_data_subscription(context, conf, topic, handler, msg_type=None, logger=None):
-    """Select reconstruction only for the configured measurement data topic."""
+    """Select shared reconstruction for configured live-data and buffer topics."""
 
     if topic in (b"data", "data") and TransportConfig(conf).mode == "incremental":
         return IncrementalSubscriber(context, conf, handler, logger=logger)
+    if topic in (b"buffer", "buffer") and TransportConfig(conf).buffer_mode == "versioned":
+        return BT.BufferSubscriber(context, conf, handler, logger=logger)
     context.add_sub(conf["pub_endpoint"], topic, handler, msg_type)

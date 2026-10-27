@@ -548,3 +548,34 @@ def test_podmr_plotmode_options(server, podmr, podmr_conf):
     raw4 = P.unwrap(p4)
     raw4["plot"]["plotmode"] = "normalize"
     assert not podmr.validate(raw4, "dq4ramsey")
+
+
+def test_buffer_reanalysis_marks_partial_batch(monkeypatch):
+    from types import SimpleNamespace
+
+    from mahos.msgs.common_meas_msgs import TrackedBuffer
+    from mahos_dq.meas.podmr import PODMR
+    from mahos_dq.msgs.podmr_msgs import UpdatePlotParamsReq
+
+    data, _ = _run_update_with_histogram(np.arange(100.0), -1, False, 0.0, 0.0, 1.0, 0.0)
+    original = data.data0.copy()
+    buffer = TrackedBuffer([("first", data), ("second", copy.deepcopy(data))])
+    op = PODMRDataOperator()
+    node = SimpleNamespace(
+        buffer=buffer, worker=SimpleNamespace(update_plot_params=lambda params: True), op=op
+    )
+    analyze = op.analyze
+
+    def fail_second(item):
+        if item is buffer[1][1]:
+            raise RuntimeError("second analysis failed")
+        return analyze(item)
+
+    monkeypatch.setattr(op, "analyze", fail_second)
+    with pytest.raises(RuntimeError, match="second analysis failed"):
+        PODMR.update_plot_params(
+            node, UpdatePlotParamsReq({**data.params["plot"], "sigdelay": 1.0})
+        )
+    assert [revision for _, revision in buffer.entry_versions()] == [1, 1]
+    np.testing.assert_allclose(data.data0, original + 1 / data.sweeps())
+    assert buffer[1][1].params["plot"]["sigdelay"] == 1.0

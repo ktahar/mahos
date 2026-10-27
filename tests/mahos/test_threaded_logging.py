@@ -77,7 +77,7 @@ def test_node_shutdown_joins_snapshot_worker_before_detaching_handler(monkeypatc
         assert worker_alive_at_detach == [False]
         assert not pub.snapshot_service._thread.is_alive()
         assert len(handler.records) == 1
-        assert "Rejected incremental recovery request" in handler.records[0].msg
+        assert "Rejected recovery request" in handler.records[0].msg
         assert handler.emit_threads == [pub.snapshot_service._thread.ident]
         assert pub_threads == handler.emit_threads
         assert node._log_handler is None

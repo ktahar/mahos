@@ -122,7 +122,7 @@ class APODMR(BasicMeasNode):
         self.worker = PulserClass(self.cli, self.logger, self.conf.get("pulser", {}))
         self.fitter = PODMRFitter(self.logger, conf=self.conf.get("fitter"))
         self.io = APODMRIO(self.logger)
-        self.buffer: Buffer[tuple[str, APODMRData]] = Buffer()
+        self.buffer: Buffer[tuple[str, APODMRData]] = self.new_buffer()
         self.op = APODMRDataOperator()
         self._pub_interval = self.conf.get("pub_interval_sec", 1.0)
         self.pub_timer = IntervalTimer(self._pub_interval)
@@ -156,11 +156,14 @@ class APODMR(BasicMeasNode):
 
     def update_plot_params(self, msg: UpdatePlotParamsReq) -> Reply:
         success = self.worker.update_plot_params(msg.params)
-        for data in self.buffer.data_list():
-            if self.op.update_plot_params(data, msg.params):
-                data.remove_fit_data()
-                self.op.get_marker_indices(data)
-                self.op.analyze(data)
+        for index, data in enumerate(self.buffer.data_list()):
+            try:
+                if self.op.update_plot_params(data, msg.params):
+                    data.remove_fit_data()
+                    self.op.get_marker_indices(data)
+                    self.op.analyze(data)
+            finally:
+                self.buffer.touch(index)
         return Reply(success)
 
     def get_param_dict_labels(self, msg: GetParamDictLabelsReq) -> Reply:

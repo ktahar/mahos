@@ -9,7 +9,9 @@ Message Types for Common Measurement Nodes.
 """
 
 from __future__ import annotations
+import operator
 import time
+import uuid
 from collections import UserList
 
 import numpy as np
@@ -225,6 +227,11 @@ class Buffer(Message, UserList):
 
     """
 
+    def touch(self, index: int):
+        """Mark an in-place edit (overridden by node-owned versioned buffers)."""
+
+        pass
+
     def file_names(self) -> list[str]:
         """Get list of available file names."""
 
@@ -250,6 +257,106 @@ class Buffer(Message, UserList):
             return self.data[i][1]
         except IndexError:
             return None
+
+
+class TrackedBuffer(Buffer):
+    """Node-owned buffer with explicit content mutation tracking.
+
+    Use list operations for structural changes and :meth:`touch` after editing a retrieved
+    dataset, including partially completed edits.
+    Do not mutate ``data`` directly.
+
+    :ivar epoch: Unique identity of this buffer's transport state.
+    :ivar revision: Monotonically increasing structural or content revision.
+
+    """
+
+    def __init__(self, initial=None):
+        super().__init__(initial)
+        self.epoch = uuid.uuid4().hex
+        self.revision = 0
+        self._versions = [(uuid.uuid4().hex, 0) for _ in self.data]
+
+    def __copy__(self):
+        return type(self)(self.data)
+
+    def touch(self, index):
+        """Mark a dataset changed without comparing its potentially large contents."""
+
+        ident, revision = self._versions[index]
+        self._versions[index] = (ident, revision + 1)
+        self.revision += 1
+
+    def __setitem__(self, i, item):
+        if isinstance(i, slice):
+            item = list(item)
+            versions = [(uuid.uuid4().hex, 0) for _ in item]
+        else:
+            versions = (uuid.uuid4().hex, 0)
+        self.data[i] = item
+        self._versions[i] = versions
+        self.revision += 1
+
+    def __delitem__(self, index):
+        del self.data[index]
+        del self._versions[index]
+        self.revision += 1
+
+    def insert(self, i, item):
+        self.data.insert(i, item)
+        self._versions.insert(i, (uuid.uuid4().hex, 0))
+        self.revision += 1
+
+    def append(self, item):
+        self.insert(len(self), item)
+
+    def extend(self, other):
+        for item in list(other):
+            self.append(item)
+
+    def pop(self, i=-1):
+        item = self.data[i]
+        del self[i]
+        return item
+
+    def clear(self):
+        if self.data:
+            del self[:]
+
+    def remove(self, item):
+        del self[self.data.index(item)]
+
+    def reverse(self):
+        self.data.reverse()
+        self._versions.reverse()
+        self.revision += 1
+
+    def sort(self, *, key=None, reverse=False):
+        order = sorted(
+            range(len(self)),
+            key=lambda i: self.data[i] if key is None else key(self.data[i]),
+            reverse=reverse,
+        )
+        self.data = [self.data[i] for i in order]
+        self._versions = [self._versions[i] for i in order]
+        self.revision += 1
+
+    def __iadd__(self, other):
+        self.extend(other)
+        return self
+
+    def __imul__(self, n):
+        n = operator.index(n)
+        if n <= 0:
+            self.clear()
+        elif n > 1:
+            self.extend(self.data * (n - 1))
+        return self
+
+    def entry_versions(self) -> tuple[tuple[str, int], ...]:
+        """Return ordered entry identities and revisions without exposing mutable bookkeeping."""
+
+        return tuple(self._versions)
 
 
 class PopBufferReq(Request):

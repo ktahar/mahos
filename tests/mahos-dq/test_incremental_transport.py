@@ -19,7 +19,9 @@ from mahos_dq.gui.spodmr_client import QSPODMRClient
 def measurement(request, gconf, tmp_path, server):
     name, partial = request.param
     gconf["localhost"][name].update(
-        data_transport="incremental", sync_endpoint=f"ipc://{tmp_path}/sync"
+        data_transport="incremental",
+        sync_endpoint=f"ipc://{tmp_path}/sync",
+        pub_interval_sec=0.05,
     )
     return name, partial, request.getfixturevalue(name)
 

@@ -68,6 +68,15 @@ def transport():
     zctx.term()
 
 
+@pytest.fixture
+def recovery_clock(monkeypatch):
+    """Control recovery deadlines while keeping socket pump timeouts on real time."""
+
+    now = [0.0]
+    monkeypatch.setattr(transport_module, "time", SimpleNamespace(monotonic=lambda: now[0]))
+    return now
+
+
 def pump(server, client, condition, timeout=3.0):
     deadline = time.monotonic() + timeout
     while not condition() and time.monotonic() < deadline:
@@ -248,7 +257,7 @@ def test_suffixes_atomic_delivery_and_ownership(transport, tail, monkeypatch):
     assert late[-1].params == {"x": 3}
 
 
-def test_lost_final_update_and_late_join(transport):
+def test_lost_final_update_and_late_join(transport, recovery_clock):
     server, client, conf = transport
     pub = publisher(server, conf)
     delivered = []
@@ -262,6 +271,7 @@ def test_lost_final_update_and_late_join(transport):
     source.a = np.ones((2, 4))
     source.running = False
     pub.publish(source)
+    recovery_clock[0] += 1.0
     pump(server, client, lambda: sub.revision == 2)
     assert delivered[-1].a.shape == (2, 4)
     assert not delivered[-1].running
@@ -322,7 +332,7 @@ def test_replacements_clear_and_invalidation(transport, axis):
     np.testing.assert_equal(received[-1].a, source.a)
 
 
-def test_restart_and_unchanged_revision(transport, tmp_path):
+def test_restart_and_unchanged_revision(transport, tmp_path, recovery_clock):
     server, client, conf = transport
     conf["pub_endpoint"] = f"ipc://{tmp_path}/pub"
     conf["sync_endpoint"] = f"ipc://{tmp_path}/sync"
@@ -331,7 +341,7 @@ def test_restart_and_unchanged_revision(transport, tmp_path):
     sub = IncrementalSubscriber(client, conf, received.append)
     pub.publish(SimpleNamespace(a=np.zeros((2, 2)), b=None))
     pump(server, client, lambda: sub.revision == 1)
-    sub.next_query = 0
+    recovery_clock[0] += 1.0
     pump(server, client, lambda: sub.pending is not None)
     pump(server, client, lambda: sub.pending is None)
     assert len(received) == 1
@@ -341,6 +351,7 @@ def test_restart_and_unchanged_revision(transport, tmp_path):
     try:
         pub = publisher(restarted, conf)
         pub.publish(SimpleNamespace(a=np.ones((2, 2)), b=None))
+        recovery_clock[0] += 1.0
         pump(restarted, client, lambda: sub.epoch != old_epoch)
         np.testing.assert_equal(received[-1].a, np.ones((2, 2)))
     finally:
@@ -378,7 +389,7 @@ def test_mutable_tail_without_growth(transport, monkeypatch):
 
 @pytest.mark.parametrize("capacity", [0, 1, 4])
 @pytest.mark.parametrize("axis", [0, 1])
-def test_counted_rolling_arrays(transport, capacity, axis):
+def test_counted_rolling_arrays(transport, capacity, axis, recovery_clock):
     server, client, conf = transport
     pub = IncrementalPublisher(
         server,
@@ -410,6 +421,7 @@ def test_counted_rolling_arrays(transport, capacity, axis):
     source.count += 1
     source.a = source.a + 1
     pub.publish(source)
+    recovery_clock[0] += 1.0
     pump(server, client, lambda: sub.revision == pub.revision)
     np.testing.assert_equal(received[-1].a, source.a)
     np.testing.assert_equal(received[0].a, first)
@@ -468,7 +480,7 @@ def test_invalid_requests_do_not_stop_server(transport, frames, caplog):
         assert deserialize(header, None)[1] == "valid"
         np.testing.assert_equal(deserialize(snapshot, None).a, pub.state.a)
         server.poll()  # Worker records are forwarded by the owning node thread.
-        assert "Rejected incremental recovery request" in caplog.text
+        assert "Rejected recovery request" in caplog.text
     finally:
         dealer.close()
 
@@ -753,7 +765,7 @@ def test_shutdown_joins_in_progress_snapshot(transport, monkeypatch):
         server.close()
 
 
-def test_snapshots_bypass_custom_message_serialization(transport):
+def test_snapshots_bypass_custom_message_serialization(transport, recovery_clock):
     server, client, conf = transport
     pub = publisher(server, conf)
     received = []
@@ -772,6 +784,7 @@ def test_snapshots_bypass_custom_message_serialization(transport):
         socket.setsockopt(zmq.UNSUBSCRIBE, TOPIC)
     source.a = np.ones((2, 3))
     pub.publish(source)
+    recovery_clock[0] += 1.0
     pump(server, client, lambda: sub.revision == 3)
     late = []
     other = IncrementalSubscriber(client, conf, late.append)

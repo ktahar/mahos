@@ -10,7 +10,6 @@ Logic and instrument control part of HBT Interferometer.
 
 from mahos.msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
 from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.msgs.common_meas_msgs import Buffer
 from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
 from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
 from mahos_dq.msgs import hbt_msgs
@@ -87,7 +86,7 @@ class HBT(BasicMeasNode):
         self.worker = Listener(self.cli, self.logger, self.conf.get("listener", {}))
         self.fitter = HBTFitter(self.logger)
         self.io = HBTIO(self.logger)
-        self.buffer = Buffer()
+        self.buffer = self.new_buffer()
         self.pub_timer = IntervalTimer(self.conf.get("pub_interval_sec", 0.5))
 
     def close_resources(self):
@@ -126,9 +125,12 @@ class HBT(BasicMeasNode):
         """Update the plot params."""
 
         success = self.worker.update_plot_params(msg.params)
-        for data in self.buffer.data_list():
-            data.update_plot_params(msg.params)
-            data.remove_fit_data()
+        for index, data in enumerate(self.buffer.data_list()):
+            try:
+                data.update_plot_params(msg.params)
+                data.remove_fit_data()
+            finally:
+                self.buffer.touch(index)
         return Reply(success)
 
     def get_param_dict_labels(self, msg: GetParamDictLabelsReq) -> Reply:

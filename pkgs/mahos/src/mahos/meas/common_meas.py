@@ -21,13 +21,14 @@ from mahos.msgs.common_msgs import (
     CleanupArtifactReq,
 )
 from mahos.msgs.common_meas_msgs import PopBufferReq, ClearBufferReq, FitReq, ClearFitReq
-from mahos.msgs.common_meas_msgs import Buffer, BasicMeasData
+from mahos.msgs.common_meas_msgs import Buffer, TrackedBuffer, BasicMeasData
 from mahos.msgs import param_msgs as P
 from mahos.inst.server import MultiInstrumentClient
 from mahos.node.node import Node, NodeName
 from mahos.node.client import NodeClient, StateClientMixin
 from mahos.node.comm import Context
-from mahos.node.data_transport import IncrementalPublisher, TransportConfig
+from mahos.node.data_transport import IncrementalPublisher, SnapshotService, TransportConfig
+from mahos.node.buffer_transport import BufferPublisher
 from mahos.meas.file_transport import FileTransportClientMixin, FileTransportNodeMixin
 from mahos.meas.tweaker import TweakSaver
 
@@ -206,8 +207,11 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
     :param data_transport: Data distribution mode: ``"pubsub"`` (default) or
         ``"incremental"``. Incremental mode requires a measurement-defined array policy.
     :type data_transport: str
-    :param sync_endpoint: Recovery endpoint to bind when incremental mode is enabled.
+    :param sync_endpoint: Shared recovery endpoint for incremental data or versioned buffers.
     :type sync_endpoint: str
+    :param buffer_transport: Buffer distribution mode: ``"pubsub"`` (default) or
+        ``"versioned"``. Versioned mode also requires ``sync_endpoint``.
+    :type buffer_transport: str
     :param file_transport_dir: Optional measurement-side directory for client-measurement file
         transport.
     :type file_transport_dir: str
@@ -248,17 +252,36 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
 
         self.add_rep()
         self.status_pub = self.add_pub(b"status")
+
+        service = None
+        if transport.mode == "incremental" or transport.buffer_mode == "versioned":
+            service = SnapshotService(
+                self.ctx.zmq_context(), transport.endpoint, ("initial", 0, None), self.logger
+            )
+            self.ctx.add_close_service(service)
         if transport.mode == "incremental":
             self.data_pub = IncrementalPublisher(
                 self.ctx,
                 self.conf["pub_endpoint"],
                 transport.endpoint,
                 self.INCREMENTAL_ARRAYS,
+                service=service,
                 logger=self.logger,
             )
         else:
             self.data_pub = self.add_pub(b"data")
-        self.buffer_pub = self.add_pub(b"buffer")
+        if transport.buffer_mode == "versioned":
+            self.buffer_pub = BufferPublisher(
+                self.ctx, self.conf["pub_endpoint"], service, logger=self.logger
+            )
+        else:
+            self.buffer_pub = self.add_pub(b"buffer")
+        self._buffer_transport = transport.buffer_mode
+
+    def new_buffer(self):
+        """Create node-owned storage with the selected mutation-tracking policy."""
+
+        return TrackedBuffer() if self._buffer_transport == "versioned" else Buffer()
 
     def change_state(self, msg: StateReq) -> Reply:
         """Change state to msg.state. Inherited class must implement this."""
@@ -365,6 +388,9 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
         except Exception:
             self.logger.exception("Failed to fit")
             return Reply(False, message="Failed to fit")
+        finally:
+            if msg.data_index != -1:
+                self.buffer.touch(msg.data_index)
         return Reply(True, ret=ret)
 
     def clear_fit(self, msg: ClearFitReq) -> Reply:
@@ -377,7 +403,11 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
         if not isinstance(data, self.DATA):
             return Reply(False, message="Data is invalid")
 
-        data.remove_fit_data()
+        try:
+            data.remove_fit_data()
+        finally:
+            if msg.data_index != -1:
+                self.buffer.touch(msg.data_index)
         return Reply(True)
 
     def _handle_req(self, msg: Request) -> Reply:

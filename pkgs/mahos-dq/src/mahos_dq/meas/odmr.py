@@ -10,7 +10,6 @@ Logic and instrument control part of ODMR.
 
 from mahos.msgs.common_msgs import Request, Reply, StateReq, BinaryState, BinaryStatus
 from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.msgs.common_meas_msgs import Buffer
 from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
 from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
 from mahos_dq.msgs import odmr_msgs
@@ -126,7 +125,7 @@ class ODMR(BasicMeasNode):
                 self.pg = DummyWorker()
         self.fitter = ODMRFitter(self.logger, silent=False, conf=self.conf.get("fitter"))
         self.io = ODMRIO(self.logger)
-        self.buffer = Buffer()
+        self.buffer = self.new_buffer()
         self.pub_timer = IntervalTimer(self.conf.get("pub_interval_sec", 0.5))
 
     def close_resources(self):

@@ -279,3 +279,24 @@ def test_incremental_history_reanalysis_and_toggle(max_records):
         publish_and_compare()
     finally:
         context.close(close_zmq_ctx=True)
+
+
+def test_buffer_history_reanalysis_marks_same_shape_changes():
+    from types import SimpleNamespace
+
+    from mahos.msgs.common_meas_msgs import TrackedBuffer
+    from mahos_dq.meas.apodmr import APODMR
+    from mahos_dq.msgs.apodmr_msgs import UpdatePlotParamsReq
+
+    data = make_history_data()
+    append_history(data, 2)
+    original = data.signal_history.copy()
+    buffer = TrackedBuffer([("history", data)])
+    node = SimpleNamespace(
+        buffer=buffer,
+        worker=SimpleNamespace(update_plot_params=lambda params: True),
+        op=APODMRDataOperator(),
+    )
+    assert APODMR.update_plot_params(node, UpdatePlotParamsReq({"sigdelay": 2e-9})).success
+    assert buffer.entry_versions()[0][1] == 1
+    np.testing.assert_array_equal(data.signal_history, original + 1)

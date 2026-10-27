@@ -1,6 +1,8 @@
 Data transport in BasicMeasNode
 ===============================
 
+BasicMeasNode implements efficient transport mechanisms for both live and buffer data.
+
 Incremental live data transport
 -------------------------------
 
@@ -28,6 +30,9 @@ History rebuilds after analysis-window changes force replacement.
 Python and Qt measurement clients reconstruct the ordinary data classes before invoking handlers or emitting signals.
 Each delivered object contains one complete revision, including metadata and all selected arrays.
 
+Implementing incremental transport
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 To support another ``BasicMeasNode`` subclass, define ``INCREMENTAL_ARRAYS`` as a mapping
 from attribute names to ``mahos.node.data_transport.ArrayPolicy(axis, mutable_tail)``.
 Selected attributes must be NumPy arrays with non-object dtype, or ``None``.
@@ -43,3 +48,55 @@ Replacing the data object starts a new generation; uncounted array shrinkage, dt
 and changes to other dimensions cause full array replacement (though these should not happen in normal operation).
 When an in-place edit to historical elements cannot be avoided,
 call ``self.data_pub.invalidate()`` before the next publication.
+
+Versioned buffer transport
+--------------------------
+
+Buffer transport is selected independently of live-data transport::
+
+    [localhost.podmr]
+    buffer_transport = "versioned"
+    sync_endpoint = "tcp://127.0.0.1:5563"
+
+``buffer_transport`` defaults to ``"pubsub"``.
+Versioned mode is supported by ODMR, PODMR, APODMR, SPODMR, HBT, and Spectroscopy.
+A client-accessible ``sync_endpoint`` is required when either versioned buffers or incremental live data
+are enabled; the two transports share one recovery service and endpoint when enabled together.
+
+Versioned mode periodically publishes a small ordered manifest on ``versioned_buffer``
+instead of sending full objects on ``buffer``.
+
+Python and Qt clients fetch missing exact entry versions asynchronously and reconstruct
+ordinary :class:`mahos.msgs.common_meas_msgs.Buffer` objects in manifest order.
+Getters, callback signatures, Qt signals, and dataset types are unchanged.
+Repeated identical manifests cause neither downloads nor repeated callbacks.
+Appending an entry downloads only the new entry; marking an existing entry changed downloads that complete entry again.
+Clients retain their last complete buffer until every entry in the replacement is available.
+
+Implementing buffered measurements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Initialize node-owned storage with ``self.buffer = self.new_buffer()`` after
+``BasicMeasNode.__init__()``. This selects ordinary storage in conventional mode or a
+:class:`mahos.msgs.common_meas_msgs.TrackedBuffer` in versioned mode.
+Existing ``self.buffer_pub.publish(self.buffer)`` calls remain unchanged and must continue periodically even while idle.
+
+Use the buffer's list operations for structural edits, including append, pop, clear,
+slice replacement, reverse, and sort. Do not modify its underlying ``.data`` list directly.
+After modifying any retrieved dataset or its metadata, call ``self.buffer.touch(index)``.
+Every affected entry must be marked, including entries sharing a modified object reference.
+``touch()`` is a no-op for ordinary buffers. Transport identities and revisions are kept
+in node-owned storage, outside persisted measurement data and delivered buffer objects.
+
+Keep batch mutations on the node thread, mark all affected entries, then publish.
+Use ``finally`` where an operation can partially modify data before raising:
+an error must not leave changed data associated with its old revision.
+Common fitting and fit clearing, plus PODMR/APODMR/SPODMR/HBT plot updates, follow this contract.
+Plot-update marking is conservative because these operations can modify metadata even when no new analysis result is reported.
+
+Publication is the commit boundary. It copies only new or marked datasets into immutable
+transport-owned objects before the recovery thread can serialize them.
+Until the next publication, recovery serves the preceding coherent committed state.
+Serialization bypasses custom dataset serialization so complete concrete objects are preserved.
+Full-object copies and serialization remain costs; reanalysis of every entry requires downloading every entry once.
+There are no acknowledgement barriers, historical replay logs, or zero-copy deliveries.
