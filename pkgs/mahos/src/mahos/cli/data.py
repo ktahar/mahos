@@ -13,7 +13,7 @@ import importlib
 
 data_usage = """usage: mahos data COMMAND args
 
-COMMAND (l[s] | n[ote] | p[lot] | pr[int]) :
+COMMAND (d[iff] | l[s] | n[ote] | p[lot] | pr[int]) :
     the command to execute.
 
 """
@@ -35,6 +35,7 @@ def build_parser(add_help: bool = True):
         prog="mahos data", description="Data operation commands.", add_help=add_help
     )
     subparsers = parser.add_subparsers(dest="data_command")
+    _add_subcommand(subparsers, "diff", "mahos.cli.data_diff")
     _add_subcommand(subparsers, "ls", "mahos.cli.data_ls")
     _add_subcommand(subparsers, "note", "mahos.cli.data_note")
     _add_subcommand(subparsers, "plot", "mahos.cli.data_plot")
@@ -49,7 +50,9 @@ def main(args):
 
     pkg = args[0].lower()
 
-    if "ls".startswith(pkg):
+    if "diff".startswith(pkg):
+        return importlib.import_module("mahos.cli.data_diff").main(args[1:])
+    elif "ls".startswith(pkg):
         return importlib.import_module("mahos.cli.data_ls").main(args[1:])
     elif "note".startswith(pkg):
         return importlib.import_module("mahos.cli.data_note").main(args[1:])

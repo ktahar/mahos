@@ -36,6 +36,15 @@ def test_completion_parser_parses_data_subcommands():
     assert print_args.data_command == "print"
     assert print_args.names == ["result.h5"]
 
+    diff_args = parser.parse_args(
+        ["data", "diff", "-k", "params.fit", "first.h5", "second.h5", "--rtol", "0.01"]
+    )
+    assert diff_args.command == "data"
+    assert diff_args.data_command == "diff"
+    assert diff_args.key == "params.fit"
+    assert diff_args.names == ["first.h5", "second.h5"]
+    assert diff_args.rtol == 0.01
+
 
 def test_completion_parser_parses_data_plot_subcommand():
     parser = main.build_completion_parser()

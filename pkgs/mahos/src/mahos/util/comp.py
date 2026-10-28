@@ -145,7 +145,7 @@ def dict_isclose(dic: dict, other: dict, rtol: float = 1e-5, atol: float = 1e-8)
         elif isinstance(val, (float, np.floating)):
             return bool(np.isclose(val, val_other, rtol=rtol, atol=atol))
         elif isinstance(val, dict):
-            return dict_isclose(val, val_other)
+            return dict_isclose(val, val_other, rtol=rtol, atol=atol)
         elif isinstance(val, (list, tuple)):
             if len(val) != len(val_other):
                 return False
@@ -158,57 +158,75 @@ def dict_isclose(dic: dict, other: dict, rtol: float = 1e-5, atol: float = 1e-8)
     return all((k in other and isclose_val(v, other[k]) for k, v in dic.items()))
 
 
-def dict_isclose_inspect(dic: dict, other: dict, rtol: float = 1e-5, atol: float = 1e-8) -> bool:
-    """Same as dict_isclose() but report the encountered difference."""
+def dict_isclose_inspect(
+    dic: dict, other: dict, rtol: float = 1e-5, atol: float = 1e-8, *, path: str = "dict"
+) -> bool:
+    """Check closeness and print all encountered differences with their paths.
 
-    def isclose_val(val, val_other) -> bool:
+    Uses the same comparison rules as :func:`dict_isclose`. Paths include dictionary
+    keys and sequence indices. Missing keys are reported for both dictionaries;
+    array differences are summarized without listing each differing element.
+    The optional ``path`` sets the top-level label used in reported paths.
+    Returns True if the dictionaries are close, otherwise False.
+
+    """
+
+    def report(path, message):
+        print(f"{path}: {message}")
+        return False
+
+    def isclose_val(val, val_other, path) -> bool:
         if not has_compatible_types(val, val_other):
-            print(f"type mismatch: {type(val)} != {type(val_other)}")
-            return False
+            return report(path, f"type mismatch: {type(val)} != {type(val_other)}")
 
         if isinstance(val, np.ndarray):
             if val.shape != val_other.shape or val.dtype != val_other.dtype:
-                print(
+                return report(
+                    path,
                     f"array shape / dtype mismatch: {val.shape} != {val_other.shape} or"
-                    + f" {val.dtype} != {val_other.dtype}"
+                    + f" {val.dtype} != {val_other.dtype}",
                 )
-                return False
             if np.issubdtype(val.dtype, np.floating):
                 eq = bool(np.allclose(val, val_other, rtol=rtol, atol=atol))
-                if not eq:
-                    print(f"float arrays are not allclose: {val} != {val_other}")
-                return eq
+                message = "float arrays are not allclose"
             else:
                 eq = bool(np.all(val == val_other))
-                if not eq:
-                    print(f"non-float arrays are not all equal: {val} != {val_other}")
-                return eq
+                message = "non-float arrays are not all equal"
+            if not eq:
+                return report(path, f"{message}: {val} != {val_other}")
+            return True
         elif isinstance(val, (float, np.floating)):
-            eq = bool(np.isclose(val, val_other, rtol=rtol, atol=atol))
-            if not eq:
-                print(f"float values are not close: {val} != {val_other}")
-            return eq
+            if not np.isclose(val, val_other, rtol=rtol, atol=atol):
+                return report(path, f"float values are not close: {val} != {val_other}")
+            return True
         elif isinstance(val, dict):
-            return dict_isclose_inspect(val, val_other)
+            return inspect_dict(val, val_other, path)
         elif isinstance(val, (list, tuple)):
+            equal = True
             if len(val) != len(val_other):
-                print(f"list or tuple size mismatch: {len(val)} != {len(val_other)}")
-                return False
-            return all((isclose_val(elem, elem_other) for elem, elem_other in zip(val, val_other)))
+                equal = report(
+                    path, f"list or tuple size mismatch: {len(val)} != {len(val_other)}"
+                )
+            for i, (elem, elem_other) in enumerate(zip(val, val_other)):
+                if not isclose_val(elem, elem_other, f"{path}[{i}]"):
+                    equal = False
+            return equal
         else:
-            eq = val == val_other
-            if not eq:
-                print(f"{val} != {val_other}")
-            return eq
+            if val != val_other:
+                return report(path, f"{val!r} != {val_other!r}")
+            return True
 
-    if len(dic) != len(other):
-        print(f"dict size mismatch: {len(dic)} != {len(other)}")
-        return False
-    for k, v in dic.items():
-        if k not in other:
-            print(f"key {k} not in other dict")
-            return False
-        if not isclose_val(v, other[k]):
-            print(f"at key {k}")
-            return False
-    return True
+    def inspect_dict(left, right, path) -> bool:
+        equal = True
+        for key, value in left.items():
+            key_path = f"{path}[{key!r}]"
+            if key not in right:
+                equal = report(key_path, "missing from second dict")
+            elif not isclose_val(value, right[key], key_path):
+                equal = False
+        for key in right:
+            if key not in left:
+                equal = report(f"{path}[{key!r}]", "missing from first dict")
+        return equal
+
+    return inspect_dict(dic, other, path)

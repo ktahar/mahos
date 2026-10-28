@@ -114,6 +114,19 @@ For each client, ``client.M`` is the message module that may be required to invo
 Data operations
 ---------------
 
+mahos data diff
+^^^^^^^^^^^^^^^
+
+``mahos data diff FILE1 FILE2`` compares the ``params`` dictionaries in two HDF5 data files
+and reports all differing paths, including missing keys and sequence indices.
+
+Use ``-k KEY`` (or ``--key KEY``) to select another dictionary attribute or a dotted dictionary path.
+Both selected values must be dictionaries.
+
+``--rtol`` and ``--atol`` set the relative and absolute floating-point tolerances (defaults: ``1e-5`` and ``1e-8``).
+
+The exit status is 0 when the dictionaries are equal within tolerances, 1 when they differ, and 2 on errors.
+
 mahos data ls
 ^^^^^^^^^^^^^
 
