@@ -8,6 +8,7 @@ Incremental transport tests using real in-process ZMQ sockets.
 
 import copy
 import pickle
+import socket
 import zlib
 import time
 import threading
@@ -332,10 +333,15 @@ def test_replacements_clear_and_invalidation(transport, axis):
     np.testing.assert_equal(received[-1].a, source.a)
 
 
-def test_restart_and_unchanged_revision(transport, tmp_path, recovery_clock):
+def test_restart_and_unchanged_revision(transport, recovery_clock):
     server, client, conf = transport
-    conf["pub_endpoint"] = f"ipc://{tmp_path}/pub"
-    conf["sync_endpoint"] = f"ipc://{tmp_path}/sync"
+    # Use reconnectable endpoints supported on both Windows and Linux. Keep both
+    # ports reserved until selected so the endpoints cannot receive the same port.
+    with socket.socket() as pub_socket, socket.socket() as sync_socket:
+        pub_socket.bind(("127.0.0.1", 0))
+        sync_socket.bind(("127.0.0.1", 0))
+        conf["pub_endpoint"] = f"tcp://127.0.0.1:{pub_socket.getsockname()[1]}"
+        conf["sync_endpoint"] = f"tcp://127.0.0.1:{sync_socket.getsockname()[1]}"
     pub = publisher(server, conf)
     received = []
     sub = IncrementalSubscriber(client, conf, received.append)

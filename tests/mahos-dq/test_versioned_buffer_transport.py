@@ -6,6 +6,8 @@ Test versioned buffers through real measurement nodes and Python/Qt clients.
 
 """
 
+import socket
+
 import numpy as np
 import pytest
 
@@ -23,12 +25,15 @@ from mahos_dq.msgs.spectroscopy_msgs import SpectroscopyData
 
 
 @pytest.fixture
-def measurement(request, gconf, tmp_path, server):
+def measurement(request, gconf, server):
     name, live = request.param
+    with socket.socket() as sync_socket:
+        sync_socket.bind(("127.0.0.1", 0))
+        sync_endpoint = f"tcp://127.0.0.1:{sync_socket.getsockname()[1]}"
     gconf["localhost"][name].update(
         buffer_transport="versioned",
         data_transport=live,
-        sync_endpoint=f"ipc://{tmp_path}/sync",
+        sync_endpoint=sync_endpoint,
         pub_interval_sec=0.05,
     )
     return name, request.getfixturevalue(name)
