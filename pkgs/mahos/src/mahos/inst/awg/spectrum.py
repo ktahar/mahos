@@ -415,14 +415,16 @@ class Spectrum_AWG_Core(object):
         clock = spcm.Clock(card)
         if mode in ("internal", "int", "intpll"):
             clock.mode(spcm.SPC_CM_INTPLL)
+            self.logger.info("Internal clock.")
         elif mode in ("ext_ref", "extref", "external_reference", "reference"):
-            ref_clock_freq = V.check_pos_num(ref_clock_freq, "ref_clock_freq")
+            ref_clock_freq = int(round(V.check_pos_num(ref_clock_freq, "ref_clock_freq")))
             clock.mode(spcm.SPC_CM_EXTREFCLOCK)
-            clock.reference_clock(int(round(ref_clock_freq)))
+            clock.reference_clock(ref_clock_freq)
             try:
                 clock.termination(1 if termination_50 else 0)
             except Exception:
                 self.logger.exception("could not set clock termination (continuing).")
+            self.logger.info(f"External clock at {ref_clock_freq:_d} Hz.")
         else:
             raise ValueError(f"unsupported clock mode: {mode}")
         clock.clock_output(bool(clock_output))

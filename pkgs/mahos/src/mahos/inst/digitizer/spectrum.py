@@ -19,9 +19,10 @@ import numpy as np
 
 from mahos.inst.instrument import Instrument
 from mahos.util.queue import RollingQueue
+from mahos.util.conf import ConfAccessorMixin
 
 
-class Spectrum_AnalogIn(Instrument):
+class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
     """Spectrum Instrumentation digitizer (AnalogIn card).
 
     In ``triggered`` mode, each hardware trigger records a fixed-length segment with
@@ -129,6 +130,13 @@ class Spectrum_AnalogIn(Instrument):
         self._notify_samples = 0
         self._buffer_samples = 0
         self._pending: list[list[np.ndarray]] = []
+
+        self._clock_conf = {
+            "mode": self._conf_str("clock_mode", "int").lower(),
+            "freq": int(round(self._conf_pos_num("ref_clock_freq", 10_000_000))),
+            "termination": 50 == self._conf_pos_int("ref_clock_termination", 50),
+            "output": self._conf_bool("clock_output", False),
+        }
 
         if not self.conf.get("mock", False):
             self._import_spcm()
@@ -255,17 +263,24 @@ class Spectrum_AnalogIn(Instrument):
 
         return True
 
-    def _setup_clock(self, params):
+    def _setup_clock(self, rate: int | float):
         spcm = self._import_spcm()
         clock = spcm.Clock(self._open_card())
-        mode = str(
-            params.get("clock_mode_spcm", self.conf.get("clock_mode_spcm", "intpll"))
-        ).lower()
-        if mode == "intpll":
+        mode = self._clock_conf["mode"]
+        if mode in ("internal", "int", "intpll"):
             clock.mode(spcm.SPC_CM_INTPLL)
+            self.logger.info("Internal clock.")
+        elif mode in ("ext_ref", "extref", "external_reference", "reference"):
+            freq = self._clock_conf["freq"]
+            clock.mode(spcm.SPC_CM_EXTREFCLOCK)
+            clock.reference_clock(freq)
+            clock.termination(self._clock_conf["termination"])
+            self.logger.info(f"External clock at {freq:_d} Hz.")
         else:
             return self.fail_with(f"unsupported clock mode: {mode}")
-        rate_req = int(round(params["rate"])) * spcm.units.Hz
+        clock.clock_output(self._clock_conf["output"])
+
+        rate_req = int(round(rate)) * spcm.units.Hz
         rate_ret = clock.sample_rate(rate_req, return_unit=spcm.units.Hz)
         msg = f"Sampling rate: requested = {rate_req.magnitude:_d} Hz, "
         msg += f"actual = {rate_ret.magnitude:_d} Hz"
@@ -679,7 +694,7 @@ class Spectrum_AnalogIn(Instrument):
         if not self._setup_channels(params):
             return False
 
-        if not self._setup_clock(params):
+        if not self._setup_clock(params["rate"]):
             return False
 
         if self._hardware_average:
@@ -843,7 +858,7 @@ class Spectrum_AnalogIn(Instrument):
             return False
         if not self._setup_channels(params):
             return False
-        if not self._setup_clock(params):
+        if not self._setup_clock(params["rate"]):
             return False
 
         self._transfer = spcm.DataTransfer(card)
