@@ -24,12 +24,12 @@ from mahos.node.buffer_transport import (
     response,
 )
 from mahos.node.comm import Context, serialize_pickle, deserialize
+from mahos.node.transport_util import TransportConfig
 from mahos.node.data_transport import (
     ArrayPolicy,
     IncrementalPublisher,
     IncrementalSubscriber,
     SnapshotService,
-    TransportConfig,
 )
 from mahos.node.log import DummyLogger
 
@@ -91,10 +91,10 @@ def test_tracking_list_operations():
     buffer += [("fifth", dataset(5))]
     buffer *= 2
     assert len({entry[0] for entry in buffer.entry_versions()}) == 8
-    cloned = copy.copy(buffer)
-    cloned.touch(0)
-    assert cloned.epoch != buffer.epoch
-    assert cloned.entry_versions()[0] != buffer.entry_versions()[0]
+    with pytest.raises(NotImplementedError):
+        copy.copy(buffer)
+    with pytest.raises(NotImplementedError):
+        buffer.copy()
     del buffer[::2]
     assert len(buffer.entry_versions()) == 4
     buffer.clear()

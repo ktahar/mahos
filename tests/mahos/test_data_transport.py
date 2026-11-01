@@ -22,12 +22,12 @@ import zmq
 from mahos.msgs.common_msgs import Message, pickle_proto
 from mahos.node.comm import Context, serialize, deserialize
 import mahos.node.data_transport as transport_module
+from mahos.node.transport_util import TransportConfig
 from mahos.node.data_transport import (
     ArrayPolicy,
     IncrementalPublisher,
     IncrementalSubscriber,
     TOPIC,
-    TransportConfig,
 )
 from mahos.node.log import DummyLogger
 

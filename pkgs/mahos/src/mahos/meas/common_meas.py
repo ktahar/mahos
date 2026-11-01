@@ -27,7 +27,8 @@ from mahos.inst.server import MultiInstrumentClient
 from mahos.node.node import Node, NodeName
 from mahos.node.client import NodeClient, StateClientMixin
 from mahos.node.comm import Context
-from mahos.node.data_transport import IncrementalPublisher, SnapshotService, TransportConfig
+from mahos.node.transport_util import TransportConfig
+from mahos.node.data_transport import IncrementalPublisher, SnapshotService
 from mahos.node.buffer_transport import BufferPublisher
 from mahos.meas.file_transport import FileTransportClientMixin, FileTransportNodeMixin
 from mahos.meas.tweaker import TweakSaver

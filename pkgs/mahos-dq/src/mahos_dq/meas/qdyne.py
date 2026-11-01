@@ -135,7 +135,7 @@ class Qdyne(BasicMeasNode):
 
         self.worker = Pulser(self.cli, self.logger, self.conf.get("pulser", {}))
         self.io = QdyneIO(self.logger)
-        self.buffer: Buffer[tuple[str, QdyneData]] = Buffer()
+        self.buffer: Buffer[tuple[str, QdyneData]] = self.new_buffer()
         self._pub_interval = self.conf.get("pub_interval_sec", 1.0)
         self.pub_timer = IntervalTimer(self._pub_interval)
 

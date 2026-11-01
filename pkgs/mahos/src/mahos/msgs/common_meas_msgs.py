@@ -278,7 +278,16 @@ class TrackedBuffer(Buffer):
         self._versions = [(uuid.uuid4().hex, 0) for _ in self.data]
 
     def __copy__(self):
-        return type(self)(self.data)
+        raise NotImplementedError(
+            "TrackedBuffer is node-owned; copying it would break its version tracking."
+        )
+
+    def copy(self):
+        """Disabled: copying would fabricate a new epoch and entry identities."""
+
+        raise NotImplementedError(
+            "TrackedBuffer is node-owned; copying it would break its version tracking."
+        )
 
     def touch(self, index):
         """Mark a dataset changed without comparing its potentially large contents."""

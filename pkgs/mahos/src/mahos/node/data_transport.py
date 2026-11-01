@@ -20,7 +20,7 @@ import zmq
 
 import mahos.node.buffer_transport as BT
 from mahos.node.comm import serialize_pickle, deserialize
-from mahos.util.conf import ConfAccessorMixin
+from mahos.node.transport_util import TransportConfig
 import mahos.util.validation as V
 
 
@@ -63,24 +63,6 @@ def check_state(state):
     if isinstance(state, type) or not hasattr(state, "__dict__"):
         raise ValueError("Expected an attribute-based data object")
     return state
-
-
-class TransportConfig(ConfAccessorMixin):
-    """Validate the shared node/client transport configuration."""
-
-    def __init__(self, conf):
-        self.conf = conf
-        self.mode = self._conf_str("data_transport", "pubsub")
-        if self.mode not in ("pubsub", "incremental"):
-            raise ValueError("data_transport must be 'pubsub' or 'incremental'")
-        self.buffer_mode = self._conf_str("buffer_transport", "pubsub")
-        if self.buffer_mode not in ("pubsub", "versioned"):
-            raise ValueError("buffer_transport must be 'pubsub' or 'versioned'")
-        self.endpoint = (
-            self._conf_nonempty_str("sync_endpoint")
-            if self.mode == "incremental" or self.buffer_mode == "versioned"
-            else None
-        )
 
 
 @dataclass(frozen=True)

@@ -17,6 +17,7 @@ import zmq
 
 from mahos.msgs.common_meas_msgs import Buffer, TrackedBuffer
 from mahos.node.comm import deserialize, serialize_pickle
+from mahos.node.transport_util import TransportConfig
 import mahos.util.validation as V
 
 
@@ -56,6 +57,8 @@ def check_manifest(message):
 def check_request(request):
     """Validate one bounded batch of exact-version requests."""
 
+    if not isinstance(request, (tuple, list)) or len(request) != 5:
+        raise ValueError("Expected five request fields")
     kind, version, request_id, epoch, versions = request
     if V.check_int(version, "protocol version") != VERSION or kind != "buffer":
         raise ValueError("Unsupported buffer request")
@@ -151,7 +154,7 @@ class BufferSubscriber:
 
     def __init__(self, context, conf, handler, logger=None):
         self.context = context
-        self.endpoint = conf["sync_endpoint"]
+        self.endpoint = TransportConfig(conf).endpoint
         self.handler = handler
         self.logger = logger if logger is not None else logging.getLogger(__name__)
 
