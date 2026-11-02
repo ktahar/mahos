@@ -58,13 +58,22 @@ def main(args=None):
     args = parse_args(args)
     gconf, host, node = init_gconf_host_node(args.conf, args.host, args.node)
     joined_name = join_name((host, node))
-    print("Subscribing to {} of {} (config file: {}).".format(args.topic, joined_name, args.conf))
 
     try:
         c = gconf[host][node]
     except KeyError:
         print(f"[ERROR] {joined_name} is not found in the config file.")
         sys.exit(1)
+    if args.rate or args.size:
+        transport = c.get(f"{args.topic}_transport")
+        if (args.topic, transport) in (("data", "incremental"), ("buffer", "versioned")):
+            build_parser().error(
+                f"-r/--rate and -s/--size are unsupported for topic '{args.topic}' "
+                f"with {transport} transport on {joined_name}. "
+                "Omit these options to echo reconstructed messages."
+            )
+
+    print("Subscribing to {} of {} (config file: {}).".format(args.topic, joined_name, args.conf))
     module = importlib.import_module(c["module"])
     NodeClass = getattr(module, c["class"])
     if hasattr(NodeClass, "TOPIC_TYPES"):
