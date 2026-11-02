@@ -15,7 +15,6 @@ import logging
 import traceback
 
 import zmq
-from zmq.utils.strtypes import cast_bytes
 
 TOPIC_DELIM = "->"
 TIME_DELIM = ";"
@@ -23,6 +22,10 @@ TIME_DELIM = ";"
 
 class PUBHandler(logging.Handler):
     """A basic logging handler that emits log messages through a PUB socket.
+
+    Normal logger calls serialize socket access across threads using the handler lock.
+    Do not call ``emit()`` or access the socket directly from other threads.
+    ``close()`` uses the same lock to serialize shutdown with emission.
 
     :param socket: a PUB socket already bound to interfaces.
 
@@ -111,7 +114,7 @@ class PUBHandler(logging.Handler):
         except Exception:
             topic = ""
         try:
-            bmsg = cast_bytes(self.format(record))
+            bmsg = self.format(record).encode("utf-8")
         except Exception:
             self.handleError(record)
             return
@@ -126,7 +129,7 @@ class PUBHandler(logging.Handler):
         if topic:
             topic_list.append(topic)
 
-        btopic = cast_bytes(TOPIC_DELIM).join(cast_bytes(t) for t in topic_list)
+        btopic = TOPIC_DELIM.join(topic_list).encode("utf-8")
 
         self.socket.send_multipart([btopic, bmsg])
 

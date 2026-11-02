@@ -231,3 +231,72 @@ def test_history_resume_and_opt_out():
     default_data = make_history_data()
     assert default_data.can_resume({**default_data.params, "save_history": True}, data.label)
     assert default_data.can_resume({**default_data.params, "save_history": False}, data.label)
+
+
+@pytest.mark.parametrize("max_records", [0, 1, 3])
+def test_incremental_history_reanalysis_and_toggle(max_records):
+    from mahos.node.comm import Context
+    from mahos.node.data_transport import IncrementalPublisher
+    from mahos_dq.meas.apodmr import APODMR
+
+    context = Context()
+    try:
+        pub = IncrementalPublisher(
+            context, "inproc://apodmr-pub", "inproc://apodmr-sync", APODMR.INCREMENTAL_ARRAYS
+        )
+        data = make_history_data()
+        data.params["max_records"] = max_records
+        op = APODMRDataOperator()
+
+        def publish_and_compare():
+            pub.publish(data)
+            for attr in APODMR.INCREMENTAL_ARRAYS:
+                np.testing.assert_equal(getattr(pub.state, attr), getattr(data, attr))
+
+        append_history(data, 3)
+        publish_and_compare()
+        append_history(data, 2)
+        publish_and_compare()
+        # Two same-shaped rebuilds, with no publication of the intermediate None state.
+        assert op.update_plot_params(data, {"sigdelay": 2e-9})
+        publish_and_compare()
+        shape = data.signal_history.shape
+        assert op.update_plot_params(data, {"sigdelay": 0.0})
+        assert data.signal_history.shape == shape
+        publish_and_compare()
+        op.update_params(data, {"save_history": False})
+        append_history(data, 2)
+        publish_and_compare()
+        assert pub.state.signal_history is pub.state.reference_history is None
+        op.update_params(data, {"save_history": True})
+        publish_and_compare()
+        append_history(data)
+        publish_and_compare()
+        # Older saved objects need no transport-specific migration before a rebuild.
+        del data.history_generation
+        data.clear_history()
+        assert op.analyze(data)
+        publish_and_compare()
+    finally:
+        context.close(close_zmq_ctx=True)
+
+
+def test_buffer_history_reanalysis_marks_same_shape_changes():
+    from types import SimpleNamespace
+
+    from mahos.msgs.common_meas_msgs import TrackedBuffer
+    from mahos_dq.meas.apodmr import APODMR
+    from mahos_dq.msgs.apodmr_msgs import UpdatePlotParamsReq
+
+    data = make_history_data()
+    append_history(data, 2)
+    original = data.signal_history.copy()
+    buffer = TrackedBuffer([("history", data)])
+    node = SimpleNamespace(
+        buffer=buffer,
+        worker=SimpleNamespace(update_plot_params=lambda params: True),
+        op=APODMRDataOperator(),
+    )
+    assert APODMR.update_plot_params(node, UpdatePlotParamsReq({"sigdelay": 2e-9})).success
+    assert buffer.entry_versions()[0][1] == 1
+    np.testing.assert_array_equal(data.signal_history, original + 1)

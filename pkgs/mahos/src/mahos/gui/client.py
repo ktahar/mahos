@@ -23,13 +23,19 @@ from mahos.util.typing import NodeName
 
 
 class QSubWorker(QtCore.QObject):
-    def __init__(self, lconf: dict, context: Context, parent: QtCore.QObject = None):
+    def __init__(self, lconf: dict, context: Context, parent: QtCore.QObject = None, logger=None):
         QtCore.QObject.__init__(self, parent=parent)
         self.ctx = context
+        self.logger = logger
         self._closed = False
 
     def add_handler(self, lconf: dict, topic: bytes, handler, endpoint: str = "pub_endpoint"):
-        self.ctx.add_sub(lconf[endpoint], topic, handler)
+        if endpoint == "pub_endpoint":
+            from mahos.node.data_transport import add_data_subscription
+
+            add_data_subscription(self.ctx, lconf, topic, handler, logger=self.logger)
+        else:
+            self.ctx.add_sub(lconf[endpoint], topic, handler)
 
     def close(self):
         self._closed = True
@@ -40,7 +46,16 @@ class QSubWorker(QtCore.QObject):
 
 
 class QNodeClient(QtCore.QObject):
-    """Qt-based client to use Node's function."""
+    """Qt-based client to use Node's function.
+
+    An optional prefix supplies the logging hierarchy for client topics.
+    Without a prefix, diagnostics use a client-named DummyLogger.
+    Workers emit diagnostics through normal logger methods. Close the client before
+    closing the parent logger's handlers.
+
+    :param prefix: Name prefix for logger.
+
+    """
 
     def __init__(
         self,
@@ -48,10 +63,11 @@ class QNodeClient(QtCore.QObject):
         name: NodeName,
         context: Context | None = None,
         parent: QtCore.QObject = None,
+        prefix: str | None = None,
     ):
         QtCore.QObject.__init__(self, parent=parent)
-        self._host, self._name, self.conf, self.ctx = init_node_client(
-            gconf, name, context=context
+        self._host, self._name, self.conf, self.ctx, self.logger, self._full_name = (
+            init_node_client(gconf, name, type(self).__name__, context=context, prefix=prefix)
         )
 
         self._subscribers = []
@@ -97,12 +113,13 @@ class QReqClient(QNodeClient):
         context: Context | None = None,
         parent: QtCore.QObject = None,
         rep_endpoint="rep_endpoint",
+        prefix: str | None = None,
     ):
-        QNodeClient.__init__(self, gconf, name, context=context, parent=parent)
+        QNodeClient.__init__(self, gconf, name, context=context, parent=parent, prefix=prefix)
         self.req = self.ctx.add_req(
             self.conf[rep_endpoint],
             timeout_ms=get_value(gconf, self.conf, "req_timeout_ms"),
-            logger=self.__class__.__name__,
+            logger=self.logger,
         )
 
 
@@ -119,8 +136,8 @@ class QStatusSubWorker(QSubWorker):
 
     statusUpdated = QtCore.pyqtSignal(Status)
 
-    def __init__(self, lconf: dict, context, parent: QtCore.QObject = None):
-        QSubWorker.__init__(self, lconf, context, parent=parent)
+    def __init__(self, lconf: dict, context, parent: QtCore.QObject = None, logger=None):
+        QSubWorker.__init__(self, lconf, context, parent=parent, logger=logger)
         self.add_handler(lconf, b"status", self.handle_status)
 
     def handle_status(self, msg):
@@ -133,8 +150,8 @@ class QStatusDataSubWorker(QStatusSubWorker):
 
     dataUpdated = QtCore.pyqtSignal(Data)
 
-    def __init__(self, lconf: dict, context, parent: QtCore.QObject = None):
-        QStatusSubWorker.__init__(self, lconf, context, parent=parent)
+    def __init__(self, lconf: dict, context, parent: QtCore.QObject = None, logger=None):
+        QStatusSubWorker.__init__(self, lconf, context, parent=parent, logger=logger)
         self.add_handler(lconf, b"data", self.handle_data)
 
     def handle_data(self, msg):
@@ -147,8 +164,8 @@ class QStatusDataBufferSubWorker(QStatusDataSubWorker):
 
     bufferUpdated = QtCore.pyqtSignal(Buffer)
 
-    def __init__(self, lconf: dict, context, parent: QtCore.QObject = None):
-        QStatusDataSubWorker.__init__(self, lconf, context, parent=parent)
+    def __init__(self, lconf: dict, context, parent: QtCore.QObject = None, logger=None):
+        QStatusDataSubWorker.__init__(self, lconf, context, parent=parent, logger=logger)
         self.add_handler(lconf, b"buffer", self.handle_buffer)
 
     def handle_buffer(self, msg):
@@ -167,10 +184,11 @@ class QStatusSubscriber(QNodeClient):
         name: NodeName,
         context: Context | None = None,
         parent: QtCore.QObject = None,
+        prefix: str | None = None,
     ):
-        QNodeClient.__init__(self, gconf, name, context=context, parent=parent)
+        QNodeClient.__init__(self, gconf, name, context=context, parent=parent, prefix=prefix)
 
-        self.sub = QStatusSubWorker(self.conf, self.ctx)
+        self.sub = QStatusSubWorker(self.conf, self.ctx, logger=self.logger)
         # do signal connections here
         self.sub.statusUpdated.connect(self.statusUpdated)
 
@@ -190,14 +208,21 @@ class QStateClient(QStateReqClient):
         context: Context | None = None,
         parent: QtCore.QObject = None,
         rep_endpoint="rep_endpoint",
+        prefix: str | None = None,
     ):
         QStateReqClient.__init__(
-            self, gconf, name, context=context, parent=parent, rep_endpoint=rep_endpoint
+            self,
+            gconf,
+            name,
+            context=context,
+            parent=parent,
+            rep_endpoint=rep_endpoint,
+            prefix=prefix,
         )
 
         self._state = None
 
-        self.sub = QStatusSubWorker(self.conf, self.ctx)
+        self.sub = QStatusSubWorker(self.conf, self.ctx, logger=self.logger)
         # do signal connections here
         self.sub.statusUpdated.connect(self.statusUpdated)
         self.sub.statusUpdated.connect(self.check_state)
@@ -239,16 +264,23 @@ class QBasicMeasClient(QStateReqClient, BasicMeasReqMixin, ParamDictReqMixin):
         parent: QtCore.QObject = None,
         rep_endpoint="rep_endpoint",
         file_transport_dir: str | None = None,
+        prefix: str | None = None,
     ):
         QStateReqClient.__init__(
-            self, gconf, name, context=context, parent=parent, rep_endpoint=rep_endpoint
+            self,
+            gconf,
+            name,
+            context=context,
+            parent=parent,
+            rep_endpoint=rep_endpoint,
+            prefix=prefix,
         )
 
         self.init_file_transport(file_transport_dir)
 
         self._state = self._data = self._buffer = None
 
-        self.sub = QStatusDataBufferSubWorker(self.conf, self.ctx)
+        self.sub = QStatusDataBufferSubWorker(self.conf, self.ctx, logger=self.logger)
 
         # do signal connections here
         self.sub.statusUpdated.connect(self.statusUpdated)

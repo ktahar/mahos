@@ -35,6 +35,7 @@ class APODMRData(PODMRData):
     :ivar reference_history: Individual reference window means with the same shape and type.
     :ivar history_start_record: Zero-based absolute record index of the first history row.
         For empty history, this equals ``records``.
+    :ivar history_generation: Generation counter advanced whenever history is cleared.
     :ivar trace_laser_timing: Laser-start timing in trace-local time, measured from trigger.
     :ivar marker_indices: Marker indices with shape ``(4,)`` as
         ``(sig_head, sig_tail, ref_head, ref_tail)`` shared by all traces.
@@ -61,6 +62,7 @@ class APODMRData(PODMRData):
         self.signal_history = None
         self.reference_history = None
         self.history_start_record = 0
+        self.history_generation = 0
         self.trace_laser_timing = None
         self.trigger_timing = None
 
@@ -70,6 +72,7 @@ class APODMRData(PODMRData):
         self.signal_history = None
         self.reference_history = None
         self.history_start_record = self.records
+        self.history_generation = getattr(self, "history_generation", 0) + 1
 
     def can_resume(self, params: dict | None, label: str) -> bool:
         """Check resume compatibility while allowing history collection to be toggled."""

@@ -10,7 +10,6 @@ Logic and instrument control part of Spectroscopy.
 
 from mahos.msgs.common_msgs import Reply, StateReq, BinaryState
 from mahos.msgs.common_msgs import SaveDataReq, ExportDataReq, LoadDataReq
-from mahos.msgs.common_meas_msgs import Buffer
 from mahos.msgs.param_msgs import GetParamDictReq, GetParamDictLabelsReq
 from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
 from mahos_dq.msgs import spectroscopy_msgs
@@ -74,7 +73,7 @@ class Spectroscopy(BasicMeasNode):
         self.worker = Repeater(self.cli, self.logger, self.conf.get("repeater", {}))
         self.fitter = SpectroscopyFitter(self.logger)
         self.io = SpectroscopyIO(self.logger)
-        self.buffer = Buffer()
+        self.buffer = self.new_buffer()
         self.pub_timer = IntervalTimer(self.conf.get("pub_interval_sec", 0.5))
 
     def close_resources(self):

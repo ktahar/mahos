@@ -16,30 +16,39 @@ import importlib
 
 from mahos.node.comm import Context, Requester
 from mahos.node.node import join_name, split_name, infer_name, local_conf, load_gconf, get_value
-from mahos.node.log import init_topic_logger
+from mahos.node.log import DummyLogger, TopicLogger, init_topic_logger
 from mahos.msgs.common_msgs import Message, Reply, StateReq, State, Status
 from mahos.msgs.data_msgs import Data
 from mahos.util.typing import NodeName, SubHandler, MessageGetter
 
 
 def init_node_client(
-    gconf: dict, name: NodeName, context: Context | None = None
-) -> tuple[str, str, dict, Context]:
+    gconf: dict,
+    name: NodeName,
+    class_name: str,
+    context: Context | None = None,
+    prefix: str | None = None,
+) -> tuple[str, str, dict, Context, TopicLogger | DummyLogger, str]:
     """initialize NodeClient-like class without inheriting it.
 
     We must inherit QObject for GUI clients and we want avoid multiple inheritance.
     (i.e. class QSomeClient(NodeClient, QtCore.QObject): )
 
-    Use this function at the constructor of such class like below:
-    self._host, self._name, self.conf, self.ctx = init_node_client(gconf, name, context)
+    Use this function in the constructor of such a class::
+
+        self._host, self._name, self.conf, self.ctx, self.logger, self._full_name = (
+            init_node_client(gconf, name, type(self).__name__, context=context, prefix=prefix)
+        )
 
     """
 
     host, name = split_name(name)
     conf = gconf[host][name]
     ctx = Context(context=context, poll_timeout_ms=get_value(gconf, conf, "poll_timeout_ms"))
+    topic = f"{class_name}({join_name((host, name))})"
+    logger, full_name = init_topic_logger(topic, prefix)
 
-    return host, name, conf, ctx
+    return host, name, conf, ctx, logger, full_name
 
 
 class HandlerWrapper(object):
@@ -75,8 +84,9 @@ class HandlerWrapper(object):
 
 
 class SubWorker(object):
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, logger=None):
         self.ctx = context
+        self.logger = logger
         self.shutdown_ev = threading.Event()
         self.handler_wrappers = []
 
@@ -87,11 +97,17 @@ class SubWorker(object):
         handler=None,
         msg_type: T.Type[Message] | None = None,
         deserial=True,
+        conf=None,
     ) -> MessageGetter:
         hw = HandlerWrapper(handler=handler)
-        self.ctx.add_sub(
-            endpoint, topic=topic, handler=hw.handler, msg_type=msg_type, deserial=deserial
-        )
+        if conf is not None and deserial:
+            from mahos.node.data_transport import add_data_subscription
+
+            add_data_subscription(self.ctx, conf, topic, hw.handler, msg_type, logger=self.logger)
+        else:
+            self.ctx.add_sub(
+                endpoint, topic=topic, handler=hw.handler, msg_type=msg_type, deserial=deserial
+            )
         self.handler_wrappers.append(hw)
         return hw.get_latest_msg
 
@@ -127,12 +143,9 @@ class NodeClient(object):
         context: Context | None = None,
         prefix: str | None = None,
     ):
-        self._host, self._name, self.conf, self.ctx = init_node_client(
-            gconf, name, context=context
+        self._host, self._name, self.conf, self.ctx, self.logger, self._full_name = (
+            init_node_client(gconf, name, type(self).__name__, context=context, prefix=prefix)
         )
-
-        topic = "{}({})".format(self.__class__.__name__, self.joined_name())
-        self.logger, self._full_name = init_topic_logger(topic, prefix)
 
         self._subscribers = []
         self._closed = False
@@ -172,7 +185,7 @@ class NodeClient(object):
 
         """
 
-        subw = SubWorker(self.ctx)
+        subw = SubWorker(self.ctx, logger=self.logger)
         getters = []
         for topic_handler_type in topic_handler_types:
             if isinstance(topic_handler_type, (bytes, str)):
@@ -182,7 +195,15 @@ class NodeClient(object):
                 msg_type = None
             else:
                 topic, handler, msg_type = topic_handler_type
-            getters.append(subw.add_sub(self.conf[endpoint], topic, handler, msg_type))
+            getters.append(
+                subw.add_sub(
+                    self.conf[endpoint],
+                    topic,
+                    handler,
+                    msg_type,
+                    conf=self.conf if endpoint == "pub_endpoint" else None,
+                )
+            )
         self.start_subworker(subw)
         return getters
 
@@ -377,7 +398,7 @@ class EchoSubscriber(NodeClient):
                 handler = self.print_rate
             else:
                 handler = self.print_size
-            subw = SubWorker(self.ctx)
+            subw = SubWorker(self.ctx, logger=self.logger)
             subw.add_sub(self.conf["pub_endpoint"], topic, handler, deserial=False)
             self.start_subworker(subw)
         else:

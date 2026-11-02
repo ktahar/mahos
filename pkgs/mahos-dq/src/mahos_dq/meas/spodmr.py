@@ -18,6 +18,7 @@ from mahos.msgs.param_msgs import prefix_labels, remove_label_prefix
 from mahos_dq.msgs import spodmr_msgs
 from mahos_dq.msgs.spodmr_msgs import SPODMRStatus, SPODMRData, UpdatePlotParamsReq, ValidateReq
 from mahos.util.timer import IntervalTimer
+from mahos.node.data_transport import ArrayPolicy
 from mahos.meas.common_meas import BasicMeasClient, BasicMeasNode
 from mahos.meas.common_worker import DummyWorker, Switch
 from mahos_dq.meas.podmr_fitter import PODMRFitter
@@ -149,6 +150,10 @@ class SPODMR(BasicMeasNode):
 
     CLIENT = SPODMRClient
     DATA = SPODMRData
+    INCREMENTAL_ARRAYS = {
+        "data0": ArrayPolicy(axis=1, mutable_tail=0),
+        "data1": ArrayPolicy(axis=1, mutable_tail=0),
+    }
 
     def __init__(self, gconf: dict, name, context=None):
         BasicMeasNode.__init__(self, gconf, name, context=context)
@@ -170,7 +175,7 @@ class SPODMR(BasicMeasNode):
             self.worker = Pulser(self.cli, self.logger, self.conf.get("pulser", {}))
         self.fitter = PODMRFitter(self.logger, conf=self.conf.get("fitter"))
         self.io = SPODMRIO(self.logger)
-        self.buffer: Buffer[tuple[str, SPODMRData]] = Buffer()
+        self.buffer: Buffer[tuple[str, SPODMRData]] = self.new_buffer()
         self.op = SPODMRDataOperator()
         self._pub_interval = self.conf.get("pub_interval_sec", 1.0)
         self.pub_timer = IntervalTimer(self._pub_interval)
@@ -207,9 +212,12 @@ class SPODMR(BasicMeasNode):
         """Update the plot params."""
 
         success = self.worker.update_plot_params(msg.params)
-        for data in self.buffer.data_list():
-            if self.op.update_plot_params(data, msg.params):
-                data.remove_fit_data()
+        for index, data in enumerate(self.buffer.data_list()):
+            try:
+                if self.op.update_plot_params(data, msg.params):
+                    data.remove_fit_data()
+            finally:
+                self.buffer.touch(index)
         return Reply(success)
 
     def get_param_dict_labels(self, msg: GetParamDictLabelsReq) -> Reply:
