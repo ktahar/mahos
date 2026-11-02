@@ -20,7 +20,6 @@ from mahos_dq.inst.overlay.confocal_scanner_mock import DUMMY_CAPABILITY
 from mahos.util.comp import dict_equal_inspect
 
 from shared.util import get_some, expect_value
-from shared.fixtures import ctx, gconf, server, confocal, tracker, manager, confocal_conf
 
 
 def scan_params():

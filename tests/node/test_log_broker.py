@@ -11,7 +11,6 @@ Tests for LogBroker.
 import time
 import builtins
 
-from shared.fixtures import ctx, gconf, log_broker, dummy_logging
 from mahos.node.log_broker import LogBroker
 from mahos.version import RuntimeInfo
 

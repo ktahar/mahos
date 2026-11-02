@@ -11,7 +11,6 @@ Tests for mahos_dq.meas.iodmr.
 from mahos_dq.meas.iodmr import IODMRClient, IODMRIO
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, iodmr, server_conf, iodmr_conf
 
 
 def expect_iodmr(cli: IODMRClient, params: dict, poll_timeout_ms):
@@ -26,15 +25,14 @@ def expect_iodmr(cli: IODMRClient, params: dict, poll_timeout_ms):
     return expect_value(get, v, poll_timeout_ms, trials=500)
 
 
-def test_iodmr(server, iodmr, server_conf, iodmr_conf):
+def test_iodmr(server, iodmr, iodmr_conf, sg_power_bounds):
     poll_timeout_ms = iodmr_conf["poll_timeout_ms"]
-    power_bounds = tuple(server_conf["instrument"]["sg"]["conf"]["power_bounds"])
 
     iodmr.wait()
 
     params = iodmr.get_param_dict()
     power = params["power"]
-    assert (power.minimum(), power.maximum()) == power_bounds
+    assert (power.minimum(), power.maximum()) == sg_power_bounds
     assert get_some(iodmr.get_status, poll_timeout_ms).state == BinaryState.IDLE
 
     # params = iodmr_params()

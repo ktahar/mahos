@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+
+from shared.fixtures import (
+    ctx,
+    gconf,
+    server,
+    camera,
+    server_conf,
+    camera_conf,
+    grid_sweeper,
+    grid_sweeper_conf,
+    confocal_ev,
+    odmr_ev,
+    confocal_conf,
+    pos_tweaker,
+    pos_tweaker_conf,
+    recorder,
+    recorder_conf,
+    manager,
+    confocal,
+    tracker,
+    odmr,
+    manager_conf,
+    sweeper,
+    sweeper_conf,
+    tweaker,
+    tweaker_conf,
+)

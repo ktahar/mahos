@@ -13,14 +13,6 @@ import numpy as np
 from mahos.meas.grid_sweeper import GridSweeperClient, GridSweeperIO
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import (
-    ctx,
-    gconf,
-    server,
-    grid_sweeper,
-    server_conf,
-    grid_sweeper_conf,
-)
 
 
 def expect_grid_sweeper(cli: GridSweeperClient, poll_timeout_ms, sweeps: int):

@@ -10,7 +10,6 @@ Tests for Tweaker.
 
 from shared.util import get_some
 
-from shared.fixtures import ctx, gconf, server, tweaker, tweaker_conf
 import mahos.msgs.param_msgs as P
 
 

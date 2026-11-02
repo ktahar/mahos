@@ -21,7 +21,6 @@ from mahos_dq.msgs.apodmr_msgs import APODMRData, MWMode
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from shared.util import expect_value, get_some, save_load_test
-from shared.fixtures import ctx, gconf, server, apodmr, server_conf, apodmr_conf
 
 
 def expect_apodmr(cli: APODMRClient, num: int, poll_timeout_ms):

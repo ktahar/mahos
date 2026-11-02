@@ -11,20 +11,7 @@ Tests for StateManager.
 from mahos_dq.msgs.confocal_msgs import ConfocalState
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import expect_value
-
-from shared.fixtures import (
-    ctx,
-    gconf,
-    manager,
-    server,
-    confocal,
-    tracker,
-    odmr,
-    manager_conf,
-    confocal_name,
-    tracker_name,
-    odmr_name,
-)
+from shared.fixtures import confocal_name, tracker_name, odmr_name
 
 
 def expect_locked(cli, name, poll_timeout_ms):

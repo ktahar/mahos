@@ -11,7 +11,6 @@ Tests for mahos_dq.meas.hbt.
 from mahos_dq.meas.hbt import HBTClient, HBTIO
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, hbt, server_conf, hbt_conf
 
 
 def expect_hbt(cli: HBTClient, params: dict, poll_timeout_ms):

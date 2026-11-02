@@ -6,23 +6,17 @@ Exercise real measurement nodes and Python/Qt clients with incremental transport
 
 """
 
-import socket
-
 import numpy as np
 import pytest
 
-from shared.fixtures import ctx, gconf, server, odmr, spodmr, apodmr
 from mahos_dq.gui.apodmr_client import QAPODMRClient
 from mahos_dq.gui.odmr_client import QODMRClient
 from mahos_dq.gui.spodmr_client import QSPODMRClient
 
 
 @pytest.fixture
-def measurement(request, gconf, server):
+def measurement(request, gconf, server, sync_endpoint):
     name, partial = request.param
-    with socket.socket() as sync_socket:
-        sync_socket.bind(("127.0.0.1", 0))
-        sync_endpoint = f"tcp://127.0.0.1:{sync_socket.getsockname()[1]}"
     gconf["localhost"][name].update(
         data_transport="incremental",
         sync_endpoint=sync_endpoint,

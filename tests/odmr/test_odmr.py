@@ -11,7 +11,6 @@ Tests for mahos_dq.meas.odmr.
 from mahos_dq.meas.odmr import ODMRClient, ODMRIO
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, odmr, server_conf, odmr_conf
 
 
 def expect_odmr(cli: ODMRClient, params: dict, poll_timeout_ms):
@@ -26,16 +25,15 @@ def expect_odmr(cli: ODMRClient, params: dict, poll_timeout_ms):
     return expect_value(get, v, poll_timeout_ms, trials=500)
 
 
-def test_odmr(server, odmr, server_conf, odmr_conf):
+def test_odmr(server, odmr, odmr_conf, sg_power_bounds):
     poll_timeout_ms = odmr_conf["poll_timeout_ms"]
-    power_bounds = tuple(server_conf["instrument"]["sg"]["conf"]["power_bounds"])
 
     odmr.wait()
 
     params = odmr.get_param_dict("cw")
     params["num"].set(10)
     power = params["power"]
-    assert (power.minimum(), power.maximum()) == power_bounds
+    assert (power.minimum(), power.maximum()) == sg_power_bounds
     assert odmr.get_param_dict("non-existent-name") == None
     assert get_some(odmr.get_status, poll_timeout_ms).state == BinaryState.IDLE
 

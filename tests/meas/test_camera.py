@@ -11,7 +11,6 @@ Tests for mahos.meas.camera.
 from mahos.meas.camera import CameraClient, CameraIO
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, camera, server_conf, camera_conf
 
 
 def expect_camera(cli: CameraClient, params: dict, poll_timeout_ms):

@@ -10,8 +10,6 @@ Tests for reconnection function of node request.
 
 import time
 
-from shared.fixtures import ctx, gconf, server_restart, server_conf
-
 
 def wait_new_status(client, old_status, poll_timeout_ms, trials=500):
     for i in range(trials):

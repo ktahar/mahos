@@ -6,12 +6,9 @@ Test versioned buffers through real measurement nodes and Python/Qt clients.
 
 """
 
-import socket
-
 import numpy as np
 import pytest
 
-from shared.fixtures import ctx, gconf, server, odmr, podmr, spodmr, apodmr, hbt, spectroscopy
 from mahos.gui.client import QBasicMeasClient
 from mahos.msgs.common_meas_msgs import Buffer
 from mahos.node.log import DummyLogger
@@ -25,11 +22,8 @@ from mahos_dq.msgs.spectroscopy_msgs import SpectroscopyData
 
 
 @pytest.fixture
-def measurement(request, gconf, server):
+def measurement(request, gconf, server, sync_endpoint):
     name, live = request.param
-    with socket.socket() as sync_socket:
-        sync_socket.bind(("127.0.0.1", 0))
-        sync_endpoint = f"tcp://127.0.0.1:{sync_socket.getsockname()[1]}"
     gconf["localhost"][name].update(
         buffer_transport="versioned",
         data_transport=live,

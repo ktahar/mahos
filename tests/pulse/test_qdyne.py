@@ -19,7 +19,6 @@ from mahos_dq.msgs.qdyne_msgs import QdyneData, MWMode
 from mahos_dq.meas.qdyne_worker import QdyneAnalyzer, Pulser
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, get_final_data, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, qdyne, server_conf, qdyne_conf
 
 
 def _qt_binding_loaded() -> bool:

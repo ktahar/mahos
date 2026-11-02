@@ -22,7 +22,6 @@ from mahos.msgs import param_msgs as P
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos_dq.meas.podmr_worker import Pulser, PODMRDataOperator
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, podmr, server_conf, podmr_conf
 from podmr_patterns import patterns
 
 

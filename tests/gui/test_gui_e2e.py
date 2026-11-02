@@ -23,16 +23,6 @@ from mahos.gui.recorder import RecorderMainWindow
 from mahos.gui.sweeper import SweeperWidget
 from mahos.msgs.common_msgs import BinaryState
 from mahos.node.node import local_conf
-from shared.fixtures import (
-    ctx,
-    gconf,
-    server,
-    global_params,
-    camera,
-    sweeper,
-    grid_sweeper,
-    recorder,
-)
 
 
 GUI_TIMEOUT_MS = 15_000

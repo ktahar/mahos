@@ -23,7 +23,7 @@ from mahos.node.buffer_transport import (
     BufferSubscriber,
     response,
 )
-from mahos.node.comm import Context, serialize_pickle, deserialize
+from mahos.node.comm import serialize_pickle, deserialize
 from mahos.node.transport_util import TransportConfig
 from mahos.node.data_transport import (
     ArrayPolicy,
@@ -41,23 +41,20 @@ def dataset(value):
 
 
 @pytest.fixture
-def transport():
-    zctx = zmq.Context()
-    server = Context(zctx, poll_timeout_ms=1)
-    client = Context(zctx, poll_timeout_ms=1)
+def transport(transport_contexts):
+    server, client = transport_contexts
     suffix = uuid.uuid4().hex
     conf = {
         "buffer_transport": "versioned",
         "pub_endpoint": f"inproc://buffer-pub-{suffix}",
         "sync_endpoint": f"inproc://buffer-sync-{suffix}",
     }
-    service = SnapshotService(zctx, conf["sync_endpoint"], ("initial", 0, None), DummyLogger())
+    service = SnapshotService(
+        server.zmq_context(), conf["sync_endpoint"], ("initial", 0, None), DummyLogger()
+    )
     server.add_close_service(service)
     pub = BufferPublisher(server, conf["pub_endpoint"], service)
     yield server, client, conf, service, pub
-    client.close()
-    server.close()
-    zctx.term()
 
 
 def pump(client, condition, publish=None):

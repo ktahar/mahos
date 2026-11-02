@@ -26,19 +26,6 @@ from mahos_dq.gui.spodmr import SPODMRMainWindow
 from mahos_dq.gui.apodmr import APODMRMainWindow
 from mahos_dq.gui.iodmr import IODMRMainWindow
 from mahos_dq.gui.spectroscopy import SpectroscopyMainWindow
-from shared.fixtures import (
-    ctx,
-    gconf,
-    server,
-    global_params,
-    spectroscopy,
-    odmr,
-    hbt,
-    podmr,
-    apodmr,
-    spodmr,
-    iodmr,
-)
 
 
 GUI_TIMEOUT_MS = 30_000

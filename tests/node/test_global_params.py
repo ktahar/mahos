@@ -10,8 +10,6 @@ Tests for GlobalParams.
 
 from shared.util import expect_value
 
-from shared.fixtures import ctx, gconf, global_params, global_params_2clients, gparams_conf
-
 
 def expect_param(cli, key, value, poll_timeout_ms):
     return expect_value(lambda: cli.get_param(key), value, poll_timeout_ms, trials=500)

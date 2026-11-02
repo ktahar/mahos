@@ -53,10 +53,8 @@ class CompressedData(Message):
 
 
 @pytest.fixture
-def transport():
-    zctx = zmq.Context()
-    server = Context(zctx, poll_timeout_ms=1)
-    client = Context(zctx, poll_timeout_ms=1)
+def transport(transport_contexts):
+    server, client = transport_contexts
     suffix = uuid.uuid4().hex
     conf = {
         "data_transport": "incremental",
@@ -64,9 +62,6 @@ def transport():
         "sync_endpoint": f"inproc://sync-{suffix}",
     }
     yield server, client, conf
-    client.close()
-    server.close()
-    zctx.term()
 
 
 @pytest.fixture

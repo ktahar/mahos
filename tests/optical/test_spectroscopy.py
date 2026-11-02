@@ -11,7 +11,6 @@ Tests for mahos.meas.spectroscopy.
 from mahos_dq.meas.spectroscopy import SpectroscopyClient, SpectroscopyIO
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, spectroscopy, server_conf, spectroscopy_conf
 
 
 def expect_spectroscopy(cli: SpectroscopyClient, params: dict, poll_timeout_ms):

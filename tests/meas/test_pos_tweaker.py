@@ -11,8 +11,6 @@ Tests for PosTweaker.
 from mahos.meas.pos_tweaker import PosTweakerClient
 from shared.util import get_some, expect_value
 
-from shared.fixtures import ctx, gconf, server, pos_tweaker, pos_tweaker_conf
-
 
 def expect_target(cli: PosTweakerClient, targets: dict, poll_timeout_ms):
     def get():

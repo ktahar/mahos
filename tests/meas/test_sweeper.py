@@ -11,7 +11,6 @@ Tests for Sweeper.
 from mahos.meas.sweeper import SweeperClient, SweeperIO
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, sweeper, server_conf, sweeper_conf
 
 
 def expect_sweeper(cli: SweeperClient, poll_timeout_ms, sweeps: int):

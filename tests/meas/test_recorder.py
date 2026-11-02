@@ -11,7 +11,6 @@ Tests for Recorder.
 from mahos.meas.recorder import RecorderClient, RecorderIO
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, recorder, server_conf, recorder_conf
 
 
 def expect_recorder(cli: RecorderClient, poll_timeout_ms, inst: str, length: int = 3):

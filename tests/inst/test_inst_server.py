@@ -15,8 +15,6 @@ from mahos_dq.msgs.confocal_msgs import Axis
 from mahos_dq.inst.overlay.confocal_scanner_mock import DUMMY_CAPABILITY
 from mahos.inst.server import OverlayConf
 
-from shared.fixtures import ctx, gconf, server_2clients
-
 
 def test_overlay_conf():
     # dummy instrument dict

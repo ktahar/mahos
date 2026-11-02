@@ -19,7 +19,6 @@ from mahos_dq.msgs.spodmr_msgs import SPODMRData, MWMode
 from mahos_dq.meas.podmr_generator.generator import make_generators
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import get_some, expect_value, save_load_test
-from shared.fixtures import ctx, gconf, server, spodmr, server_conf, spodmr_conf
 
 
 def expect_spodmr(cli: SPODMRClient, num: int, poll_timeout_ms):

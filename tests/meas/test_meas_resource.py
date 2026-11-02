@@ -12,8 +12,6 @@ from mahos_dq.msgs.confocal_msgs import ConfocalState
 from mahos.msgs.common_msgs import BinaryState
 from shared.util import expect_value
 
-from shared.fixtures import ctx, gconf, server, confocal_ev, odmr_ev, server_conf, confocal_conf
-
 
 def expect_locked(cli, name, poll_timeout_ms):
     get = lambda: cli.is_locked(name)
