@@ -24,6 +24,34 @@ from mahos.node.log import DummyLogger
 from mahos.util.file_transport import SharedFileTransport
 
 
+@pytest.mark.parametrize(
+    ("filename", "suffix"),
+    [
+        ("aaa.bbb.ccc.odmr.h5", ".odmr.h5"),
+        ("aaa.bbb.pkl.bz2", ".pkl.bz2"),
+        ("aaa.bbb.png", ".png"),
+        ("aaa.bbb.pkl", ".pkl"),
+        ("aaa.bbb.bz2", ".bz2"),
+        ("data.h5", ".h5"),
+        (".h5", ".h5"),
+        (".odmr.h5", ".odmr.h5"),
+        (".pkl.bz2", ".pkl.bz2"),
+        (".png", ".png"),
+        ("data", ""),
+        ("", ""),
+    ],
+)
+def test_format_suffix(tmp_path, filename, suffix):
+    transport = SharedFileTransport(tmp_path)
+    assert transport.suffix(filename) == suffix
+    if filename:
+        assert transport.suffix(tmp_path / filename) == suffix
+    name = transport.new_name("save", filename)
+    assert name.startswith("mahos_save_")
+    assert len(name) == len("mahos_save_") + 32 + len(suffix)
+    assert name.endswith(suffix)
+
+
 def test_names_resolution_and_compound_suffix(tmp_path):
     transport = SharedFileTransport(tmp_path)
     for purpose, prefix in transport.PREFIXES.items():

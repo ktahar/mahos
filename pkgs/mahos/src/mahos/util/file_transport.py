@@ -58,12 +58,23 @@ class SharedFileTransport:
 
     @staticmethod
     def suffix(path: str | os.PathLike[str]) -> str:
-        """Return all suffixes of a path (for example, ``.data.h5``)."""
+        """Return the format suffix used for transport and staging names.
+
+        HDF5 names retain up to two suffix components (for example, ``.odmr.h5``),
+        and compressed pickle names retain ``.pkl.bz2``. Other names retain only
+        the final extension. Earlier dotted filename components are discarded.
+        Leading-dot inputs are treated as extension-only names, so ``.h5`` and
+        ``.odmr.h5`` are also supported. Names without an extension return ``""``.
+
+        """
 
         basename = os.path.basename(os.fspath(path))
         if basename.startswith(".") and basename not in (".", ".."):
-            return basename
-        return "".join(Path(basename).suffixes)
+            basename = "file" + basename
+        suffixes = Path(basename).suffixes
+        if suffixes[-1:] == [".h5"] or suffixes[-2:] == [".pkl", ".bz2"]:
+            return "".join(suffixes[-2:])
+        return "".join(suffixes[-1:])
 
     def new_name(self, purpose: str, source_name: str | os.PathLike[str] = "") -> str:
         """Return a UUID-based basename partitioned by transport purpose."""
