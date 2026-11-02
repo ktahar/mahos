@@ -96,13 +96,19 @@ def response(request_id, epoch, versions, latest):
 class BufferPublisher:
     """Commit changed entries once, then periodically publish their small manifest.
 
-    Publication owns the node-thread boundary: changed objects are copied before they become
-    visible to the recovery thread. Only the current publication is retained.
+    Publication is the commit boundary on the node thread: new or marked datasets are deep
+    copied before they become visible to the recovery thread. Unchanged entry versions reuse
+    their committed copies. Callers must use :class:`~mahos.msgs.common_meas_msgs.TrackedBuffer`
+    operations for structural edits and ``touch()`` for dataset or metadata changes.
+    Until the next publication, recovery serves the preceding coherent committed state.
+    Only the current publication is retained.
 
     The manifest contains the protocol version, buffer epoch, buffer revision, and
     ordered ``(entry_id, entry_revision, file_name)`` entries.
     Duplicate filenames have independent identities; removing and reloading a file allocates a
-    fresh identity. Replacing the buffer transport state or restarting the node changes its epoch.
+    fresh identity. Replacing the tracked buffer or restarting the node changes its epoch.
+    Every ``publish()`` call sends the manifest, even when it is unchanged, so idle nodes must
+    continue publishing for newly connected clients.
 
     """
 
@@ -143,11 +149,20 @@ class BufferSubscriber:
     """Reconstruct complete ordinary buffers on the subscription thread.
 
     Clients subscribe to the buffer manifests, cache the buffer contents,
-    and request missing buffer entries. One bounded request is outstanding at a time.
+    and request missing exact entry versions through a separate DEALER socket owned by the
+    subscription thread. Nonblocking polling keeps one bounded request outstanding at a time;
+    unanswered requests are retried after five seconds with the same request ID and arguments.
     Cache entries are private and limited to the latest manifest;
-    callbacks receive independent copies. Identical manifests do not repeat callbacks.
+    callbacks receive deep copies in manifest order only when all required entries are available.
+    Identical manifests do not repeat callbacks. Clients retain their last complete buffer
+    while a replacement is being assembled.
 
-    This may skip intermediate manifests and eventually converge when changes stop
+    A stale-version response supplies the latest manifest without entries, allowing the client
+    to request current versions. Adopting a newer manifest cancels the pending request and
+    discards cached versions no longer required; an epoch change clears the cache.
+    Responses that do not match the pending request are ignored.
+
+    Clients may skip intermediate manifests and eventually converge when changes stop
     and communication succeeds.
 
     """

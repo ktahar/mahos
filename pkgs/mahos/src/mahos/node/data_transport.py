@@ -150,7 +150,8 @@ class SnapshotService:
     """Serve committed replicas on a dedicated thread with a one-revision byte cache.
 
     The owning node replaces the latest immutable publication under a short lock.
-    This serves committed publications, never the worker's live data.
+    The service captures these publications under the lock, then serializes them outside it;
+    it never reads the worker's live data.
 
     Socket creation, request processing, serialization, and socket closure belong solely to
     the service thread. Shutdown waits for any serialization already in progress to finish.
@@ -158,7 +159,10 @@ class SnapshotService:
     Live-data revisions are serialized only when a snapshot is requested, caching the most
     recently serialized revision for reuse across clients. Buffer requests share this service
     but retrieve bounded batches of exact entry versions from a separate immutable publication.
+    Revision-only live-data queries return without serializing the state. If a requested buffer
+    version is no longer available, the response contains the latest manifest and no entries.
     No historical snapshot queue or buffer versions are stored.
+    Serialization bypasses custom dataset serialization to preserve complete concrete objects.
     Queued duplicate requests from the same client are coalesced within bounded batches;
     later retries still receive responses.
 
@@ -319,17 +323,25 @@ class SnapshotService:
 class IncrementalPublisher:
     """Publish array suffixes and serve immutable, revisioned snapshots.
 
-    Published prefixes must be immutable except for the configured mutable tail;
-    call ``invalidate()`` after other in-place edits.
+    Published prefixes must remain unchanged except for the configured mutable tail.
+    Call ``invalidate()`` before the next publication after other in-place edits,
+    unless a policy's generation token forces replacement of the affected array.
+    Replacing the source object or calling ``invalidate()`` starts a new epoch.
 
     Publication runs on the node thread; a dedicated service handles snapshot requests.
     The context owns snapshot service shutdown.
     This removes recovery serialization from the measurement thread, but does not eliminate
     CPU or memory-bandwidth contention. Publications (and client reconstructions) copy arrays.
 
-    Replacing the source object automatically starts a new epoch; in-place mutations on arrays
-    require ``invalidate()``.  Each publication captures metadata and payloads before
-    returning to the worker. Committed replicas are never mutated by the publisher.
+    Each update contains the epoch, base and new revisions, a deep copy of metadata, and
+    per-array ``(axis, drop, start, payload)`` operations. An operation retains ``start``
+    slices after dropping ``drop`` leading slices from the previous array, then appends the
+    copied payload; ``start == 0`` replaces the array.
+    This supports both mutable tails and rolling arrays with cumulative slice counters.
+
+    Each publication captures metadata and payloads before returning to the worker and
+    commits the reconstructed replica before sending the update.
+    Committed replicas are never mutated by the publisher.
 
     """
 
@@ -435,9 +447,15 @@ class IncrementalSubscriber:
     Unanswered requests are retried after five seconds using the same request ID and arguments,
     so responses remain valid when acquisition or transfer takes longer.
     Duplicate responses are ignored once the logical request completes.
-    Recovery is asynchronous and does not use the client's ordinary measurement request socket.
+    Recovery uses a separate DEALER socket owned by the subscription thread, with one logical
+    request outstanding at a time. Polling is nonblocking and does not use the client's ordinary
+    measurement request socket. Revision checks detect missed final updates even when no
+    further publications arrive.
 
-    A disconnected client retains its last complete data object.
+    Updates are validated and assembled before replacing the private replica. Handlers receive
+    deep copies of complete revisions, so their mutations cannot affect later reconstruction.
+    A disconnected client retains its last complete data object; recovery may skip intermediate
+    revisions.
 
     """
 

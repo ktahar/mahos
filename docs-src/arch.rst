@@ -9,6 +9,7 @@ As introduced in :doc:`overview`, the mahos system consists of nodes that are ca
    arch_node
    arch_inst
    arch_meas
+   arch_meas_data_transport
    arch_gui
 
 .. figure:: ./img/mahos-layers.svg

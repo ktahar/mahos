@@ -17,7 +17,7 @@ Enable this in the measurement node's configuration::
 ``data_transport`` defaults to ``"pubsub"``, which preserves conventional full-object publication.
 ``sync_endpoint`` is required in incremental mode and must be a distinct, client-accessible endpoint.
 
-Among the builtin BasicMeasNodes, ODMR, APODMR, and SPODMR support the incremental transport now.
+Among the built-in BasicMeasNodes, ODMR, APODMR, and SPODMR support incremental transport.
 ODMR sends ``data`` and ``bg_data`` along axis 1, retransmitting the last column because it may still be filled in place.
 SPODMR sends complete appended columns of ``data0`` and ``data1`` along axis 1, without a mutable tail.
 APODMR sends ``raw_data`` along axis 0 using its cumulative ``records`` counter.
@@ -41,11 +41,11 @@ the array must contain the latest slices ending at that count.
 This rolling array mode cannot be combined with a mutable tail.
 The optional ``generation_attr`` names a scalar generation token whose change forces array replacement.
 For example, APODMR increments ``history_generation`` whenever history is cleared, including rebuilds between publications.
-The existing ``self.data_pub.publish(data)`` calls remain unchanged, but care must be taken on mutable operations on the data.
-Previously published elements outside the mutable tail must not change (that breaks basic assumption of this transport mechanism).
+Existing ``self.data_pub.publish(data)`` calls remain unchanged.
+Previously published elements outside the mutable tail must remain unchanged unless replacement is forced.
 Metadata and arrays must be coherent while ``publish()`` runs, as with conventional serialization.
 Replacing the data object starts a new generation; uncounted array shrinkage, dtype changes,
-and changes to other dimensions cause full array replacement (though these should not happen in normal operation).
+and changes to other dimensions cause full array replacement.
 When an in-place edit to historical elements cannot be avoided,
 call ``self.data_pub.invalidate()`` before the next publication.
 
@@ -91,12 +91,9 @@ in node-owned storage, outside persisted measurement data and delivered buffer o
 Keep batch mutations on the node thread, mark all affected entries, then publish.
 Use ``finally`` where an operation can partially modify data before raising:
 an error must not leave changed data associated with its old revision.
-Common fitting and fit clearing, plus PODMR/APODMR/SPODMR/HBT plot updates, follow this contract.
+Common fitting and fit clearing operations, as well as PODMR/APODMR/SPODMR/HBT plot updates, follow this contract.
 Plot-update marking is conservative because these operations can modify metadata even when no new analysis result is reported.
 
-Publication is the commit boundary. It copies only new or marked datasets into immutable
-transport-owned objects before the recovery thread can serialize them.
-Until the next publication, recovery serves the preceding coherent committed state.
-Serialization bypasses custom dataset serialization so complete concrete objects are preserved.
-Full-object copies and serialization remain costs; reanalysis of every entry requires downloading every entry once.
-There are no acknowledgement barriers, historical replay logs, or zero-copy deliveries.
+Changes become available to clients at the next publication.
+Clients may skip intermediate buffer revisions; versioned transport does not provide a history of changes.
+Copying and serialization still have a cost: reanalysis of every entry requires downloading every entry again.
