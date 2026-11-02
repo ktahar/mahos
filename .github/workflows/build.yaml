@@ -30,15 +30,17 @@ jobs:
         run: |
           ruff format --check .
       - name: Test with pytest (excluding GUI E2E)
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: |
           pytest --timeout=30 -m "not gui_e2e" \
-            --ignore=tests/mahos/test_gui_e2e.py \
-            --ignore=tests/mahos-dq/test_gui_e2e_dq.py
+            --ignore=tests/gui/test_gui_e2e.py \
+            --ignore=tests/gui/test_gui_e2e_dq.py
       - name: Test GUI E2E with pytest
         if: ${{ matrix.python-version == '3.12' }}
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
           pytest --timeout=80 -m "gui_e2e" \
-            tests/mahos/test_gui_e2e.py \
-            tests/mahos-dq/test_gui_e2e_dq.py
+            tests/gui/test_gui_e2e.py \
+            tests/gui/test_gui_e2e_dq.py

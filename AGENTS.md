@@ -72,7 +72,7 @@ is excluded from formatting and linting.
 ## Testing
 
 Tests use pytest. Name test files `test_*.py`, and focus new unit tests on the module you change.
-Run targeted tests with `pytest tests/mahos/test_x.py`. Use `tests/conf.toml` as a sample test
+Run targeted tests with `pytest tests/<area>/test_x.py`. Use `tests/shared/conf.toml` as a sample test
 configuration.
 
 ## Commit Messages
@@ -95,7 +95,7 @@ Do not use backticks in commit subjects or bodies.
 - Avoid QObject-based helpers that introduce unnecessary object references or signal/slot
   connections; these can make GUI teardown nondeterministic.
 - Avoid excessive GUI component tests built around monkeypatching or ad hoc mocks.
-  Prefer end-to-end tests (`tests/mahos/test_gui_e2e.py` or `tests/mahos-dq/test_gui_e2e_dq.py`)
+  Prefer end-to-end tests (`tests/gui/test_gui_e2e.py` or `tests/gui/test_gui_e2e_dq.py`)
   or unit tests focused on important logic.
 
 ## CLI Completion Performance

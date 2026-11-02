@@ -44,7 +44,7 @@ With your config, use the `command line interface <https://toyotacrdl.github.io/
 
 - The `tutorial <https://toyotacrdl.github.io/mahos/tutorial.html>`_ and corresponding `examples <https://github.com/ToyotaCRDL/mahos/tree/main/examples>`_ are provided to get used to these concepts.
 - `Realistic examples <https://github.com/ToyotaCRDL/mahos/tree/main/examples/cfm>`_ are provided for confocal microscope / ODMR system using ``mahos-dq``.
-- There is an `example config <https://github.com/ToyotaCRDL/mahos/blob/main/tests/conf.toml>`_ for the unit test too.
+- There is an `example config <https://github.com/ToyotaCRDL/mahos/blob/main/tests/shared/conf.toml>`_ for the unit test too.
   Here you can observe main built-in measurement logics and GUIs with mock instruments.
 
 Cite
