@@ -14,7 +14,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from mahos.util.comp import dict_isclose
-from mahos.util.conv import real_fft
+from mahos.util.signal import real_fft
 from mahos.msgs.common_msgs import Request
 from mahos.msgs.common_meas_msgs import BasicMeasData
 from mahos_dq.msgs.podmr_msgs import TDCStatus

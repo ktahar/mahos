@@ -21,7 +21,7 @@ from mahos_dq.meas.podmr_fitter import PODMRFitter
 from mahos.node.log import DummyLogger
 from mahos.util.io import save_pickle_or_h5, load_pickle_or_h5
 from mahos.util.unit import SI_scale
-from mahos.util.conv import real_fft, real_fftfreq
+from mahos.util.signal import real_fft, real_fftfreq
 from mahos.util.plot import colors_tab20_pair
 
 

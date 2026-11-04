@@ -43,7 +43,7 @@ from mahos.gui.dialog import save_dialog, load_dialog, export_dialog
 from mahos.node.node import local_conf, join_name
 from mahos.util.plot import colors_tab20_pair
 from mahos.util.math_phys import round_halfint, round_evenint
-from mahos.util.conv import real_fft
+from mahos.util.signal import real_fft
 
 
 Policy = QtWidgets.QSizePolicy.Policy

@@ -20,7 +20,7 @@ from mahos_dq.msgs.podmr_msgs import PODMRData
 from mahos.msgs.fit_msgs import PeakType
 from mahos.msgs import param_msgs as P
 from mahos.node.log import DummyLogger
-from mahos.util.conv import real_fft
+from mahos.util.signal import real_fft
 from mahos.meas.common_fitter import gaussian, lorentzian, voigt, BaseFitter
 from mahos_dq.meas.odmr_fitter import guess_single_peak, guess_multi_peak, guess_background
 

@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 
 """
-Conversion module.
+Conversion utility module.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
 
-Defines generic conversion functions.
+Defines generic / miscellaneous conversion functions.
 
 """
 
 from __future__ import annotations
 import typing as T
+import warnings
 
 import numpy as np
 
@@ -68,28 +69,6 @@ def invert_mapping(d: T.Mapping[K, V]) -> dict[V, list[K]]:
     return ret
 
 
-def real_fft(xdata, ydata, remove_dc=True):
-    from scipy import fft
-
-    N = len(xdata)
-    if N != len(ydata):
-        raise ValueError("xdata and ydata has wrong length")
-
-    freq = fft.fftfreq(N, abs(xdata[1] - xdata[0]))
-    spec = fft.rfft(ydata)
-    if remove_dc:
-        spec[0] = 0
-
-    return freq[: N // 2], np.abs(spec[: N // 2]) / N
-
-
-def real_fftfreq(xdata):
-    from scipy import fft
-
-    N = len(xdata)
-    return fft.fftfreq(len(xdata), abs(xdata[1] - xdata[0]))[: N // 2]
-
-
 def _clip_angle(theta, min_, max_, step):
     while theta < min_:
         theta += step
@@ -104,3 +83,29 @@ def clip_angle_degrees(theta: float | np.ndarray, min_=0.0, max_=360.0) -> float
 
 def clip_angle_radians(theta: float | np.ndarray, min_=0.0, max_=2 * np.pi) -> float | np.ndarray:
     return _clip_angle(theta, min_, max_, 2 * np.pi)
+
+
+def real_fft(xdata, ydata, remove_dc=True):
+    """Deprecated alias for :func:`mahos.util.signal.real_fft`."""
+
+    import mahos.util.signal
+
+    warnings.warn(
+        "mahos.util.conv.real_fft is deprecated; use mahos.util.signal.real_fft instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return mahos.util.signal.real_fft(xdata, ydata, remove_dc=remove_dc)
+
+
+def real_fftfreq(xdata):
+    """Deprecated alias for :func:`mahos.util.signal.real_fftfreq`."""
+
+    import mahos.util.signal
+
+    warnings.warn(
+        "mahos.util.conv.real_fftfreq is deprecated; use mahos.util.signal.real_fftfreq instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return mahos.util.signal.real_fftfreq(xdata)
