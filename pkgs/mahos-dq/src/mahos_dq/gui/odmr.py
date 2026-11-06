@@ -20,7 +20,11 @@ import pyqtgraph as pg
 from mahos.gui import Qt
 from mahos.gui.Qt import QtCore, QtWidgets, QtGui
 
-from mahos_dq.gui.plot import update_cursor_label
+from mahos_dq.gui.plot import (
+    create_crosshair,
+    set_crosshair_visible,
+    update_cursor,
+)
 from mahos_dq.gui.ui.odmr import Ui_ODMR
 from mahos_dq.gui.ui.odmr_peaks import Ui_ODMRPeaks
 from mahos_dq.gui.odmr_client import QODMRClient
@@ -119,6 +123,8 @@ class PlotWidget(QtWidgets.QWidget):
             self.complexBox,
         ):
             hl0.addWidget(w)
+        self.showCrosshairBox = QtWidgets.QCheckBox("Show crosshair", parent=self)
+        hl0.addWidget(self.showCrosshairBox)
         hl0.addItem(spacer)
 
         hl = QtWidgets.QHBoxLayout()
@@ -133,6 +139,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel("Ready")
         vl.addWidget(self.label)
         self.setLayout(vl)
+        self.showCrosshairBox.toggled.connect(self.toggle_crosshair)
 
     def init_view(self):
         self.layout = pg.GraphicsLayout()
@@ -153,6 +160,8 @@ class PlotWidget(QtWidgets.QWidget):
         self.img_plot.setLabel("left", "Number of accumulation")
 
         self.plot.scene().sigMouseMoved.connect(self.update_pos)
+        self._crosshair = create_crosshair(self.plot)
+        self._crosshair_initialized = False
         self.showimgBox.toggled.connect(self.toggle_image)
         self.normalizenBox.valueChanged.connect(self.update_normalize)
 
@@ -187,7 +196,14 @@ class PlotWidget(QtWidgets.QWidget):
         self.img.setTransform(QtGui.QTransform.fromScale(data.step(), 1.0))
 
     def update_pos(self, pos):
-        update_cursor_label(pos, self.plot, self.label)
+        update_cursor(pos, self.plot, self.label, self._crosshair)
+
+    def toggle_crosshair(self, visible):
+        set_crosshair_visible(
+            self.plot, self._crosshair, visible, center=not self._crosshair_initialized
+        )
+        if visible:
+            self._crosshair_initialized = True
 
     def add_error_bar(self, x, y, height, pen):
         item = pg.ErrorBarItem(x=x, y=y, height=height, pen=pen)

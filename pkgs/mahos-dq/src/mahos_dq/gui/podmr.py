@@ -24,7 +24,11 @@ import pyqtgraph as pg
 from mahos.gui import Qt
 from mahos.gui.Qt import QtCore, QtWidgets, QtGui
 
-from mahos_dq.gui.plot import update_cursor_label
+from mahos_dq.gui.plot import (
+    create_crosshair,
+    set_crosshair_visible,
+    update_cursor,
+)
 from mahos_dq.gui.ui.podmr import Ui_PODMR
 from mahos_dq.gui.ui.podmr_nmr_table import Ui_NMRTable
 from mahos_dq.gui.ui.podmr_autosave import Ui_PODMRAutoSave
@@ -134,6 +138,8 @@ class PlotWidget(QtWidgets.QWidget):
         spacer = QtWidgets.QSpacerItem(40, 20, Policy.Expanding, Policy.Minimum)
         for w in (self.fontsizeBox,):
             hl0.addWidget(w)
+        self.showCrosshairBox = QtWidgets.QCheckBox("Show crosshair", parent=self)
+        hl0.addWidget(self.showCrosshairBox)
         hl0.addItem(spacer)
 
         vl = QtWidgets.QVBoxLayout()
@@ -144,6 +150,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel("Ready")
         vl.addWidget(self.label)
         self.setLayout(vl)
+        self.showCrosshairBox.toggled.connect(self.toggle_crosshair)
 
     def init_view(self):
         self.layout = pg.GraphicsLayout()
@@ -151,9 +158,18 @@ class PlotWidget(QtWidgets.QWidget):
         self.plot = self.layout.addPlot(row=0, col=0, lockAspect=False)
         self.plot.showGrid(x=True, y=True)
         self.plot.scene().sigMouseMoved.connect(self.update_pos)
+        self._crosshair = create_crosshair(self.plot)
+        self._crosshair_initialized = False
 
     def update_pos(self, pos):
-        update_cursor_label(pos, self.plot, self.label)
+        update_cursor(pos, self.plot, self.label, self._crosshair)
+
+    def toggle_crosshair(self, visible):
+        set_crosshair_visible(
+            self.plot, self._crosshair, visible, center=not self._crosshair_initialized
+        )
+        if visible:
+            self._crosshair_initialized = True
 
     def plot_analyzed(self, data_list):
         self.plot.clearPlots()
@@ -289,6 +305,8 @@ class AltPlotWidget(QtWidgets.QWidget):
         spacer = QtWidgets.QSpacerItem(40, 20, Policy.Expanding, Policy.Minimum)
         for w in (self.modeBox, self.zeropadBox, self.removeDCBox, self.fontsizeBox):
             hl0.addWidget(w)
+        self.showCrosshairBox = QtWidgets.QCheckBox("Show crosshair", parent=self)
+        hl0.addWidget(self.showCrosshairBox)
         hl0.addItem(spacer)
 
         vl = QtWidgets.QVBoxLayout()
@@ -299,6 +317,7 @@ class AltPlotWidget(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel("Ready")
         vl.addWidget(self.label)
         self.setLayout(vl)
+        self.showCrosshairBox.toggled.connect(self.toggle_crosshair)
 
     def init_view(self):
         self.layout = pg.GraphicsLayout()
@@ -306,12 +325,21 @@ class AltPlotWidget(QtWidgets.QWidget):
         self.plot = self.layout.addPlot(row=0, col=0, lockAspect=False)
         self.plot.showGrid(x=True, y=True)
         self.plot.scene().sigMouseMoved.connect(self.update_pos)
+        self._crosshair = create_crosshair(self.plot)
+        self._crosshair_initialized = False
 
         # TODO only for FFT
         self.plot.setLabel("left", "FFT spectrum")
 
     def update_pos(self, pos):
-        update_cursor_label(pos, self.plot, self.label)
+        update_cursor(pos, self.plot, self.label, self._crosshair)
+
+    def toggle_crosshair(self, visible):
+        set_crosshair_visible(
+            self.plot, self._crosshair, visible, center=not self._crosshair_initialized
+        )
+        if visible:
+            self._crosshair_initialized = True
 
     def get_mode(self) -> str:
         """Get current AltPlot's mode. One of (None, FFT)."""
@@ -424,6 +452,8 @@ class RawPlotWidget(QtWidgets.QWidget):
         self.raw_plot = glw.addPlot(lockAspect=False)
         self.raw_plot.showGrid(x=True, y=True)
         self.raw_plot.scene().sigMouseMoved.connect(self.update_pos)
+        self._crosshair = create_crosshair(self.raw_plot)
+        self._crosshair_initialized = False
         self.raw_plot.setLabel("bottom", "Time", "s")
         self.raw_plot.setLabel("left", "Events")
 
@@ -487,6 +517,8 @@ class RawPlotWidget(QtWidgets.QWidget):
         hl.addWidget(self.numBox)
         hl.addWidget(self.marginBox)
         hl.addWidget(self.fontsizeBox)
+        self.showCrosshairBox = QtWidgets.QCheckBox("Show crosshair", parent=self)
+        hl.addWidget(self.showCrosshairBox)
         hl.addItem(spacer)
         vl = QtWidgets.QVBoxLayout()
         vl.addLayout(hl)
@@ -494,9 +526,17 @@ class RawPlotWidget(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel("Ready")
         vl.addWidget(self.label)
         self.setLayout(vl)
+        self.showCrosshairBox.toggled.connect(self.toggle_crosshair)
 
     def update_pos(self, pos):
-        update_cursor_label(pos, self.raw_plot, self.label)
+        update_cursor(pos, self.raw_plot, self.label, self._crosshair)
+
+    def toggle_crosshair(self, visible):
+        set_crosshair_visible(
+            self.raw_plot, self._crosshair, visible, center=not self._crosshair_initialized
+        )
+        if visible:
+            self._crosshair_initialized = True
 
     def _show_empty(self):
         self._raw_item.setData([0, 1], [0, 0])

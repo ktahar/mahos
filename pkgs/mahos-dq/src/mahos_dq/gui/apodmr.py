@@ -21,7 +21,11 @@ from mahos.gui.gui_node import GUINode, get_gui_logger
 from mahos.gui.dialog import load_dialog
 import mahos.util.validation as V
 
-from mahos_dq.gui.plot import update_cursor_label
+from mahos_dq.gui.plot import (
+    create_crosshair,
+    set_crosshair_visible,
+    update_cursor,
+)
 from mahos_dq.gui.ui.apodmr import Ui_APODMR
 from mahos_dq.gui.apodmr_client import QAPODMRClient
 from mahos_dq.gui.podmr import (
@@ -70,6 +74,8 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
         self.raw_plot = glw.addPlot(lockAspect=False)
         self.raw_plot.showGrid(x=True, y=True)
         self.raw_plot.scene().sigMouseMoved.connect(self.update_pos)
+        self._crosshair = create_crosshair(self.raw_plot)
+        self._crosshair_initialized = False
         self.raw_plot.setLabel("bottom", "Time", "s")
         self.raw_plot.setLabel("left", "Signal")
         self.raw_plot.addLegend()
@@ -123,6 +129,8 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
         hl.addWidget(self.indexBox)
         hl.addWidget(self.numBox)
         hl.addWidget(self.fontsizeBox)
+        self.showCrosshairBox = QtWidgets.QCheckBox("Show crosshair", parent=self)
+        hl.addWidget(self.showCrosshairBox)
         hl.addItem(spacer)
 
         vl = QtWidgets.QVBoxLayout()
@@ -131,9 +139,17 @@ class APODMRRawPlotWidget(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel("Ready")
         vl.addWidget(self.label)
         self.setLayout(vl)
+        self.showCrosshairBox.toggled.connect(self.toggle_crosshair)
 
     def update_pos(self, pos):
-        update_cursor_label(pos, self.raw_plot, self.label)
+        update_cursor(pos, self.raw_plot, self.label, self._crosshair)
+
+    def toggle_crosshair(self, visible):
+        set_crosshair_visible(
+            self.raw_plot, self._crosshair, visible, center=not self._crosshair_initialized
+        )
+        if visible:
+            self._crosshair_initialized = True
 
     def _clear_traces(self):
         for item in self._trace_items:

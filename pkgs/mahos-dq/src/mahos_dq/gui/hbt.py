@@ -17,7 +17,11 @@ from mahos.gui.Qt import QtCore, QtGui, QtWidgets
 
 import pyqtgraph as pg
 
-from mahos_dq.gui.plot import update_cursor_label
+from mahos_dq.gui.plot import (
+    create_crosshair,
+    set_crosshair_visible,
+    update_cursor,
+)
 from mahos_dq.gui.ui.hbt import Ui_HBT
 from mahos_dq.gui.hbt_client import QHBTClient
 
@@ -90,6 +94,8 @@ class PlotWidget(QtWidgets.QWidget):
             self.fontsizeBox,
         ):
             hl.addWidget(w)
+        self.showCrosshairBox = QtWidgets.QCheckBox("Show crosshair", parent=self)
+        hl.addWidget(self.showCrosshairBox)
         hl.addItem(spacer)
 
         self.graphicsView = pg.GraphicsView(parent=self)
@@ -100,6 +106,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.label = QtWidgets.QLabel("Ready")
         vl.addWidget(self.label)
         self.setLayout(vl)
+        self.showCrosshairBox.toggled.connect(self.toggle_crosshair)
 
     def init_view(self):
         self.layout = pg.GraphicsLayout()
@@ -109,6 +116,8 @@ class PlotWidget(QtWidgets.QWidget):
 
         self.plot.showGrid(x=True, y=True)
         self.plot.scene().sigMouseMoved.connect(self.update_pos)
+        self._crosshair = create_crosshair(self.plot)
+        self._crosshair_initialized = False
         self.plot.setLabel("bottom", "Time", "s")
         self.plot.setLabel("left", "Events")
 
@@ -125,7 +134,14 @@ class PlotWidget(QtWidgets.QWidget):
         self.xmaxBox.valueChanged.connect(self.update_xrange)
 
     def update_pos(self, pos):
-        update_cursor_label(pos, self.plot, self.label)
+        update_cursor(pos, self.plot, self.label, self._crosshair)
+
+    def toggle_crosshair(self, visible):
+        set_crosshair_visible(
+            self.plot, self._crosshair, visible, center=not self._crosshair_initialized
+        )
+        if visible:
+            self._crosshair_initialized = True
 
     def refresh(self, data_list: list[tuple[HBTData, bool, str]], data: HBTData):
         self.update_reference(data)
