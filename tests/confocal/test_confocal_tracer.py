@@ -109,3 +109,42 @@ def tracer_trace(channels: int, size: int):
     from mahos_dq.msgs.confocal_msgs import Trace
 
     return Trace(size=size, channels=channels)
+
+
+def test_tracer_append_overflow_and_empty():
+    tracer = make_tracer([1])
+    tracer.trace = tracer_trace(channels=1, size=8)
+    values = np.arange(20, dtype=float)
+    stamps = np.arange(20).astype("datetime64[ns]")
+    tracer._append_trace_data(0, values, stamps)
+    np.testing.assert_equal(tracer.trace.traces[0], values[-8:])
+    np.testing.assert_equal(tracer.trace.stamps[0], stamps[-8:])
+    assert tracer.trace.sample_counts == [28]
+    tracer._append_trace_data(0, values[:0], stamps[:0])
+    assert tracer.trace.sample_counts == [28]
+    tracer.trace.clear()
+    assert tracer.trace.sample_counts == [8]
+    assert tracer.trace.generation == 1
+    assert not np.any(tracer.trace.traces)
+
+
+def test_trace_migration_and_hdf5(tmp_path):
+    from mahos_dq.meas.confocal_io import ConfocalIO
+    from mahos_dq.msgs.confocal_msgs import update_trace
+
+    trace = tracer_trace(channels=2, size=8)
+    trace.set_version(1)
+    del trace.sample_counts
+    del trace.generation
+    update_trace(trace)
+    assert trace.version() == 2
+    assert trace.sample_counts == [8, 8]
+    trace.clear()
+    io = ConfocalIO()
+    filename = str(tmp_path / "trace.h5")
+    assert io.save_trace(filename, trace)
+    loaded = io.load_trace(filename)
+    np.testing.assert_equal(loaded.sample_counts, trace.sample_counts)
+    assert loaded.generation == 1
+    assert isinstance(loaded.traces, list)
+    assert isinstance(loaded.stamps, list)

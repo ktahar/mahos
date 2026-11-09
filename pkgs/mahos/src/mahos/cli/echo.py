@@ -65,8 +65,12 @@ def main(args=None):
         print(f"[ERROR] {joined_name} is not found in the config file.")
         sys.exit(1)
     if args.rate or args.size:
-        transport = c.get(f"{args.topic}_transport")
-        if (args.topic, transport) in (("data", "incremental"), ("buffer", "versioned")):
+        transport = c.get("buffer_transport" if args.topic == "buffer" else "data_transport")
+        if (args.topic, transport) in (
+            ("data", "incremental"),
+            ("trace", "incremental"),
+            ("buffer", "versioned"),
+        ):
             build_parser().error(
                 f"-r/--rate and -s/--size are unsupported for topic '{args.topic}' "
                 f"with {transport} transport on {joined_name}. "

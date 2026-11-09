@@ -299,15 +299,19 @@ class Tracer(Worker):
             return [data]
 
     def _append_trace_data(self, ch: int, new_data: np.ndarray, new_stamps: np.ndarray):
-        if len(new_data) > self.size:
-            new_data = new_data[: self.size]
-            new_stamps = new_stamps[: self.size]
+        count = len(new_data)
+        if not count:
+            return
+        if count > self.size:
+            new_data = new_data[-self.size :]
+            new_stamps = new_stamps[-self.size :]
         # shift data. see pyqtgraph/examples/scrollingPlots.py
         s = len(new_data)
         self.trace.traces[ch][:-s] = self.trace.traces[ch][s:]
         self.trace.traces[ch][-s:] = new_data
         self.trace.stamps[ch][:-s] = self.trace.stamps[ch][s:]
         self.trace.stamps[ch][-s:] = new_stamps
+        self.trace.sample_counts[ch] += count
 
     def get_data(self):
         trace_ch = 0

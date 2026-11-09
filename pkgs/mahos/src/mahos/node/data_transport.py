@@ -25,7 +25,7 @@ import mahos.util.validation as V
 
 
 TOPIC = b"incremental_data"
-VERSION = 1
+VERSION = 2
 
 
 def check_envelope(message, length):
@@ -72,6 +72,9 @@ class ArrayPolicy:
     For counted rolling arrays, ``count_attr`` names the cumulative number of appended slices.
     The array contains the latest slices ending at that count; retained slices must be immutable.
 
+    With ``sequence=True``, apply the policy to each array in a list.
+    ``count_attr`` then names per-element counters; the generation token remains shared.
+
     For the array which is subject to individual reset (c.f. whole data reset by ``invalidate()``),
     ``generation_attr`` names a scalar token whose change forces replacement, including
     same-shaped rebuilds. A missing token (for older saved data) is treated as ``None``.
@@ -83,7 +86,10 @@ class ArrayPolicy:
     count_attr: str | None = None
     generation_attr: str | None = None
 
+    sequence: bool = False
+
     def __post_init__(self):
+        V.check_bool(self.sequence, "sequence")
         V.check_nonneg_int(self.axis, "axis")
         V.check_nonneg_int(self.mutable_tail, "mutable_tail")
         for name in (self.count_attr, self.generation_attr):
@@ -108,42 +114,50 @@ def assemble(previous, metadata, operations):
             or getattr(metadata, name) is not None
         ):
             raise ValueError("Array operation must name an empty metadata attribute")
-        if not isinstance(operation, (tuple, list)) or len(operation) != 4:
-            raise ValueError("Expected four array operation fields")
-        axis, drop, start, payload = operation
-        V.check_nonneg_int(axis, "axis")
-        V.check_nonneg_int(drop, "drop")
-        V.check_nonneg_int(start, "start")
-        if payload is not None:
-            if (
-                not isinstance(payload, np.ndarray)
-                or payload.dtype.hasobject
-                or axis >= payload.ndim
-            ):
-                raise ValueError("Invalid array payload or axis")
-        elif start:
-            raise ValueError("Cannot append None to an array")
-        if start == 0:
-            value = payload
+        old = getattr(previous, name, None)
+        if isinstance(operation, list):
+            items = operation
+            base = old if isinstance(old, list) and len(old) == len(items) else [None] * len(items)
+            value = [_assemble_array(prev, op) for prev, op in zip(base, items)]
         else:
-            old = getattr(previous, name)
-            if (
-                not isinstance(old, np.ndarray)
-                or old.ndim != payload.ndim
-                or old.dtype != payload.dtype
-                or old.shape[:axis] != payload.shape[:axis]
-                or old.shape[axis + 1 :] != payload.shape[axis + 1 :]
-                or drop + start > old.shape[axis]
-            ):
-                raise ValueError("Invalid incremental array base or offset")
-            prefix = [slice(None)] * old.ndim
-            prefix[axis] = slice(drop, drop + start)
-            if drop == 0 and start == old.shape[axis] and payload.shape[axis] == 0:
-                value = old
-            else:
-                value = np.concatenate((old[tuple(prefix)], payload), axis=axis)
+            value = _assemble_array(old, operation)
         setattr(result, name, value)
     return result
+
+
+def _assemble_array(old, operation):
+    """Apply one validated array operation without mutating its base."""
+
+    if not isinstance(operation, tuple) or len(operation) != 4:
+        raise ValueError("Expected a four-field array operation tuple")
+    axis, drop, start, payload = operation
+    V.check_nonneg_int(axis, "axis")
+    V.check_nonneg_int(drop, "drop")
+    V.check_nonneg_int(start, "start")
+    if payload is not None:
+        if not isinstance(payload, np.ndarray) or payload.dtype.hasobject or axis >= payload.ndim:
+            raise ValueError("Invalid array payload or axis")
+    elif start:
+        raise ValueError("Cannot append None to an array")
+    if start == 0:
+        value = payload
+    else:
+        if (
+            not isinstance(old, np.ndarray)
+            or old.ndim != payload.ndim
+            or old.dtype != payload.dtype
+            or old.shape[:axis] != payload.shape[:axis]
+            or old.shape[axis + 1 :] != payload.shape[axis + 1 :]
+            or drop + start > old.shape[axis]
+        ):
+            raise ValueError("Invalid incremental array base or offset")
+        prefix = [slice(None)] * old.ndim
+        prefix[axis] = slice(drop, drop + start)
+        if drop == 0 and start == old.shape[axis] and payload.shape[axis] == 0:
+            value = old
+        else:
+            value = np.concatenate((old[tuple(prefix)], payload), axis=axis)
+    return value
 
 
 class SnapshotService:
@@ -334,7 +348,8 @@ class IncrementalPublisher:
     CPU or memory-bandwidth contention. Publications (and client reconstructions) copy arrays.
 
     Each update contains the epoch, base and new revisions, a deep copy of metadata, and
-    per-array ``(axis, drop, start, payload)`` operations. An operation retains ``start``
+    per-array ``(axis, drop, start, payload)`` tuples (lists of tuples for sequence policies).
+    An operation retains ``start``
     slices after dropping ``drop`` leading slices from the previous array, then appends the
     copied payload; ``start == 0`` replaces the array.
     This supports both mutable tails and rolling arrays with cumulative slice counters.
@@ -369,11 +384,23 @@ class IncrementalPublisher:
 
         self.source = None
 
-    def _extract(self, msg, reset, name, policy):
+    def _extract(self, msg, reset, name, policy, index=None):
         """extract incremental array update operation."""
 
         value = getattr(msg, name)
         old = getattr(self.state, name) if self.state is not None else None
+        if index is not None:
+            value = value[index]
+            old = (
+                old[index]
+                if isinstance(old, list) and len(old) == len(getattr(msg, name))
+                else None
+            )
+
+        def counter(state):
+            count = getattr(state, policy.count_attr)
+            return count if index is None else count[index]
+
         axis = policy.axis
         start = drop = 0
         if value is not None:
@@ -395,8 +422,8 @@ class IncrementalPublisher:
                 )
             ):
                 if policy.count_attr is not None:
-                    count = V.check_nonneg_int(getattr(msg, policy.count_attr), policy.count_attr)
-                    old_count = getattr(self.state, policy.count_attr)
+                    count = V.check_nonneg_int(counter(msg), policy.count_attr)
+                    old_count = V.check_nonneg_int(counter(self.state), policy.count_attr)
                     new_begin = count - value.shape[axis]
                     old_begin = old_count - old.shape[axis]
                     if count >= old_count and new_begin >= old_begin:
@@ -405,7 +432,7 @@ class IncrementalPublisher:
                 elif old.shape[axis] <= value.shape[axis]:
                     start = max(0, old.shape[axis] - policy.mutable_tail)
             if policy.count_attr is not None:
-                count = V.check_nonneg_int(getattr(msg, policy.count_attr), policy.count_attr)
+                count = V.check_nonneg_int(counter(msg), policy.count_attr)
                 if count < value.shape[axis]:
                     raise ValueError(f"{name}: cumulative count is smaller than retained length")
             suffix = [slice(None)] * value.ndim
@@ -424,7 +451,19 @@ class IncrementalPublisher:
         metadata = copy.deepcopy(metadata)
         operations = {}
         for name, policy in self.policies.items():
-            operations[name] = self._extract(msg, reset, name, policy)
+            if policy.sequence:
+                values = getattr(msg, name)
+                if not isinstance(values, list):
+                    raise ValueError(f"{name} must be a list of arrays")
+                if policy.count_attr is not None:
+                    counts = getattr(msg, policy.count_attr)
+                    if not isinstance(counts, (list, np.ndarray)) or len(counts) != len(values):
+                        raise ValueError(f"{name}: counters must match array list length")
+                operations[name] = [
+                    self._extract(msg, reset, name, policy, i) for i in range(len(values))
+                ]
+            else:
+                operations[name] = self._extract(msg, reset, name, policy)
         state = assemble(self.state, metadata, operations)
         if reset:
             self.epoch = uuid.uuid4().hex
@@ -631,7 +670,10 @@ class IncrementalSubscriber:
 def add_data_subscription(context, conf, topic, handler, msg_type=None, logger=None):
     """Select shared reconstruction for configured live-data and buffer topics."""
 
-    if topic in (b"data", "data") and TransportConfig(conf).mode == "incremental":
+    if (
+        topic in (b"data", "data", b"trace", "trace")
+        and TransportConfig(conf).mode == "incremental"
+    ):
         return IncrementalSubscriber(context, conf, handler, logger=logger)
     if topic in (b"buffer", "buffer") and TransportConfig(conf).buffer_mode == "versioned":
         return BT.BufferSubscriber(context, conf, handler, logger=logger)

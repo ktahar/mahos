@@ -316,15 +316,20 @@ class Trace(Data, ComplexDataMixin):
     :ivar _complex: True when trace storage uses complex dtype.
     :ivar traces: Per-channel trace arrays.
     :ivar stamps: Per-channel ``datetime64[ns]`` timestamp arrays.
+    :ivar sample_counts: Per-channel cumulative positions, including initial zero padding.
+    :ivar generation: Reset token incremented by :meth:`clear`.
     :ivar ylabel: Y-axis label used by viewers.
     :ivar yunit: Y-axis unit used by viewers.
 
     """
 
     def __init__(self, size: int = 0, channels: int = 2, _complex: bool = False):
-        self.set_version(1)
+        self.set_version(2)
 
         self._complex = _complex
+
+        self.sample_counts = [size] * channels
+        self.generation = 0
 
         # trace data
         self.traces = [np.zeros(size, self.dtype()) for _ in range(channels)]
@@ -346,6 +351,8 @@ class Trace(Data, ComplexDataMixin):
     def clear(self):
         channels = self.channels()
         size = self.size()
+        self.sample_counts = [size] * channels
+        self.generation += 1
         for ch in range(channels):
             self.traces[ch] = np.zeros(size, self.dtype())
             self.stamps[ch] = np.zeros(size, dtype="datetime64[ns]")
@@ -380,10 +387,18 @@ class Trace(Data, ComplexDataMixin):
         return list(val)
 
     def _h5_dataset_writers(self) -> dict:
-        return {"stamps": self._h5_write_stamps, "traces": self._h5_write_traces}
+        return {
+            "stamps": self._h5_write_stamps,
+            "traces": self._h5_write_traces,
+            "sample_counts": np.array,
+        }
 
     def _h5_readers(self) -> dict:
-        return {"stamps": self._h5_read_stamps, "traces": self._h5_read_traces}
+        return {
+            "stamps": self._h5_read_stamps,
+            "traces": self._h5_read_traces,
+            "sample_counts": lambda val: np.array(val).tolist(),
+        }
 
 
 def update_trace(trace: Trace):
@@ -395,6 +410,11 @@ def update_trace(trace: Trace):
         trace.ylabel: str = "Intensity"
         trace.yunit: str = "cps"  # old data were in cps
         trace.set_version(1)
+
+    if trace.version() <= 1:
+        trace.sample_counts = [len(t) for t in trace.traces]
+        trace.generation = 0
+        trace.set_version(2)
 
     return trace
 

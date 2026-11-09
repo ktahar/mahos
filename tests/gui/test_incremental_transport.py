@@ -96,3 +96,56 @@ def test_measurement_clients(measurement, gconf, qtbot):
     finally:
         late.close()
         qcli.close()
+
+
+@pytest.mark.parametrize("standalone", [False, True])
+def test_trace_clients(standalone, ctx, gconf, server, sync_endpoint, qtbot):
+    from mahos.node.node import start_node_proc
+    from mahos.msgs.common_msgs import BinaryState
+    from mahos_dq.meas.confocal import Confocal, ConfocalClient, TraceNode, TraceNodeClient
+    from mahos_dq.gui.confocal_client import QTracerClient, QTraceNodeClient
+    from mahos_dq.msgs.confocal_msgs import ConfocalState
+    from shared.fixtures import stop_proc
+
+    conf = gconf["localhost"]["confocal"]
+    conf.update(data_transport="incremental", sync_endpoint=sync_endpoint)
+    conf["tracer"]["size"] = 10
+    node, client, qtclient = (
+        (TraceNode, TraceNodeClient, QTraceNodeClient)
+        if standalone
+        else (Confocal, ConfocalClient, QTracerClient)
+    )
+    proc, shutdown = start_node_proc(ctx, node, gconf, "localhost::confocal")
+    cli = client(gconf, "localhost::confocal")
+    late = qcli = None
+    try:
+        qtbot.waitUntil(lambda: cli.get_status() is not None, timeout=10000)
+        assert cli.change_state(BinaryState.ACTIVE if standalone else ConfocalState.INTERACT)
+        qtbot.waitUntil(
+            lambda: cli.get_trace() is not None and min(cli.get_trace().sample_counts) > 30,
+            timeout=10000,
+        )
+        assert cli.pause_trace()
+        qtbot.wait(200)
+        expected = cli.get_trace()
+        late = client(gconf, "localhost::confocal")
+        qcli = qtclient(gconf, "localhost::confocal")
+        received = []
+        qcli.traceUpdated.connect(received.append)
+        qtbot.waitUntil(lambda: late.get_trace() is not None and bool(received), timeout=10000)
+        for trace in (late.get_trace(), received[-1]):
+            np.testing.assert_equal(trace.traces, expected.traces)
+            np.testing.assert_equal(trace.stamps, expected.stamps)
+        assert cli.clear_trace()
+        assert cli.resume_trace()
+        qtbot.waitUntil(
+            lambda: cli.get_trace().generation == 1 and received[-1].generation == 1, timeout=10000
+        )
+        assert cli.change_state(BinaryState.IDLE if standalone else ConfocalState.IDLE)
+    finally:
+        if late is not None:
+            late.close()
+        if qcli is not None:
+            qcli.close()
+        cli.close()
+        stop_proc(proc, shutdown)

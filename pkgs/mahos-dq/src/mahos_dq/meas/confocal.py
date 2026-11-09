@@ -47,6 +47,8 @@ from mahos.meas.tweaker import TweakSaver
 from mahos.meas.common_meas import BaseMeasClientMixin
 from mahos.meas.common_worker import DummyWorker, PulseGen_CW, Switch
 from mahos.meas.file_transport import FileTransportNodeMixin
+from mahos.node.data_transport import ArrayPolicy, IncrementalPublisher
+from mahos.node.transport_util import TransportConfig
 from mahos_dq.meas.confocal_worker import Piezo, Tracer, Scanner
 from mahos_dq.meas.confocal_io import ConfocalIO
 from mahos_dq.meas.confocal_req import ConfocalImageReqMixin, ConfocalTraceReqMixin
@@ -232,6 +234,10 @@ class Confocal(FileTransportNodeMixin, Node):
     :type piezo: dict
     :param piezo.interval_sec: (default: 0.5) Interval to poll piezo pos.
     :type piezo.interval_sec: float
+    :param data_transport: (default: "pubsub") Trace transport: "pubsub" or "incremental".
+    :type data_transport: str
+    :param sync_endpoint: Recovery endpoint required for incremental trace transport.
+    :type sync_endpoint: str
     :param tracer: Trace worker configuration dictionary.
     :type tracer: dict
     :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
@@ -274,7 +280,22 @@ class Confocal(FileTransportNodeMixin, Node):
         self.add_rep()
         self.status_pub = self.add_pub(b"status")
         self.image_pub = self.add_pub(b"image")
-        self.trace_pub = self.add_pub(b"trace")
+        transport = TransportConfig(self.conf)
+        if transport.mode == "incremental":
+            self.trace_pub = IncrementalPublisher(
+                self.ctx,
+                self.conf["pub_endpoint"],
+                transport.endpoint,
+                {
+                    name: ArrayPolicy(
+                        0, count_attr="sample_counts", generation_attr="generation", sequence=True
+                    )
+                    for name in ("traces", "stamps")
+                },
+                logger=self.logger,
+            )
+        else:
+            self.trace_pub = self.add_pub(b"trace")
 
         _default_sw_names = ["switch"] if "switch" in self.conf["target"]["servers"] else []
         sw_names = self.conf.get("switch_names", _default_sw_names)
@@ -758,6 +779,10 @@ class TraceNode(FileTransportNodeMixin, Node):
     :param file_transport_dir: Optional node-side directory for client-node file transport.
     :type file_transport_dir: str
 
+    :param data_transport: (default: "pubsub") Trace transport: "pubsub" or "incremental".
+    :type data_transport: str
+    :param sync_endpoint: Recovery endpoint required for incremental trace transport.
+    :type sync_endpoint: str
     :param tracer: Trace worker configuration dictionary.
     :type tracer: dict
     :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
@@ -799,7 +824,22 @@ class TraceNode(FileTransportNodeMixin, Node):
         self.add_clients(self.cli)
         self.add_rep()
         self.status_pub = self.add_pub(b"status")
-        self.trace_pub = self.add_pub(b"trace")
+        transport = TransportConfig(self.conf)
+        if transport.mode == "incremental":
+            self.trace_pub = IncrementalPublisher(
+                self.ctx,
+                self.conf["pub_endpoint"],
+                transport.endpoint,
+                {
+                    name: ArrayPolicy(
+                        0, count_attr="sample_counts", generation_attr="generation", sequence=True
+                    )
+                    for name in ("traces", "stamps")
+                },
+                logger=self.logger,
+            )
+        else:
+            self.trace_pub = self.add_pub(b"trace")
 
         _default_sw_names = ["switch"] if "switch" in self.conf["target"]["servers"] else []
         sw_names = self.conf.get("switch_names", _default_sw_names)

@@ -27,6 +27,13 @@ If no records overlap the previous publication, the retained array is replaced i
 Its ``signal_history`` and ``reference_history`` append along axis 0 while enabled and remain ``None`` while disabled.
 History rebuilds after analysis-window changes force replacement.
 
+Confocal and TraceNode also support these settings for their ``trace`` topic.
+Both ``Trace.traces`` and ``Trace.stamps`` remain lists of per-channel arrays.
+Channels advance independently, using ``sample_counts`` positions.
+Clearing a trace increments ``generation`` to invalidate retained overlap.
+Oversized input batches retain the latest samples. Pause/resume preserves the existing frozen
+trace behavior; switching between frozen and live objects starts a new transport epoch.
+
 Python and Qt measurement clients reconstruct the ordinary data classes before invoking handlers or emitting signals.
 Each delivered object contains one complete revision, including metadata and all selected arrays.
 
@@ -38,6 +45,9 @@ from attribute names to ``mahos.node.data_transport.ArrayPolicy(axis, mutable_ta
 Selected attributes must be NumPy arrays with non-object dtype, or ``None``.
 The optional ``count_attr`` policy field names a cumulative slice counter for a rolling array;
 the array must contain the latest slices ending at that count.
+With ``sequence=True``, the attribute is a list of arrays, and ``count_attr`` names a list of corresponding counters.
+Each element is reconstructed independently; a channel-count change replaces the list.
+The generation token applies to the whole list.
 This rolling array mode cannot be combined with a mutable tail.
 The optional ``generation_attr`` names a scalar generation token whose change forces array replacement.
 For example, APODMR increments ``history_generation`` whenever history is cleared, including rebuilds between publications.
