@@ -22,8 +22,24 @@ class TransportConfig(ConfAccessorMixin):
         self.buffer_mode = self._conf_str("buffer_transport", "pubsub")
         if self.buffer_mode not in ("pubsub", "versioned"):
             raise ValueError("buffer_transport must be 'pubsub' or 'versioned'")
-        self.endpoint = (
-            self._conf_nonempty_str("sync_endpoint")
-            if self.mode == "incremental" or self.buffer_mode == "versioned"
-            else None
+        self.latest_modes = {
+            topic: self._conf_str(topic + "_transport", "pubsub") for topic in ("pulse", "wave")
+        }
+        if any(mode not in ("pubsub", "latest") for mode in self.latest_modes.values()):
+            raise ValueError("pulse_transport and wave_transport must be pubsub or latest")
+        self.needs_service = (
+            self.mode == "incremental"
+            or self.buffer_mode == "versioned"
+            or "latest" in self.latest_modes.values()
         )
+        self.endpoint = self._conf_nonempty_str("sync_endpoint") if self.needs_service else None
+
+    def mode_for_topic(self, topic: str | bytes) -> str:
+        """Return the configured transport mode for a subscription topic."""
+
+        name = topic.decode() if isinstance(topic, bytes) else topic
+        if name in ("data", "trace"):
+            return self.mode
+        if name == "buffer":
+            return self.buffer_mode
+        return self.latest_modes.get(name, "pubsub")

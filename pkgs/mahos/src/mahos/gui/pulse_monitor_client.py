@@ -46,7 +46,11 @@ class QPulseClient(QNodeClient):
         self.add_sub(self.sub)
 
     def check_pulse(self, pulse: PulsePattern):
-        if self._pulse is not None and self._pulse.ident == pulse.ident:
+        if (
+            self.conf.get("pulse_transport", "pubsub") != "latest"
+            and self._pulse is not None
+            and self._pulse.ident == pulse.ident
+        ):
             return  # same pulse received
 
         self._pulse = pulse

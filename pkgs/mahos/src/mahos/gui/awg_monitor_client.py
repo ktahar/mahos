@@ -34,7 +34,11 @@ class QAWGClient(QNodeClient):
         self.add_sub(self.sub)
 
     def check_awg(self, awg: AWGWaveform):
-        if self._awg is not None and self._awg.ident == awg.ident:
+        if (
+            self.conf.get("wave_transport", "pubsub") != "latest"
+            and self._awg is not None
+            and self._awg.ident == awg.ident
+        ):
             return
         self._awg = awg
         self.awgUpdated.emit(awg)

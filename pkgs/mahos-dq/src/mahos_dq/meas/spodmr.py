@@ -158,7 +158,7 @@ class SPODMR(BasicMeasNode):
     def __init__(self, gconf: dict, name, context=None):
         BasicMeasNode.__init__(self, gconf, name, context=context)
 
-        self.pulse_pub = self.add_pub(b"pulse")
+        self.pulse_pub = self.new_preview_publisher(b"pulse")
 
         _default_sw_names = ["switch"] if "switch" in self.conf["target"]["servers"] else []
         sw_names = self.conf.get("switch_names", _default_sw_names)

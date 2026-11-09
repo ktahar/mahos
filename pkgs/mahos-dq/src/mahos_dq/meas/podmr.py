@@ -119,8 +119,8 @@ class PODMR(BasicMeasNode):
     def __init__(self, gconf: dict, name, context=None):
         BasicMeasNode.__init__(self, gconf, name, context=context)
 
-        self.pulse_pub = self.add_pub(b"pulse")
-        self.wave_pub = self.add_pub(b"wave")
+        self.pulse_pub = self.new_preview_publisher(b"pulse")
+        self.wave_pub = self.new_preview_publisher(b"wave")
         self._published_wave_ident = None
 
         _default_sw_names = ["switch"] if "switch" in self.conf["target"]["servers"] else []
@@ -303,14 +303,21 @@ class PODMR(BasicMeasNode):
         self.status_pub.publish(BinaryStatus(state=self.state))
         if publish_data:
             self.data_pub.publish(self.worker.data_msg())
-        if publish_other:
-            pulse = self.worker.pulse_msg()
-            if pulse is not None:
-                self.pulse_pub.publish(pulse)
-            self.buffer_pub.publish(self.buffer)
-        # publishing wave is one-shot because it can be huge
+        if not publish_other:
+            return
+
+        self.buffer_pub.publish(self.buffer)
+
+        pulse = self.worker.pulse_msg()
+        if pulse is not None:
+            self.pulse_pub.publish(pulse)
+
+        # Full wave publication is one-shot; latest mode repeats only its identity.
         wave = self.worker.wave_msg()
-        if wave is not None and wave.ident != self._published_wave_ident:
+        if wave is not None and (
+            wave.ident != self._published_wave_ident
+            or (self._latest_modes["wave"] == "latest" and publish_other)
+        ):
             self.wave_pub.publish(wave)
             self._published_wave_ident = wave.ident
 

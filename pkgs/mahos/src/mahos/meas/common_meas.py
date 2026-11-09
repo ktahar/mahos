@@ -208,11 +208,17 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
     :param data_transport: Data distribution mode: ``"pubsub"`` (default) or
         ``"incremental"``. Incremental mode requires a measurement-defined array policy.
     :type data_transport: str
-    :param sync_endpoint: Shared recovery endpoint for incremental data or versioned buffers.
+    :param sync_endpoint: Shared recovery endpoint for advanced data transports.
     :type sync_endpoint: str
     :param buffer_transport: Buffer distribution mode: ``"pubsub"`` (default) or
         ``"versioned"``. Versioned mode also requires ``sync_endpoint``.
     :type buffer_transport: str
+    :param pulse_transport: Pulse preview transport: ``"pubsub"`` (default) or ``"latest"``.
+        Latest mode requires ``sync_endpoint``.
+    :type pulse_transport: str
+    :param wave_transport: Waveform preview transport: ``"pubsub"`` (default) or ``"latest"``.
+        Latest mode requires ``sync_endpoint``.
+    :type wave_transport: str
     :param file_transport_dir: Optional measurement-side directory for client-measurement file
         transport.
     :type file_transport_dir: str
@@ -255,7 +261,7 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
         self.status_pub = self.add_pub(b"status")
 
         service = None
-        if transport.mode == "incremental" or transport.buffer_mode == "versioned":
+        if transport.needs_service:
             service = SnapshotService(
                 self.ctx.zmq_context(), transport.endpoint, ("initial", 0, None), self.logger
             )
@@ -278,6 +284,20 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
         else:
             self.buffer_pub = self.add_pub(b"buffer")
         self._buffer_transport = transport.buffer_mode
+        self._snapshot_service = service
+        self._latest_modes = transport.latest_modes
+
+    def new_preview_publisher(self, topic):
+        """Construct a conventional or latest-object preview publisher."""
+
+        from mahos.node.latest_transport import LatestPublisher
+
+        name = topic.decode() if isinstance(topic, bytes) else topic
+        if self._latest_modes.get(name) == "latest":
+            return LatestPublisher(
+                self.ctx, self.conf["pub_endpoint"], topic, self._snapshot_service, self.logger
+            )
+        return self.add_pub(topic)
 
     def new_buffer(self):
         """Create node-owned storage with the selected mutation-tracking policy."""

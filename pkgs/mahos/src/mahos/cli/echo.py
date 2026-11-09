@@ -54,6 +54,7 @@ def main(args=None):
     from mahos.cli.util import init_gconf_host_node
     from mahos.node.client import EchoSubscriber
     from mahos.node.node import join_name
+    from mahos.node.transport_util import TransportConfig
 
     args = parse_args(args)
     gconf, host, node = init_gconf_host_node(args.conf, args.host, args.node)
@@ -65,12 +66,8 @@ def main(args=None):
         print(f"[ERROR] {joined_name} is not found in the config file.")
         sys.exit(1)
     if args.rate or args.size:
-        transport = c.get("buffer_transport" if args.topic == "buffer" else "data_transport")
-        if (args.topic, transport) in (
-            ("data", "incremental"),
-            ("trace", "incremental"),
-            ("buffer", "versioned"),
-        ):
+        transport = TransportConfig(c).mode_for_topic(args.topic)
+        if transport != "pubsub":
             build_parser().error(
                 f"-r/--rate and -s/--size are unsupported for topic '{args.topic}' "
                 f"with {transport} transport on {joined_name}. "

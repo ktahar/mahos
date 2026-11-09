@@ -108,3 +108,36 @@ Plot-update marking is conservative because these operations can modify metadata
 Changes become available to clients at the next publication.
 Clients may skip intermediate buffer revisions; versioned transport does not provide a history of changes.
 Copying and serialization still have a cost: reanalysis of every entry requires downloading every entry again.
+
+Latest preview transport
+------------------------
+
+Pulse patterns and AWG waveform previews can be distributed as retained immutable objects::
+
+    [localhost.podmr]
+    pulse_transport = "latest"
+    wave_transport = "latest"
+    sync_endpoint = "tcp://127.0.0.1:5563"
+
+Both settings default to ``"pubsub"`` and are independent of data and buffer transport.
+They share the same recovery service and endpoint with the other advanced transports.
+Pulse transport is supported by ODMR, PODMR, APODMR, SPODMR, and Qdyne;
+wave transport is supported by PODMR and APODMR.
+
+Latest mode periodically announces a small identity on ``latest_pulse`` or ``latest_wave``.
+An identity contains a publisher epoch, monotonic revision, and the object's UUID.
+Clients asynchronously fetch the current publication when its identity changes.
+Late subscribers can retrieve the retained preview, including while the node is idle.
+Repeated identities require no payload transfer or callbacks.
+Public monitor getters, payload classes, and Qt signals are unchanged.
+
+Implementing a node with preview
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Construct publishers using ``self.new_preview_publisher(b"pulse")`` (or ``b"wave"``).
+Continue calling ``publish(data)`` periodically.
+A new UUID commits a deep copy on the node thread; unchanged UUIDs only announce the existing publication.
+The shared service lazily serializes the committed copy and caches its bytes until replacement.
+The subscriber retains no history; its client keeps the last delivered object while fetching an update.
+A fetch returns the service's current object, which may supersede the announcement.
+Intermediate updates may be skipped; clients converge when updates stop and communication succeeds.

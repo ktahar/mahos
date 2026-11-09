@@ -19,6 +19,7 @@ import numpy as np
 import zmq
 
 import mahos.node.buffer_transport as BT
+import mahos.node.latest_transport as LT
 from mahos.node.comm import serialize_pickle, deserialize
 from mahos.node.transport_util import TransportConfig
 import mahos.util.validation as V
@@ -175,7 +176,9 @@ class SnapshotService:
     but retrieve bounded batches of exact entry versions from a separate immutable publication.
     Revision-only live-data queries return without serializing the state. If a requested buffer
     version is no longer available, the response contains the latest manifest and no entries.
-    No historical snapshot queue or buffer versions are stored.
+    Latest-object requests retrieve the current immutable publication for a named topic,
+    with one lazily serialized byte cache per topic.
+    No historical snapshot queue, preview objects, or buffer versions are stored.
     Serialization bypasses custom dataset serialization to preserve complete concrete objects.
     Queued duplicate requests from the same client are coalesced within bounded batches;
     later retries still receive responses.
@@ -187,6 +190,7 @@ class SnapshotService:
         self._endpoint = endpoint
         self._latest = initial
         self._buffer_latest = None
+        self._objects = {}
         self.logger = logger
 
         self._lock = threading.Lock()
@@ -214,6 +218,28 @@ class SnapshotService:
         with self._lock:
             self._buffer_latest = (manifest, entries)
 
+    def commit_latest(self, topic, identity, state):
+        """Replace one topic's immutable publication and discard its byte cache."""
+
+        with self._lock:
+            self._objects[topic] = (identity, state, None)
+
+    def _latest_response(self, request_id, arguments):
+        """Serialize a captured publication, caching only if it is still current."""
+
+        topic, known = arguments
+        with self._lock:
+            publication = self._objects.get(topic)
+        identity, state, payload = publication or (None, None, None)
+        included = identity is not None and identity != known
+        if included and payload is None:
+            payload = serialize_pickle(state)
+            with self._lock:
+                if self._objects.get(topic) is publication:
+                    self._objects[topic] = (identity, state, payload)
+        header = (LT.VERSION, "latest", request_id, topic, identity, included)
+        return [serialize_pickle(header)] + ([payload] if included else [])
+
     @staticmethod
     def _decode_request(payload):
         """Dispatch wire validation and normalize requests for shared batch handling."""
@@ -222,6 +248,9 @@ class SnapshotService:
         if isinstance(request, (tuple, list)) and request and request[0] == "buffer":
             kind = "buffer"
             request_id, *arguments = BT.check_request(request)
+        elif isinstance(request, (tuple, list)) and request and request[0] == "latest":
+            kind = "latest"
+            request_id, *arguments = LT.check_request(request)
         else:
             kind = "live"
             request_id, *arguments = check_request(request)
@@ -285,6 +314,8 @@ class SnapshotService:
                 break
             if kind == "live":
                 frames = self._live_response(request_id, arguments, live_latest)
+            elif kind == "latest":
+                frames = self._latest_response(request_id, arguments)
             else:
                 frames = self._buffer_response(request_id, arguments, buffer_latest)
             try:
@@ -326,6 +357,7 @@ class SnapshotService:
             with self._lock:
                 self._latest = None
                 self._buffer_latest = None
+                self._objects.clear()
 
     def close(self):
         """Stop the service and join its thread before the ZMQ context is closed."""
@@ -677,4 +709,7 @@ def add_data_subscription(context, conf, topic, handler, msg_type=None, logger=N
         return IncrementalSubscriber(context, conf, handler, logger=logger)
     if topic in (b"buffer", "buffer") and TransportConfig(conf).buffer_mode == "versioned":
         return BT.BufferSubscriber(context, conf, handler, logger=logger)
+    name = topic.decode() if isinstance(topic, bytes) else topic
+    if TransportConfig(conf).latest_modes.get(name) == "latest":
+        return LT.LatestSubscriber(context, conf, topic, handler, logger=logger)
     context.add_sub(conf["pub_endpoint"], topic, handler, msg_type)
