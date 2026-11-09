@@ -47,8 +47,8 @@ from mahos.meas.tweaker import TweakSaver
 from mahos.meas.common_meas import BaseMeasClientMixin
 from mahos.meas.common_worker import DummyWorker, PulseGen_CW, Switch
 from mahos.meas.file_transport import FileTransportNodeMixin
-from mahos.node.data_transport import ArrayPolicy, IncrementalPublisher
-from mahos.node.transport_util import TransportConfig
+from mahos.node.transport.incremental import ArrayPolicy, IncrementalPublisher
+from mahos.node.transport import TransportConfig, SnapshotService
 from mahos_dq.meas.confocal_worker import Piezo, Tracer, Scanner
 from mahos_dq.meas.confocal_io import ConfocalIO
 from mahos_dq.meas.confocal_req import ConfocalImageReqMixin, ConfocalTraceReqMixin
@@ -282,16 +282,18 @@ class Confocal(FileTransportNodeMixin, Node):
         self.image_pub = self.add_pub(b"image")
         transport = TransportConfig(self.conf)
         if transport.mode == "incremental":
+            service = SnapshotService(self.ctx, transport.endpoint, self.logger)
+
             self.trace_pub = IncrementalPublisher(
                 self.ctx,
                 self.conf["pub_endpoint"],
-                transport.endpoint,
                 {
                     name: ArrayPolicy(
                         0, count_attr="sample_counts", generation_attr="generation", sequence=True
                     )
                     for name in ("traces", "stamps")
                 },
+                service,
                 logger=self.logger,
             )
         else:
@@ -826,16 +828,18 @@ class TraceNode(FileTransportNodeMixin, Node):
         self.status_pub = self.add_pub(b"status")
         transport = TransportConfig(self.conf)
         if transport.mode == "incremental":
+            service = SnapshotService(self.ctx, transport.endpoint, self.logger)
+
             self.trace_pub = IncrementalPublisher(
                 self.ctx,
                 self.conf["pub_endpoint"],
-                transport.endpoint,
                 {
                     name: ArrayPolicy(
                         0, count_attr="sample_counts", generation_attr="generation", sequence=True
                     )
                     for name in ("traces", "stamps")
                 },
+                service,
                 logger=self.logger,
             )
         else:

@@ -8,6 +8,7 @@ Tests for mahos_dq.msgs.apodmr_msgs.
 
 """
 
+import logging
 import numpy as np
 import pytest
 
@@ -15,6 +16,7 @@ from mahos_dq.msgs.apodmr_msgs import APODMRData, update_data
 from mahos_dq.meas.apodmr_io import APODMRIO
 from mahos_dq.meas.apodmr_worker import APODMRDataOperator
 from shared.util import save_load_test
+from mahos.node.transport import SnapshotService
 
 
 def make_data(num_pattern: int, plotmode: str, *, partial: int = -1) -> APODMRData:
@@ -236,13 +238,16 @@ def test_history_resume_and_opt_out():
 @pytest.mark.parametrize("max_records", [0, 1, 3])
 def test_incremental_history_reanalysis_and_toggle(max_records):
     from mahos.node.comm import Context
-    from mahos.node.data_transport import IncrementalPublisher
+    from mahos.node.transport.incremental import IncrementalPublisher
     from mahos_dq.meas.apodmr import APODMR
 
     context = Context()
     try:
         pub = IncrementalPublisher(
-            context, "inproc://apodmr-pub", "inproc://apodmr-sync", APODMR.INCREMENTAL_ARRAYS
+            context,
+            "inproc://apodmr-pub",
+            APODMR.INCREMENTAL_ARRAYS,
+            SnapshotService(context, "inproc://apodmr-sync", logging.getLogger(__name__)),
         )
         data = make_history_data()
         data.params["max_records"] = max_records

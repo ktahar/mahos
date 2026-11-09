@@ -15,8 +15,8 @@ from mahos.gui.pulse_monitor_client import QPulseClient
 from mahos.gui.awg_monitor_client import QAWGClient
 from mahos.msgs.inst.pg_msgs import PulsePattern, Blocks
 from mahos.msgs.inst.awg_msgs import AWGWaveform
-from mahos.node.data_transport import SnapshotService
-from mahos.node.latest_transport import LatestPublisher
+from mahos.node.transport import SnapshotService
+from mahos.node.transport.latest import LatestPublisher
 from mahos.node.log import DummyLogger
 
 
@@ -29,10 +29,8 @@ def test_latest_preview_qt(topic, transport_contexts, qtbot):
         "pub_endpoint": f"inproc://qt-preview-pub-{suffix}",
         "sync_endpoint": f"inproc://qt-preview-sync-{suffix}",
     }
-    service = SnapshotService(
-        server.zmq_context(), conf["sync_endpoint"], ("initial", 0, None), DummyLogger()
-    )
-    server.add_close_service(service)
+    service = SnapshotService(server, conf["sync_endpoint"], DummyLogger())
+
     pub = LatestPublisher(server, conf["pub_endpoint"], topic, service)
     data = (
         PulsePattern(Blocks(), 1e9) if topic == "pulse" else AWGWaveform({}, {}, 1e9, {}, 0, 0, 0)

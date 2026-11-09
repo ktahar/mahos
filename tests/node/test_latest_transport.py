@@ -13,10 +13,10 @@ from types import SimpleNamespace
 import pytest
 
 from mahos.node.comm import serialize_pickle
-from mahos.node.data_transport import SnapshotService
-from mahos.node.latest_transport import LatestPublisher, LatestSubscriber
+from mahos.node.transport import SnapshotService
+from mahos.node.transport.latest import LatestPublisher, LatestSubscriber
 from mahos.node.log import DummyLogger
-from mahos.node.transport_util import TransportConfig
+from mahos.node.transport.config import TransportConfig
 
 
 def pump(client, condition, publish=lambda: None):
@@ -37,10 +37,8 @@ def setup(transport_contexts):
         pub_endpoint=f"inproc://latest-pub-{suffix}",
         sync_endpoint=f"inproc://latest-sync-{suffix}",
     )
-    service = SnapshotService(
-        server.zmq_context(), conf["sync_endpoint"], ("initial", 0, None), DummyLogger()
-    )
-    server.add_close_service(service)
+    service = SnapshotService(server, conf["sync_endpoint"], DummyLogger())
+
     return server, client, conf, service
 
 
@@ -120,18 +118,18 @@ def test_retry_and_obsolete_response(setup):
 
 def test_shared_service_with_live_and_buffer(setup):
     import numpy as np
-    from mahos.node.data_transport import IncrementalPublisher, IncrementalSubscriber, ArrayPolicy
-    from mahos.node.buffer_transport import BufferPublisher, BufferSubscriber
+    from mahos.node.transport.incremental import (
+        IncrementalPublisher,
+        IncrementalSubscriber,
+        ArrayPolicy,
+    )
+    from mahos.node.transport.buffer import BufferPublisher, BufferSubscriber
     from mahos.msgs.common_meas_msgs import TrackedBuffer
 
     server, client, conf, service = setup
     conf.update(data_transport="incremental", buffer_transport="versioned")
     live = IncrementalPublisher(
-        server,
-        conf["pub_endpoint"],
-        conf["sync_endpoint"],
-        {"values": ArrayPolicy(0, 0)},
-        service=service,
+        server, conf["pub_endpoint"], {"values": ArrayPolicy(0, 0)}, service
     )
     buffer = BufferPublisher(server, conf["pub_endpoint"], service)
     preview = LatestPublisher(server, conf["pub_endpoint"], "wave", service)

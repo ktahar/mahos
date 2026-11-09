@@ -101,9 +101,9 @@ class SubWorker(object):
     ) -> MessageGetter:
         hw = HandlerWrapper(handler=handler)
         if conf is not None and deserial:
-            from mahos.node.data_transport import add_data_subscription
+            from mahos.node.transport import add_subscription
 
-            add_data_subscription(self.ctx, conf, topic, hw.handler, msg_type, logger=self.logger)
+            add_subscription(self.ctx, conf, topic, hw.handler, msg_type, logger=self.logger)
         else:
             self.ctx.add_sub(
                 endpoint, topic=topic, handler=hw.handler, msg_type=msg_type, deserial=deserial

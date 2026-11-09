@@ -16,7 +16,7 @@ import pytest
 import zmq
 
 from mahos.msgs.common_meas_msgs import BasicMeasData, Buffer, TrackedBuffer
-from mahos.node.buffer_transport import (
+from mahos.node.transport.buffer import (
     BATCH_SIZE,
     TOPIC,
     BufferPublisher,
@@ -24,13 +24,13 @@ from mahos.node.buffer_transport import (
     response,
 )
 from mahos.node.comm import serialize_pickle, deserialize
-from mahos.node.transport_util import TransportConfig
-from mahos.node.data_transport import (
+from mahos.node.transport.config import TransportConfig
+from mahos.node.transport.incremental import (
     ArrayPolicy,
     IncrementalPublisher,
     IncrementalSubscriber,
-    SnapshotService,
 )
+from mahos.node.transport import SnapshotService
 from mahos.node.log import DummyLogger
 
 
@@ -49,10 +49,8 @@ def transport(transport_contexts):
         "pub_endpoint": f"inproc://buffer-pub-{suffix}",
         "sync_endpoint": f"inproc://buffer-sync-{suffix}",
     }
-    service = SnapshotService(
-        server.zmq_context(), conf["sync_endpoint"], ("initial", 0, None), DummyLogger()
-    )
-    server.add_close_service(service)
+    service = SnapshotService(server, conf["sync_endpoint"], DummyLogger())
+
     pub = BufferPublisher(server, conf["pub_endpoint"], service)
     yield server, client, conf, service, pub
 
@@ -243,9 +241,7 @@ def test_supersession_delayed_responses_and_validation(transport):
 def test_combined_endpoint_and_raw_topic_isolation(transport):
     server, client, conf, service, pub = transport
     conf = {**conf, "data_transport": "incremental"}
-    live_pub = IncrementalPublisher(
-        server, conf["pub_endpoint"], conf["sync_endpoint"], {"a": ArrayPolicy(0)}, service=service
-    )
+    live_pub = IncrementalPublisher(server, conf["pub_endpoint"], {"a": ArrayPolicy(0)}, service)
     live, buffers, raw = [], [], []
     IncrementalSubscriber(client, conf, live.append)
     BufferSubscriber(client, conf, buffers.append)
@@ -287,7 +283,7 @@ def test_stale_response_reconciles_without_mixing(transport):
 
 
 def test_lost_reply_retries_same_request(transport, monkeypatch):
-    import mahos.node.buffer_transport as module
+    import mahos.node.transport.buffer as module
 
     _, client, conf, service, pub = transport
     now = [10.0]

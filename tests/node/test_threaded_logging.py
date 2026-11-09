@@ -15,11 +15,12 @@ import pytest
 import zmq
 
 from mahos.node.comm import serialize, deserialize
-from mahos.node.data_transport import IncrementalPublisher, ArrayPolicy, VERSION
+from mahos.node.transport.incremental import IncrementalPublisher, ArrayPolicy, VERSION
 from mahos.node.log import PUBHandler
 from mahos.node.node import Node
 
 from shared.logging import RecordingHandler
+from mahos.node.transport import SnapshotService
 
 
 def test_node_shutdown_joins_snapshot_worker_before_detaching_handler(monkeypatch):
@@ -46,7 +47,11 @@ def test_node_shutdown_joins_snapshot_worker_before_detaching_handler(monkeypatc
     dealer.connect(sync)
     try:
         pub = IncrementalPublisher(
-            node.ctx, f"inproc://pub-{suffix}", sync, {"data": ArrayPolicy(0)}, logger=node.logger
+            node.ctx,
+            f"inproc://pub-{suffix}",
+            {"data": ArrayPolicy(0)},
+            SnapshotService(node.ctx, sync, node.logger),
+            logger=node.logger,
         )
         log_handler = node._log_handler
         remove_handler = node.logger.removeHandler
@@ -54,7 +59,7 @@ def test_node_shutdown_joins_snapshot_worker_before_detaching_handler(monkeypatc
 
         def observe_handler_removal(handler):
             if handler is log_handler:
-                worker_alive_at_detach.append(pub.snapshot_service._thread.is_alive())
+                worker_alive_at_detach.append(pub.service._thread.is_alive())
             remove_handler(handler)
 
         monkeypatch.setattr(node.logger, "removeHandler", observe_handler_removal)
@@ -65,10 +70,10 @@ def test_node_shutdown_joins_snapshot_worker_before_detaching_handler(monkeypatc
         assert len(handler.records) == 1
         node.close()
         assert worker_alive_at_detach == [False]
-        assert not pub.snapshot_service._thread.is_alive()
+        assert not pub.service._thread.is_alive()
         assert len(handler.records) == 1
         assert "Rejected recovery request" in handler.records[0].msg
-        assert handler.emit_threads == [pub.snapshot_service._thread.ident]
+        assert handler.emit_threads == [pub.service._thread.ident]
         assert pub_threads == handler.emit_threads
         assert node._log_handler is None
         assert log_handler not in node.logger.handlers
@@ -83,7 +88,7 @@ def test_node_shutdown_joins_snapshot_worker_before_detaching_handler(monkeypatc
 def test_python_client_logs_without_getter_or_parent_poll():
     from mahos.node.client import StatusDataSubscriber
     from mahos.node.comm import Context
-    from mahos.node.data_transport import TOPIC
+    from mahos.node.transport.incremental import TOPIC
 
     zctx = zmq.Context()
     server = Context(zctx)
@@ -100,7 +105,10 @@ def test_python_client_logs_without_getter_or_parent_poll():
     cli = None
     try:
         pub = IncrementalPublisher(
-            server, conf["pub_endpoint"], conf["sync_endpoint"], {"data": ArrayPolicy(0)}
+            server,
+            conf["pub_endpoint"],
+            {"data": ArrayPolicy(0)},
+            SnapshotService(server, conf["sync_endpoint"], logging.getLogger(__name__)),
         )
         cli = StatusDataSubscriber(
             {"localhost": {"node": conf}},

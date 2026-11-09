@@ -1,7 +1,7 @@
 Data transport in BasicMeasNode
 ===============================
 
-BasicMeasNode implements efficient transport mechanisms for both live and buffer data.
+BasicMeasNode implements efficient transport mechanisms for live, buffer, and preview data.
 
 Incremental live data transport
 -------------------------------
@@ -42,7 +42,7 @@ Implementing incremental transport
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To support another ``BasicMeasNode`` subclass, define ``INCREMENTAL_ARRAYS`` as a mapping
-from attribute names to ``mahos.node.data_transport.ArrayPolicy(axis, mutable_tail)``.
+from attribute names to ``mahos.node.transport.incremental.ArrayPolicy(axis, mutable_tail)``.
 Selected attributes must be NumPy arrays with non-object dtype, or ``None``.
 The optional ``count_attr`` policy field names a cumulative slice counter for a rolling array;
 the array must contain the latest slices ending at that count.
@@ -141,3 +141,17 @@ The shared service lazily serializes the committed copy and caches its bytes unt
 The subscriber retains no history; its client keeps the last delivered object while fetching an update.
 A fetch returns the service's current object, which may supersede the announcement.
 Intermediate updates may be skipped; clients converge when updates stop and communication succeeds.
+
+
+Transport module layout
+-----------------------
+
+Advanced transports live in ``mahos.node.transport``:
+
+* ``incremental``, ``buffer``, and ``latest`` contain the mode-specific publishers, subscribers, and protocols.
+* ``service`` provides ``SnapshotService``, shared by enabled transport modes.
+* ``config`` validates settings and resolves the transport mode for each topic.
+* ``subscription`` provides ``add_subscription()``, selecting the configured subscriber.
+
+The ``mahos.node.transport`` package exports ``ArrayPolicy``, ``SnapshotService``, ``TransportConfig``,
+and ``add_subscription()``.  Import mode-specific publishers and subscribers from their modules.

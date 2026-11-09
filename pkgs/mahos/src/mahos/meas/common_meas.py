@@ -27,9 +27,9 @@ from mahos.inst.server import MultiInstrumentClient
 from mahos.node.node import Node, NodeName
 from mahos.node.client import NodeClient, StateClientMixin
 from mahos.node.comm import Context
-from mahos.node.transport_util import TransportConfig
-from mahos.node.data_transport import IncrementalPublisher, SnapshotService
-from mahos.node.buffer_transport import BufferPublisher
+from mahos.node.transport.incremental import IncrementalPublisher
+from mahos.node.transport import SnapshotService, TransportConfig
+from mahos.node.transport.buffer import BufferPublisher
 from mahos.meas.file_transport import FileTransportClientMixin, FileTransportNodeMixin
 from mahos.meas.tweaker import TweakSaver
 
@@ -262,17 +262,14 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
 
         service = None
         if transport.needs_service:
-            service = SnapshotService(
-                self.ctx.zmq_context(), transport.endpoint, ("initial", 0, None), self.logger
-            )
-            self.ctx.add_close_service(service)
+            service = SnapshotService(self.ctx, transport.endpoint, self.logger)
+
         if transport.mode == "incremental":
             self.data_pub = IncrementalPublisher(
                 self.ctx,
                 self.conf["pub_endpoint"],
-                transport.endpoint,
                 self.INCREMENTAL_ARRAYS,
-                service=service,
+                service,
                 logger=self.logger,
             )
         else:
@@ -290,7 +287,7 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
     def new_preview_publisher(self, topic):
         """Construct a conventional or latest-object preview publisher."""
 
-        from mahos.node.latest_transport import LatestPublisher
+        from mahos.node.transport.latest import LatestPublisher
 
         name = topic.decode() if isinstance(topic, bytes) else topic
         if self._latest_modes.get(name) == "latest":

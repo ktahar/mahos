@@ -6,6 +6,7 @@ Incremental transport tests using real in-process ZMQ sockets.
 
 """
 
+import logging
 import copy
 import pickle
 import socket
@@ -21,9 +22,10 @@ import zmq
 
 from mahos.msgs.common_msgs import Message, pickle_proto
 from mahos.node.comm import Context, serialize, deserialize
-import mahos.node.data_transport as transport_module
-from mahos.node.transport_util import TransportConfig
-from mahos.node.data_transport import (
+import mahos.node.transport.incremental as transport_module
+import mahos.node.transport.service as service_module
+from mahos.node.transport.config import TransportConfig
+from mahos.node.transport.incremental import (
     ArrayPolicy,
     IncrementalPublisher,
     IncrementalSubscriber,
@@ -31,6 +33,7 @@ from mahos.node.data_transport import (
 )
 from mahos.node.log import DummyLogger
 from shared.transport import pump
+from mahos.node.transport import SnapshotService
 
 
 class CompressedData(Message):
@@ -66,8 +69,8 @@ def publisher(server, conf, tail=0, axis=1):
     return IncrementalPublisher(
         server,
         conf["pub_endpoint"],
-        conf["sync_endpoint"],
         {"a": ArrayPolicy(axis, tail), "b": ArrayPolicy(axis, tail)},
+        SnapshotService(server, conf["sync_endpoint"], logging.getLogger(__name__)),
     )
 
 
@@ -376,8 +379,8 @@ def test_counted_rolling_arrays(transport, capacity, axis, recovery_clock):
     pub = IncrementalPublisher(
         server,
         conf["pub_endpoint"],
-        conf["sync_endpoint"],
         {"a": ArrayPolicy(axis, count_attr="count")},
+        SnapshotService(server, conf["sync_endpoint"], logging.getLogger(__name__)),
     )
     received, wire = [], []
     sub = IncrementalSubscriber(client, conf, received.append)
@@ -418,8 +421,8 @@ def test_same_shape_history_rebuild(transport, monkeypatch):
     pub = IncrementalPublisher(
         server,
         conf["pub_endpoint"],
-        conf["sync_endpoint"],
         {"a": ArrayPolicy(0, generation_attr="generation")},
+        SnapshotService(server, conf["sync_endpoint"], logging.getLogger(__name__)),
     )
     received = []
     sub = IncrementalSubscriber(client, conf, received.append)
@@ -586,14 +589,14 @@ def receive_snapshot(dealer):
 def test_snapshot_cache_is_lazy_and_shared(transport, monkeypatch):
     server, client, conf = transport
     serialized = []
-    original_serialize = transport_module.serialize_pickle
+    original_serialize = service_module.serialize_pickle
 
     def record_serialization(msg, **kwargs):
         if isinstance(msg, SimpleNamespace):
             serialized.append((threading.get_ident(), msg))
         return original_serialize(msg, **kwargs)
 
-    monkeypatch.setattr(transport_module, "serialize_pickle", record_serialization)
+    monkeypatch.setattr(service_module, "serialize_pickle", record_serialization)
     pub = publisher(server, conf)
     dealers = [recovery_dealer(client, conf["sync_endpoint"]) for _ in range(2)]
     try:
@@ -633,9 +636,9 @@ def test_snapshot_cache_is_lazy_and_shared(transport, monkeypatch):
         for dealer in dealers:
             dealer.close()
         server.close()
-    assert not pub.snapshot_service._thread.is_alive()
-    assert pub.snapshot_service._cache_payload is None
-    assert pub.snapshot_service._latest is None
+    assert not pub.service._thread.is_alive()
+    assert pub.service._cache_payload is None
+    assert pub.service._latest is None
     server.close()  # Idempotent shutdown.
 
 
@@ -643,7 +646,7 @@ def test_publication_during_snapshot_and_queued_retry_coalescing(transport, monk
     server, client, conf = transport
     entered, release = threading.Event(), threading.Event()
     serialized = []
-    original_serialize = transport_module.serialize_pickle
+    original_serialize = service_module.serialize_pickle
 
     def slow_serialization(msg, **kwargs):
         if isinstance(msg, SimpleNamespace):
@@ -653,7 +656,7 @@ def test_publication_during_snapshot_and_queued_retry_coalescing(transport, monk
                 assert release.wait(5)
         return original_serialize(msg, **kwargs)
 
-    monkeypatch.setattr(transport_module, "serialize_pickle", slow_serialization)
+    monkeypatch.setattr(service_module, "serialize_pickle", slow_serialization)
     pub = publisher(server, conf)
     first = recovery_dealer(client, conf["sync_endpoint"])
     second = recovery_dealer(client, conf["sync_endpoint"])
@@ -692,18 +695,18 @@ def test_publication_during_snapshot_and_queued_retry_coalescing(transport, monk
 def test_snapshot_service_bind_failure_does_not_leak_thread(transport):
     server, client, conf = transport
     pub = publisher(server, conf)
+    assert server.close_services == [pub.service]
     # Qt may finish unrelated dummy threads while this test runs.
     before = {t for t in threading.enumerate() if t.name == "mahos-snapshot"}
     with pytest.raises(zmq.ZMQError):
-        transport_module.SnapshotService(
-            server.zmq_context(), conf["sync_endpoint"], ("epoch", 0, None), DummyLogger()
-        )
+        service_module.SnapshotService(server, conf["sync_endpoint"], DummyLogger())
+    assert server.close_services == [pub.service]
     assert {t for t in threading.enumerate() if t.name == "mahos-snapshot"} == before
     dealer = recovery_dealer(client, conf["sync_endpoint"])
     try:
         dealer.send(serialize((transport_module.VERSION, "still-alive", None, 0, True)))
         header, state = receive_snapshot(dealer)
-        assert header[2] == pub.epoch and state is None
+        assert header[2] == "initial" and state is None
     finally:
         dealer.close()
 
@@ -711,7 +714,7 @@ def test_snapshot_service_bind_failure_does_not_leak_thread(transport):
 def test_shutdown_joins_in_progress_snapshot(transport, monkeypatch):
     server, client, conf = transport
     entered, release, closed = threading.Event(), threading.Event(), threading.Event()
-    original_serialize = transport_module.serialize_pickle
+    original_serialize = service_module.serialize_pickle
 
     def slow_serialization(msg, **kwargs):
         if isinstance(msg, SimpleNamespace):
@@ -719,7 +722,7 @@ def test_shutdown_joins_in_progress_snapshot(transport, monkeypatch):
             assert release.wait(5)
         return original_serialize(msg, **kwargs)
 
-    monkeypatch.setattr(transport_module, "serialize_pickle", slow_serialization)
+    monkeypatch.setattr(service_module, "serialize_pickle", slow_serialization)
     pub = publisher(server, conf)
     dealer = recovery_dealer(client, conf["sync_endpoint"])
     closer = None
@@ -729,16 +732,16 @@ def test_shutdown_joins_in_progress_snapshot(transport, monkeypatch):
         assert entered.wait(3)
 
         def close_service():
-            pub.snapshot_service.close()
+            pub.service.close()
             closed.set()
 
         closer = threading.Thread(target=close_service)
         closer.start()
-        assert pub.snapshot_service._stop.wait(3)
+        assert pub.service._stop.wait(3)
         assert not closed.is_set()
         release.set()
         assert closed.wait(3)
-        assert not pub.snapshot_service._thread.is_alive()
+        assert not pub.service._thread.is_alive()
     finally:
         release.set()
         if closer is not None:

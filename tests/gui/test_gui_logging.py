@@ -14,16 +14,17 @@ import uuid
 import pytest
 import zmq
 
-from mahos.node.data_transport import IncrementalPublisher, ArrayPolicy
+from mahos.node.transport.incremental import IncrementalPublisher, ArrayPolicy
 
 from shared.logging import RecordingHandler
+from mahos.node.transport import SnapshotService
 
 
 @pytest.mark.parametrize("logger_kind", ["none", "pub"])
 def test_qt_client_logs_without_gui_event_loop(qapp, capsys, logger_kind):
     from mahos.gui.client import QBasicMeasClient
     from mahos.node.comm import Context
-    from mahos.node.data_transport import TOPIC
+    from mahos.node.transport.incremental import TOPIC
 
     zctx = zmq.Context()
     server = Context(zctx)
@@ -50,7 +51,10 @@ def test_qt_client_logs_without_gui_event_loop(qapp, capsys, logger_kind):
     cli = None
     try:
         pub = IncrementalPublisher(
-            server, conf["pub_endpoint"], conf["sync_endpoint"], {"data": ArrayPolicy(0)}
+            server,
+            conf["pub_endpoint"],
+            {"data": ArrayPolicy(0)},
+            SnapshotService(server, conf["sync_endpoint"], logging.getLogger(__name__)),
         )
         cli = QBasicMeasClient(
             {"localhost": {"node": conf}},

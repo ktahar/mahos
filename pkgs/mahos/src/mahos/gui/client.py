@@ -31,9 +31,9 @@ class QSubWorker(QtCore.QObject):
 
     def add_handler(self, lconf: dict, topic: bytes, handler, endpoint: str = "pub_endpoint"):
         if endpoint == "pub_endpoint":
-            from mahos.node.data_transport import add_data_subscription
+            from mahos.node.transport import add_subscription
 
-            add_data_subscription(self.ctx, lconf, topic, handler, logger=self.logger)
+            add_subscription(self.ctx, lconf, topic, handler, logger=self.logger)
         else:
             self.ctx.add_sub(lconf[endpoint], topic, handler)
 

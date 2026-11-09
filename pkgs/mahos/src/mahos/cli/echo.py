@@ -54,7 +54,7 @@ def main(args=None):
     from mahos.cli.util import init_gconf_host_node
     from mahos.node.client import EchoSubscriber
     from mahos.node.node import join_name
-    from mahos.node.transport_util import TransportConfig
+    from mahos.node.transport.config import TransportConfig
 
     args = parse_args(args)
     gconf, host, node = init_gconf_host_node(args.conf, args.host, args.node)

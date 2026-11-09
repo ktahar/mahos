@@ -1,11 +1,17 @@
 """Incremental transport tests for confocal trace buffers."""
 
+import logging
 import numpy as np
 import pytest
 
-import mahos.node.data_transport as transport_module
-from mahos.node.data_transport import ArrayPolicy, IncrementalPublisher, IncrementalSubscriber
+from mahos.node.transport import add_subscription
+from mahos.node.transport.incremental import (
+    ArrayPolicy,
+    IncrementalPublisher,
+    IncrementalSubscriber,
+)
 from shared.transport import pump
+from mahos.node.transport import SnapshotService
 
 
 @pytest.mark.parametrize("complex_data", [False, True])
@@ -17,16 +23,16 @@ def test_trace_lists_rolling_and_reset(transport, complex_data):
     pub = IncrementalPublisher(
         server,
         conf["pub_endpoint"],
-        conf["sync_endpoint"],
         {
             name: ArrayPolicy(
                 0, count_attr="sample_counts", generation_attr="generation", sequence=True
             )
             for name in ("traces", "stamps")
         },
+        SnapshotService(server, conf["sync_endpoint"], logging.getLogger(__name__)),
     )
     received = []
-    transport_module.add_data_subscription(client, conf, b"trace", received.append)
+    add_subscription(client, conf, b"trace", received.append)
     worker = Tracer.__new__(Tracer)
     worker.size = 8
     worker.trace = Trace(8, 2, complex_data)

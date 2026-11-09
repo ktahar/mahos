@@ -16,7 +16,7 @@ import uuid
 import zmq
 
 from mahos.node.comm import deserialize, serialize_pickle
-from mahos.node.transport_util import TransportConfig
+from mahos.node.transport.config import TransportConfig
 import mahos.util.validation as V
 
 VERSION = 1
