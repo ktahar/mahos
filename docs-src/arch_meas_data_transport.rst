@@ -29,7 +29,8 @@ History rebuilds after analysis-window changes force replacement.
 
 Confocal and TraceNode also support these settings for their ``trace`` topic.
 Both ``Trace.traces`` and ``Trace.stamps`` remain lists of per-channel arrays.
-Channels advance independently, using ``sample_counts`` positions.
+Channels start empty and grow independently up to ``max_size``, then retain the latest samples.
+``sample_counts`` counts received samples since clear, including samples that have rolled out.
 Clearing a trace increments ``generation`` to invalidate retained overlap.
 Oversized input batches retain the latest samples. Pause/resume preserves the existing frozen
 trace behavior; switching between frozen and live objects starts a new transport epoch.

@@ -14,6 +14,7 @@ import copy
 import numpy as np
 
 from mahos.util.timer import IntervalTimer
+from mahos.util.conf import ConfAccessorMixin
 from mahos_dq.msgs.confocal_msgs import (
     PiezoPos,
     Image,
@@ -132,7 +133,7 @@ class Piezo(Worker):
         return success
 
 
-class Tracer(Worker):
+class Tracer(Worker, ConfAccessorMixin):
     """Tracer.
 
     Apart from main confocal state, this class has local state
@@ -159,25 +160,27 @@ class Tracer(Worker):
             raise ValueError("all pd_channels values must be positive.")
         self.add_instruments(self.clock, *self.pds)
 
-        self.interval_sec = self.conf.get("interval_sec", 0.5)
-        self.size = self.conf.get("size", DEFAULT_TRACER_SIZE)
-        self.cb_samples = self.conf.get("samples", 5)
-        self.time_window_sec = self.conf.get("time_window_sec", 0.01)
-        self.pd_bounds = self.conf.get("pd_bounds", (-10.0, 10.0))
+        self.interval_sec = self._conf_nonneg_num("interval_sec", 0.5)
+        self.size = self._conf_pos_int("size", DEFAULT_TRACER_SIZE)
+        self.cb_samples = self._conf_pos_int("samples", 5)
+        self.time_window_sec = self._conf_nonneg_num("time_window_sec", 0.01)
+        self.pd_bounds = self._conf_ascending_numbers("pd_bounds", 2, (-10.0, 10.0))
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
 
         if "pd_rate" in self.conf:
-            self.pd_rate = self.conf["pd_rate"]
+            self.pd_rate = self._conf_pos_num("pd_rate")
             if "oversample" in self.conf:
                 msg = "pd_rate and oversample are both defined in conf. oversample is disregarded."
                 self.logger.warn(msg)
             self.oversample = None
         else:
             self.pd_rate = None
-            self.oversample = self.conf.get("oversample", 1)
+            self.oversample = self._conf_pos_int("oversample", 1)
 
         self.trace = Trace(
-            size=self.size, channels=sum(self.pd_channels), _complex=conf.get("complex", False)
+            size=self.size,
+            channels=sum(self.pd_channels),
+            _complex=self._conf_bool("complex", False),
         )
         self.paused_trace: Trace | None = None
 
@@ -302,15 +305,13 @@ class Tracer(Worker):
         count = len(new_data)
         if not count:
             return
-        if count > self.size:
-            new_data = new_data[-self.size :]
-            new_stamps = new_stamps[-self.size :]
-        # shift data. see pyqtgraph/examples/scrollingPlots.py
-        s = len(new_data)
-        self.trace.traces[ch][:-s] = self.trace.traces[ch][s:]
-        self.trace.traces[ch][-s:] = new_data
-        self.trace.stamps[ch][:-s] = self.trace.stamps[ch][s:]
-        self.trace.stamps[ch][-s:] = new_stamps
+        if count >= self.size:
+            self.trace.traces[ch] = new_data[-self.size :].astype(self.trace.dtype(), copy=True)
+            self.trace.stamps[ch] = new_stamps[-self.size :].copy()
+        else:
+            keep = self.size - count
+            self.trace.traces[ch] = np.concatenate((self.trace.traces[ch][-keep:], new_data))
+            self.trace.stamps[ch] = np.concatenate((self.trace.stamps[ch][-keep:], new_stamps))
         self.trace.sample_counts[ch] += count
 
     def get_data(self):
@@ -334,7 +335,8 @@ class Tracer(Worker):
                     continue
                 for j in range(channels):
                     new_data = np.hstack([chunk[j] for chunk in split_chunks])
-                    last_stamp = self.trace.stamps[trace_ch + j][-1].view(np.int64)
+                    old_stamps = self.trace.stamps[trace_ch + j]
+                    last_stamp = old_stamps[-1].view(np.int64) if len(old_stamps) else 0
                     new_stamps = self._interp_stamps(stamps, last_stamp)
                     self._append_trace_data(trace_ch + j, new_data, new_stamps)
             trace_ch += self.pd_channels[i]

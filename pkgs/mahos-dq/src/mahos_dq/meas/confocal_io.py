@@ -167,7 +167,11 @@ class ConfocalIO(object):
             return update_trace(d)
 
     def export_trace(self, file_name: str, trace: Trace, params: dict | None = None) -> bool:
-        """Export the trace to text or image files."""
+        """Export the trace to text or image files.
+
+        Text exports right-align channels and use NaN for missing samples.
+
+        """
 
         if not isinstance(trace, Trace):
             self.logger.error(f"Given object ({trace}) is not a Trace.")
@@ -291,7 +295,12 @@ class ConfocalIO(object):
             fo.write("# {}\n".format(" ".join([f"PD{i}" for i in range(trace.channels())])))
             fo.write("# {}\n".format(" ".join([trace.yunit] * trace.channels())))
         with open(fn, "ab") as fo:
-            np.savetxt(fo, np.column_stack(trace.traces))
+            size = max((len(t) for t in trace.traces), default=0)
+            table = np.full((size, trace.channels()), np.nan, dtype=trace.dtype())
+            for ch, values in enumerate(trace.traces):
+                if len(values):
+                    table[-len(values) :, ch] = values
+            np.savetxt(fo, table)
         self.logger.info(f"Exported Trace to {fn}.")
         return True
 
@@ -304,8 +313,11 @@ class ConfocalIO(object):
                 x = [datetime.fromtimestamp(s) for s in s.astype(np.float64) * 1e-9]
                 plt.plot(x, t, label=f"PD{ch}")
         else:
+            end = max((len(t) for t in trace.traces), default=0)
             for ch in range(len(trace.traces)):
-                plt.plot(trace.get_trace(ch, complex_conv), label=f"PD{ch}")
+                y = trace.get_trace(ch, complex_conv)
+                x = np.arange(end - len(y), end)
+                plt.plot(x, y, label=f"PD{ch}")
             plt.xlabel("Data points")
 
         plt.legend()

@@ -87,7 +87,8 @@ def test_confocal(server, confocal, confocal_conf):
     assert confocal.move(Axis.X, v)
     assert expect_value(lambda: confocal.get_status().pos.x_tgt, v, poll_timeout_ms)
     trace = get_some(confocal.get_trace, poll_timeout_ms)
-    assert len(trace.traces[0]) == tracer_size
+    assert len(trace.traces[0]) <= tracer_size
+    assert trace.max_size == tracer_size
 
     sparams = scan_params()
     assert confocal.change_state(ConfocalState.SCAN, sparams)

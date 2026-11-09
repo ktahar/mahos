@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import pytest
-import zmq
-
-from mahos.node.comm import Context
+from shared.transport import transport_contexts as transport_contexts
+from shared.transport import transport as transport
 
 from shared.fixtures import (
     ctx,
@@ -16,16 +14,3 @@ from shared.fixtures import (
     server_restart,
     server_conf,
 )
-
-
-@pytest.fixture
-def transport_contexts():
-    """Provide server and client contexts sharing one ZeroMQ context."""
-
-    zctx = zmq.Context()
-    server = Context(zctx, poll_timeout_ms=1)
-    client = Context(zctx, poll_timeout_ms=1)
-    yield server, client
-    client.close()
-    server.close()
-    zctx.term()

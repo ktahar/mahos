@@ -313,10 +313,18 @@ def update_image(image: Image):
 class Trace(Data, ComplexDataMixin):
     """Multi-channel confocal trace buffer with timestamped samples.
 
+    Channels start empty and grow independently up to ``max_size``; acquisition then
+    retains the latest samples. :meth:`size` reports the retained length of one channel.
+    Clearing preserves capacity and dtypes while resetting counts and advancing generation.
+
+    Trace format version 2 stores channel lengths alongside flattened arrays in HDF5;
+    older rectangular files are migrated by removing leading timestamp padding.
+
     :ivar _complex: True when trace storage uses complex dtype.
     :ivar traces: Per-channel trace arrays.
     :ivar stamps: Per-channel ``datetime64[ns]`` timestamp arrays.
-    :ivar sample_counts: Per-channel cumulative positions, including initial zero padding.
+    :ivar max_size: Maximum retained samples per channel.
+    :ivar sample_counts: Per-channel samples received since the last clear.
     :ivar generation: Reset token incremented by :meth:`clear`.
     :ivar ylabel: Y-axis label used by viewers.
     :ivar yunit: Y-axis unit used by viewers.
@@ -328,13 +336,14 @@ class Trace(Data, ComplexDataMixin):
 
         self._complex = _complex
 
-        self.sample_counts = [size] * channels
+        self.sample_counts = [0] * channels
         self.generation = 0
+        self.max_size = size
 
         # trace data
-        self.traces = [np.zeros(size, self.dtype()) for _ in range(channels)]
+        self.traces = [np.empty(0, self.dtype()) for _ in range(channels)]
         # time stamps
-        self.stamps = [np.zeros(size, dtype="datetime64[ns]") for _ in range(channels)]
+        self.stamps = [np.empty(0, dtype="datetime64[ns]") for _ in range(channels)]
 
         self.ylabel: str = "Intensity"
         self.yunit: str = ""
@@ -342,20 +351,19 @@ class Trace(Data, ComplexDataMixin):
     def channels(self) -> int:
         return len(self.traces)
 
-    def size(self) -> int:
-        return len(self.traces[0])
+    def size(self, ch: int = 0) -> int:
+        return len(self.traces[ch])
 
     def dtype(self):
         return np.cdouble if self._complex else np.double
 
     def clear(self):
         channels = self.channels()
-        size = self.size()
-        self.sample_counts = [size] * channels
+        self.sample_counts = [0] * channels
         self.generation += 1
         for ch in range(channels):
-            self.traces[ch] = np.zeros(size, self.dtype())
-            self.stamps[ch] = np.zeros(size, dtype="datetime64[ns]")
+            self.traces[ch] = np.empty(0, self.dtype())
+            self.stamps[ch] = np.empty(0, dtype="datetime64[ns]")
 
     def is_complex(self) -> bool:
         return np.issubdtype(self.traces[0].dtype, np.complexfloating)
@@ -374,17 +382,31 @@ class Trace(Data, ComplexDataMixin):
     def as_dataframes(self):
         return [self.as_dataframe(ch) for ch in range(len(self.traces))]
 
+    def to_h5(self, group, compression=None, compression_opts=None):
+        """Store channel arrays flat, with lengths on each dataset."""
+
+        super().to_h5(group, compression=compression, compression_opts=compression_opts)
+        for name in ("traces", "stamps"):
+            group[name].attrs["lengths"] = [len(a) for a in getattr(self, name)]
+
     def _h5_write_stamps(self, val):
-        return np.array(val).astype(np.int64)
+        return np.concatenate(val).astype(np.int64) if val else np.empty(0, np.int64)
 
     def _h5_read_stamps(self, val):
-        return list(np.array(val).astype("datetime64[ns]"))
+        arrays = self._h5_read_traces(val)
+        return [a.astype("datetime64[ns]") for a in arrays]
 
     def _h5_write_traces(self, val):
-        return np.array(val)
+        return np.concatenate(val) if val else np.empty(0, self.dtype())
 
     def _h5_read_traces(self, val):
-        return list(val)
+        array = np.array(val)
+        if "lengths" not in val.attrs:
+            return list(array)  # Legacy rectangular storage (v1 or earlier).
+        lengths = np.asarray(val.attrs["lengths"], dtype=np.int64)
+        if not len(lengths):
+            return []
+        return list(np.split(array, np.cumsum(lengths)[:-1]))
 
     def _h5_dataset_writers(self) -> dict:
         return {
@@ -412,6 +434,13 @@ def update_trace(trace: Trace):
         trace.set_version(1)
 
     if trace.version() <= 1:
+        trace.max_size = max((len(t) for t in trace.traces), default=0)
+        for ch, stamps in enumerate(trace.stamps):
+            valid = np.flatnonzero(stamps.view(np.int64) != 0)
+            start = int(valid[0]) if len(valid) else len(stamps)
+            trace.traces[ch] = trace.traces[ch][start:].copy()
+            trace.stamps[ch] = stamps[start:].copy()
+        # Legacy files do not record how many samples rolled out of the buffer.
         trace.sample_counts = [len(t) for t in trace.traces]
         trace.generation = 0
         trace.set_version(2)

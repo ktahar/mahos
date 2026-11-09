@@ -12,6 +12,7 @@ import logging
 import time
 
 import numpy as np
+import pytest
 
 from mahos_dq.meas.confocal_worker import Tracer
 
@@ -119,11 +120,11 @@ def test_tracer_append_overflow_and_empty():
     tracer._append_trace_data(0, values, stamps)
     np.testing.assert_equal(tracer.trace.traces[0], values[-8:])
     np.testing.assert_equal(tracer.trace.stamps[0], stamps[-8:])
-    assert tracer.trace.sample_counts == [28]
+    assert tracer.trace.sample_counts == [20]
     tracer._append_trace_data(0, values[:0], stamps[:0])
-    assert tracer.trace.sample_counts == [28]
+    assert tracer.trace.sample_counts == [20]
     tracer.trace.clear()
-    assert tracer.trace.sample_counts == [8]
+    assert tracer.trace.sample_counts == [0]
     assert tracer.trace.generation == 1
     assert not np.any(tracer.trace.traces)
 
@@ -133,12 +134,19 @@ def test_trace_migration_and_hdf5(tmp_path):
     from mahos_dq.msgs.confocal_msgs import update_trace
 
     trace = tracer_trace(channels=2, size=8)
+    trace.traces = [np.zeros(8), np.arange(8, dtype=float)]
+    trace.stamps = [
+        np.zeros(8, dtype="datetime64[ns]"),
+        np.array([0, 0, 1, 2, 3, 4, 5, 6], dtype="datetime64[ns]"),
+    ]
     trace.set_version(1)
     del trace.sample_counts
     del trace.generation
     update_trace(trace)
     assert trace.version() == 2
-    assert trace.sample_counts == [8, 8]
+    assert trace.sample_counts == [0, 6]
+    assert trace.max_size == 8
+    assert [len(t) for t in trace.traces] == [0, 6]
     trace.clear()
     io = ConfocalIO()
     filename = str(tmp_path / "trace.h5")
@@ -148,3 +156,58 @@ def test_trace_migration_and_hdf5(tmp_path):
     assert loaded.generation == 1
     assert isinstance(loaded.traces, list)
     assert isinstance(loaded.stamps, list)
+
+
+def test_tracer_grows_then_rolls():
+    tracer = make_tracer([1, 1])
+    tracer.trace = tracer_trace(channels=2, size=8)
+    assert tracer.trace.size() == 0
+    for start, stop in [(0, 3), (3, 7), (7, 9)]:
+        values = np.arange(start, stop, dtype=float)
+        tracer._append_trace_data(0, values, values.astype("datetime64[ns]"))
+        np.testing.assert_equal(tracer.trace.traces[0], np.arange(max(0, stop - 8), stop))
+        assert tracer.trace.sample_counts == [stop, 0]
+        assert tracer.trace.size(1) == 0
+
+
+@pytest.mark.parametrize("complex_data", [False, True])
+def test_ragged_trace_io(tmp_path, complex_data):
+    from mahos_dq.meas.confocal_io import ConfocalIO
+
+    tracer = make_tracer([1, 1])
+    from mahos_dq.msgs.confocal_msgs import Trace
+
+    tracer.trace = Trace(size=8, channels=2, _complex=complex_data)
+    values = np.arange(3.0) + (2j if complex_data else 0)
+    tracer._append_trace_data(1, values, np.arange(3).astype("datetime64[ns]"))
+    io = ConfocalIO()
+    filename = str(tmp_path / "ragged.h5")
+    assert io.save_trace(filename, tracer.trace)
+    loaded = io.load_trace(filename)
+    assert loaded.max_size == 8
+    for name in ("traces", "stamps"):
+        for actual, expected in zip(getattr(loaded, name), getattr(tracer.trace, name)):
+            np.testing.assert_equal(actual, expected)
+    filename = str(tmp_path / "ragged.txt")
+    assert io.export_trace(filename, loaded)
+    table = np.loadtxt(filename, dtype=loaded.dtype())
+    assert np.isnan(table[:, 0]).all()
+    np.testing.assert_equal(table[:, 1], values)
+
+
+def test_legacy_rectangular_trace_file(tmp_path):
+    import h5py
+    from mahos_dq.meas.confocal_io import ConfocalIO
+
+    filename = str(tmp_path / "legacy.h5")
+    with h5py.File(filename, "w") as f:
+        f.attrs["_version"] = 1
+        f.attrs["_complex"] = False
+        f.create_dataset("traces", data=[[0.0, 0.0, 0.0, 3.0], [0.0, 0.0, 0.0, 0.0]])
+        f.create_dataset("stamps", data=[[0, 0, 10, 20], [0, 0, 0, 0]])
+    trace = ConfocalIO().load_trace(filename)
+    assert trace.version() == 2
+    assert trace.max_size == 4
+    assert trace.sample_counts == [2, 0]
+    np.testing.assert_equal(trace.traces[0], [0.0, 3.0])
+    assert trace.size(1) == 0

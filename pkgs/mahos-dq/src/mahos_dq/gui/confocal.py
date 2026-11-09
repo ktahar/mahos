@@ -48,7 +48,6 @@ from mahos_dq.msgs.confocal_msgs import (
 )
 from mahos_dq.msgs.confocal_msgs import line_mode_to_str, str_to_line_mode
 from mahos_dq.msgs.confocal_tracker_msgs import OptMode
-from mahos_dq.meas.confocal_worker import DEFAULT_TRACER_SIZE
 from mahos_dq.gui.confocal_client import (
     QConfocalClient,
     QConfocalTrackerClient,
@@ -2214,19 +2213,13 @@ class traceView(ClientWidget, Ui_traceView):
         self.update_fontsize()
 
     def init_plot(self):
-        try:
-            size = self.conf["tracer"]["size"]
-        except KeyError:
-            size = DEFAULT_TRACER_SIZE
-
         colors = colors_tab20_pair()
         # Pick C2 as color for total
         ctotal = colors.pop(2)
-        self._trace_size = size
         self._plot_colors = colors
         self._ctotal = ctotal[0]
-        self.curve_total = self.pi.plot(np.zeros(size), pen=ctotal[1])
-        self.curve_total_sma = self.pi.plot(np.zeros(size), pen=mkPen(ctotal[0], width=3))
+        self.curve_total = self.pi.plot(np.empty(0), pen=ctotal[1])
+        self.curve_total_sma = self.pi.plot(np.empty(0), pen=mkPen(ctotal[0], width=3))
 
         self.pi.showGrid(x=True, y=True)
         self.pi.setLabel("bottom", "Data point")
@@ -2279,6 +2272,8 @@ class traceView(ClientWidget, Ui_traceView):
             elif not df.index.is_monotonic_increasing:
                 df = df.sort_index()
             dfs.append(df)
+        if not dfs or any(df.empty for df in dfs):
+            return np.empty(0, dtype="datetime64[ns]"), np.empty(0)
         base_index = dfs[0].index
         # Align channels to PD0 timestamps for total trace.
         cdf = pd.concat([dfs[0]] + [df.reindex(base_index, method="nearest") for df in dfs[1:]])
@@ -2309,8 +2304,8 @@ class traceView(ClientWidget, Ui_traceView):
 
         for ch, name in enumerate(names):
             c0, c1 = self._plot_colors[ch]
-            curve = self.pi.plot(np.zeros(self._trace_size), pen=c1)
-            sma_curve = self.pi.plot(np.zeros(self._trace_size), pen=mkPen(c0, width=3))
+            curve = self.pi.plot(np.empty(0), pen=c1)
+            sma_curve = self.pi.plot(np.empty(0), pen=mkPen(c0, width=3))
 
             label = QtWidgets.QLabel(parent=self)
             label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -2369,18 +2364,25 @@ class traceView(ClientWidget, Ui_traceView):
                 trace.get_trace(ch, complex_conv=self.complexBox.currentText())
                 for ch in range(len(self._channel))
             ]
+            # Align the newest sample of every channel at the same data-point index.
+            end = max(map(len, traces), default=0)
             for channel, tr in zip(self._channel, traces):
+                x = np.arange(end - len(tr), end)
                 tsma = simple_moving_average(tr, N)
                 means.append(tsma[-1] if len(tsma) else 0.0)
                 if channel.check.isChecked():
                     if raw:
-                        channel.curve.setData(tr)
-                    channel.sma_curve.setData(tsma)
+                        channel.curve.setData(x=x, y=tr)
+                    channel.sma_curve.setData(x=simple_moving_average(x, N), y=tsma)
             if len(self._channel) > 1 and self.showtotalBox.isChecked():
-                t = sum(traces)
+                size = min(map(len, traces))
+                t = sum(tr[-size:] for tr in traces) if size else np.empty(0)
+                x = np.arange(end - size, end)
                 if raw:
-                    self.curve_total.setData(t)
-                self.curve_total_sma.setData(simple_moving_average(t, N))
+                    self.curve_total.setData(x=x, y=t)
+                self.curve_total_sma.setData(
+                    x=simple_moving_average(x, N), y=simple_moving_average(t, N)
+                )
 
         u = trace.yunit or ""
         total = sum(means)
