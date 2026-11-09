@@ -23,6 +23,27 @@ class DummyUnits:
 
 
 class DummyChannel:
+    def __init__(self, index=0):
+        self.index = index
+
+    def path(self, value):
+        self._path_value = value
+        return value
+
+    def termination(self, value):
+        self._termination_value = value
+
+    def get_termination(self):
+        return self._termination_value
+
+    def coupling(self, value):
+        self._coupling_value = value
+        return value
+
+    def filter(self, value):
+        self._filter_value = value
+        return value
+
     def amp(self, value, return_unit):
         self.amp_value = value
         return value
@@ -37,16 +58,11 @@ class DummyChannel:
 
 class DummyChannels(list):
     def __init__(self, card, card_enable):
-        super().__init__([DummyChannel()])
-
-    def path(self, value):
-        self._path_value = value
-
-    def termination(self, value):
-        self._termination_value = value
-
-    def coupling(self, value):
-        self._coupling_value = value
+        super().__init__(
+            DummyChannel(index)
+            for index in range(card_enable.bit_length())
+            if card_enable & (1 << index)
+        )
 
 
 class DummyCard:
@@ -140,6 +156,17 @@ def make_inst(conf=None):
     inst = Spectrum_AnalogIn("digitizer", {"mock": True, "lines": [0], **(conf or {})})
     inst._spcm = DummySpcm
     return inst
+
+
+@pytest.mark.parametrize("lines", [[1, 0], [0, 0], ["ch1", "channel0"], [0, "ch0"]])
+def test_lines_reject_unordered_or_duplicate_indices(lines):
+    with pytest.raises(ValueError, match="lines"):
+        make_inst({"lines": lines})
+
+
+@pytest.mark.parametrize("lines", [[0], [0, 2], ["ch2", "channel10"]])
+def test_lines_accept_ascending_indices(lines):
+    assert make_inst({"lines": lines}).lines == lines
 
 
 def make_triggered_params(**overrides):

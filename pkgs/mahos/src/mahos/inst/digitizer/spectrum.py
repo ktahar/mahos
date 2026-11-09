@@ -14,12 +14,22 @@ import threading
 import time
 import enum
 import math
+from dataclasses import dataclass
 
 import numpy as np
 
 from mahos.inst.instrument import Instrument
 from mahos.util.queue import RollingQueue
 from mahos.util.conf import ConfAccessorMixin
+import mahos.util.validation as V
+
+
+@dataclass(frozen=True)
+class ChannelConf:
+    input_path: int = 0
+    term_50: bool = False
+    DC_coupling: bool = True
+    filter_enable: bool = False
 
 
 class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
@@ -33,14 +43,34 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
     pre-trigger region is removed before data reduction and publication. Software triggering is
     rejected in ``triggered`` mode; ``stream`` mode uses a one-time software trigger internally.
 
-    :param lines: channel indices to enable, for example ``[0]`` or ``[0, 1]``.
+    :param lines: channel indices to enable in strictly ascending order, for example
+        ``[0]`` or ``[0, 1]``. Duplicate indices are rejected.
     :type lines: list[int | str]
-    :param channel_mask: explicit channel bit mask. Takes precedence over ``lines``.
-    :type channel_mask: int
     :param resource: card resource such as ``/dev/spcm0`` or ``TCPIP::192.168.1.10::inst0::INSTR``.
     :type resource: str
     :param serial_number: card serial number.
     :type serial_number: int
+    :param input_path: (default: 0) input path, either ``0`` or ``1``. A scalar applies to
+        all channels; a list or tuple must contain one value per channel in ``lines`` order.
+        This is a static configuration setting and is not read from acquisition parameters.
+    :type input_path: int | list[int] | tuple[int, ...]
+    :param termination: (default: False) channel termination: ``True`` or ``50`` selects
+        50 Ohm; ``False`` or ``1_000_000`` selects High-Z (1 MOhm). A scalar applies to all
+        channels; a list or tuple must contain one value per channel in ``lines`` order.
+        Path 1 requires 50 Ohm. This is a static configuration setting.
+    :type termination: bool | int | list[bool | int] | tuple[bool | int, ...]
+    :param DC_coupling: (default: True) ``True`` selects DC coupling and ``False`` selects
+        AC coupling. A scalar applies to all channels; a list or tuple must contain one
+        boolean per channel in ``lines`` order. This is a static configuration setting.
+    :type DC_coupling: bool | list[bool] | tuple[bool, ...]
+    :param filter: (default: False) enable the channel input filter. A scalar applies to
+        all channels; a list or tuple must contain one boolean per channel in ``lines``
+        order. This is a static configuration setting.
+    :type filter: bool | list[bool] | tuple[bool, ...]
+    :param trigger_termination: (default: False) external trigger input termination:
+        ``True`` or ``50`` selects 50 Ohm; ``False`` or ``1_000_000`` selects High-Z (1 MOhm).
+        This is read only from static configuration, independently of ``termination``.
+    :type trigger_termination: bool | int
     :param queue_size: (default: 10000) software buffer size.
     :type queue_size: int
     :param silent: (default: False) suppress queue overflow warnings.
@@ -81,9 +111,8 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
     def __init__(self, name, conf=None, prefix=None):
         Instrument.__init__(self, name, conf=conf, prefix=prefix)
 
-        if "channel_mask" not in self.conf:
-            self.check_required_conf(("lines",))
-        self.lines = self.conf.get("lines", [0])
+        self.check_required_conf("lines")
+        self.lines = self.conf["lines"]
         self.queue_size = self.conf.get("queue_size", 10000)
         self.queue = RollingQueue(self.queue_size)
         self._silent = self.conf.get("silent", False)
@@ -138,9 +167,90 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
             "output": self._conf_bool("clock_output", False),
         }
 
+        V.check_ascending_numbers([self._channel_index(line) for line in self.lines], name="lines")
+        self._channel_conf = self._normalize_channel_conf()
+
         if not self.conf.get("mock", False):
             self._import_spcm()
             self._open_card()
+
+    def _normalize_channel_conf(self) -> tuple[ChannelConf, ...]:
+        # input_path: 0 or 1. defaults to 0.
+        if "input_path" in self.conf:
+            path = self.conf["input_path"]
+            if isinstance(path, int):
+                path = [path] * len(self.lines)
+            elif isinstance(path, (tuple, list)):
+                path = self._conf_integers("input_path", len(self.lines))
+            else:
+                raise TypeError("unrecognized input_path type.")
+        else:
+            path = [0] * len(self.lines)
+        for p in path:
+            if p not in (0, 1):
+                raise ValueError(f"Invalid input path {p} (must be 0 or 1)")
+
+        # termination: True for 50 Ohm, False for High-Z. defaults to False.
+        if "termination" in self.conf:
+            term = self.conf["termination"]
+            if isinstance(term, int) and not isinstance(term, bool):
+                if term not in (50, 1_000_000):
+                    raise TypeError("invalid termination value (must be 50 or 1 M).")
+                term = [term == 50] * len(self.lines)
+            elif isinstance(term, bool):
+                term = [term] * len(self.lines)
+            elif isinstance(term, (tuple, list)):
+                _term = []
+                for t in term:
+                    if isinstance(t, int) and not isinstance(t, bool):
+                        if t not in (50, 1_000_000):
+                            raise TypeError("invalid termination value (must be 50 or 1 M).")
+                        _term.append(t == 50)
+                    elif isinstance(t, bool):
+                        _term.append(t)
+                    else:
+                        raise TypeError("unrecognized termination element type.")
+                term = _term
+                if len(term) != len(self.lines):
+                    raise ValueError("termination length is invalid.")
+            else:
+                raise TypeError("unrecognized termination type.")
+        else:
+            term = [False] * len(self.lines)
+
+        for p, t in zip(path, term):
+            if p == 1 and not t:
+                raise ValueError("for path 1, termination must always be 50.")
+
+        # coupling: True for DC, False for AC. defaults to True.
+        if "DC_coupling" in self.conf:
+            cpl = self.conf["DC_coupling"]
+            if isinstance(cpl, bool):
+                cpl = [cpl] * len(self.lines)
+            elif isinstance(cpl, (tuple, list)):
+                if len(cpl) != len(self.lines):
+                    raise ValueError("DC_coupling length is invalid.")
+                cpl = [V.check_bool(c, f"DC_coupling[{i}]") for i, c in enumerate(cpl)]
+            else:
+                raise TypeError("unrecognized DC_coupling type.")
+        else:
+            cpl = [True] * len(self.lines)
+
+        # filter: True to enable, False to disable. defaults to False.
+        if "filter" in self.conf:
+            filt = self.conf["filter"]
+            if isinstance(filt, bool):
+                filt = [filt] * len(self.lines)
+            elif isinstance(filt, (tuple, list)):
+                if len(filt) != len(self.lines):
+                    raise ValueError("filter length is invalid.")
+                filt = [V.check_bool(f, f"filter[{i}]") for i, f in enumerate(filt)]
+            else:
+                raise TypeError("unrecognized filter type.")
+        else:
+            filt = [False] * len(self.lines)
+
+        return tuple((ChannelConf(p, t, c, f) for p, t, c, f in zip(path, term, cpl, filt)))
 
     def _import_spcm(self):
         if self._spcm is None:
@@ -177,8 +287,6 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
 
     def _channel_mask(self) -> int:
         spcm = self._import_spcm()
-        if "channel_mask" in self.conf:
-            return int(self.conf["channel_mask"])
         mask = 0
         for line in self.lines:
             idx = self._channel_index(line)
@@ -214,50 +322,43 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
 
         # Don't change the order of settings.
         # 1: input path
-        path = int(params.get("input_path", self.conf.get("input_path", 0)))
-        if path not in (0, 1):
-            return self.fail_with(f"Invalid input path {path} (must be 0 or 1)")
-        self._channels.path(path)
-
         # 2: termination
-        termination = int(params.get("termination", self.conf.get("termination", 1_000_000)))
-        if path == 1 and termination != 50:
-            return self.fail_with("For path 1, termination is always 50.")
-        if path == 0:
-            # don't set termination for path 1 that's always 50 Ohm (attempt will raise error).
-            if termination == 1_000_000:
-                self._channels.termination(0)
-            elif termination == 50:
-                self._channels.termination(1)
-            else:
-                return self.fail_with(f"invalid termination: {termination} (must be 50 or 1 M)")
-
         # 3: coupling
-        DC_coupling = bool(params.get("DC_coupling", self.conf.get("DC_coupling", True)))
-        if DC_coupling:
-            self._channels.coupling(spcm.COUPLING_DC)
-        else:
-            self._channels.coupling(spcm.COUPLING_AC)
-
-        self.logger.debug(
-            "Channels: path = {}, termination = {}, coupling = {}".format(
-                path, "50" if termination == 50 else "HighZ", "DC" if DC_coupling else "AC"
+        # 4: filter
+        for ch, conf in zip(self._channels, self._channel_conf):
+            path = ch.path(conf.input_path)
+            if conf.input_path == 0:
+                # why Channel.termination() doesn't return int?
+                ch.termination(int(conf.term_50))
+                term = ch.get_termination()
+            else:
+                term = 1
+            # COUPLING_DC is 0, so this is logical inversion.
+            cpl = ch.coupling(spcm.COUPLING_DC if conf.DC_coupling else spcm.COUPLING_AC)
+            filt = ch.filter(int(conf.filter_enable))
+            self.logger.debug(
+                "Ch{}: path = {}, termination = {}, coupling = {}, filter = {}".format(
+                    ch.index,
+                    path,
+                    "50" if term == 1 else "HighZ",
+                    "AC" if cpl == 1 else "DC",
+                    filt,
+                )
             )
-        )
 
-        # 4: bounds (amp and offset)
+        # 5: bounds (amp and offset)
         bounds = self._get_bounds(params)
         if len(bounds) != len(self._channels):
             return self.fail_with(
                 f"len(bounds) is invalid: {len(bounds)} != {len(self._channels)}."
             )
-        for ch, bnds in zip(self._channels, bounds):
+        for ch, conf, bnds in zip(self._channels, self._channel_conf, bounds):
             if len(bnds) == 2 and isinstance(bnds[0], (float, int, np.integer, np.floating)):
                 lb, ub = bnds
-                amp, offset = self._get_amp_offset(path, lb, ub)
+                amp, offset = self._get_amp_offset(conf.input_path, lb, ub)
                 amp_set = ch.amp(amp * spcm.units.mV, return_unit=spcm.units.mV)
                 ofs_set = ch.offset(offset * spcm.units.percent, return_unit=spcm.units.V)
-                self.logger.debug(f"{ch} range: Amp = {amp_set}, Offset = {ofs_set}")
+                self.logger.debug(f"Ch{ch.index} range: Amp = {amp_set}, Offset = {ofs_set}")
             else:
                 return self.fail_with(f"invalid bounds: {bnds}")
 
@@ -269,13 +370,13 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
         mode = self._clock_conf["mode"]
         if mode in ("internal", "int", "intpll"):
             clock.mode(spcm.SPC_CM_INTPLL)
-            self.logger.info("Internal clock.")
+            self.logger.debug("Internal clock.")
         elif mode in ("ext_ref", "extref", "external_reference", "reference"):
             freq = self._clock_conf["freq"]
             clock.mode(spcm.SPC_CM_EXTREFCLOCK)
             clock.reference_clock(freq)
             clock.termination(self._clock_conf["termination"])
-            self.logger.info(f"External clock at {freq:_d} Hz.")
+            self.logger.debug(f"External clock at {freq:_d} Hz.")
         else:
             return self.fail_with(f"unsupported clock mode: {mode}")
         clock.clock_output(self._clock_conf["output"])
@@ -300,20 +401,13 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
         if source in ("ext0", "external0"):
             trigger.or_mask(spcm.SPC_TMASK_EXT0)
             trigger.ext0_mode(mode)
-            if "trigger_termination" in params or "trigger_termination" in self.conf:
-                termination = int(
-                    params.get("trigger_termination", self.conf.get("trigger_termination"))
-                )
-            else:
-                termination = int(
-                    params.get("termination", self.conf.get("termination", 1_000_000))
-                )
-            if termination == 1_000_000:
-                trigger.termination(0)
-                self.logger.debug("trigger ext0 termination: HighZ (1 M)")
-            elif termination == 50:
+            termination = self.conf.get("trigger_termination", False)
+            if termination in (50, True):
                 trigger.termination(1)
                 self.logger.debug("trigger ext0 termination: 50 Ohm")
+            elif termination in (1_000_000, False):
+                trigger.termination(0)
+                self.logger.debug("trigger ext0 termination: HighZ (1 M)")
             else:
                 return self.fail_with(f"invalid termination: {termination} (must be 50 or 1 M)")
             trigger.ext0_coupling(spcm.COUPLING_DC)
