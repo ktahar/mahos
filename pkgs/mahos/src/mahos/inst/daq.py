@@ -11,6 +11,8 @@ This module requires PyDAQmx library.
 """
 
 from __future__ import annotations
+
+from mahos.inst.channel_selection import channel_indices
 import time
 from typing import Callable, Optional
 
@@ -589,6 +591,10 @@ class AnalogIn(ConfigurableTask):
     In clock-mode, readings are synchronized to a clock, buffered, and read at each `cb_samples`.
     In on-demand-mode, data are read on get("data") request.
 
+    The runtime ``channel_selection`` parameter selects strictly ascending, zero-based
+    indices into ``lines`` for hardware acquisition. Omission or ``None`` restores all
+    inputs. Per-channel bounds always follow the full configured ``lines`` order.
+
     :param lines: list of strings to designate DAQ's physical channels.
     :type lines: list[str]
     :param queue_size: (default: 10000) Software buffer (queue) size for acquired data.
@@ -673,6 +679,8 @@ class AnalogIn(ConfigurableTask):
 
         self.check_required_conf(("lines",))
         self.lines = conf["lines"]
+        self._active_lines = list(self.lines)
+        self._channel_selection = list(range(len(self.lines)))
 
         self.queue_size = self.conf.get("queue_size", 10000)
         self.queue = RollingQueue(self.queue_size)
@@ -700,7 +708,7 @@ class AnalogIn(ConfigurableTask):
 
     def get_max_rate(self) -> float | None:
         rate = D.float64()
-        if len(self.lines) == 1:
+        if len(self._active_lines) == 1:
             D.GetDevAIMaxSingleChanRate(_device_name(self.lines[0]), D.byref(rate))
         else:
             D.GetDevAIMaxMultiChanRate(_device_name(self.lines[0]), D.byref(rate))
@@ -808,6 +816,20 @@ class AnalogIn(ConfigurableTask):
 
         return self.queue.pop_all_block()
 
+    def _select_channels(self, params: dict) -> bool:
+        """Resolve physical input selection before creating a task."""
+
+        try:
+            indices = channel_indices(params.get("channel_selection"), len(self.lines))
+            if getattr(self, "_requires_all_channels", False) and len(indices) != len(self.lines):
+                raise ValueError("This instrument requires all configured inputs.")
+        except ValueError as e:
+            return self.fail_with(str(e))
+        self._channel_selection = indices
+        self._active_lines = [self.lines[i] for i in indices]
+        self.queue = RollingQueue(self.queue_size)
+        return True
+
     def _get_bounds(self, params: dict) -> tuple[bool, list[tuple[float, float]]]:
         bounds = params.get("bounds", [(-10.0, 10.0)] * len(self.lines))
         if len(bounds) == 2 and isinstance(bounds[0], (float, np.floating, int, np.integer)):
@@ -815,7 +837,7 @@ class AnalogIn(ConfigurableTask):
         if len(bounds) != len(self.lines):
             self.logger.error(f"len(bounds) is invalid: {len(bounds)} != {len(self.lines)}.")
             return False, []
-        return True, bounds
+        return True, [bounds[i] for i in self._channel_selection]
 
     def _get_ranges(self, channel: str) -> tuple[float, float] | None:
         if self.task is None:
@@ -827,13 +849,15 @@ class AnalogIn(ConfigurableTask):
         return low.value, high.value
 
     def configure_on_demand(self, params: dict) -> bool:
+        if not self._select_channels(params):
+            return False
         success, bounds = self._get_bounds(params)
         if not success:
             return False
 
         self.finite = False
         self.task = D.Task()
-        for line, bound in zip(self.lines, bounds):
+        for line, bound in zip(self._active_lines, bounds):
             self.task.CreateAIVoltageChan(
                 line, "", D.DAQmx_Val_RSE, bound[0], bound[1], D.DAQmx_Val_Volts, None
             )
@@ -842,6 +866,8 @@ class AnalogIn(ConfigurableTask):
         return True
 
     def configure_clock(self, params: dict) -> bool:
+        if not self._select_channels(params):
+            return False
         if not self.check_required_params(params, ("clock", "cb_samples", "samples")):
             return False
         clock = params["clock"]
@@ -904,7 +930,7 @@ class AnalogIn(ConfigurableTask):
         done_handler = params.get("done_handler", self._null_done_handler)
         self.task = AnalogInTask(
             self.full_name(),
-            len(self.lines),
+            len(self._active_lines),
             every,
             oversample,
             block_samples,
@@ -919,7 +945,7 @@ class AnalogIn(ConfigurableTask):
             done_handler,
         )
 
-        for i, (line, bound) in enumerate(zip(self.lines, bounds)):
+        for i, (line, bound) in enumerate(zip(self._active_lines, bounds)):
             self.task.CreateAIVoltageChan(
                 line,
                 f"AnalogIn{i}",
@@ -945,7 +971,7 @@ class AnalogIn(ConfigurableTask):
             self.set_buffer_size(buffer_size)
             self.logger.debug(f"Buffer size (manual alloc): {self.get_buffer_size()}")
 
-        for i, line in enumerate(self.lines):
+        for i, line in enumerate(self._active_lines):
             ranges = self._get_ranges(f"AnalogIn{i}")
             self.logger.debug(f"Input voltage ranges of {line}: {ranges}")
 
@@ -972,14 +998,14 @@ class AnalogIn(ConfigurableTask):
     def read_on_demand(self, oversample: int = 1) -> np.float64 | np.ndarray:
         """Read out analog voltages on demand.
 
-        if len(self.lines) is 1, the value is returned in np.float64.
-        Otherwise values are returned in ndarray (size: len(self.lines), type: float64).
+        if len(self._active_lines) is 1, the value is returned in np.float64.
+        Otherwise values are returned in ndarray (size: len(self._active_lines), type: float64).
 
         :param oversample: number of samples per channels, which is used for averaging.
 
         """
 
-        line_num = len(self.lines)
+        line_num = len(self._active_lines)
         volt = np.zeros(oversample * line_num, dtype=np.float64)
         read_samps = D.int32()
 
@@ -1251,6 +1277,8 @@ class BufferedEdgeCounter(ConfigurableTask):
     # Standard API
 
     def configure(self, params: dict, label: str = "") -> bool:
+        if params.get("channel_selection") is not None:
+            return self.fail_with("Hardware channel selection requires an analog input.")
         if not self.check_required_params(params, ("clock", "cb_samples", "samples")):
             return False
         clock = params["clock"]

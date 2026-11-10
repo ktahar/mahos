@@ -10,6 +10,8 @@ Worker for Pulse ODMR with Slow detectors.
 
 from __future__ import annotations
 
+from mahos.inst.channel_selection import pd_selections
+
 import numpy as np
 
 from mahos_dq.msgs.spodmr_msgs import SPODMRData, MWMode, is_sweepN, is_CPlike, is_correlation
@@ -561,6 +563,7 @@ class Pulser(Worker):
         self.pg = PGInterface(cli, "pg")
         self.pd_names = self.conf.get("pd_names", ["pd0"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
+        self.pd_channel_selection = pd_selections(self.conf, self.pd_names)
         self._pd_spectrum = self.conf.get("pd_spectrum", False)
         if self._pd_spectrum:
             self.clock = None
@@ -688,6 +691,7 @@ class Pulser(Worker):
                 return False
             clock_pd = self.clock.get_internal_output()
 
+        self.data.params["pd_channel_selection"] = dict(self.pd_channel_selection)
         num = self.data.get_num()
         if params["partial"] == -1:
             num *= 2
@@ -706,6 +710,7 @@ class Pulser(Worker):
                         oversample=self.oversample,
                         bounds=params["pd"].get("bounds", (-10.0, 10.0)),
                         data_transfer=self._pd_data_transfer,
+                        channel_selection=self.pd_channel_selection.get(pd.inst),
                     )
                     for pd in self.pds
                 ]

@@ -9,6 +9,8 @@ Workers for Confocal.
 """
 
 from __future__ import annotations
+
+from mahos.inst.channel_selection import pd_selections
 import copy
 
 import numpy as np
@@ -149,6 +151,7 @@ class Tracer(Worker, ConfAccessorMixin):
         self.clock = None if self._pd_spectrum else ClockSourceInterface(cli, "clock")
         self.pd_names = conf.get("pd_names", ["pd0", "pd1"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
+        self.pd_channel_selection = pd_selections(self.conf, self.pd_names)
         self.pd_channels = conf.get("pd_channels", [1] * len(self.pds))
         if isinstance(self.pd_channels, int):
             if len(self.pds) != 1:
@@ -156,6 +159,10 @@ class Tracer(Worker, ConfAccessorMixin):
             self.pd_channels = [self.pd_channels]
         if len(self.pd_channels) != len(self.pds):
             raise ValueError("len(pd_channels) must match len(pd_names).")
+        for i, name in enumerate(self.pd_names):
+            selection = self.pd_channel_selection.get(name)
+            if "pd_channels" not in conf and selection is not None:
+                self.pd_channels[i] = len(selection)
         if any(ch < 1 for ch in self.pd_channels):
             raise ValueError("all pd_channels values must be positive.")
         self.add_instruments(self.clock, *self.pds)
@@ -182,6 +189,7 @@ class Tracer(Worker, ConfAccessorMixin):
             channels=sum(self.pd_channels),
             _complex=self._conf_bool("complex", False),
         )
+        self.trace.params = {"pd_channel_selection": dict(self.pd_channel_selection)}
         self.paused_trace: Trace | None = None
 
         self.running = False
@@ -219,6 +227,7 @@ class Tracer(Worker, ConfAccessorMixin):
                     clock=clock_pd,
                     stamp=True,
                     data_transfer=self._pd_data_transfer,
+                    channel_selection=self.pd_channel_selection.get(pd.inst),
                 )
                 for pd in self.pds
             ]

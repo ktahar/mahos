@@ -214,6 +214,7 @@ class LockinAnalogPD(AnalogIn):
 
     def __init__(self, name, conf, prefix=None):
         AnalogIn.__init__(self, name, conf=conf, prefix=prefix)
+        self._requires_all_channels = True
         if len(self.conf["lines"]) != 2:
             raise ValueError("len(lines) must be 2.")
 

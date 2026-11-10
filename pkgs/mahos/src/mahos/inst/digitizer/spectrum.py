@@ -10,6 +10,8 @@ Spectrum Instrumentation Digitizer instruments.
 
 from __future__ import annotations
 
+from mahos.inst.channel_selection import channel_indices
+
 import threading
 import time
 import enum
@@ -42,6 +44,10 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
     segment is enlarged as needed for mandatory pre-trigger samples and byte alignment, and the
     pre-trigger region is removed before data reduction and publication. Software triggering is
     rejected in ``triggered`` mode; ``stream`` mode uses a one-time software trigger internally.
+
+    The runtime ``channel_selection`` parameter selects strictly ascending, zero-based
+    indices into ``lines`` for hardware acquisition. Omission or ``None`` restores all
+    inputs. Per-channel bounds always follow the full configured ``lines`` order.
 
     :param lines: channel indices to enable in strictly ascending order, for example
         ``[0]`` or ``[0, 1]``. Duplicate indices are rejected.
@@ -113,6 +119,8 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
 
         self.check_required_conf("lines")
         self.lines = self.conf["lines"]
+        self._active_lines = list(self.lines)
+        self._channel_selection = list(range(len(self.lines)))
         self.queue_size = self.conf.get("queue_size", 10000)
         self.queue = RollingQueue(self.queue_size)
         self._silent = self.conf.get("silent", False)
@@ -288,7 +296,7 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
     def _channel_mask(self) -> int:
         spcm = self._import_spcm()
         mask = 0
-        for line in self.lines:
+        for line in self._active_lines:
             idx = self._channel_index(line)
             mask |= int(getattr(spcm, f"CHANNEL{idx}", 1 << idx))
         return mask
@@ -319,13 +327,17 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
         card = self._open_card()
         self._channels = spcm.Channels(card, card_enable=self._channel_mask())
         self._line_num = len(self._channels)
+        if self._line_num != len(self._active_lines):
+            return self.fail_with("Hardware enabled a different number of inputs than requested.")
 
         # Don't change the order of settings.
         # 1: input path
         # 2: termination
         # 3: coupling
         # 4: filter
-        for ch, conf in zip(self._channels, self._channel_conf):
+        for ch, conf in zip(
+            self._channels, [self._channel_conf[i] for i in self._channel_selection]
+        ):
             path = ch.path(conf.input_path)
             if conf.input_path == 0:
                 # why Channel.termination() doesn't return int?
@@ -352,7 +364,9 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
             return self.fail_with(
                 f"len(bounds) is invalid: {len(bounds)} != {len(self._channels)}."
             )
-        for ch, conf, bnds in zip(self._channels, self._channel_conf, bounds):
+        for ch, conf, bnds in zip(
+            self._channels, [self._channel_conf[i] for i in self._channel_selection], bounds
+        ):
             if len(bnds) == 2 and isinstance(bnds[0], (float, int, np.integer, np.floating)):
                 lb, ub = bnds
                 amp, offset = self._get_amp_offset(conf.input_path, lb, ub)
@@ -700,7 +714,9 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
         bounds = params.get("bounds", self.conf.get("bounds", (-10.0, 10.0)))
         if len(bounds) == 2 and isinstance(bounds[0], (float, int, np.integer, np.floating)):
             return [tuple(bounds)] * self._line_num
-        return bounds
+        if len(bounds) != len(self.lines):
+            raise ValueError("bounds must have one entry per configured line.")
+        return [bounds[i] for i in self._channel_selection]
 
     def _validate_reduce_params(self, params) -> bool:
         self._oversample = int(params.get("oversample", 1))
@@ -894,6 +910,12 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
         return True
 
     def configure_triggered(self, params: dict) -> bool:
+        try:
+            indices = channel_indices(params.get("channel_selection"), len(self.lines))
+        except ValueError as e:
+            return self.fail_with(str(e))
+        self._channel_selection = indices
+        self._active_lines = [self.lines[i] for i in indices]
         required = ("trigger_source", "cb_samples", "samples", "rate")
         if not self.check_required_params(params, required):
             return False
@@ -929,6 +951,12 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
         return True
 
     def configure_stream(self, params: dict) -> bool:
+        try:
+            indices = channel_indices(params.get("channel_selection"), len(self.lines))
+        except ValueError as e:
+            return self.fail_with(str(e))
+        self._channel_selection = indices
+        self._active_lines = [self.lines[i] for i in indices]
         if not self.check_required_params(params, ("cb_samples", "buffer_size", "rate")):
             return False
         if not self._validate_reduce_params(params):

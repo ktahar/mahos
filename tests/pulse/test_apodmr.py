@@ -117,6 +117,8 @@ def test_apodmr_start_rejects_nondivisible_sweeps_before_locking():
 
 def test_apodmr_pd_finite_samples_include_drop_first():
     class PD:
+        inst = "pd0"
+
         def configure_triggered(self, *args, **kwargs):
             self.args = args
             self.kwargs = kwargs
@@ -141,8 +143,10 @@ def test_apodmr_pd_finite_samples_include_drop_first():
     pulser._pd_data_transfer = None
     pulser.conf = {}
     pulser.pds = [PD()]
+    pulser.pd_channel_selection = {"pd0": [2]}
 
     assert pulser.init_start_pds(2)
+    assert pulser.pds[0].kwargs["channel_selection"] == [2]
     assert pulser.pds[0].args[1] == 32
     assert pulser.pds[0].args[2] == 32 * (2 + 2)
     assert pulser.pds[0].kwargs["finite"] is True

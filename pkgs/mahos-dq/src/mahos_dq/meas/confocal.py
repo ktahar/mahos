@@ -242,6 +242,15 @@ class Confocal(FileTransportNodeMixin, Node):
     :type tracer: dict
     :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
     :type tracer.pd_names: list[str]
+    :param tracer.pd_channel_selection: Optional mapping of PD names to strictly ascending,
+        zero-based indices into the instrument configured physical ``lines``.
+        Missing entries acquire all inputs.
+    :type tracer.pd_channel_selection: dict[str, list[int]]
+    :param tracer.pd_channels: Logical output counts per PD, overriding counts inferred
+        from channel selections. If omitted, each PD defaults to its selection length
+        or one when no selection is given. For a LockinAnalogPD selecting both X/Y
+        inputs, explicitly specify one logical output.
+    :type tracer.pd_channels: list[int] | int
     :param tracer.interval_sec: (default: 0.5) Interval to poll trace data.
     :type tracer.interval_sec: float
     :param tracer.size: (default: 500) Size of trace data.
@@ -789,6 +798,15 @@ class TraceNode(FileTransportNodeMixin, Node):
     :type tracer: dict
     :param tracer.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
     :type tracer.pd_names: list[str]
+    :param tracer.pd_channel_selection: Optional mapping of PD names to strictly ascending,
+        zero-based indices into the instrument configured physical ``lines``.
+        Missing entries acquire all inputs.
+    :type tracer.pd_channel_selection: dict[str, list[int]]
+    :param tracer.pd_channels: Logical output counts per PD, overriding counts inferred
+        from channel selections. If omitted, each PD defaults to its selection length
+        or one when no selection is given. For a LockinAnalogPD selecting both X/Y
+        inputs, explicitly specify one logical output.
+    :type tracer.pd_channels: list[int] | int
     :param tracer.interval_sec: (default: 0.5) Interval to poll trace data.
     :type tracer.interval_sec: float
     :param tracer.size: (default: 500) Size of trace data.

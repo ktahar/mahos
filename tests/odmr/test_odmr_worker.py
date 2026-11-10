@@ -214,7 +214,7 @@ def test_configure_clocked_analog_pds():
         [pd],
         "gate-in",
         _analog_params(),
-        {},
+        {"pd_channel_selection": {"pd0": [2]}},
         False,
         point_count=4,
         drop_first=1,
@@ -231,6 +231,7 @@ def test_configure_clocked_analog_pds():
         "retriggerable": True,
     }
     assert pd.params == {
+        "channel_selection": [2],
         "trigger_source": "clock-output",
         "clock": "clock-output",
         "cb_samples": 4,

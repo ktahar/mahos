@@ -9,6 +9,8 @@ Worker for ODMR.
 """
 
 from __future__ import annotations
+
+from mahos.inst.channel_selection import pd_selections
 import time
 
 import numpy as np
@@ -673,6 +675,10 @@ class Sweeper(SweeperBase, ODMRPGMixin):
     :type sweeper.pd_clock: str
     :param sweeper.pd_names: (default: ["pd0", "pd1"]) PD names in target.servers.
     :type sweeper.pd_names: list[str]
+    :param sweeper.pd_channel_selection: Optional mapping of PD names to strictly ascending,
+        zero-based indices into the instrument configured physical ``lines``.
+        Missing entries acquire all inputs.
+    :type sweeper.pd_channel_selection: dict[str, list[int]]
     :param sweeper.pd_analog: (default: False) set True if PD is AnalogIn-based.
     :type sweeper.pd_analog: bool
     :param sweeper.pd_spectrum: (default: False) set True if PD is Spectrum_AnalogIn-based.
@@ -783,8 +789,11 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         self.pg = PGInterface(cli, "pg")
         self.pd_names = self.conf.get("pd_names", ["pd0", "pd1"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
+        self.pd_channel_selection = pd_selections(self.conf, self.pd_names)
         self._pd_spectrum = self.conf.get("pd_spectrum", False)
         self._pd_analog = self.conf.get("pd_analog", False) or self._pd_spectrum
+        if not self._pd_analog and any(v is not None for v in self.pd_channel_selection.values()):
+            raise ValueError("pd_channel_selection requires analog PD acquisition.")
         self._pd_trace = self.conf.get("pd_trace", False)
         if self._pd_trace and not self._pd_analog:
             raise ValueError("pd_trace requires pd_analog or pd_spectrum")
@@ -957,6 +966,7 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         else:
             # TODO: check ident if resume?
             self.data.update_params(params)
+        self.data.params["pd_channel_selection"] = dict(self.pd_channel_selection)
         self.data.yunit = result_unit(
             self.pds[0].get_unit(), self.data.params, self.data.label, self._pd_trace
         )

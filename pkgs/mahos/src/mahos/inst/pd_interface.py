@@ -16,7 +16,14 @@ from mahos.inst.daq_interface import BufferedReaderInterface
 
 
 class PDInterface(BufferedReaderInterface):
-    """Common interface for SinglePhotonCounter (BufferedEdgeCounter) and AnalogIn-based PD."""
+    """Common interface for counters and analog PDs.
+
+    Analog configure helpers accept ``channel_selection``: strictly ascending indices
+    into configured physical ``lines``. ``None`` restores all inputs. Hardware selection
+    changes the returned channel count; per-channel settings retain full ``lines`` order.
+    Counters do not support explicit hardware channel selection.
+
+    """
 
     def configure_triggered(
         self,
@@ -39,6 +46,7 @@ class PDInterface(BufferedReaderInterface):
         data_transfer: str | None = None,
         trigger_dir: bool = True,
         hardware_average: bool = True,
+        channel_selection: list[int] | None = None,
     ) -> bool:
         """Configure triggered fixed-length acquisition.
 
@@ -50,6 +58,7 @@ class PDInterface(BufferedReaderInterface):
         """
 
         params = {
+            "channel_selection": channel_selection,
             "cb_samples": cb_samples,
             "samples": samples,
             "rate": rate,
@@ -88,11 +97,13 @@ class PDInterface(BufferedReaderInterface):
         oversample: int = 1,
         clock: str = "",
         stamp: bool = True,
+        channel_selection: list[int] | None = None,
         data_transfer: str | None = None,
     ) -> bool:
         """Configure continuously running infinite (stream) acquisition."""
 
         params = {
+            "channel_selection": channel_selection,
             "cb_samples": cb_samples,
             "buffer_size": buffer_size,
             "rate": rate,

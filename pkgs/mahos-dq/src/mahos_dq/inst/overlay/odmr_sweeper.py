@@ -8,6 +8,8 @@ InstrumentOverlay for sweeping ODMR.
 
 """
 
+from mahos.inst.channel_selection import pd_selections
+
 import time
 import threading
 import math
@@ -247,6 +249,10 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
     :type pg: Instrument
     :param pd_names: (default: ["pd0", "pd1"]) names of PD Instruments in this overlay.
     :type pd_names: list[str]
+    :param pd_channel_selection: Optional mapping of PD names to strictly ascending,
+        zero-based indices into the instrument configured physical ``lines``.
+        Missing entries acquire all inputs.
+    :type pd_channel_selection: dict[str, list[int]]
     :param pd0: Reference to the first PD Instrument when named in ``pd_names``.
     :type pd0: Instrument
     :param pd1: Reference to the second PD Instrument when named in ``pd_names``.
@@ -312,8 +318,11 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
         self.pg = self.conf.get("pg")
         self.pd_names = self.conf.get("pd_names", ["pd0", "pd1"])
         self.pds = [self.conf.get(n) for n in self.pd_names]
+        self.pd_channel_selection = pd_selections(self.conf, self.pd_names)
         self._pd_spectrum = self.conf.get("pd_spectrum", False)
         self._pd_analog = self.conf.get("pd_analog", False) or self._pd_spectrum
+        if not self._pd_analog and any(v is not None for v in self.pd_channel_selection.values()):
+            raise ValueError("pd_channel_selection requires analog PD acquisition.")
         self._pd_trace = self.conf.get("pd_trace", False)
         if self._pd_trace and not self._pd_analog:
             raise ValueError("pd_trace requires pd_analog or pd_spectrum")

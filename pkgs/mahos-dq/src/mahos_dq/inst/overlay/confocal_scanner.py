@@ -14,6 +14,7 @@ import threading
 
 from mahos.util import conv
 from mahos.inst.overlay.overlay import InstrumentOverlay
+from mahos.inst.channel_selection import pd_selections
 from mahos_dq.msgs.confocal_msgs import ScanMode, ScanDirection, LineMode
 from mahos.inst.daq import BufferedEdgeCounter, AnalogIn
 
@@ -86,21 +87,40 @@ class ConfocalScannerMixin(object):
 class ConfocalScannerAnalog(InstrumentOverlay, ConfocalScannerMixin):
     """ConfocalScannerAnalog provides primitive operations for confocal scanning.
 
-    This class performs the scanning with DAQ analog outputs.
+    This class performs the scanning with DAQ analog outputs. Selected PD channels
+    are summed into one intensity value per pixel. Dummy samples are discarded
+    before returning each line in scan order.
+
+    :param clock: Clock instrument for timed acquisition and piezo output.
+    :type clock: Instrument
+    :param divider: Optional clock divider used when oversampling.
+    :type divider: Instrument | None
+    :param piezo: Analog piezo instrument providing scan output.
+    :type piezo: Instrument
+    :param pd_names: (default: ["pd0", "pd1"]) Names of PD instrument references in this overlay.
+    :type pd_names: list[str]
+    :param pd_channel_selection: Optional mapping of PD names to strictly ascending,
+        zero-based indices into their configured physical ``lines``. Missing entries
+        acquire all inputs. Explicit selection requires analog input PDs.
+    :type pd_channel_selection: dict[str, list[int]]
+    :param pd_data_transfer: Optional DAQ data transfer mode.
+    :type pd_data_transfer: str
 
     """
 
     def __init__(self, name, conf, prefix=None):
         InstrumentOverlay.__init__(self, name, conf=conf, prefix=prefix)
+        self.running = False
         self.clock = self.conf.get("clock")
         self.divider = self.conf.get("divider")
         self.piezo = self.conf.get("piezo")
-        self.pds = [self.conf.get(n) for n in self.conf.get("pd_names", ["pd0", "pd1"])]
+        self.pd_names = self.conf.get("pd_names", ["pd0", "pd1"])
+        self.pds = [self.conf.get(n) for n in self.pd_names]
+        self.pd_channel_selection = pd_selections(self.conf, self.pd_names)
         self.add_instruments(self.clock, self.piezo, *self.pds)
 
         self.line_timeout = None
         self.loop_stop_ev = self.loop_thread = None
-        self.running = False
 
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
 
@@ -129,9 +149,12 @@ class ConfocalScannerAnalog(InstrumentOverlay, ConfocalScannerMixin):
         if self.lines_sent >= self.ynum:
             return None
 
+        blocks = [pd.pop_block() for pd in self.pds]
+        channels = [
+            ch for block in blocks for ch in (block if isinstance(block, list) else [block])
+        ]
         # discard dummy samples at the start.
-        lines = [pd.pop_block()[self.dummy_samples :] for pd in self.pds]
-        data = np.sum(lines, axis=0)
+        data = np.sum(channels, axis=0)[self.dummy_samples :]
         if self.line_mode == LineMode.DESCEND or (
             self.line_mode == LineMode.ZIGZAG and self.lines_sent % 2 == 1
         ):
@@ -181,8 +204,6 @@ class ConfocalScannerAnalog(InstrumentOverlay, ConfocalScannerMixin):
             return self.fail_with(f"oversample == {self.oversample} is not supported.")
         if isinstance(self.pds[0], AnalogIn) and self.oversample < 1:
             return self.fail_with("oversample must be positive integer.")
-        if not self._check_pd_rate():
-            return False
 
         self.loop_stop_ev = self.loop_thread = None
 
@@ -270,10 +291,24 @@ class ConfocalScannerAnalog(InstrumentOverlay, ConfocalScannerMixin):
         if not success:
             return self.fail_with("failed to configure and start piezo.")
 
-        if not (
-            all([pd.configure(params_pd) for pd in self.pds])
-            and all([pd.start() for pd in self.pds])
+        # TODO: after verifying DAQ resource reservation and clock routing on real hardware,
+        # move PD configuration and the rate check before piezo configuration/start_scan(),
+        # so failures return before starting the scan. Keep the rate check after PD
+        # configuration so it uses the selected channel count.
+        if not all(
+            [
+                pd.configure(
+                    dict(params_pd, channel_selection=self.pd_channel_selection.get(name))
+                )
+                for name, pd in zip(self.pd_names, self.pds)
+            ]
         ):
+            return self.fail_with("failed to configure PD.")
+        if not self._check_pd_rate():
+            self.piezo.stop()  # this can be removed after resolving TODO above.
+            return False
+
+        if not all([pd.start() for pd in self.pds]):
             return self.fail_with("failed to configure and start PD.")
 
         return True

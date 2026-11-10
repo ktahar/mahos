@@ -76,6 +76,10 @@ class SPODMR(BasicMeasNode):
 
     :param pulser.pd_names: (default: ["pd0"]) PD names in target.servers.
     :type pulser.pd_names: list[str]
+    :param pulser.pd_channel_selection: Optional mapping of PD names to strictly ascending,
+        zero-based indices into the instrument configured physical ``lines``.
+        Missing entries acquire all inputs.
+    :type pulser.pd_channel_selection: dict[str, list[int]]
     :param pulser.quick_resume: default value of quick_resume.
         If True, it skips instrument configurations on resume.
     :type pulser.quick_resume: bool

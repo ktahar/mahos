@@ -4,6 +4,7 @@ Configuration file
 To use the MAHOS system, you need to prepare a TOML configuration file.
 One good way to get used to this concept may be going through the :doc:`tutorial`.
 If you are migrating an existing configuration from MAHOS 0.3.x, see :doc:`migration`.
+See also :doc:`conf_tips` for some configuration tips for specific subsystems.
 
 Here, we put the configuration file for :doc:`tutorial_ivcurve` as a reference.
 

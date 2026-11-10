@@ -9,6 +9,8 @@ Worker for Analog-PD Pulse ODMR.
 """
 
 from __future__ import annotations
+
+from mahos.inst.channel_selection import pd_selections
 import typing as T
 import time
 import math
@@ -395,6 +397,7 @@ class APODMRPulserBase(CommonPulserBase):
             self.clock = ClockSourceInterface(cli, self.conf.get("clock_name", "clock"))
         self.pd_names = self.conf.get("pd_names", ["pd0"])
         self.pds = [PDInterface(cli, n) for n in self.pd_names]
+        self.pd_channel_selection = pd_selections(self.conf, self.pd_names)
         self.add_instruments(self.clock, *self.pds)
 
         self.check_required_conf(["pd_trigger"])
@@ -631,6 +634,7 @@ class APODMRPulserBase(CommonPulserBase):
 
     def init_start_pds(self, remaining_records: int | None) -> bool:
         params = self.data.get_params()
+        self.data.params["pd_channel_selection"] = dict(self.pd_channel_selection)
         rate = params["pd"]["rate"]
         sweeps_per_record = self._sweeps_per_record(params)
         burst_num = self._burst_num(params)
@@ -677,6 +681,7 @@ class APODMRPulserBase(CommonPulserBase):
                         reduce_op="mean",
                         bounds=params["pd"].get("bounds", (-10.0, 10.0)),
                         data_transfer=self._pd_data_transfer,
+                        channel_selection=self.pd_channel_selection.get(pd.inst),
                         hardware_average=params["pd"].get("hardware_average", True),
                     )
                     for pd in self.pds
@@ -913,6 +918,10 @@ class Pulser(SGPGPulserBase, APODMRPulserBase):
 
     :param pulser.pd_names: (default: ["pd0"]) PD names in target.servers.
     :type pulser.pd_names: list[str]
+    :param pulser.pd_channel_selection: Optional mapping of PD names to strictly ascending,
+        zero-based indices into the instrument configured physical ``lines``.
+        Missing entries acquire all inputs.
+    :type pulser.pd_channel_selection: dict[str, list[int]]
     :param pulser.clock_name: (default: ``"clock"``) Clock source instrument name.
     :type pulser.clock_name: str
     :param pulser.pd_trigger: DAQ terminal name for PD trigger.
@@ -1087,6 +1096,10 @@ class AWGPulser(AWGPulserBase, APODMRPulserBase):
 
     :param pulser.pd_names: (default: ["pd0"]) PD names in target.servers.
     :type pulser.pd_names: list[str]
+    :param pulser.pd_channel_selection: Optional mapping of PD names to strictly ascending,
+        zero-based indices into the instrument configured physical ``lines``.
+        Missing entries acquire all inputs.
+    :type pulser.pd_channel_selection: dict[str, list[int]]
     :param pulser.clock_name: (default: ``"clock"``) Clock source instrument name.
     :type pulser.clock_name: str
     :param pulser.pd_trigger: DAQ terminal name for PD trigger.

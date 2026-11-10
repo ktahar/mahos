@@ -211,3 +211,33 @@ def test_legacy_rectangular_trace_file(tmp_path):
     assert trace.sample_counts == [2, 0]
     np.testing.assert_equal(trace.traces[0], [0.0, 3.0])
     assert trace.size(1) == 0
+
+
+def test_tracer_selection_derives_channel_count():
+    tracer = Tracer(
+        DummyCLI(),
+        logging.getLogger(__name__),
+        {"pd_names": ["pd0"], "pd_spectrum": True, "pd_channel_selection": {"pd0": [0, 2]}},
+    )
+    assert tracer.pd_channels == [2]
+    assert len(tracer.trace.traces) == 2
+
+
+@pytest.mark.parametrize("pd_channels", [1, [1]])
+def test_tracer_selection_preserves_logical_channel_count(pd_channels):
+    tracer = Tracer(
+        DummyCLI(),
+        logging.getLogger(__name__),
+        {
+            "pd_names": ["pd0"],
+            "pd_channels": pd_channels,
+            "pd_channel_selection": {"pd0": [0, 1]},
+            "complex": True,
+        },
+    )
+    assert tracer.pd_channels == [1]
+    assert len(tracer.trace.traces) == 1
+    values = np.array([1.0 + 2.0j, 3.0 + 4.0j])
+    tracer.pds = [DummyPD([(values, time.time_ns())])]
+    tracer.get_data()
+    np.testing.assert_array_equal(tracer.trace.traces[0], values)

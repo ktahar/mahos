@@ -10,6 +10,8 @@ Shared PD-related logic for ODMR.
 
 from __future__ import annotations
 
+from mahos.inst.channel_selection import pd_selections
+
 from dataclasses import dataclass
 import math
 
@@ -369,7 +371,12 @@ def configure_analog_pds(
         "trigger_dir": True,
         "data_transfer": data_transfer,
     }
-    success = all(pd.configure(params_pd, "triggered") for pd in pds)
+    names = conf.get("pd_names", [f"pd{i}" for i in range(len(pds))])
+    selections = pd_selections(conf, names)
+    success = all(
+        pd.configure(dict(params_pd, channel_selection=selections.get(name)), "triggered")
+        for name, pd in zip(names, pds)
+    )
     if not success:
         return False
     return True
@@ -438,7 +445,12 @@ def configure_trace_pds(
         "data_transfer": data_transfer,
         "hardware_average": params["pd"].get("hardware_average", True),
     }
-    success = all(pd.configure(params_pd, "triggered") for pd in pds)
+    names = conf.get("pd_names", [f"pd{i}" for i in range(len(pds))])
+    selections = pd_selections(conf, names)
+    success = all(
+        pd.configure(dict(params_pd, channel_selection=selections.get(name)), "triggered")
+        for name, pd in zip(names, pds)
+    )
     if not success:
         return None
     return samples_per_trace

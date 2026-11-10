@@ -586,3 +586,27 @@ def test_start_forces_only_software_trigger(monkeypatch, trigger_source, expecte
     assert inst._card.start_commands == expected_commands
     assert inst.stop()
     assert inst._card.stop_commands == (DummySpcm.M2CMD_DATA_STOPDMA,)
+
+
+def test_hardware_channel_selection_and_restore(monkeypatch):
+    inst = make_inst({"lines": [0, 2, 4, 6], "DC_coupling": [True, False, True, False]})
+    bounds = [(-1.0, 1.0), (-2.0, 2.0), (-0.2, 0.2), (-5.0, 5.0)]
+    configure_triggered(inst, monkeypatch, channel_selection=[2], bounds=bounds)
+    assert inst.lines == [0, 2, 4, 6]
+    assert inst._channel_mask() == 1 << 4
+    assert inst._line_num == 1
+    assert inst._channels[0].amp_value == 200
+    assert inst._channels[0]._coupling_value == DummySpcm.COUPLING_DC
+    inst._append_data(np.ones(4))
+    configure_triggered(inst, monkeypatch, bounds=bounds)
+    assert inst._channel_mask() == sum(1 << i for i in inst.lines)
+    assert inst._line_num == 4
+    assert inst.pop_opt() is None
+
+
+@pytest.mark.parametrize("selection", [[], [True], [-1], [1, 0], [0, 0], [4], [0.0]])
+def test_invalid_hardware_channel_selection(selection, monkeypatch):
+    inst = make_inst({"lines": [0, 1, 2, 3]})
+    monkeypatch.setattr(inst, "_open_card", lambda: pytest.fail("must validate before hardware"))
+    assert not inst.configure_triggered(make_triggered_params(channel_selection=selection))
+    assert not inst.configure_stream({"channel_selection": selection})
