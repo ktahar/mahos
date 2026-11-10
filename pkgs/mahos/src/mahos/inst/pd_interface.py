@@ -43,10 +43,10 @@ class PDInterface(BufferedReaderInterface):
         block_reduce_op: str = "mean",
         reduce_factor: int = 1,
         reduce_op: str = "mean",
+        channel_selection: list[int] | None = None,
         data_transfer: str | None = None,
         trigger_dir: bool = True,
         hardware_average: bool = True,
-        channel_selection: list[int] | None = None,
     ) -> bool:
         """Configure triggered fixed-length acquisition.
 

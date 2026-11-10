@@ -10,6 +10,8 @@ Worker for ODMR.
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 from mahos.inst.channel_selection import pd_selections
 import time
 
@@ -526,14 +528,20 @@ class SweeperOverlay(SweeperBase):
             return self.fail_with_release("Error configuring sweeper.")
 
         self.pulse_pattern = self.sweeper.get_pulse_pattern()
+        resume = params is None or params.get("resume")
+        if not resume:
+            instrument_params = self.sweeper.get_instrument_params()
+            if instrument_params is None:
+                return self.fail_with_release("Error getting sweeper instrument metadata.")
 
         success &= self.sweeper.start()
         if not success:
             return self.fail_with_release("Error starting sweeper.")
 
-        if params is not None and not params["resume"]:
+        if not resume:
             # new measurement.
             self.data = ODMRData(params, label)
+            self.data.params["instrument"] = deepcopy(instrument_params)
             self.data.start()
             self.logger.info("Started sweeper.")
         else:
@@ -966,7 +974,6 @@ class Sweeper(SweeperBase, ODMRPGMixin):
         else:
             # TODO: check ident if resume?
             self.data.update_params(params)
-        self.data.params["pd_channel_selection"] = dict(self.pd_channel_selection)
         self.data.yunit = result_unit(
             self.pds[0].get_unit(), self.data.params, self.data.label, self._pd_trace
         )
@@ -979,6 +986,16 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             trig = TriggerType.HARDWARE_RISING
         if not self.configure_pg(self.data.params, self.data.label, trig):
             return self.fail_with_release("Failed to configure PG.")
+
+        if not resume:
+            try:
+                instrument_params = self._make_instrument_params(self.data.params, self.data.label)
+            except ValueError as e:
+                return self.fail_with_release(f"Error deriving sweeper instrument metadata: {e}")
+            if instrument_params is None:
+                return self.fail_with_release("Error getting sweeper instrument metadata.")
+            self.data.params["instrument"] = instrument_params
+
         if self._pd_analog:
             if not self.start_analog_pd(self.data.params, self.data.label):
                 return self.fail_with_release("Failed to start PD (Analog).")

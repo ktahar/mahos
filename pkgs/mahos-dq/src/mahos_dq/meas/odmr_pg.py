@@ -12,11 +12,12 @@ from __future__ import annotations
 
 import math
 
+from mahos.inst.channel_selection import pd_selections
 from mahos.msgs.inst.pg_msgs import Block, Blocks, TriggerType, PulsePattern
 from mahos.util.param import ParamAccessor, ParamError
 from mahos.util.unit import SI_format
 from mahos_dq.meas.podmr_generator import generator_kernel as K
-from mahos_dq.meas.odmr_pd import trace_samples, validate_trace_params
+from mahos_dq.meas.odmr_pd import analog_oversample, trace_samples, validate_trace_params
 
 
 class ODMRPGMixin(object):
@@ -26,6 +27,7 @@ class ODMRPGMixin(object):
     - conf
         - pg_freq_cw
     - pg
+    - pd_names
     - _pd_analog
     - _pd_spectrum
     - _pd_trace
@@ -60,6 +62,41 @@ class ODMRPGMixin(object):
         if success:
             self.pulse_pattern = PulsePattern(blocks, freq)
         return success
+
+    def _make_instrument_params(self, params: dict, label: str) -> dict | None:
+        """Build a detached snapshot of configured detector settings and PG timing.
+
+        ``pd_mode`` is ``counter``, ``analog_integrated``, or ``analog_trace`` for the
+        current measurement. Sample counts include worker-side rounding and segment
+        adjustments; the requested sampling rate is stored in ``params["pd"]["rate"]``.
+        ``length`` and ``offsets`` are reported by the PG, in ticks at ``pg_freq``.
+        Return None if either PG readback fails.
+
+        """
+
+        length = self.pg.get("length")
+        offsets = self.pg.get("offsets")
+        if length is None or offsets is None:
+            return None
+
+        trace = self._pd_analog and self._pd_trace and label == "pulse"
+        mode = "analog_trace" if trace else "analog_integrated" if self._pd_analog else "counter"
+        metadata = {
+            "pd_names": list(self.pd_names),
+            "pd_channel_selection": pd_selections(self.conf, self.pd_names),
+            "pd_mode": mode,
+            "pg_freq": float(self.pulse_pattern.freq),
+            "length": int(length),
+            "offsets": [] if all(ofs == 0 for ofs in offsets) else [int(ofs) for ofs in offsets],
+        }
+        if trace:
+            metadata["oversample"] = 1
+            metadata["samples_per_trace"] = trace_samples(
+                params, self.conf, self._pd_spectrum
+            ).realized
+        elif self._pd_analog:
+            metadata["oversample"] = analog_oversample(params, self.conf, self._pd_spectrum)
+        return metadata
 
     def apd_time_window(self, params: dict, label: str) -> float:
         """Return the effective APD (SinglePhotonCounter) integration time."""

@@ -58,6 +58,11 @@ class ODMRSweeperInterface(InstrumentInterface):
 
         return self.get("capability")
 
+    def get_instrument_params(self) -> dict | None:
+        """Get configured instrument metadata, or None if the request failed."""
+
+        return self.get("instrument_params")
+
     def get_pulse_pattern(self) -> PulsePattern | None:
         """Get current pulse pattern."""
 

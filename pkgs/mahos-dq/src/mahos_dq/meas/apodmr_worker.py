@@ -117,6 +117,7 @@ class APODMRDataOperator(PODMRDataOperator):
         offsets: list[int],
         pd_rate: float,
         mw_modes: T.Sequence[MWMode],
+        pd_channel_selection: dict,
         extra: dict | None = None,
     ):
         if "instrument" in data.params:
@@ -133,6 +134,7 @@ class APODMRDataOperator(PODMRDataOperator):
         else:
             data.params["instrument"]["offsets"] = offsets
         data.params["instrument"]["mw_modes"] = [MWMode.parse(m).name for m in mw_modes]
+        data.params["instrument"]["pd_channel_selection"] = dict(pd_channel_selection)
         if extra is not None:
             data.params["instrument"].update(extra)
 
@@ -634,7 +636,6 @@ class APODMRPulserBase(CommonPulserBase):
 
     def init_start_pds(self, remaining_records: int | None) -> bool:
         params = self.data.get_params()
-        self.data.params["pd_channel_selection"] = dict(self.pd_channel_selection)
         rate = params["pd"]["rate"]
         sweeps_per_record = self._sweeps_per_record(params)
         burst_num = self._burst_num(params)
@@ -680,8 +681,8 @@ class APODMRPulserBase(CommonPulserBase):
                         reduce_factor=sweeps_per_record,
                         reduce_op="mean",
                         bounds=params["pd"].get("bounds", (-10.0, 10.0)),
-                        data_transfer=self._pd_data_transfer,
                         channel_selection=self.pd_channel_selection.get(pd.inst),
+                        data_transfer=self._pd_data_transfer,
                         hardware_average=params["pd"].get("hardware_average", True),
                     )
                     for pd in self.pds
@@ -1020,6 +1021,7 @@ class Pulser(SGPGPulserBase, APODMRPulserBase):
             self.offsets,
             pd_rate,
             self.mw_modes,
+            self.pd_channel_selection,
         )
         return True
 
@@ -1233,6 +1235,7 @@ class AWGPulser(AWGPulserBase, APODMRPulserBase):
             self.offsets,
             pd_rate,
             self.mw_modes,
+            self.pd_channel_selection,
             inst_extra,
         )
         return True

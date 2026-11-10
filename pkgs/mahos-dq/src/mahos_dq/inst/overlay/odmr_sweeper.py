@@ -194,6 +194,8 @@ class ODMRSweeperCommandBase(InstrumentOverlay):
             return self.pulse_pattern
         elif key == "capability":
             return self.get_capability()
+        elif key == "instrument_params":
+            return {}
         else:
             self.logger.error(f"unknown get() key: {key}")
             return None
@@ -651,6 +653,10 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             return self.pulse_pattern
         elif key == "capability":
             return self.get_capability()
+        elif key == "instrument_params":
+            if self.pulse_pattern is None:
+                return {}
+            return self._make_instrument_params(self.params, self._label)
         else:
             self.logger.error(f"unknown get() key: {key}")
             return None

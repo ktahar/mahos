@@ -38,7 +38,9 @@ class SPODMRDataOperator(object):
             return
         data.laser_duties = np.array(laser_duties)
 
-    def set_instrument_params(self, data: SPODMRData, pg_freq, length, offsets, mw_modes):
+    def set_instrument_params(
+        self, data: SPODMRData, pg_freq, length, offsets, mw_modes, pd_channel_selection
+    ):
         if "instrument" in data.params:
             return
         data.params["instrument"] = {}
@@ -49,6 +51,7 @@ class SPODMRDataOperator(object):
         else:
             data.params["instrument"]["offsets"] = offsets
         data.params["instrument"]["mw_modes"] = [MWMode.parse(m).name for m in mw_modes]
+        data.params["instrument"]["pd_channel_selection"] = dict(pd_channel_selection)
 
     def _append_line_single(self, data, line):
         if data is None:
@@ -666,7 +669,12 @@ class Pulser(Worker):
             return False
 
         self.op.set_instrument_params(
-            self.data, self.freq, self.length, self.offsets, self.mw_modes
+            self.data,
+            self.freq,
+            self.length,
+            self.offsets,
+            self.mw_modes,
+            self.pd_channel_selection,
         )
 
         return True
@@ -691,7 +699,6 @@ class Pulser(Worker):
                 return False
             clock_pd = self.clock.get_internal_output()
 
-        self.data.params["pd_channel_selection"] = dict(self.pd_channel_selection)
         num = self.data.get_num()
         if params["partial"] == -1:
             num *= 2
@@ -709,8 +716,8 @@ class Pulser(Worker):
                         every=self.conf.get("every", False),
                         oversample=self.oversample,
                         bounds=params["pd"].get("bounds", (-10.0, 10.0)),
-                        data_transfer=self._pd_data_transfer,
                         channel_selection=self.pd_channel_selection.get(pd.inst),
+                        data_transfer=self._pd_data_transfer,
                     )
                     for pd in self.pds
                 ]
@@ -1142,7 +1149,12 @@ class DebugPulser(Pulser):
             return False
 
         self.op.set_instrument_params(
-            self.data, self.freq, self.length, self.offsets, self.mw_modes
+            self.data,
+            self.freq,
+            self.length,
+            self.offsets,
+            self.mw_modes,
+            self.pd_channel_selection,
         )
 
         return True

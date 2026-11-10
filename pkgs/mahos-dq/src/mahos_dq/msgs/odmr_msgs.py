@@ -32,6 +32,11 @@ class ValidateReq(Request):
 class ODMRData(BasicMeasData, ComplexDataMixin):
     """Data type for ODMR measurement.
 
+    New acquisitions store instrument metadata in ``params["instrument"]``: PD names,
+    channel selections, acquisition mode, PG frequency, length and offsets, and applicable
+    AnalogPD sample counts. The snapshot is retained when the measurement is resumed.
+    Command-based sweeper overlays provide an empty metadata dictionary.
+
     :ivar data: Signal values with shape ``(frequency, sweep)``.
     :ivar bg_data: Background values with shape ``(frequency, sweep)``, or None.
     :ivar raw_data_sum: Sum of the burst-averaged AnalogPD traces across ODMR sweeps with

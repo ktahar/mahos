@@ -226,8 +226,8 @@ class Tracer(Worker, ConfAccessorMixin):
                     oversample=oversample,
                     clock=clock_pd,
                     stamp=True,
-                    data_transfer=self._pd_data_transfer,
                     channel_selection=self.pd_channel_selection.get(pd.inst),
+                    data_transfer=self._pd_data_transfer,
                 )
                 for pd in self.pds
             ]

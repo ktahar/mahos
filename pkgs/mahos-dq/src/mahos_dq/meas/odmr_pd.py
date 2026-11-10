@@ -300,6 +300,17 @@ def configure_apds(
     return all([pd.configure(params_pd) for pd in pds])
 
 
+def analog_oversample(params: dict, conf: dict, pd_spectrum: bool) -> int:
+    """Calculate the configured sample count for integrated AnalogPD acquisition."""
+
+    samples = round(params["timing"]["time_window"] * params["pd"]["rate"])
+    if pd_spectrum:
+        samples = round_segment_samples_down(
+            samples, granularity=conf.get("pd_segment_granularity", 16)
+        ) - conf.get("pd_segment_offset", 0)
+    return samples
+
+
 def configure_analog_pds(
     clock,
     pds,
@@ -315,23 +326,11 @@ def configure_analog_pds(
     """Configure a retriggerable clock and AnalogPDs for integrated acquisition."""
 
     rate = params["pd"]["rate"]
-    oversamp = round(params["timing"]["time_window"] * rate)
-
-    if pd_spectrum:
-        granularity = conf.get("pd_segment_granularity", 16)
-        offset = conf.get("pd_segment_offset", 0)
-        try:
-            adjusted = round_segment_samples_down(oversamp, granularity=granularity)
-            adjusted -= offset
-        except ValueError:
-            logger.exception("failed to round oversample to segment granularity")
-            return False
-        if adjusted != oversamp:
-            logger.info(
-                "PD oversample adjusted down: "
-                f"{oversamp} to {adjusted} (granularity = {granularity} offset = {offset})"
-            )
-        oversamp = adjusted
+    try:
+        oversamp = analog_oversample(params, conf, pd_spectrum)
+    except ValueError:
+        logger.exception("failed to round oversample to segment granularity")
+        return False
 
     logger.info(f"Analog PD oversample: {oversamp}")
 
