@@ -294,31 +294,30 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
         if self._line_num != len(self._active_lines):
             return self.fail_with("Hardware enabled a different number of inputs than requested.")
 
-        # Don't change the order of settings.
-        # 1: input path
-        # 2: termination
-        # 3: coupling
-        # 4: filter
+        # Don't change the order of configuration.
+        # 1: input path, 2: termination, 3: coupling, 4: filter
         for ch, conf in zip(
             self._channels, [self._channel_conf[i] for i in self._channel_selection]
         ):
             path = ch.path(conf.input_path)
             if conf.input_path == 0:
                 # why Channel.termination() doesn't return int?
+                # TODO: made a PR to spcm https://github.com/SpectrumInstrumentation/spcm/pull/10
+                # change here after this PR is merged and inst-requirements.txt is updated.
                 ch.termination(int(conf.term_50))
                 term = ch.get_termination()
             else:
                 term = 1
             # COUPLING_DC is 0, so this is logical inversion.
             cpl = ch.coupling(spcm.COUPLING_DC if conf.DC_coupling else spcm.COUPLING_AC)
-            filt = ch.filter(int(conf.filter_enable))
+            fil = ch.filter(int(conf.filter_enable))
             self.logger.debug(
                 "Ch{}: path = {}, termination = {}, coupling = {}, filter = {}".format(
                     ch.index,
                     path,
                     "50" if term == 1 else "HighZ",
                     "AC" if cpl == 1 else "DC",
-                    filt,
+                    fil,
                 )
             )
 
