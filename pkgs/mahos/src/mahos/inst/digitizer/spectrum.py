@@ -182,83 +182,47 @@ class Spectrum_AnalogIn(Instrument, ConfAccessorMixin):
             self._import_spcm()
             self._open_card()
 
+    def _per_channel(self, key: str, default, check) -> list:
+        """Normalize conf[key] to one checked value per line.
+
+        A scalar applies to all lines; a list or tuple must have one element per line.
+
+        """
+
+        value = self.conf.get(key, default)
+        if not isinstance(value, (tuple, list)):
+            return [check(value, key)] * len(self.lines)
+        if len(value) != len(self.lines):
+            raise V.ValidationError(
+                f"{key} must have {len(self.lines)} elements. Got {len(value)}."
+            )
+        return [check(v, f"{key}[{i}]") for i, v in enumerate(value)]
+
+    @staticmethod
+    def _check_input_path(value, name: str) -> int:
+        if V.check_int(value, name) not in (0, 1):
+            raise V.ValidationError(f"{name} must be 0 or 1. Got {value!r}")
+        return value
+
+    @staticmethod
+    def _check_termination(value, name: str) -> bool:
+        # True or 50 for 50 Ohm, False or 1_000_000 for High-Z.
+        if isinstance(value, bool):
+            return value
+        if V.check_int(value, name) not in (50, 1_000_000):
+            raise V.ValidationError(f"{name} must be 50 or 1_000_000. Got {value!r}")
+        return value == 50
+
     def _normalize_channel_conf(self) -> tuple[ChannelConf, ...]:
-        # input_path: 0 or 1. defaults to 0.
-        if "input_path" in self.conf:
-            path = self.conf["input_path"]
-            if isinstance(path, int):
-                path = [path] * len(self.lines)
-            elif isinstance(path, (tuple, list)):
-                path = self._conf_integers("input_path", len(self.lines))
-            else:
-                raise TypeError("unrecognized input_path type.")
-        else:
-            path = [0] * len(self.lines)
-        for p in path:
-            if p not in (0, 1):
-                raise ValueError(f"Invalid input path {p} (must be 0 or 1)")
-
-        # termination: True for 50 Ohm, False for High-Z. defaults to False.
-        if "termination" in self.conf:
-            term = self.conf["termination"]
-            if isinstance(term, int) and not isinstance(term, bool):
-                if term not in (50, 1_000_000):
-                    raise TypeError("invalid termination value (must be 50 or 1 M).")
-                term = [term == 50] * len(self.lines)
-            elif isinstance(term, bool):
-                term = [term] * len(self.lines)
-            elif isinstance(term, (tuple, list)):
-                _term = []
-                for t in term:
-                    if isinstance(t, int) and not isinstance(t, bool):
-                        if t not in (50, 1_000_000):
-                            raise TypeError("invalid termination value (must be 50 or 1 M).")
-                        _term.append(t == 50)
-                    elif isinstance(t, bool):
-                        _term.append(t)
-                    else:
-                        raise TypeError("unrecognized termination element type.")
-                term = _term
-                if len(term) != len(self.lines):
-                    raise ValueError("termination length is invalid.")
-            else:
-                raise TypeError("unrecognized termination type.")
-        else:
-            term = [False] * len(self.lines)
-
+        path = self._per_channel("input_path", 0, self._check_input_path)
+        term = self._per_channel("termination", False, self._check_termination)
         for p, t in zip(path, term):
             if p == 1 and not t:
                 raise ValueError("for path 1, termination must always be 50.")
+        cpl = self._per_channel("DC_coupling", True, V.check_bool)
+        fil = self._per_channel("filter", False, V.check_bool)
 
-        # coupling: True for DC, False for AC. defaults to True.
-        if "DC_coupling" in self.conf:
-            cpl = self.conf["DC_coupling"]
-            if isinstance(cpl, bool):
-                cpl = [cpl] * len(self.lines)
-            elif isinstance(cpl, (tuple, list)):
-                if len(cpl) != len(self.lines):
-                    raise ValueError("DC_coupling length is invalid.")
-                cpl = [V.check_bool(c, f"DC_coupling[{i}]") for i, c in enumerate(cpl)]
-            else:
-                raise TypeError("unrecognized DC_coupling type.")
-        else:
-            cpl = [True] * len(self.lines)
-
-        # filter: True to enable, False to disable. defaults to False.
-        if "filter" in self.conf:
-            filt = self.conf["filter"]
-            if isinstance(filt, bool):
-                filt = [filt] * len(self.lines)
-            elif isinstance(filt, (tuple, list)):
-                if len(filt) != len(self.lines):
-                    raise ValueError("filter length is invalid.")
-                filt = [V.check_bool(f, f"filter[{i}]") for i, f in enumerate(filt)]
-            else:
-                raise TypeError("unrecognized filter type.")
-        else:
-            filt = [False] * len(self.lines)
-
-        return tuple((ChannelConf(p, t, c, f) for p, t, c, f in zip(path, term, cpl, filt)))
+        return tuple((ChannelConf(p, t, c, f) for p, t, c, f in zip(path, term, cpl, fil)))
 
     def _import_spcm(self):
         if self._spcm is None:

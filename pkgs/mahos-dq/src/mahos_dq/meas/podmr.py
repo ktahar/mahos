@@ -315,8 +315,7 @@ class PODMR(BasicMeasNode):
         # Full wave publication is one-shot; latest mode repeats only its identity.
         wave = self.worker.wave_msg()
         if wave is not None and (
-            wave.ident != self._published_wave_ident
-            or (self._latest_modes["wave"] == "latest" and publish_other)
+            wave.ident != self._published_wave_ident or self._latest_modes["wave"] == "latest"
         ):
             self.wave_pub.publish(wave)
             self._published_wave_ident = wave.ident

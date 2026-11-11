@@ -10,7 +10,6 @@ Shared PD-related logic for ODMR.
 
 from __future__ import annotations
 
-from mahos.inst.channel_selection import pd_selections
 
 from dataclasses import dataclass
 import math
@@ -311,9 +310,22 @@ def analog_oversample(params: dict, conf: dict, pd_spectrum: bool) -> int:
     return samples
 
 
+def _configure_selected_pds(
+    pds, pd_names: list[str], pd_selections: dict, params_pd: dict
+) -> bool:
+    """Configure each PD in triggered mode with its static channel selection."""
+
+    return all(
+        pd.configure(dict(params_pd, channel_selection=pd_selections.get(name)), "triggered")
+        for name, pd in zip(pd_names, pds)
+    )
+
+
 def configure_analog_pds(
     clock,
     pds,
+    pd_names: list[str],
+    pd_selections: dict,
     pd_trigger: str,
     params: dict,
     conf: dict,
@@ -370,20 +382,14 @@ def configure_analog_pds(
         "trigger_dir": True,
         "data_transfer": data_transfer,
     }
-    names = conf.get("pd_names", [f"pd{i}" for i in range(len(pds))])
-    selections = pd_selections(conf, names)
-    success = all(
-        pd.configure(dict(params_pd, channel_selection=selections.get(name)), "triggered")
-        for name, pd in zip(names, pds)
-    )
-    if not success:
-        return False
-    return True
+    return _configure_selected_pds(pds, pd_names, pd_selections, params_pd)
 
 
 def configure_trace_pds(
     clock,
     pds,
+    pd_names: list[str],
+    pd_selections: dict,
     pd_trigger: str,
     params: dict,
     conf: dict,
@@ -444,12 +450,7 @@ def configure_trace_pds(
         "data_transfer": data_transfer,
         "hardware_average": params["pd"].get("hardware_average", True),
     }
-    names = conf.get("pd_names", [f"pd{i}" for i in range(len(pds))])
-    selections = pd_selections(conf, names)
-    success = all(
-        pd.configure(dict(params_pd, channel_selection=selections.get(name)), "triggered")
-        for name, pd in zip(names, pds)
-    )
+    success = _configure_selected_pds(pds, pd_names, pd_selections, params_pd)
     if not success:
         return None
     return samples_per_trace

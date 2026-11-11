@@ -719,6 +719,8 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
             self._samples_per_trace = configure_trace_pds(
                 self.clock,
                 self.pds,
+                self.pd_names,
+                self.pd_channel_selection,
                 self._pd_clock,
                 params,
                 self.conf,
@@ -733,6 +735,8 @@ class ODMRSweeperPG(InstrumentOverlay, ODMRPGMixin, ConfAccessorMixin):
         return configure_analog_pds(
             self.clock,
             self.pds,
+            self.pd_names,
+            self.pd_channel_selection,
             self._pd_clock,
             params,
             self.conf,

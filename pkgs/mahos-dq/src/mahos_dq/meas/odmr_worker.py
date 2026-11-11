@@ -929,6 +929,8 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             self._samples_per_trace = configure_trace_pds(
                 self.clock,
                 self.pds,
+                self.pd_names,
+                self.pd_channel_selection,
                 self._pd_clock,
                 params,
                 self.conf,
@@ -944,6 +946,8 @@ class Sweeper(SweeperBase, ODMRPGMixin):
             if not configure_analog_pds(
                 self.clock,
                 self.pds,
+                self.pd_names,
+                self.pd_channel_selection,
                 self._pd_clock,
                 params,
                 self.conf,

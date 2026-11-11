@@ -188,6 +188,8 @@ def test_configure_trace_pds(spectrum, point_count, background, expected_samples
     result = configure_trace_pds(
         clock,
         [pd],
+        ["pd0"],
+        {},
         "gate-in",
         params,
         conf,

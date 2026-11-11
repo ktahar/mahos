@@ -212,9 +212,11 @@ def test_configure_clocked_analog_pds():
     assert configure_analog_pds(
         clock,
         [pd],
+        ["pd0"],
+        {"pd0": [2]},
         "gate-in",
         _analog_params(),
-        {"pd_channel_selection": {"pd0": [2]}},
+        {},
         False,
         point_count=4,
         drop_first=1,
@@ -259,6 +261,8 @@ def test_configure_spectrum_analog_pds_adjusts_oversample():
     assert configure_analog_pds(
         None,
         [pd],
+        ["pd0"],
+        {},
         "external-trigger",
         params,
         {"pd_segment_granularity": 16, "pd_segment_offset": 4},
@@ -281,6 +285,8 @@ def test_configure_analog_pds_stops_after_clock_failure():
     assert not configure_analog_pds(
         clock,
         [pd],
+        ["pd0"],
+        {},
         "gate-in",
         _analog_params(),
         {},
@@ -326,6 +332,8 @@ def test_direct_pd_wrappers_apply_sweep_point_and_drop_policy():
     sweeper_analog._pg_immediate = False
     sweeper_analog.clock = clock
     sweeper_analog.pds = [pd_analog]
+    sweeper_analog.pd_names = ["pd0"]
+    sweeper_analog.pd_channel_selection = {}
 
     assert sweeper_analog.start_analog_pd(params_analog, "cw")
     assert pd_analog.params["cb_samples"] == 6
@@ -367,6 +375,8 @@ def test_overlay_pd_wrappers_apply_point_policy_without_starting():
     sweeper_analog._pd_trace = sweeper_analog._pd_spectrum = False
     sweeper_analog.clock = clock
     sweeper_analog.pds = [pd_analog]
+    sweeper_analog.pd_names = ["pd0"]
+    sweeper_analog.pd_channel_selection = {}
 
     assert sweeper_analog.configure_analog_pd(params_analog, "cw")
     assert pd_analog.params["cb_samples"] == 2

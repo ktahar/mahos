@@ -10,9 +10,9 @@ PG sequence for ODMR.
 
 from __future__ import annotations
 
+from copy import deepcopy
 import math
 
-from mahos.inst.channel_selection import pd_selections
 from mahos.msgs.inst.pg_msgs import Block, Blocks, TriggerType, PulsePattern
 from mahos.util.param import ParamAccessor, ParamError
 from mahos.util.unit import SI_format
@@ -28,6 +28,7 @@ class ODMRPGMixin(object):
         - pg_freq_cw
     - pg
     - pd_names
+    - pd_channel_selection
     - _pd_analog
     - _pd_spectrum
     - _pd_trace
@@ -83,7 +84,7 @@ class ODMRPGMixin(object):
         mode = "analog_trace" if trace else "analog_integrated" if self._pd_analog else "counter"
         metadata = {
             "pd_names": list(self.pd_names),
-            "pd_channel_selection": pd_selections(self.conf, self.pd_names),
+            "pd_channel_selection": deepcopy(self.pd_channel_selection),
             "pd_mode": mode,
             "pg_freq": float(self.pulse_pattern.freq),
             "length": int(length),

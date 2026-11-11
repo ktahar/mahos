@@ -14,6 +14,7 @@ import pytest
 
 from mahos.msgs.inst.pg_msgs import Blocks, PulsePattern
 from mahos_dq.meas.odmr_io import ODMRIO
+from mahos.inst.channel_selection import pd_selections
 from mahos_dq.meas.odmr_pd import configure_analog_pds, configure_trace_pds
 from mahos_dq.meas.odmr_pg import ODMRPGMixin
 from mahos_dq.inst.overlay.odmr_sweeper import ODMRSweeperCommandBase, ODMRSweeperPG
@@ -58,6 +59,7 @@ def _sweeper(conf, *, analog=True, trace=False, spectrum=False, offsets=(0, 4)):
     sweeper = ODMRPGMixin()
     sweeper.conf = conf
     sweeper.pd_names = conf.get("pd_names", ["pd0", "pd1"])
+    sweeper.pd_channel_selection = pd_selections(conf, sweeper.pd_names)
     sweeper._pd_analog = analog
     sweeper._pd_trace = trace
     sweeper._pd_spectrum = spectrum
@@ -111,7 +113,20 @@ def test_metadata_matches_configured_acquisition(
 
     if analog:
         pd = _PD()
-        args = (None, [pd], "gate", params, conf, spectrum, 2, 0, None, logging.getLogger())
+        args = (
+            None,
+            [pd],
+            sweeper.pd_names,
+            sweeper.pd_channel_selection,
+            "gate",
+            params,
+            conf,
+            spectrum,
+            2,
+            0,
+            None,
+            logging.getLogger(),
+        )
         if mode == "analog_trace":
             assert configure_trace_pds(*args) == samples_per_trace
             assert pd.params["block_samples"] == samples_per_trace
@@ -139,6 +154,7 @@ def test_metadata_is_detached_and_normalizes_zero_offsets():
     metadata = sweeper._make_instrument_params(_params(), "cw")
     names.append("pd2")
     selections["pd0"].append(3)
+    sweeper.pd_channel_selection["pd0"].append(3)
     offsets[0] = 4
     assert metadata["pd_names"] == ["pd0", "pd1"]
     assert metadata["pd_channel_selection"] == {"pd0": [0, 2], "pd1": None}

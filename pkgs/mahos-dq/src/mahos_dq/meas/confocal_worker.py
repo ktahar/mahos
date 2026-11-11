@@ -17,6 +17,7 @@ import numpy as np
 
 from mahos.util.timer import IntervalTimer
 from mahos.util.conf import ConfAccessorMixin
+import mahos.util.validation as V
 from mahos_dq.msgs.confocal_msgs import (
     PiezoPos,
     Image,
@@ -171,8 +172,15 @@ class Tracer(Worker, ConfAccessorMixin):
         self.size = self._conf_pos_int("size", DEFAULT_TRACER_SIZE)
         self.cb_samples = self._conf_pos_int("samples", 5)
         self.time_window_sec = self._conf_nonneg_num("time_window_sec", 0.01)
-        self.pd_bounds = self._conf_ascending_numbers("pd_bounds", 2, (-10.0, 10.0))
         self._pd_data_transfer = self.conf.get("pd_data_transfer")
+        self.pd_bounds = self.conf.get("pd_bounds", (-10.0, 10.0))
+        if isinstance(self.pd_bounds, (list, tuple)) and all(
+            isinstance(b, (list, tuple)) for b in self.pd_bounds
+        ):
+            for i, b in enumerate(self.pd_bounds):
+                V.check_ascending_numbers(b, 2, f"pd_bounds[{i}]")
+        else:
+            V.check_ascending_numbers(self.pd_bounds, 2, "pd_bounds")
 
         if "pd_rate" in self.conf:
             self.pd_rate = self._conf_pos_num("pd_rate")
