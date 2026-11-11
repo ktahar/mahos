@@ -280,12 +280,12 @@ class BasicMeasNode(FileTransportNodeMixin, Node):
             )
         else:
             self.buffer_pub = self.add_pub(b"buffer")
-        self._buffer_transport = transport.buffer_mode
         self._snapshot_service = service
+        self._buffer_transport = transport.buffer_mode
         self._latest_modes = transport.latest_modes
 
-    def new_preview_publisher(self, topic):
-        """Construct a conventional or latest-object preview publisher."""
+    def add_object_publisher(self, topic):
+        """Add an object publisher using the configured transport."""
 
         from mahos.node.transport.latest import LatestPublisher
 

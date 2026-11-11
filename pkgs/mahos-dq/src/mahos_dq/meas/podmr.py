@@ -119,8 +119,8 @@ class PODMR(BasicMeasNode):
     def __init__(self, gconf: dict, name, context=None):
         BasicMeasNode.__init__(self, gconf, name, context=context)
 
-        self.pulse_pub = self.new_preview_publisher(b"pulse")
-        self.wave_pub = self.new_preview_publisher(b"wave")
+        self.pulse_pub = self.add_object_publisher(b"pulse")
+        self.wave_pub = self.add_object_publisher(b"wave")
         self._published_wave_ident = None
 
         _default_sw_names = ["switch"] if "switch" in self.conf["target"]["servers"] else []

@@ -134,7 +134,7 @@ Public monitor getters, payload classes, and Qt signals are unchanged.
 Implementing a node with preview
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Construct publishers using ``self.new_preview_publisher(b"pulse")`` (or ``b"wave"``).
+Construct publishers using ``self.add_object_publisher(b"pulse")`` (or ``b"wave"``).
 Continue calling ``publish(data)`` periodically.
 A new UUID commits a deep copy on the node thread; unchanged UUIDs only announce the existing publication.
 The shared service lazily serializes the committed copy and caches its bytes until replacement.
