@@ -26,6 +26,7 @@ from mahos.util.conf import PresetLoader
 from mahos.meas.common_worker import Worker
 
 from mahos_dq.meas.podmr_generator.generator import make_generators
+from mahos_dq.meas.podmr_generator.splitter import IntervalSplitter
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from mahos_dq.util.segments import round_duration_for_segment_samples
 
@@ -589,10 +590,11 @@ class Pulser(Worker):
         iq_amplitude = self.conf.get("iq_amplitude", 0.0)
         channel_remap = self.conf.get("channel_remap")
 
+        self._interval_splitter = IntervalSplitter(self.conf, self.logger.warn)
         self.generators = make_generators(
             freq=self.conf["pg_freq"],
             reduce_start_divisor=self.conf["reduce_start_divisor"],
-            split_fraction=self.conf.get("split_fraction", 4),
+            splitter=self._interval_splitter,
             minimum_block_length=self.conf["minimum_block_length"],
             block_base=self.conf["block_base"],
             mw_modes=self.mw_modes,

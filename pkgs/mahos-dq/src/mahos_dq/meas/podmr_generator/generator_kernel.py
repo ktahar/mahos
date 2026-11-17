@@ -143,10 +143,13 @@ def round_pulsesN(
     pulses: list[list[float]],
     reduce_start_divisor: int,
     print_fn,
+    *,
+    ticks_to_preserve: tuple[int, ...] = (),
 ) -> tuple[float, list[int], list[int], list[list[int]]]:
     """Round the float (real time) pulse parameters according to freq to get integer parameters.
 
-    pulses[i] must have same lengths.
+    pulses[i] must have same lengths. Additional ``ticks_to_preserve`` constrain frequency
+    reduction without appearing in the returned pulse lists.
 
     """
 
@@ -168,8 +171,11 @@ def round_pulsesN(
     values = [round(v * freq) for v in values]
 
     if reduce_start_divisor:
+        values.extend(ticks_to_preserve)
         print_fn("starting to reduce parameters")
         values, freq = _reduce(values, freq, reduce_start_divisor)
+        if ticks_to_preserve:
+            values = values[: -len(ticks_to_preserve)]
         print_fn(f"reduced to: {values} freq: {freq:.2e}")
 
     _xdata = np.round(values[: -len(common_pulses) - N_pulses]).astype(int)
@@ -197,21 +203,39 @@ def round_pulses(
     pulses1: list[float],
     reduce_start_divisor: int,
     print_fn,
+    *,
+    ticks_to_preserve: tuple[int, ...] = (),
 ) -> tuple[float, list[int], list[int], list[int], list[int]]:
     """Round the float (real time) pulse parameters according to freq to get integer parameters.
 
-    pulses0 and pulses1 must have same lengths.
+    pulses0 and pulses1 must have same lengths. Additional ``ticks_to_preserve`` constrain
+    frequency reduction without appearing in the returned pulse lists.
 
     """
 
     freq, _xdata, _common_pulses, _pulses = round_pulsesN(
-        freq, xdata, common_pulses, [pulses0, pulses1], reduce_start_divisor, print_fn
+        freq,
+        xdata,
+        common_pulses,
+        [pulses0, pulses1],
+        reduce_start_divisor,
+        print_fn,
+        ticks_to_preserve=ticks_to_preserve,
     )
     return freq, _xdata, _common_pulses, _pulses[0], _pulses[1]
 
 
-def split_int(n, A):
+def _split_int(n, A):
     return n // A, n - n // A
+
+
+def split_int(n, A):
+    """Removed; use :meth:`PatternGenerator._split_int` instead."""
+
+    raise RuntimeError(
+        "generator_kernel.split_int() is removed because it ignores split_head. "
+        "Use PatternGenerator._split_int(value, freq) instead."
+    )
 
 
 def offset_base_inc(duration: int, base: int) -> int:

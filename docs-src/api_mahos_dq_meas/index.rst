@@ -18,6 +18,7 @@ The mahos_dq.meas package provides high-level measurement logics for mahos_dq.
    podmr.PODMR
    spodmr.SPODMR
    qdyne.Qdyne
+   podmr_generator.splitter.IntervalSplitter
    iodmr.IODMR
    iodmr_worker.ISweeperDirect
    iodmr_worker.ISweeperOverlay

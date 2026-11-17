@@ -889,11 +889,18 @@ class Pulser(SGPGPulserBase, APODMRPulserBase):
     :type pulser.mw_modes: tuple[str | int]
     :param pulser.iq_amplitude: (only for mw_mode ArbPhase (2)) amplitude of analog IQ signal in V.
     :type pulser.iq_amplitude: float
-    :param pulser.split_fraction: (default: 4) fraction factor (F) to split the free period
-        for MW phase modulation. the period (T) is split into (T // F, T - T // F) and MW phase
-        is switched at T // F. Thus, larger F results in "quicker start" of the phase
-        modulation (depending on hardware, but its response may be a bit slow).
+    :param pulser.split_fraction: (default: 4) fraction factor to split the free period for
+        MW phase modulation. Ignored when ``split_head`` is configured.
+        See :class:`~mahos_dq.meas.podmr_generator.splitter.IntervalSplitter` for details.
     :type pulser.split_fraction: int
+    :param pulser.split_head: Optional fixed first portion of each split free period in seconds.
+        Overrides ``split_fraction``.
+        See :class:`~mahos_dq.meas.podmr_generator.splitter.IntervalSplitter` for details.
+    :type pulser.split_head: float
+    :param pulser.min_split_tail: (default: 0) Minimum remaining portion of each split free
+        period in seconds (only with ``split_head``).
+        See :class:`~mahos_dq.meas.podmr_generator.splitter.IntervalSplitter` for details.
+    :type pulser.min_split_tail: float
     :param pulser.pg_freq: (has preset) pulse generator frequency
     :type pulser.pg_freq: float
     :param pulser.reduce_start_divisor: (has preset) the divisor on start of reducing frequency
@@ -1058,11 +1065,18 @@ class AWGPulser(AWGPulserBase, APODMRPulserBase):
     :param pulser.quick_resume: default value of quick_resume.
         If True, it skips instrument configurations on resume.
     :type pulser.quick_resume: bool
-    :param pulser.split_fraction: (default: 4) fraction factor (F) to split the free period
-        for MW phase modulation. the period (T) is split into (T // F, T - T // F) and MW phase
-        is switched at T // F. Thus, larger F results in "quicker start" of the phase
-        modulation (depending on hardware, but its response may be a bit slow).
+    :param pulser.split_fraction: (default: 4) fraction factor to split the free period for
+        MW phase modulation. Ignored when ``split_head`` is configured.
+        See :class:`~mahos_dq.meas.podmr_generator.splitter.IntervalSplitter` for details.
     :type pulser.split_fraction: int
+    :param pulser.split_head: Optional fixed first portion of each split free period in seconds.
+        Overrides ``split_fraction``.
+        See :class:`~mahos_dq.meas.podmr_generator.splitter.IntervalSplitter` for details.
+    :type pulser.split_head: float
+    :param pulser.min_split_tail: (default: 0) Minimum remaining portion of each split free
+        period in seconds (only with ``split_head``).
+        See :class:`~mahos_dq.meas.podmr_generator.splitter.IntervalSplitter` for details.
+    :type pulser.min_split_tail: float
     :param pulser.minimum_block_length: (has preset) minimum block length in generated blocks
     :type pulser.minimum_block_length: int
     :param pulser.block_base: (has preset) block base granularity of pulse generator.

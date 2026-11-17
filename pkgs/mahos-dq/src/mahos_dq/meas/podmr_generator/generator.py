@@ -14,6 +14,7 @@ import re
 
 import numpy as np
 from mahos_dq.meas.podmr_generator import generator_kernel as K
+from mahos_dq.meas.podmr_generator.splitter import IntervalSplitter
 
 from mahos.msgs import param_msgs as P
 from mahos.msgs.inst.pg_msgs import Channels, AnalogChannel
@@ -47,7 +48,7 @@ class PatternGenerator(object):
         self,
         freq: float = 2.0e9,
         reduce_start_divisor: int = 2,
-        split_fraction: int = 4,
+        splitter: IntervalSplitter | None = None,
         minimum_block_length: int = 1000,
         block_base: int = 4,
         mw_modes: tuple[MWMode | str | int] = (MWMode.QPSK,),
@@ -58,7 +59,7 @@ class PatternGenerator(object):
     ):
         self.freq = freq
         self.reduce_start_divisor = reduce_start_divisor
-        self.split_fraction = split_fraction
+        self.splitter = IntervalSplitter({}) if splitter is None else splitter
         self.minimum_block_length = minimum_block_length
         self.block_base = block_base
         self.mw_modes = tuple(MWMode.parse(m) for m in mw_modes)
@@ -67,6 +68,21 @@ class PatternGenerator(object):
         self.print_fn = print_fn
         self.method = method
         self._params = None
+
+    def _split_int(self, value: int, freq: float) -> tuple[int, int]:
+        """Split an interval at the effective pattern frequency."""
+
+        return self.splitter.split(value, self.freq, freq)
+
+    def _round_pulses(self, *args):
+        """Round pulses while preserving the fixed head during frequency reduction."""
+
+        return K.round_pulses(*args, ticks_to_preserve=self.splitter.ticks_to_preserve(self.freq))
+
+    def _round_pulsesN(self, *args):
+        """Round multiple pulse lists while preserving the fixed head."""
+
+        return K.round_pulsesN(*args, ticks_to_preserve=self.splitter.ticks_to_preserve(self.freq))
 
     def pulse_params(self) -> P.ParamDict[str, P.PDValue]:
         """Return ParamDict of additional pulse params."""
@@ -228,7 +244,7 @@ class RabiGenerator(PatternGenerator):
         reduce_start_divisor: int,
         fix_base_width: int | None,
     ):
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, [], [], reduce_start_divisor, self.print_fn
         )
         p0 = [True]
@@ -299,7 +315,7 @@ class T1Generator(PatternGenerator):
 
         p0 = [p180]
         p1 = [p180]
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [False, flip_head]
@@ -384,7 +400,7 @@ class FIDGenerator(PatternGenerator):
         p0 = [p90, p270]
         p1 = [p90, p270]
 
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [mw_x]
@@ -392,7 +408,7 @@ class FIDGenerator(PatternGenerator):
 
         def gen(v, p90, p270, read_phase):
             if self.mode_has_4phase():
-                v_f, v_l = K.split_int(v, self.split_fraction)
+                v_f, v_l = self._split_int(v, freq)
                 return [
                     ((mw_x, "mw"), p90),
                     ((mw_x,), v_f),
@@ -505,14 +521,14 @@ class SpinEchoGenerator(PatternGenerator):
         p0 = [p90, p180, p270]
         p1 = [p90, p180, p270]
 
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [read_phase0]
         p1 = p1 + [read_phase1]
 
         def gen(v, p90, p180, p270, read_phase):
-            v_f, v_l = K.split_int(v, self.split_fraction)
+            v_f, v_l = self._split_int(v, freq)
             if self.mode_has_4phase():
                 return [
                     ((mw_x, "mw"), p90),
@@ -641,7 +657,7 @@ class TRSEGenerator(PatternGenerator):
         p0 = [p90, p180, p270, tauconst]
         p1 = [p90, p180, p270, tauconst]
 
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [mw_x]
@@ -649,7 +665,7 @@ class TRSEGenerator(PatternGenerator):
 
         def gen(v, p90, p180, p270, tauconst, read_phase):
             if self.mode_has_4phase():
-                v_f, v_l = K.split_int(v, self.split_fraction)
+                v_f, v_l = self._split_int(v, freq)
                 return [
                     ((mw_x, "mw"), p90),
                     ((mw_x,), tauconst),
@@ -809,15 +825,15 @@ class DDGenerator(PatternGenerator):
         p0 = [p90, p180, p270]
         p1 = [p90, p180, p270]
 
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [Nconst, read_phase0, self.method]
         p1 = p1 + [Nconst, read_phase1, self.method]
 
         def gen(tau, p90, p180, p270, Nconst, read_phase, method):
-            tau_f, tau_l = K.split_int(tau, self.split_fraction)
-            tau2_f, tau2_l = K.split_int(tau * 2, self.split_fraction)
+            tau_f, tau_l = self._split_int(tau, freq)
+            tau2_f, tau2_l = self._split_int(tau * 2, freq)
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
             if self.mode_has_4phase():
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
@@ -900,7 +916,7 @@ class DDGenerator(PatternGenerator):
 
         self.print_fn(f"Quantum Interpolation: {supersample}")
 
-        freq, tau, common_pulses, p0, p1 = K.round_pulses(
+        freq, tau, common_pulses, p0, p1 = self._round_pulses(
             self.freq,
             xdata[::supersample],
             common_pulses,
@@ -962,17 +978,17 @@ class DDGenerator(PatternGenerator):
 
             init_ptn = [
                 ((mw_x, "mw"), p90),
-                ((mw_x,), K.split_int(tau_list[0], self.split_fraction)[0]),
+                ((mw_x,), self._split_int(tau_list[0], freq)[0]),
             ]
             if self.mode_has_4phase():
                 read_ptn = [
-                    ((read_phase,), K.split_int(tau_list[-1], self.split_fraction)[1]),
+                    ((read_phase,), self._split_int(tau_list[-1], freq)[1]),
                     ((read_phase, "mw"), p90),
                 ]
             else:  # MWMode.Ext2Phase
                 phase = mw_uninvert(read_phase)
                 read_ptn = [
-                    ((phase,), K.split_int(tau_list[-1], self.split_fraction)[1]),
+                    ((phase,), self._split_int(tau_list[-1], freq)[1]),
                 ]
                 if mw_inverted(read_phase):
                     read_ptn.append(((phase, "mw"), p270))
@@ -983,9 +999,9 @@ class DDGenerator(PatternGenerator):
 
             def mw_pattern(phase_before, tau_before, phase_next, tau_next):
                 return [
-                    ((phase_before,), K.split_int(tau_before, self.split_fraction)[1]),
+                    ((phase_before,), self._split_int(tau_before, freq)[1]),
                     ((phase_before, "mw"), p180),
-                    ((phase_next,), K.split_int(tau_next, self.split_fraction)[0]),
+                    ((phase_next,), self._split_int(tau_next, freq)[0]),
                 ]
 
             phase_list_ = phase_list + [read_phase]
@@ -1095,7 +1111,7 @@ class RDDGenerator(PatternGenerator):
         p0 = [p90, p180]
         p1 = [p90, p180]
 
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [Nconst, read_phase0, self.method]
@@ -1113,8 +1129,8 @@ class RDDGenerator(PatternGenerator):
             return ret
 
         def gen(tau, p90, p180, Nconst, read_phase, method):
-            tau_f, tau_l = K.split_int(tau, self.split_fraction)
-            tau2_f, tau2_l = K.split_int(tau * 2, self.split_fraction)
+            tau_f, tau_l = self._split_int(tau, freq)
+            tau2_f, tau2_l = self._split_int(tau * 2, freq)
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
             read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
 
@@ -1260,15 +1276,15 @@ class DDNGenerator(PatternGenerator):
         p0 = [p90, p180, p270, tauconst]
         p1 = [p90, p180, p270, tauconst]
 
-        freq, dummy, common_pulses, p0, p1 = K.round_pulses(
+        freq, dummy, common_pulses, p0, p1 = self._round_pulses(
             self.freq, [0], common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [read_phase0, self.method]
         p1 = p1 + [read_phase1, self.method]
 
         def gen(n, p90, p180, p270, tauconst, read_phase, method):
-            tau_f, tau_l = K.split_int(tauconst, self.split_fraction)
-            tau2_f, tau2_l = K.split_int(tauconst * 2, self.split_fraction)
+            tau_f, tau_l = self._split_int(tauconst, freq)
+            tau2_f, tau2_l = self._split_int(tauconst * 2, freq)
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
             if self.mode_has_4phase():
                 read_ptn = [((read_phase,), tau_l), ((read_phase, "mw"), p90)]
@@ -1379,7 +1395,7 @@ class PiTrainGenerator(PatternGenerator):
 
         p0 = [tauconst]
         p1 = [tauconst]
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [Nconst, True]
@@ -1467,7 +1483,7 @@ class SEHalfPiSweepGenerator(PatternGenerator):
 
         p0 = [p180, tauconst]
         p1 = [p180, tauconst]
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [True]
@@ -1563,7 +1579,7 @@ class SpinLockGenerator(PatternGenerator):
         p0 = [p90, p270, iq_delay]
         p1 = [p90, p270, iq_delay]
 
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [mw_x_inv]
@@ -1707,15 +1723,15 @@ class XY8CorrelationGenerator(PatternGenerator):
         p0 = [p90, p180, p270, tauconst]
         p1 = [p90, p180, p270, tauconst]
 
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [Nconst, reinit_phase, read_phase0, self.method]
         p1 = p1 + [Nconst, reinit_phase, read_phase1, self.method]
 
         def gen(tau, p90, p180, p270, tauconst, Nconst, reinit_phase, read_phase, method):
-            tau_f, tau_l = K.split_int(tauconst, self.split_fraction)
-            tau2_f, tau2_l = K.split_int(tauconst * 2, self.split_fraction)
+            tau_f, tau_l = self._split_int(tauconst, freq)
+            tau2_f, tau2_l = self._split_int(tauconst * 2, freq)
 
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
             storage_ptn = [((mw_y,), tau_l), ((mw_y, "mw"), p90)]
@@ -1740,7 +1756,7 @@ class XY8CorrelationGenerator(PatternGenerator):
             xy8_first = init_ptn + pattern + storage_ptn
             xy8_second = reinit_ptn + pattern + read_ptn
 
-            v_f, v_l = K.split_int(tau, self.split_fraction)
+            v_f, v_l = self._split_int(tau, freq)
             if method == "xy8cl":
                 interlude = [((mw_y,), v_l), ((reinit_phase,), v_f)]
             elif method == "xy8cl1flip":
@@ -1873,15 +1889,15 @@ class XY8CorrelationNflipGenerator(PatternGenerator):
         reinit_phase = mw_x if reinitX else mw_y
         p0 = [p90, p180, p270, tauconst]
         p1 = [p90, p180, p270, tauconst]
-        freq, dummy, common_pulses, p0, p1 = K.round_pulses(
+        freq, dummy, common_pulses, p0, p1 = self._round_pulses(
             self.freq, [0], common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [Nconst, reinit_phase, read_phase0]
         p1 = p1 + [Nconst, reinit_phase, read_phase1]
 
         def gen(n, p90, p180, p270, tauconst, Nconst, reinit_phase, read_phase):
-            tau_f, tau_l = K.split_int(tauconst, self.split_fraction)
-            tau2_f, tau2_l = K.split_int(tauconst * 2, self.split_fraction)
+            tau_f, tau_l = self._split_int(tauconst, freq)
+            tau2_f, tau2_l = self._split_int(tauconst * 2, freq)
 
             init_ptn = [((mw_x, "mw"), p90), ((mw_x,), tau_f)]
             storage_ptn = [((mw_y,), tau_l), ((mw_y, "mw"), p90), ((mw_y,), tau2_f)]
@@ -1965,7 +1981,7 @@ class DDGateGenerator(PatternGenerator):
         self,
         freq: float = 2.0e9,
         reduce_start_divisor: int = 2,
-        split_fraction: int = 4,
+        splitter: IntervalSplitter | None = None,
         minimum_block_length: int = 1000,
         block_base: int = 4,
         mw_modes: tuple[MWMode] = (MWMode.QPSK,),
@@ -1978,7 +1994,7 @@ class DDGateGenerator(PatternGenerator):
             self,
             freq=freq,
             reduce_start_divisor=reduce_start_divisor,
-            split_fraction=split_fraction,
+            splitter=splitter,
             minimum_block_length=minimum_block_length,
             block_base=block_base,
             mw_modes=mw_modes,
@@ -2072,15 +2088,15 @@ class DDGateGenerator(PatternGenerator):
 
         p0 = [p90, p180, tauconst]
         p1 = [p90, p180, tauconst]
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [Nconst, N2const, N3const, pih_ch0]
         p1 = p1 + [Nconst, N2const, N3const, pih_ch1]
 
         def gen(tau, p90, p180, tauconst, Nconst, N2const, N3const, pih_ch):
-            tau_f, tau_l = K.split_int(tauconst, self.split_fraction)
-            tau2_f, tau2_l = K.split_int(tauconst * 2, self.split_fraction)
+            tau_f, tau_l = self._split_int(tauconst, freq)
+            tau2_f, tau2_l = self._split_int(tauconst * 2, freq)
 
             init_ptn = [(pih_ch[0], p90), ((mw_x,), tau_f)]
             storage_ptn = [((pih_ch[1][0],), tau_l), (pih_ch[1], p90)]
@@ -2101,7 +2117,7 @@ class DDGateGenerator(PatternGenerator):
             xy8_first = init_ptn + pattern + storage_ptn
             xy8_second = reinit_ptn + pattern + read_ptn
 
-            v_f, v_l = K.split_int(tau, self.split_fraction)
+            v_f, v_l = self._split_int(tau, freq)
             interlude = [
                 ((mw_y,), tau),
                 ((mw_y, "mw"), p180),
@@ -2218,15 +2234,15 @@ class DDNGateGenerator(DDGateGenerator):
 
         p0 = [p90, p180, tauconst, tau2const]
         p1 = [p90, p180, tauconst, tau2const]
-        freq, _, common_pulses, p0, p1 = K.round_pulses(
+        freq, _, common_pulses, p0, p1 = self._round_pulses(
             self.freq, [0], common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [Nconst, pih_ch0]
         p1 = p1 + [Nconst, pih_ch1]
 
         def gen(n, p90, p180, tauconst, tau2const, Nconst, pih_ch):
-            tau_f, tau_l = K.split_int(tauconst, self.split_fraction)
-            tau2_f, tau2_l = K.split_int(tauconst * 2, self.split_fraction)
+            tau_f, tau_l = self._split_int(tauconst, freq)
+            tau2_f, tau2_l = self._split_int(tauconst * 2, freq)
 
             init_ptn = [(pih_ch[0], p90), ((mw_x,), tau_f)]
             storage_ptn = [((pih_ch[1][0],), tau_l), (pih_ch[1], p90)]
@@ -2247,7 +2263,7 @@ class DDNGateGenerator(DDGateGenerator):
             xy8_first = init_ptn + pattern + storage_ptn
             xy8_second = reinit_ptn + pattern + read_ptn
 
-            v_f, v_l = K.split_int(tau2const, self.split_fraction)
+            v_f, v_l = self._split_int(tau2const, freq)
             interlude = [
                 ((mw_y,), tau2const),
                 ((mw_y, "mw"), p180),
@@ -2329,7 +2345,7 @@ class DRabiGenerator(PatternGenerator):
 
         p0 = [p180, delay]
         p1 = [p180, delay]
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [True]
@@ -2414,14 +2430,14 @@ class DQ2RamseyGenerator(PatternGenerator):
 
         p0 = [p90]
         p1 = [p90]
-        freq, xdata, common_pulses, p0, p1 = K.round_pulses(
+        freq, xdata, common_pulses, p0, p1 = self._round_pulses(
             self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
         )
         p0 = p0 + [read_phase0]
         p1 = p1 + [read_phase1]
 
         def gen(v, p90, read_phase):
-            v_f, v_l = K.split_int(v, self.split_fraction)
+            v_f, v_l = self._split_int(v, freq)
             return [
                 ((mw_x, mw1_x, "mw", "mw1"), p90),
                 ((mw_x, mw1_x), v_f),
@@ -2501,7 +2517,7 @@ class DQ4RamseyGenerator(PatternGenerator):
         read_phases = [(mw_x, mw1_x), (mw_x_inv, mw1_x), (mw_x_inv, mw1_x_inv), (mw_x, mw1_x_inv)]
 
         pulses = [[p90]] * 4
-        freq, xdata, common_pulses, pulses = K.round_pulsesN(
+        freq, xdata, common_pulses, pulses = self._round_pulsesN(
             self.freq, xdata, common_pulses, pulses, reduce_start_divisor, self.print_fn
         )
         pargs = []
@@ -2509,7 +2525,7 @@ class DQ4RamseyGenerator(PatternGenerator):
             pargs.append([p[0], read_phase])
 
         def gen(v, p90, read_phase):
-            v_f, v_l = K.split_int(v, self.split_fraction)
+            v_f, v_l = self._split_int(v, freq)
             return [
                 ((mw_x, mw1_x, "mw", "mw1"), p90),
                 ((mw_x, mw1_x), v_f),
@@ -2561,7 +2577,7 @@ def _load_generator_class(module_name: str, class_name: str):
 def make_generators(
     freq: float = 2.0e9,
     reduce_start_divisor: int = 2,
-    split_fraction: int = 4,
+    splitter: IntervalSplitter | None = None,
     minimum_block_length: int = 1000,
     block_base: int = 4,
     mw_modes: tuple[MWMode | str | int] = (MWMode.QPSK,),
@@ -2583,64 +2599,67 @@ def make_generators(
         if not allowed_num_pattern_set:
             raise ValueError("allowed_num_pattern must not be empty")
 
-    args = (
-        freq,
-        reduce_start_divisor,
-        split_fraction,
-        minimum_block_length,
-        block_base,
-        mw_modes,
-        iq_amplitude,
-        channel_remap,
-        print_fn,
-    )
+    if splitter is None:
+        splitter = IntervalSplitter({})
+    # Pass by keyword so user generators with an outdated __init__ signature fail loudly.
+    kwargs = {
+        "freq": freq,
+        "reduce_start_divisor": reduce_start_divisor,
+        "splitter": splitter,
+        "minimum_block_length": minimum_block_length,
+        "block_base": block_base,
+        "mw_modes": mw_modes,
+        "iq_amplitude": iq_amplitude,
+        "channel_remap": channel_remap,
+        "print_fn": print_fn,
+    }
     user_generators = generators
     generators = {
-        "rabi": RabiGenerator(*args),
-        "t1": T1Generator(*args),
-        "fid": FIDGenerator(*args),
-        "spinecho": SpinEchoGenerator(*args),
-        "trse": TRSEGenerator(*args),
-        "cp": DDGenerator(*args, method="cp"),
-        "cpmg": DDGenerator(*args, method="cpmg"),
-        "xy4": DDGenerator(*args, method="xy4"),
-        "xy8": DDGenerator(*args, method="xy8"),
-        "xy16": DDGenerator(*args, method="xy16"),
-        "cpN": DDNGenerator(*args, method="cpN"),
-        "cpmgN": DDNGenerator(*args, method="cpmgN"),
-        "xy4N": DDNGenerator(*args, method="xy4N"),
-        "xy8N": DDNGenerator(*args, method="xy8N"),
-        "xy16N": DDNGenerator(*args, method="xy16N"),
-        "180train": PiTrainGenerator(*args),
-        "se90sweep": SEHalfPiSweepGenerator(*args),
-        "spinlock": SpinLockGenerator(*args),
-        "xy8cl": XY8CorrelationGenerator(*args, method="xy8cl"),
-        "xy8cl1flip": XY8CorrelationGenerator(*args, method="xy8cl1flip"),
-        "xy8clNflip": XY8CorrelationNflipGenerator(*args),
-        "ddgate": DDGateGenerator(*args),
-        "ddgateN": DDNGateGenerator(*args),
+        "rabi": RabiGenerator(**kwargs),
+        "t1": T1Generator(**kwargs),
+        "fid": FIDGenerator(**kwargs),
+        "spinecho": SpinEchoGenerator(**kwargs),
+        "trse": TRSEGenerator(**kwargs),
+        "cp": DDGenerator(**kwargs, method="cp"),
+        "cpmg": DDGenerator(**kwargs, method="cpmg"),
+        "xy4": DDGenerator(**kwargs, method="xy4"),
+        "xy8": DDGenerator(**kwargs, method="xy8"),
+        "xy16": DDGenerator(**kwargs, method="xy16"),
+        "cpN": DDNGenerator(**kwargs, method="cpN"),
+        "cpmgN": DDNGenerator(**kwargs, method="cpmgN"),
+        "xy4N": DDNGenerator(**kwargs, method="xy4N"),
+        "xy8N": DDNGenerator(**kwargs, method="xy8N"),
+        "xy16N": DDNGenerator(**kwargs, method="xy16N"),
+        "180train": PiTrainGenerator(**kwargs),
+        "se90sweep": SEHalfPiSweepGenerator(**kwargs),
+        "spinlock": SpinLockGenerator(**kwargs),
+        "xy8cl": XY8CorrelationGenerator(**kwargs, method="xy8cl"),
+        "xy8cl1flip": XY8CorrelationGenerator(**kwargs, method="xy8cl1flip"),
+        "xy8clNflip": XY8CorrelationNflipGenerator(**kwargs),
+        "ddgate": DDGateGenerator(**kwargs),
+        "ddgateN": DDNGateGenerator(**kwargs),
     }
     if len(mw_modes) > 1:
         # add sequences using multiple mw channels here
-        generators["drabi"] = DRabiGenerator(*args)
+        generators["drabi"] = DRabiGenerator(**kwargs)
         if all(m in (MWMode.QPSK, MWMode.ArbPhase, MWMode.AWG) for m in mw_modes[:2]):
-            generators["dq2ramsey"] = DQ2RamseyGenerator(*args)
-            generators["dq4ramsey"] = DQ4RamseyGenerator(*args)
+            generators["dq2ramsey"] = DQ2RamseyGenerator(**kwargs)
+            generators["dq4ramsey"] = DQ4RamseyGenerator(**kwargs)
     if all(m == MWMode.Ext2Phase for m in mw_modes):
         # these methods requires 4 phases (x, y, x_inv, y_inv) and unavailable in 2-phase mode.
         for key in ["xy16", "xy16N", "ddgate", "ddgateN"]:
             del generators[key]
     if any(m in (MWMode.ArbPhase, MWMode.AWG) for m in mw_modes):
         # Randomized DD. no rcpmg because it is equivalent to rcp.
-        generators["rcp"] = RDDGenerator(*args, method="cp")
-        generators["rxy4"] = RDDGenerator(*args, method="xy4")
-        generators["rxy8"] = RDDGenerator(*args, method="xy8")
-        generators["rxy16"] = RDDGenerator(*args, method="xy16")
+        generators["rcp"] = RDDGenerator(**kwargs, method="cp")
+        generators["rxy4"] = RDDGenerator(**kwargs, method="xy4")
+        generators["rxy8"] = RDDGenerator(**kwargs, method="xy8")
+        generators["rxy16"] = RDDGenerator(**kwargs, method="xy16")
     if user_generators:
         for label, spec in user_generators.items():
             module_name, class_name = _parse_generator_spec(label, spec)
             GeneratorClass = _load_generator_class(module_name, class_name)
-            generator = GeneratorClass(*args)
+            generator = GeneratorClass(**kwargs)
             num_pattern = generator.num_pattern()
             if allowed_num_pattern_set is not None and num_pattern not in allowed_num_pattern_set:
                 raise ValueError(

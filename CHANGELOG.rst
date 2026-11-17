@@ -19,6 +19,13 @@ Changed
 
 - Development tooling: replace black and flake8 with Ruff for formatting and linting.
 - rename ``mahos.util.locked_queue`` to ``mahos.util.queue.RollingQueue``.
+- PODMR,SPODMR,APODMR,Qdyne: ``podmr_generator.generator_kernel.split_int()`` is removed
+  (raises an error); user-defined generators should call ``PatternGenerator._split_int()``,
+  which respects ``split_head``.
+- PODMR,SPODMR,APODMR,Qdyne: ``PatternGenerator`` and ``make_generators()`` take
+  ``splitter`` (``IntervalSplitter``) instead of ``split_fraction``. Generators are now
+  constructed with keyword arguments; user-defined generators overriding ``__init__``
+  must accept ``splitter`` instead of ``split_fraction``.
 
 Fixed
 ^^^^^

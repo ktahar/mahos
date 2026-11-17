@@ -43,3 +43,21 @@ class NotAGenerator(object):
     """Invalid class for type-check tests."""
 
     pass
+
+
+class LegacyInitGenerator(AddedGenerator):
+    """Generator with the removed split_fraction constructor argument."""
+
+    def __init__(
+        self,
+        freq=2.0e9,
+        reduce_start_divisor=2,
+        split_fraction=4,
+        minimum_block_length=1000,
+        block_base=4,
+        mw_modes=(),
+        iq_amplitude=0.0,
+        channel_remap=None,
+        print_fn=print,
+    ):
+        AddedGenerator.__init__(self, freq, reduce_start_divisor)

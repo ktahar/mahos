@@ -31,6 +31,7 @@ from mahos.meas.common_worker import Worker
 
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from mahos_dq.meas.podmr_generator.generator import make_generators
+from mahos_dq.meas.podmr_generator.splitter import IntervalSplitter
 
 
 def _is_qt_loaded() -> bool:
@@ -265,10 +266,11 @@ class Pulser(Worker, ConfAccessorMixin):
         channel_remap = self.conf.get("channel_remap")
         self.mw_modes = tuple(MWMode.parse(m) for m in self.conf.get("mw_modes", (0,)))
 
+        self._interval_splitter = IntervalSplitter(self.conf, self.logger.warn)
         self.generators = make_generators(
             freq=self.conf["pg_freq"],
             reduce_start_divisor=self.conf["reduce_start_divisor"],
-            split_fraction=self.conf.get("split_fraction", 4),
+            splitter=self._interval_splitter,
             minimum_block_length=mbl,
             block_base=bb,
             mw_modes=self.mw_modes,
