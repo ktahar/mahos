@@ -24,7 +24,7 @@ from lmfit.model import ModelResult
 from mahos_dq.msgs.iodmr_msgs import IODMRData
 from mahos.node.log import DummyLogger
 from mahos.util.io import save_pickle_or_h5, load_pickle, load_h5
-from mahos.util.image import save_image
+from mahos.util.image import plot_image
 from mahos_dq.meas.iodmr_fitter import IODMRFitResult, IODMRFitter
 
 
@@ -153,12 +153,12 @@ class IODMRIO(object):
 
         img = fit.make_image_BIC()
         xfn = f"{head}_BIC{ext}"
-        save_image(xfn, img, figsize=figsize, dpi=dpi, fontsize=fontsize, cmap=cmap)
+        plot_image(xfn, img, figsize=figsize, dpi=dpi, fontsize=fontsize, cmap=cmap)
 
         img = fit.make_image_B()
         xfn = f"{head}_B{ext}"
         if img is not None:
-            save_image(
+            plot_image(
                 xfn,
                 img,
                 figsize=figsize,
@@ -172,7 +172,7 @@ class IODMRIO(object):
         img = fit.make_image_freq()
         xfn = f"{head}_freq{ext}"
         if img is not None:
-            save_image(xfn, img, figsize=figsize, dpi=dpi, fontsize=fontsize, cmap=cmap)
+            plot_image(xfn, img, figsize=figsize, dpi=dpi, fontsize=fontsize, cmap=cmap)
 
         if params.get("all", 0):
             self._export_fit_all(head + "_all", fit, params)
@@ -292,7 +292,7 @@ class IODMRIO(object):
             head, ext = path.splitext(fn)
             freq_str = f"{freq * 1e-6:.1f}MHz"
             xfn = f"{head}_d{i}f{freq_str}{ext}"
-            save_image(
+            plot_image(
                 xfn,
                 img,
                 patches=[rect],

@@ -29,6 +29,14 @@ Changed
   must accept ``splitter`` instead of ``split_fraction``.
 - meas: exported figures use matplotlib's constrained layout instead of ``tight_layout()``.
   Exported images have slightly different margins and spacing.
+- ``mahos.util.image``: ``plot_map()``, ``plot_map_only()``, and ``save_map()`` take numpy
+  arrays ``(x, y, image)`` and a full file name instead of a ``pandas.DataFrame``;
+  ``to_map()`` and ``derive_map()`` are removed. The ``save_map()`` text format is unchanged.
+  ``apply_binning()`` raises ``ValueError`` for an indivisible shape instead of returning ``None``.
+  ``save_image()`` is renamed to ``plot_image()`` with params ``fn`` and ``image``;
+  ``save_image()`` remains as a deprecated alias accepting the old ``fpath`` and ``img``.
+- Confocal: ``ConfocalIO.create_dataframe()`` is replaced by ``get_map()``
+  returning ``(x, y, values)``.
 
 Fixed
 ^^^^^

@@ -14,7 +14,6 @@ import time
 from datetime import datetime
 
 import numpy as np
-import pandas as pd
 from matplotlib.figure import Figure
 
 from mahos_dq.msgs.confocal_msgs import Image, Trace, ScanDirection, update_image, update_trace
@@ -115,29 +114,25 @@ class ConfocalIO(object):
 
         def plot(image, param, pos, fig, ax):
             _x, _y = self.get_xylabel(image)
-            df = self.create_dataframe(image, param.get("complex_conv", "real"))
-            fn_head, ext = path.splitext(file_name)
-            units = {_x: "um", _y: "um", "I": image.cunit}
+            x, y, values = self.get_map(image, param.get("complex_conv", "real"))
             plot_map(
-                file_name,
-                df,
-                _x,
-                _y,
-                "I",
-                units=units,
+                None,
+                x,
+                y,
+                values,
                 fig=fig,
                 ax=ax,
+                xlabel=f"{_x} (um)",
+                ylabel=f"{_y} (um)",
+                clabel=image.cunit,
                 vmin=param.get("vmin"),
                 vmax=param.get("vmax"),
                 invX=param.get("invX", False),
                 invY=param.get("invY", False),
                 aspect="equal",
-                exts=(),
                 cmap=param.get("cmap", "inferno"),
                 plot_pos=pos,
                 pos_color=param.get("pos_color", "#2bb32b"),
-                mapped=True,
-                nocheck=True,
             )
 
         if params is None:
@@ -209,48 +204,32 @@ class ConfocalIO(object):
         else:
             raise ValueError("invalid direction {} is given.".format(image.direction))
 
-    def create_dataframe(self, image: Image, complex_conv: str = "real"):
+    def get_map(self, image: Image, complex_conv: str = "real"):
+        """Get (x, y, values) of image. values has shape (len(y), len(x))."""
+
         im = image.get_image(complex_conv)
         xs, ys = im.shape
-        xar = self.get_xarray(image)[:xs]
-        yar = self.get_yarray(image)[:ys]
-        df = pd.DataFrame(data=im.T, index=yar, columns=xar)
-
-        return df
+        x = self.get_xarray(image)[:xs]
+        y = self.get_yarray(image)[:ys]
+        return x, y, im.T
 
     def _export_image_text(self, fn, image: Image) -> bool:
-        fn_head, ext = path.splitext(fn)
         _x, _y = self.get_xylabel(image)
-        df = self.create_dataframe(image)
-        save_map(
-            fn_head,
-            df,
-            _x,
-            _y,
-            "I",
-            ext=ext,
-            delimiter=",",
-            mapped=True,
-            nocheck=True,
-            rename=False,
-        )
+        x, y, values = self.get_map(image)
+        save_map(fn, x, y, values, xlabel=_x, ylabel=_y, clabel="I", delimiter=",")
         self.logger.info(f"Exported Image to {fn}.")
         return True
 
     def _export_image_image(self, fn, image: Image, params: dict) -> bool:
         _x, _y = self.get_xylabel(image)
-        df = self.create_dataframe(image, params.get("complex_conv", "real"))
+        x, y, values = self.get_map(image, params.get("complex_conv", "real"))
 
-        fn_head, ext = path.splitext(fn)
-        units = {_x: "um", _y: "um", "I": image.cunit}
         if params.get("only", False):
             plot_map_only(
-                fn_head,
-                df,
-                _x,
-                _y,
-                "I",
-                units=units,
+                fn,
+                x,
+                y,
+                values,
                 vmin=params.get("vmin"),
                 vmax=params.get("vmax"),
                 invX=params.get("invX", False),
@@ -258,20 +237,18 @@ class ConfocalIO(object):
                 aspect=params.get("aspect", "auto"),
                 figsize=params.get("figsize", (8, 6)),
                 dpi=params.get("dpi", 100),
-                exts=(ext,),
                 cmap=params.get("cmap", "inferno"),
                 plot_pos=params.get("pos"),
-                mapped=True,
-                nocheck=True,
             )
         else:
             plot_map(
-                fn_head,
-                df,
-                _x,
-                _y,
-                "I",
-                units=units,
+                fn,
+                x,
+                y,
+                values,
+                xlabel=f"{_x} (um)",
+                ylabel=f"{_y} (um)",
+                clabel=image.cunit,
                 vmin=params.get("vmin"),
                 vmax=params.get("vmax"),
                 invX=params.get("invX", False),
@@ -280,11 +257,8 @@ class ConfocalIO(object):
                 figsize=params.get("figsize", (8, 6)),
                 fontsize=params.get("fontsize", 20),
                 dpi=params.get("dpi", 100),
-                exts=(ext,),
                 cmap=params.get("cmap", "inferno"),
                 plot_pos=params.get("pos"),
-                mapped=True,
-                nocheck=True,
             )
         self.logger.info(f"Exported Image to {fn}.")
         return True

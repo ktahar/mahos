@@ -1,202 +1,100 @@
 #!/usr/bin/env python3
 
 """
-Plot / Convertion functions for 2D image data.
+Plot / conversion functions for 2D image data.
+
+All functions take 2D data in row-major order with shape (H, W), i.e., ``image[i, j]`` is
+the value of the pixel at row ``i`` and column ``j``.
+
+- :func:`plot_map`: map with physical coordinates. Pixel centers are given by ``x`` and ``y``
+  (e.g., a confocal scan in um). The y-axis points up by default.
+- :func:`plot_map_only`: same as :func:`plot_map`, but saves the colored map alone
+  (no axes, labels, or colorbar).
+- :func:`save_map`: save the same ``(x, y, image)`` data as a text table.
+- :func:`plot_image`: image without spatial unit (e.g., camera frame). Axes are pixel indices,
+  and the origin is at the top-left (row 0 at the top).
+- :func:`apply_binning`: average 2D data over square blocks.
+
+``save_image()`` is a deprecated alias for :func:`plot_image`.
+
+:func:`plot_map` and :func:`plot_image` share the figure handling
+(``fig``, ``ax``, ``figsize``, ``fontsize``, ``dpi``, and ``tight``) and the color mapping
+(``cmap``, ``vmin``, and ``vmax``), and both draw a colorbar.
 
 .. This file is a part of MAHOS project, which is released under the 3-Clause BSD license.
 .. See included LICENSE file or https://github.com/ToyotaCRDL/mahos/blob/main/LICENSE for details.
 
 """
 
+from __future__ import annotations
+
 import os
+import warnings
+from collections.abc import Sequence
 
 import numpy as np
-import pandas as pd
+from numpy.typing import ArrayLike, NDArray
 import matplotlib as mpl
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from mahos.util import cui
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
+
+import mahos.util.validation as V
 
 
-def to_map(df, xl, yl, cl):
-    """Convert parallel DataFrame to mapped DataFrame.
-    col is used to designate which col (of input DF) to map.
-    """
+def _check_map(x: ArrayLike, y: ArrayLike, image: ArrayLike) -> tuple[NDArray, NDArray, NDArray]:
+    """Convert map inputs to arrays and check that ``image`` has shape (len(y), len(x))."""
 
-    ind = pd.MultiIndex.from_arrays(np.array(df.loc[:, [yl, xl]]).T)
-    df.index = ind
-    s = df.loc[:, cl]
-
-    return s.unstack()
-
-
-def derive_map(df, xl, yl, cl, units=None, axis="x"):
-    """Take derivative of the map DataFrame."""
-
-    df = df.sort(axis=0).sort(axis=1)
-
-    if axis == "x":
-        step = df.columns[1] - df.columns[0]
-        ar = np.array([np.gradient(ar, step) for ar in df.values])
-
-        _cl = cl
-        cl = "d%s_d%s" % (cl, xl)
-        if units is not None:
-            units[cl] = "%s/%s" % (units[_cl], units[xl])
-
-    elif axis == "y":
-        step = df.index[1] - df.index[0]
-        ar = np.array([np.gradient(ar, step) for ar in df.values.T]).T
-        _cl = cl
-        cl = "d%s_d%s" % (cl, yl)
-        if units is not None:
-            units[cl] = "%s/%s" % (units[_cl], units[xl])
-
-    new_df = pd.DataFrame(ar, index=df.index, columns=df.columns)
-
-    return new_df, xl, yl, cl
+    x = np.asarray(x)
+    y = np.asarray(y)
+    image = np.asarray(image)
+    if x.ndim != 1 or y.ndim != 1:
+        raise ValueError(f"x and y must be 1D arrays. Given shapes: {x.shape}, {y.shape}")
+    if image.shape != (len(y), len(x)):
+        raise ValueError(
+            f"image shape must be (len(y), len(x)) = {(len(y), len(x))}. Given: {image.shape}"
+        )
+    return x, y, image
 
 
-def plot_map(
-    fpath,
-    df,
-    xl,
-    yl,
-    cl,
-    units=None,
-    fig=None,
-    ax=None,
-    vmin=None,
-    vmax=None,
-    invX=False,
-    invY=False,
-    aspect="auto",
-    figsize=(8, 6),
-    fontsize=None,
-    dpi=None,
-    suffix="",
-    exts=(".png",),
-    cmap="inferno",
-    mapped=False,
-    nocheck=False,
-    derivative=None,
-    plot_pos=None,
-    pos_color="#2bb32b",
-    tight=True,
-    cunit_only=True,
-):
-    """Plot DataFrame as pseudo-color image.
+def _prepare_figure(
+    fig: Figure | None,
+    ax: Axes | None,
+    figsize: tuple[float, float],
+    tight: bool,
+    use_pyplot: bool = False,
+) -> tuple[Figure, Axes]:
+    """Create or adopt (fig, ax) for :func:`plot_map` and :func:`plot_image`.
 
     If ``tight`` is True, a newly created figure uses the constrained layout.
     A figure given by ``fig`` gets the tight layout engine only if it has no layout engine.
+    A new figure is created via ``matplotlib.pyplot`` only if ``use_pyplot`` is True.
 
     """
-
-    with mpl.rc_context({"font.size": fontsize} if fontsize else None):
-        if not mapped:
-            df2 = to_map(df, xl, yl, cl)
-            if derivative is not None:
-                df2, xl, yl, cl = derive_map(df2, xl, yl, cl, units=units, axis=derivative)
-        else:
-            df2 = df
-
-        x, y = np.array(df2.columns), np.array(df2.index)
-        xmin, xmax = min(x), max(x)
-        ymin, ymax = min(y), max(y)
-        X, Y = np.meshgrid(x, y)
-
-        if fig is None:
-            fig = Figure(figsize=figsize, layout="constrained" if tight else None)
-        elif tight and fig.get_layout_engine() is None:
-            fig.set_layout_engine("tight")
-        if ax is None:
-            ax = fig.add_subplot(111)
-        ax.set_aspect(aspect)
-        ax.tick_params(axis="both", direction="out")
-        map_ = ax.pcolormesh(X, Y, np.array(df2), cmap=cmap, vmin=vmin, vmax=vmax)
-        cbar = fig.colorbar(map_, ax=ax)
-        if invX:
-            ax.set_xlim(xmax, xmin)
-        else:
-            ax.set_xlim(xmin, xmax)
-        if invY:
-            ax.set_ylim(ymax, ymin)
-        else:
-            ax.set_ylim(ymin, ymax)
-
-        if units is not None:
-            ax.set_xlabel(f"{xl} ({units[xl]})")
-            ax.set_ylabel(f"{yl} ({units[yl]})")
-            if cunit_only:
-                cbar.set_label(units[cl])
-            else:
-                cbar.set_label(f"{cl} ({units[cl]})")
-        else:
-            ax.set_xlabel(xl)
-            ax.set_ylabel(yl)
-            cbar.set_label(cl)
-
-        if plot_pos is not None:
-            x, y = plot_pos
-            ax.plot(x, y, color=pos_color, marker="x", markeredgewidth=1.0, markersize=8)
-
-        for ext in exts:
-            fn = fpath + ext
-            if nocheck or cui.check_existance(fn):
-                fig.savefig(fn, dpi=dpi)
-
-
-def plot_map_only(
-    fpath,
-    df,
-    xl,
-    yl,
-    cl,
-    units=None,
-    fig=None,
-    ax=None,
-    vmin=None,
-    vmax=None,
-    invX=False,
-    invY=False,
-    aspect="auto",
-    figsize=(8, 6),
-    dpi=None,
-    suffix="",
-    exts=(".png",),
-    cmap="inferno",
-    mapped=False,
-    nocheck=False,
-    derivative=None,
-    plot_pos=None,
-    pos_color="#2bb32b",
-):
-    """Plot DataFrame as pseudo-color image.
-
-    Difference with plot_map(): This function saves the image only
-    (No axis, colorbar, labels, etc.).
-
-    """
-
-    if not mapped:
-        df2 = to_map(df, xl, yl, cl)
-        if derivative is not None:
-            df2, xl, yl, cl = derive_map(df2, xl, yl, cl, units=units, axis=derivative)
-    else:
-        df2 = df
-
-    x, y = np.array(df2.columns), np.array(df2.index)
-    xmin, xmax = min(x), max(x)
-    ymin, ymax = min(y), max(y)
-    X, Y = np.meshgrid(x, y)
 
     if fig is None:
-        fig = Figure(figsize=figsize, frameon=False)
-    ax = Axes(fig, [0.0, 0.0, 1.0, 1.0])
-    fig.add_axes(ax)
-    ax.set_axis_off()
+        layout = "constrained" if tight else None
+        if use_pyplot:
+            import matplotlib.pyplot as plt
+
+            fig = plt.figure(figsize=figsize, layout=layout)
+        else:
+            fig = Figure(figsize=figsize, layout=layout)
+    elif tight and fig.get_layout_engine() is None:
+        fig.set_layout_engine("tight")
+    if ax is None:
+        ax = fig.add_subplot(111)
+    return fig, ax
+
+
+def _draw_map(ax: Axes, x, y, image, vmin, vmax, invX, invY, aspect, cmap, plot_pos, pos_color):
+    """Draw a pseudo-color map on ``ax`` and return the QuadMesh."""
+
     ax.set_aspect(aspect)
-    ax.pcolormesh(X, Y, np.array(df2), cmap=cmap, vmin=vmin, vmax=vmax)
+    mesh = ax.pcolormesh(x, y, image, cmap=cmap, vmin=vmin, vmax=vmax)
+    xmin, xmax = np.min(x), np.max(x)
+    ymin, ymax = np.min(y), np.max(y)
     if invX:
         ax.set_xlim(xmax, xmin)
     else:
@@ -207,101 +105,197 @@ def plot_map_only(
         ax.set_ylim(ymin, ymax)
 
     if plot_pos is not None:
-        x, y = plot_pos
-        ax.plot(x, y, color=pos_color, marker="x", markeredgewidth=1.0, markersize=8)
-
-    for ext in exts:
-        fn = fpath + ext
-        if nocheck or cui.check_existance(fn):
-            fig.savefig(fn, dpi=dpi)
+        px, py = plot_pos
+        ax.plot(px, py, color=pos_color, marker="x", markeredgewidth=1.0, markersize=8)
+    return mesh
 
 
-def save_map(
-    fpath,
-    df,
-    xl,
-    yl,
-    cl,
-    ext=".txt",
-    suffix="",
-    delimiter=",",
-    mapped=False,
-    nocheck=False,
-    derivative=None,
-    rename=True,
-):
-    if not mapped:
-        df2 = to_map(df, xl, yl, cl)
+def plot_map(
+    fn: str | None,
+    x: ArrayLike,
+    y: ArrayLike,
+    image: ArrayLike,
+    fig: Figure | None = None,
+    ax: Axes | None = None,
+    xlabel: str = "",
+    ylabel: str = "",
+    clabel: str = "",
+    vmin: float | None = None,
+    vmax: float | None = None,
+    invX: bool = False,
+    invY: bool = False,
+    aspect: str | float = "auto",
+    figsize: tuple[float, float] = (8, 6),
+    fontsize: float | None = None,
+    dpi: float | None = None,
+    cmap: str = "inferno",
+    plot_pos: tuple[float, float] | None = None,
+    pos_color: str = "#2bb32b",
+    tight: bool = True,
+) -> Figure:
+    """Plot 2D map data with physical coordinates as a pseudo-color image with a colorbar.
 
-        if derivative is not None:
-            df2, xl, yl, cl = derive_map(df2, xl, yl, cl, axis=derivative)
-    else:
-        df2 = df
+    Axes are the given ``x`` and ``y`` coordinates, with limits at the outermost pixel centers.
+    The y-axis points up unless ``invY`` is True.
+    Use :func:`plot_image` instead for data without spatial unit.
 
-    if rename:
-        save_fpath = os.path.splitext(fpath)[0] + "_%s%s%s%s%s" % (xl, yl, cl, suffix, ext)
-    else:
-        save_fpath = fpath + ext
-
-    if nocheck or cui.check_existance(save_fpath):
-        df2.to_csv(save_fpath, sep=delimiter, index_label="%s\\%s/%s" % (yl, cl, xl))
-
-
-def save_image(
-    fpath,
-    img: np.ndarray,
-    fig=None,
-    ax=None,
-    xlabel="",
-    ylabel="",
-    title="",
-    aspect="equal",
-    figsize=(8, 6),
-    vmin=None,
-    vmax=None,
-    cmap="inferno",
-    patches=(),
-    lines=(),
-    show=False,
-    dpi=None,
-    fontsize=None,
-    tight=True,
-):
-    """Save 2D monochrome image data as pseudo-color image.
-
-    The image is without spatial unit, like camera image.
     If ``tight`` is True, a newly created figure uses the constrained layout.
     A figure given by ``fig`` gets the tight layout engine only if it has no layout engine.
-    Set ``show=True`` to show the figure interactively (this imports ``matplotlib.pyplot``).
+
+    :param fn: file name to save the figure. None to draw without saving.
+    :param x: x values (pixel centers) with shape (W,).
+    :param y: y values (pixel centers) with shape (H,).
+    :param image: map values with shape (H, W), i.e., ``image[i, j]`` is at ``(x[j], y[i])``.
+    :param fig: figure to draw on. A new figure is created if None.
+    :param ax: axes to draw on. A new subplot of ``fig`` is created if None.
+    :param clabel: colorbar label.
+    :param plot_pos: position (x, y) to mark with a cross.
+    :returns: the figure drawn on.
+    :raises ValueError: shapes of ``x``, ``y``, and ``image`` are inconsistent.
 
     """
 
+    x, y, image = _check_map(x, y, image)
     with mpl.rc_context({"font.size": fontsize} if fontsize else None):
-        layout = "constrained" if tight else None
-        if fig is None:
-            if show:
-                import matplotlib.pyplot as plt
+        fig, ax = _prepare_figure(fig, ax, figsize, tight)
+        ax.tick_params(axis="both", direction="out")
+        mesh = _draw_map(
+            ax, x, y, image, vmin, vmax, invX, invY, aspect, cmap, plot_pos, pos_color
+        )
+        cbar = fig.colorbar(mesh, ax=ax)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        cbar.set_label(clabel)
 
-                fig = plt.figure(figsize=figsize, layout=layout)
-            else:
-                fig = Figure(figsize=figsize, layout=layout)
-        elif tight and fig.get_layout_engine() is None:
-            fig.set_layout_engine("tight")
-        if ax is None:
-            ax = fig.add_subplot(111)
+        if fn is not None:
+            fig.savefig(fn, dpi=dpi)
+    return fig
+
+
+def plot_map_only(
+    fn: str,
+    x: ArrayLike,
+    y: ArrayLike,
+    image: ArrayLike,
+    vmin: float | None = None,
+    vmax: float | None = None,
+    invX: bool = False,
+    invY: bool = False,
+    aspect: str | float = "auto",
+    figsize: tuple[float, float] = (8, 6),
+    dpi: float | None = None,
+    cmap: str = "inferno",
+    plot_pos: tuple[float, float] | None = None,
+    pos_color: str = "#2bb32b",
+):
+    """Save 2D map data as a pseudo-color image only (no axes, colorbar, labels, etc.).
+
+    The parameters are the same as :func:`plot_map`.
+
+    :raises ValueError: shapes of ``x``, ``y``, and ``image`` are inconsistent.
+
+    """
+
+    x, y, image = _check_map(x, y, image)
+    fig = Figure(figsize=figsize, frameon=False)
+    ax = Axes(fig, [0.0, 0.0, 1.0, 1.0])
+    fig.add_axes(ax)
+    ax.set_axis_off()
+    _draw_map(ax, x, y, image, vmin, vmax, invX, invY, aspect, cmap, plot_pos, pos_color)
+    fig.savefig(fn, dpi=dpi)
+
+
+def save_map(
+    fn: str,
+    x: ArrayLike,
+    y: ArrayLike,
+    image: ArrayLike,
+    xlabel: str = "x",
+    ylabel: str = "y",
+    clabel: str = "I",
+    delimiter: str = ",",
+):
+    """Save 2D map data as a text table.
+
+    The first row is a header: a corner label ``ylabel\\clabel/xlabel`` followed by x values.
+    Each following row is a y value followed by the image values at that y.
+    NaN values are written as empty cells.
+    Lines end with ``os.linesep`` to keep the format written by the former pandas implementation.
+
+    :param x: x values with shape (W,).
+    :param y: y values with shape (H,).
+    :param image: map values with shape (H, W), i.e., ``image[i, j]`` is at ``(x[j], y[i])``.
+    :raises ValueError: shapes of ``x``, ``y``, and ``image`` are inconsistent.
+
+    """
+
+    x, y, image = _check_map(x, y, image)
+    cells = image.astype(str)
+    if np.issubdtype(image.dtype, np.floating):
+        cells[np.isnan(image)] = ""
+    rows = [[f"{ylabel}\\{clabel}/{xlabel}"] + x.astype(str).tolist()]
+    rows.extend([yv] + list(c) for yv, c in zip(y.astype(str).tolist(), cells.tolist()))
+    with open(fn, "w", encoding="utf-8", newline="") as f:
+        f.write("".join(delimiter.join(r) + os.linesep for r in rows))
+
+
+def plot_image(
+    fn: str | None,
+    image: ArrayLike,
+    fig: Figure | None = None,
+    ax: Axes | None = None,
+    xlabel: str = "",
+    ylabel: str = "",
+    title: str = "",
+    aspect: str | float = "equal",
+    figsize: tuple[float, float] = (8, 6),
+    vmin: float | None = None,
+    vmax: float | None = None,
+    cmap: str = "inferno",
+    patches: Sequence[Patch] = (),
+    lines: Sequence[Line2D] = (),
+    show: bool = False,
+    dpi: float | None = None,
+    fontsize: float | None = None,
+    tight: bool = True,
+) -> Figure:
+    """Plot 2D image data without spatial unit (e.g., camera frame) as a pseudo-color image.
+
+    Axes are pixel indices: pixel ``image[i, j]`` covers ``[j, j + 1]`` horizontally and
+    ``[i, i + 1]`` vertically, and the origin is at the top-left (row 0 at the top).
+    The limits cover the whole pixels.
+    Use :func:`plot_map` instead for data with physical coordinates.
+
+    The figure handling and color mapping params are the same as :func:`plot_map`.
+    If ``tight`` is True, a newly created figure uses the constrained layout.
+    A figure given by ``fig`` gets the tight layout engine only if it has no layout engine.
+
+    :param fn: file name to save the figure. None to draw without saving.
+    :param image: image values with shape (H, W).
+    :param title: axes title.
+    :param patches: matplotlib patches (e.g., ROI rectangle) drawn in pixel coordinates.
+    :param lines: matplotlib lines drawn in pixel coordinates.
+    :param show: show the figure interactively (this imports ``matplotlib.pyplot``).
+    :returns: the figure drawn on.
+    :raises ValueError: ``image`` is not 2D.
+
+    """
+
+    image = np.asarray(image)
+    if image.ndim != 2:
+        raise ValueError(f"image must be 2D. Given shape: {image.shape}")
+    h, w = image.shape
+    with mpl.rc_context({"font.size": fontsize} if fontsize else None):
+        fig, ax = _prepare_figure(fig, ax, figsize, tight, use_pyplot=show)
         ax.set_aspect(aspect)
-
-        # assume row-major order (Height, Width)
-        hlen, wlen = img.shape
-        h = np.linspace(0.5, hlen - 0.5, hlen)
-        w = np.linspace(0.5, wlen - 0.5, wlen)
-        W, H = np.meshgrid(w, h)
-
-        mesh = ax.pcolormesh(W, H, img, cmap=cmap, vmin=vmin, vmax=vmax)
+        # pixel centers
+        mesh = ax.pcolormesh(
+            np.arange(w) + 0.5, np.arange(h) + 0.5, image, cmap=cmap, vmin=vmin, vmax=vmax
+        )
         fig.colorbar(mesh, ax=ax)
 
-        ax.set_xlim(0, wlen)
-        ax.set_ylim(hlen, 0)
+        ax.set_xlim(0, w)
+        ax.set_ylim(h, 0)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_title(title)
@@ -311,25 +305,41 @@ def save_image(
         for l in lines:
             ax.add_line(l)
 
-        if fpath is not None:
-            fig.savefig(fpath, dpi=dpi)
+        if fn is not None:
+            fig.savefig(fn, dpi=dpi)
         if show:
             import matplotlib.pyplot as plt
 
             plt.show()
             plt.close(fig)
+    return fig
 
 
-def apply_binning(data, binning=1):
-    if data.shape[0] % binning != 0 or data.shape[1] % binning != 0:
-        print("the data shape cannot be devided by binning")
-        return
+def save_image(*args, **kwargs):
+    """Deprecated alias for :func:`plot_image`."""
 
-    new_data = np.zeros((data.shape[0] // binning, data.shape[1] // binning))
-    for i in range(new_data.shape[0]):
-        for j in range(new_data.shape[1]):
-            new_data[i, j] = np.mean(
-                data[i * binning : (i + 1) * binning, j * binning : (j + 1) * binning]
-            )
+    warnings.warn(
+        "mahos.util.image.save_image is deprecated; use mahos.util.image.plot_image instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    # accept the old param names (mahos <= 0.4.0)
+    if "fpath" in kwargs:
+        kwargs["fn"] = kwargs.pop("fpath")
+    if "img" in kwargs:
+        kwargs["image"] = kwargs.pop("img")
+    return plot_image(*args, **kwargs)
 
-    return new_data
+
+def apply_binning(data: NDArray, binning: int = 1) -> NDArray:
+    """Average 2D data over non-overlapping ``binning`` x ``binning`` blocks.
+
+    :raises ValueError: ``binning`` is not a positive integer or doesn't divide the shape.
+
+    """
+
+    V.check_pos_int(binning, "binning")
+    h, w = data.shape
+    if h % binning or w % binning:
+        raise ValueError(f"data shape {data.shape} is not divisible by binning {binning}")
+    return data.reshape(h // binning, binning, w // binning, binning).mean(axis=(1, 3))
