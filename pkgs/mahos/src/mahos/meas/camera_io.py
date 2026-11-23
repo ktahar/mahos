@@ -60,7 +60,7 @@ class CameraIO(object):
             return False
 
     def _export_data_image(self, file_name: str, image: Image, params):
-        fig = Figure()
+        fig = Figure(layout="constrained")
         ax = fig.add_subplot(111)
 
         ax.imshow(image.image, origin="upper")

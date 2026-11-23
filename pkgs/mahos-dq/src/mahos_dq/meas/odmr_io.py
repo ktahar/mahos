@@ -164,7 +164,7 @@ class ODMRIO(object):
         with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
             normalize_n = params.get("normalize_n", 0)
 
-            fig = Figure(figsize=figsize, dpi=params.get("dpi", 100))
+            fig = Figure(figsize=figsize, dpi=params.get("dpi", 100), layout="constrained")
             ax = fig.add_subplot(111)
 
             ax.set_xlim(x_min * coeff, x_max * coeff)
@@ -278,7 +278,6 @@ class ODMRIO(object):
             ax.set_ylim(params.get("ymin"), params.get("ymax"))
             if params.get("legend") is not None:
                 ax.legend(handles=lines, loc=params["legend"])
-            fig.tight_layout()
 
             fig.savefig(fn)
 

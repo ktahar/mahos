@@ -219,7 +219,7 @@ class PODMRIO(object):
 
         figsize = params.get("figsize", (12, 12))
         with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
-            fig = Figure(figsize=figsize, dpi=params.get("dpi", 100))
+            fig = Figure(figsize=figsize, dpi=params.get("dpi", 100), layout="constrained")
             ax = fig.add_subplot(111)
 
             ax.set_xlim(x_min * xcoeff, x_max * xcoeff)
@@ -302,7 +302,6 @@ class PODMRIO(object):
             ax.set_ylim(params.get("ymin"), params.get("ymax"))
             if params.get("legend") is not None:
                 ax.legend(handles=lines, loc=params["legend"])
-            fig.tight_layout()
             fig.savefig(fn)
         self.logger.info(f"Exported Data to {fn}.")
         return True

@@ -180,7 +180,9 @@ class IODMRIO(object):
     def _export_fit(
         self, result: ModelResult, features: dict, h: int, w: int, dirname: str, params: dict
     ):
-        fig = Figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi"))
+        fig = Figure(
+            figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi"), layout="constrained"
+        )
         ax = fig.add_subplot(111)
         result.plot_fit(
             ax=ax,
@@ -207,7 +209,6 @@ class IODMRIO(object):
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
         ax.get_legend().remove()
-        fig.tight_layout()
 
         fig.savefig(path.join(dirname, f"h{h:04d}_w{w:04d}.png"))
 
@@ -313,7 +314,7 @@ class IODMRIO(object):
         with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
             figsize = params.get("figsize", (12, 12))
 
-            fig = Figure(figsize=figsize)
+            fig = Figure(figsize=figsize, layout="constrained")
             ax = fig.add_subplot(111)
 
             ax.set_xlim(x_min * coeff, x_max * coeff)
@@ -345,7 +346,6 @@ class IODMRIO(object):
             ax.set_ylim(params.get("ymin"), params.get("ymax"))
             if params.get("legend") is not None:
                 ax.legend(handles=lines, loc=params["legend"])
-            fig.tight_layout()
 
             fig.savefig(fn, dpi=params.get("dpi"))
 

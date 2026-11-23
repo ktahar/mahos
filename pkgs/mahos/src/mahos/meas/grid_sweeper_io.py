@@ -122,6 +122,7 @@ class GridSweeperIO(object):
             fig = Figure(
                 figsize=params.get("figsize", (12, 12)),
                 dpi=params.get("dpi", 100),
+                layout="constrained",
             )
             ax = fig.subplots()
 
@@ -137,7 +138,6 @@ class GridSweeperIO(object):
             ax.set_ylabel(f"{data.ylabel}{yunit}")
             cbar.set_label(f"{data.zlabel}{zunit}")
 
-            fig.tight_layout()
             fig.savefig(file_name)
 
         self.logger.info(f"Exported data to {file_name}.")

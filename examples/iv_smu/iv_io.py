@@ -105,7 +105,11 @@ class IVIO(object):
         # Use the object-oriented API (not pyplot) because this runs inside a Node process.
         # pyplot may select a GUI backend, whose figures can crash a multi-threaded process.
         with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
-            fig = Figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi", 100))
+            fig = Figure(
+                figsize=params.get("figsize", (12, 12)),
+                dpi=params.get("dpi", 100),
+                layout="constrained",
+            )
             ax = fig.subplots()
             x = data.get_xdata()
             y = data.get_ydata()

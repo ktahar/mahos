@@ -95,7 +95,11 @@ class RecorderIO(object):
 
     def _export_data_image(self, fn, data: RecorderData, params: dict):
         with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
-            fig = Figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi", 100))
+            fig = Figure(
+                figsize=params.get("figsize", (12, 12)),
+                dpi=params.get("dpi", 100),
+                layout="constrained",
+            )
             unit_to_channels = data.get_unit_to_channels()
             x = [datetime.fromtimestamp(s) for s in data.get_xdata()]
             if len(unit_to_channels) == 1:

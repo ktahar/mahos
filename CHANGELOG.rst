@@ -10,6 +10,7 @@ Added
 
 - inst: ``digitizer`` module and ``Spectrum_AnalogIn`` Instrument.
 - ODMR:
+
   - new params ``final_delay`` and ``post_gate_delay`` (for certain modes).
   - new conf switches ``pd_trace`` and ``pd_chop`` for pulse ODMR.
 
@@ -26,9 +27,17 @@ Changed
   ``splitter`` (``IntervalSplitter``) instead of ``split_fraction``. Generators are now
   constructed with keyword arguments; user-defined generators overriding ``__init__``
   must accept ``splitter`` instead of ``split_fraction``.
+- meas: exported figures use matplotlib's constrained layout instead of ``tight_layout()``.
+  Exported images have slightly different margins and spacing.
 
 Fixed
 ^^^^^
+
+- meas: exporting figures could crash a Node process
+  (``Tcl_AsyncDelete: async handler deleted by the wrong thread``) when matplotlib
+  selected a GUI backend (e.g., TkAgg) and a figure was garbage-collected on a non-main
+  thread. IO modules now use matplotlib's object-oriented API and don't import ``pyplot``.
+  Custom IO modules (e.g., ``examples/iv_smu/iv_io.py``) should follow the same pattern.
 
 [0.4.0] - 2026-05-20
 --------------------
@@ -36,7 +45,8 @@ Fixed
 Added
 ^^^^^
 
-- meas
+- meas:
+
   - add generic measurements Sweeper (1D) and GridSweeper (2D).
   - add new measurement APODMR
   - Confocal: add TraceNode and related trace configuration options.
@@ -49,7 +59,8 @@ Added
 - inst: add new instrument modules/classes for laser, lockin (SR860), SGs
   (SRS_SG390 and Windfreak_SynthHD), and PI positioner.
 - msgs.param_msgs: add ``read_only`` option for parameters.
-- cli
+- cli:
+
   - LogBroker now prints and writes MAHOS runtime version info.
   - add argcomplete-based completion support.
 
@@ -66,14 +77,16 @@ Changed
   Now using NumPy 2.
 - Internal API cleanup: standardize ``filename`` to ``file_name`` in Tweaker/
   PosTweaker save-load paths and related request message attributes.
-- meas
+- meas:
+
   - Recorder: mode channel configuration now supports dict form
     (``inst``, ``label``, ``key``, ``unit``), allowing configurable acquisition key and
     optional unit override.
   - IV (SMU-based implementation): moved to examples.
   - ODMR/Spectroscopy fitters: switch to ``scipy.cluster.vq.kmeans2`` for initial
     peak-position guessing, dropping sklearn dependency.
-- inst
+- inst:
+
   - smu: rename parameter ``logx`` to ``log``.
   - pd: changed name of APDCounter to SinglePhotonCounter;
     but APDCounter is kept as a compatibility alias.

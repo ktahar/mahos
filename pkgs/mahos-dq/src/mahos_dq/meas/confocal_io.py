@@ -142,10 +142,11 @@ class ConfocalIO(object):
 
         if params is None:
             params = [{}, {}, {}]
-        fig = Figure(figsize=(12, 10))
+        fig = Figure(figsize=(12, 10), layout="constrained")
         axes = fig.subplots(2, 2)
         positions = ((pos_xyz[0], pos_xyz[1]), (pos_xyz[0], pos_xyz[2]), (pos_xyz[1], pos_xyz[2]))
         axes_ = axes[0, 0], axes[0, 1], axes[1, 0]
+        axes[1, 1].set_axis_off()
         for img, param, pos, ax in zip(images, params, positions, axes_):
             if img is not None:
                 plot(img, param, pos, fig, ax)
@@ -305,7 +306,7 @@ class ConfocalIO(object):
         return True
 
     def _export_trace_image(self, fn, trace: Trace, params: dict):
-        fig = Figure()
+        fig = Figure(layout="constrained")
         ax = fig.add_subplot(111)
         complex_conv = params.get("complex_conv", "real")
         if params.get("timestamp", False):
@@ -323,7 +324,6 @@ class ConfocalIO(object):
 
         ax.legend()
         ax.set_ylabel(f"Intensity ({trace.yunit})")
-        fig.tight_layout()
         fig.savefig(fn)
         self.logger.info(f"Exported Trace to {fn}.")
         return True

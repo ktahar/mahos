@@ -152,7 +152,11 @@ class SpectroscopyIO(object):
             color = cycle(params.get("color") or [f"C{i}" for i in range(10)])
             marker = cycle(params.get("marker") or ["o", "s", "^", "p", "*", "D", "h", "."])
 
-            fig = Figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi", 100))
+            fig = Figure(
+                figsize=params.get("figsize", (12, 12)),
+                dpi=params.get("dpi", 100),
+                layout="constrained",
+            )
             ax = fig.add_subplot(111)
 
             last_n = params.get("last_n", 0)

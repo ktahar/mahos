@@ -81,24 +81,22 @@ class QdyneIO(object):
     ) -> bool:
         head, ext = path.splitext(file_name)
 
-        fig = Figure()
+        fig = Figure(layout="constrained")
         ax = fig.add_subplot(111)
         ax.plot(data.get_xdata(True), data.get_ydata(True))
         ax.set_xlabel("Frequency (Hz)")
         # ax.set_ylabel("")
-        fig.tight_layout()
         fig.savefig(file_name)
 
         if params.get("trace", False):
             x = data.get_xdata(False) * data.get_bin()
             y = data.get_ydata(False)
 
-            fig = Figure()
+            fig = Figure(layout="constrained")
             ax = fig.add_subplot(111)
             ax.plot(x, y, "C0.")
             ax.set_xlabel("Time (s)")
             ax.set_ylabel("Detected photons")
-            fig.tight_layout()
             fig.savefig(head + "_trace" + ext)
 
         if params.get("pulse", False):
@@ -110,7 +108,7 @@ class QdyneIO(object):
             tbin = data.get_bin()
             mod_sec = (data.raw_data % T) * tbin
             coeff = 1e6
-            fig = Figure()
+            fig = Figure(layout="constrained")
             ax = fig.add_subplot(111)
             N, bins, patches = ax.hist(mod_sec * coeff, bins=1000)
             sh = data.marker_indices[0] * tbin * coeff
@@ -118,6 +116,5 @@ class QdyneIO(object):
             ax.vlines((sh, st), 0, max(N), "r")
             ax.set_xlabel("Time (us)")
             ax.set_ylabel("Events")
-            fig.tight_layout()
             fig.savefig(head + "_pulse" + ext)
         return True

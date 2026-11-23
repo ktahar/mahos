@@ -85,7 +85,12 @@ def plot_map(
     tight=True,
     cunit_only=True,
 ):
-    """Plot DataFrame as pseudo-color image"""
+    """Plot DataFrame as pseudo-color image.
+
+    If ``tight`` is True, a newly created figure uses the constrained layout.
+    A figure given by ``fig`` gets the tight layout engine only if it has no layout engine.
+
+    """
 
     with mpl.rc_context({"font.size": fontsize} if fontsize else None):
         if not mapped:
@@ -101,7 +106,9 @@ def plot_map(
         X, Y = np.meshgrid(x, y)
 
         if fig is None:
-            fig = Figure(figsize=figsize)
+            fig = Figure(figsize=figsize, layout="constrained" if tight else None)
+        elif tight and fig.get_layout_engine() is None:
+            fig.set_layout_engine("tight")
         if ax is None:
             ax = fig.add_subplot(111)
         ax.set_aspect(aspect)
@@ -132,9 +139,6 @@ def plot_map(
         if plot_pos is not None:
             x, y = plot_pos
             ax.plot(x, y, color=pos_color, marker="x", markeredgewidth=1.0, markersize=8)
-
-        if tight:
-            fig.tight_layout()
 
         for ext in exts:
             fn = fpath + ext
@@ -266,18 +270,23 @@ def save_image(
     """Save 2D monochrome image data as pseudo-color image.
 
     The image is without spatial unit, like camera image.
+    If ``tight`` is True, a newly created figure uses the constrained layout.
+    A figure given by ``fig`` gets the tight layout engine only if it has no layout engine.
     Set ``show=True`` to show the figure interactively (this imports ``matplotlib.pyplot``).
 
     """
 
     with mpl.rc_context({"font.size": fontsize} if fontsize else None):
+        layout = "constrained" if tight else None
         if fig is None:
             if show:
                 import matplotlib.pyplot as plt
 
-                fig = plt.figure(figsize=figsize)
+                fig = plt.figure(figsize=figsize, layout=layout)
             else:
-                fig = Figure(figsize=figsize)
+                fig = Figure(figsize=figsize, layout=layout)
+        elif tight and fig.get_layout_engine() is None:
+            fig.set_layout_engine("tight")
         if ax is None:
             ax = fig.add_subplot(111)
         ax.set_aspect(aspect)
@@ -301,9 +310,6 @@ def save_image(
             ax.add_patch(p)
         for l in lines:
             ax.add_line(l)
-
-        if tight:
-            fig.tight_layout()
 
         if fpath is not None:
             fig.savefig(fpath, dpi=dpi)
