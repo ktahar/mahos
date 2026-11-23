@@ -12,7 +12,9 @@ import os
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from mahos.util import cui
 
 
@@ -85,62 +87,59 @@ def plot_map(
 ):
     """Plot DataFrame as pseudo-color image"""
 
-    if not mapped:
-        df2 = to_map(df, xl, yl, cl)
-        if derivative is not None:
-            df2, xl, yl, cl = derive_map(df2, xl, yl, cl, units=units, axis=derivative)
-    else:
-        df2 = df
-
-    x, y = np.array(df2.columns), np.array(df2.index)
-    xmin, xmax = min(x), max(x)
-    ymin, ymax = min(y), max(y)
-    X, Y = np.meshgrid(x, y)
-
-    if fontsize:
-        plt.rcParams["font.size"] = fontsize
-    if fig is None:
-        fig = plt.figure(figsize=figsize)
-    if ax is None:
-        ax = fig.add_subplot(111)
-    ax.set_aspect(aspect)
-    plt.tick_params(axis="both", direction="out")
-    map_ = ax.pcolormesh(X, Y, np.array(df2), cmap=cmap, vmin=vmin, vmax=vmax)
-    cbar = plt.colorbar(map_, ax=ax)
-    if invX:
-        ax.set_xlim(xmax, xmin)
-    else:
-        ax.set_xlim(xmin, xmax)
-    if invY:
-        ax.set_ylim(ymax, ymin)
-    else:
-        ax.set_ylim(ymin, ymax)
-
-    if units is not None:
-        ax.set_xlabel(f"{xl} ({units[xl]})")
-        ax.set_ylabel(f"{yl} ({units[yl]})")
-        if cunit_only:
-            cbar.set_label(units[cl])
+    with mpl.rc_context({"font.size": fontsize} if fontsize else None):
+        if not mapped:
+            df2 = to_map(df, xl, yl, cl)
+            if derivative is not None:
+                df2, xl, yl, cl = derive_map(df2, xl, yl, cl, units=units, axis=derivative)
         else:
-            cbar.set_label(f"{cl} ({units[cl]})")
-    else:
-        ax.set_xlabel(xl)
-        ax.set_ylabel(yl)
-        cbar.set_label(cl)
+            df2 = df
 
-    if plot_pos is not None:
-        x, y = plot_pos
-        ax.plot(x, y, color=pos_color, marker="x", markeredgewidth=1.0, markersize=8)
+        x, y = np.array(df2.columns), np.array(df2.index)
+        xmin, xmax = min(x), max(x)
+        ymin, ymax = min(y), max(y)
+        X, Y = np.meshgrid(x, y)
 
-    if tight:
-        plt.tight_layout()
+        if fig is None:
+            fig = Figure(figsize=figsize)
+        if ax is None:
+            ax = fig.add_subplot(111)
+        ax.set_aspect(aspect)
+        ax.tick_params(axis="both", direction="out")
+        map_ = ax.pcolormesh(X, Y, np.array(df2), cmap=cmap, vmin=vmin, vmax=vmax)
+        cbar = fig.colorbar(map_, ax=ax)
+        if invX:
+            ax.set_xlim(xmax, xmin)
+        else:
+            ax.set_xlim(xmin, xmax)
+        if invY:
+            ax.set_ylim(ymax, ymin)
+        else:
+            ax.set_ylim(ymin, ymax)
 
-    for ext in exts:
-        fn = fpath + ext
-        if nocheck or cui.check_existance(fn):
-            plt.savefig(fn, dpi=dpi)
-    if exts:
-        plt.close()
+        if units is not None:
+            ax.set_xlabel(f"{xl} ({units[xl]})")
+            ax.set_ylabel(f"{yl} ({units[yl]})")
+            if cunit_only:
+                cbar.set_label(units[cl])
+            else:
+                cbar.set_label(f"{cl} ({units[cl]})")
+        else:
+            ax.set_xlabel(xl)
+            ax.set_ylabel(yl)
+            cbar.set_label(cl)
+
+        if plot_pos is not None:
+            x, y = plot_pos
+            ax.plot(x, y, color=pos_color, marker="x", markeredgewidth=1.0, markersize=8)
+
+        if tight:
+            fig.tight_layout()
+
+        for ext in exts:
+            fn = fpath + ext
+            if nocheck or cui.check_existance(fn):
+                fig.savefig(fn, dpi=dpi)
 
 
 def plot_map_only(
@@ -188,8 +187,8 @@ def plot_map_only(
     X, Y = np.meshgrid(x, y)
 
     if fig is None:
-        fig = plt.figure(figsize=figsize, frameon=False)
-    ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
+        fig = Figure(figsize=figsize, frameon=False)
+    ax = Axes(fig, [0.0, 0.0, 1.0, 1.0])
     fig.add_axes(ax)
     ax.set_axis_off()
     ax.set_aspect(aspect)
@@ -210,9 +209,7 @@ def plot_map_only(
     for ext in exts:
         fn = fpath + ext
         if nocheck or cui.check_existance(fn):
-            plt.savefig(fn, dpi=dpi)
-    if exts:
-        plt.close()
+            fig.savefig(fn, dpi=dpi)
 
 
 def save_map(
@@ -269,45 +266,52 @@ def save_image(
     """Save 2D monochrome image data as pseudo-color image.
 
     The image is without spatial unit, like camera image.
+    Set ``show=True`` to show the figure interactively (this imports ``matplotlib.pyplot``).
 
     """
 
-    if fontsize:
-        plt.rcParams["font.size"] = fontsize
-    if fig is None:
-        fig = plt.figure(figsize=figsize)
-    if ax is None:
-        ax = fig.add_subplot(111)
-    ax.set_aspect(aspect)
+    with mpl.rc_context({"font.size": fontsize} if fontsize else None):
+        if fig is None:
+            if show:
+                import matplotlib.pyplot as plt
 
-    # assume row-major order (Height, Width)
-    hlen, wlen = img.shape
-    h = np.linspace(0.5, hlen - 0.5, hlen)
-    w = np.linspace(0.5, wlen - 0.5, wlen)
-    W, H = np.meshgrid(w, h)
+                fig = plt.figure(figsize=figsize)
+            else:
+                fig = Figure(figsize=figsize)
+        if ax is None:
+            ax = fig.add_subplot(111)
+        ax.set_aspect(aspect)
 
-    plt.pcolormesh(W, H, img, cmap=cmap, vmin=vmin, vmax=vmax)
-    plt.colorbar()
+        # assume row-major order (Height, Width)
+        hlen, wlen = img.shape
+        h = np.linspace(0.5, hlen - 0.5, hlen)
+        w = np.linspace(0.5, wlen - 0.5, wlen)
+        W, H = np.meshgrid(w, h)
 
-    plt.xlim(0, wlen)
-    plt.ylim(hlen, 0)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
+        mesh = ax.pcolormesh(W, H, img, cmap=cmap, vmin=vmin, vmax=vmax)
+        fig.colorbar(mesh, ax=ax)
 
-    for p in patches:
-        plt.gca().add_patch(p)
-    for l in lines:
-        plt.gca().add_line(l)
+        ax.set_xlim(0, wlen)
+        ax.set_ylim(hlen, 0)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
 
-    if tight:
-        plt.tight_layout()
+        for p in patches:
+            ax.add_patch(p)
+        for l in lines:
+            ax.add_line(l)
 
-    if fpath is not None:
-        plt.savefig(fpath, dpi=dpi)
-    if show:
-        plt.show()
-    plt.close()
+        if tight:
+            fig.tight_layout()
+
+        if fpath is not None:
+            fig.savefig(fpath, dpi=dpi)
+        if show:
+            import matplotlib.pyplot as plt
+
+            plt.show()
+            plt.close(fig)
 
 
 def apply_binning(data, binning=1):

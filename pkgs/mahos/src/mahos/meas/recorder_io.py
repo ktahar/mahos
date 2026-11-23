@@ -13,7 +13,8 @@ from os import path
 from itertools import cycle
 from datetime import datetime
 
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.figure import Figure
 
 from mahos.msgs.recorder_msgs import RecorderData, update_data
 from mahos.node.log import DummyLogger
@@ -93,39 +94,37 @@ class RecorderIO(object):
         raise NotImplementedError("export data to csv (txt) is not implemented")
 
     def _export_data_image(self, fn, data: RecorderData, params: dict):
-        plt.rcParams["font.size"] = params.get("fontsize", 28)
+        with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
+            fig = Figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi", 100))
+            unit_to_channels = data.get_unit_to_channels()
+            x = [datetime.fromtimestamp(s) for s in data.get_xdata()]
+            if len(unit_to_channels) == 1:
+                axes = [fig.subplots()]
+            else:
+                axes = fig.subplots(len(unit_to_channels))
 
-        fig = plt.figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi", 100))
-        unit_to_channels = data.get_unit_to_channels()
-        x = [datetime.fromtimestamp(s) for s in data.get_xdata()]
-        if len(unit_to_channels) == 1:
-            axes = [fig.subplots()]
-        else:
-            axes = fig.subplots(len(unit_to_channels))
+            for ax, (unit, channels) in zip(axes, unit_to_channels.items()):
+                color = cycle(params.get("color") or [f"C{i}" for i in range(10)])
+                marker = cycle(params.get("marker") or ["o", "s", "^", "p", "*", "D", "h", "."])
+                lines = []
 
-        for ax, (unit, channels) in zip(axes, unit_to_channels.items()):
-            color = cycle(params.get("color") or [f"C{i}" for i in range(10)])
-            marker = cycle(params.get("marker") or ["o", "s", "^", "p", "*", "D", "h", "."])
-            lines = []
+                for ch, col, mk in zip(channels, color, marker):
+                    y = data.get_ydata(ch)
+                    lw = 1.0 if params.get("linewidth") is None else params.get("linewidth")
+                    lines.append(ax.plot(x, y, label=ch, color=col, linewidth=lw)[0])
 
-            for ch, col, mk in zip(channels, color, marker):
-                y = data.get_ydata(ch)
-                lw = 1.0 if params.get("linewidth") is None else params.get("linewidth")
-                lines.append(ax.plot(x, y, label=ch, color=col, linewidth=lw)[0])
+                # set_xlim and set_ylim should be called after all plots to auto-scale properly
+                ax.set_xlim(params.get("xmin"), params.get("xmax"))
+                ax.set_ylim(params.get("ymin"), params.get("ymax"))
 
-            # set_xlim and set_ylim should be called after all plots to auto-scale properly
-            ax.set_xlim(params.get("xmin"), params.get("xmax"))
-            ax.set_ylim(params.get("ymin"), params.get("ymax"))
+                leg = params.get("legend", "best")
+                if leg is not None:
+                    ax.legend(handles=lines, loc=leg)
 
-            leg = params.get("legend", "best")
-            if leg is not None:
-                ax.legend(handles=lines, loc=leg)
+                ax.set_xlabel(r"Time (s)")
+                ax.set_ylabel(f"{unit} ({unit})")
 
-            ax.set_xlabel(r"Time (s)")
-            ax.set_ylabel(f"{unit} ({unit})")
-
-        plt.savefig(fn)
-        plt.close()
+            fig.savefig(fn)
 
         self.logger.info(f"Exported Data to {fn}.")
         return True

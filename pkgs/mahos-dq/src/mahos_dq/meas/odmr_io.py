@@ -13,7 +13,8 @@ from os import path
 from itertools import cycle
 
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.figure import Figure
 
 from mahos_dq.meas.odmr_fitter import ODMRFitter
 from mahos_dq.msgs.odmr_msgs import ODMRData, update_data
@@ -160,90 +161,66 @@ class ODMRIO(object):
             x_min = min([min(x) for x in xs])
 
         figsize = params.get("figsize", (12, 12))
-        plt.rcParams["font.size"] = params.get("fontsize", 28)
-        normalize_n = params.get("normalize_n", 0)
+        with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
+            normalize_n = params.get("normalize_n", 0)
 
-        fig = plt.figure(figsize=figsize, dpi=params.get("dpi", 100))
-        ax = fig.add_subplot(111)
+            fig = Figure(figsize=figsize, dpi=params.get("dpi", 100))
+            ax = fig.add_subplot(111)
 
-        ax.set_xlim(x_min * coeff, x_max * coeff)
-        plt.xlabel(f"Frequency ({unit})")
-        if data_list[0].is_complex():
-            suffix = " [" + params.get("complex_conv", "real") + "]"
-        else:
-            suffix = ""
-        if normalize_n:
-            plt.ylabel("Normalized Intensity" + suffix)
-        else:
-            plt.ylabel(f"Intensity ({data_list[0].yunit})" + suffix)
-
-        label = params.get("label") or [f"data{i}" for i in range(len(data_list))]
-        offset = params.get("offset") or [0.0] * len(data_list)
-        c0, c1 = zip(*colors_tab20_pair())
-        color_fit = cycle(params.get("color_fit") or c0)
-        color = cycle(params.get("color") or c0)
-        color_bg = cycle(params.get("color_bg") or c1)
-        marker = cycle(params.get("marker") or ["o", "s", "^", "p", "*", "D", "h", "."])
-        marker_bg = cycle(params.get("marker_bg") or ["v", ">", "<", "1", "2", "3", "4"])
-
-        lines = []
-        for data, l, ofs, cf, col, cb, mk, mb in zip(
-            data_list, label, offset, color_fit, color, color_bg, marker, marker_bg
-        ):
-            x = data.get_xdata()
-            y, y_bg = data.get_ydata(
-                normalize_n=normalize_n, complex_conv=params.get("complex_conv", "real")
-            )
-            xfit = data.get_fit_xdata()
-            yfit = data.get_fit_ydata(normalize_n=normalize_n)
-            ystd, ybg_std = data.get_ydata(
-                normalize_n=normalize_n, complex_conv=params.get("complex_conv", "real"), std=True
-            )
-            if normalize_n and params.get("base_line", False):
-                ax.hlines(1.0 + ofs, x_min * coeff, x_max * coeff, "#A0A0A0", "dashed")
-
-            _show_fit = params.get("show_fit", True) and xfit is not None and yfit is not None
-            lw = (
-                (0.5 if _show_fit else 1.0)
-                if params.get("linewidth") is None
-                else params.get("linewidth")
-            )
-            if params.get("show_std", False) and ystd is not None:
-                lines.append(
-                    ax.errorbar(
-                        x * coeff,
-                        y + ofs,
-                        yerr=ystd,
-                        label=l,
-                        marker=mk,
-                        linestyle="-",
-                        color=col,
-                        linewidth=lw,
-                    )[0]
-                )
+            ax.set_xlim(x_min * coeff, x_max * coeff)
+            ax.set_xlabel(f"Frequency ({unit})")
+            if data_list[0].is_complex():
+                suffix = " [" + params.get("complex_conv", "real") + "]"
             else:
-                lines.append(
-                    ax.plot(
-                        x * coeff,
-                        y + ofs,
-                        label=l,
-                        marker=mk,
-                        linestyle="-",
-                        color=col,
-                        linewidth=lw,
-                    )[0]
+                suffix = ""
+            if normalize_n:
+                ax.set_ylabel("Normalized Intensity" + suffix)
+            else:
+                ax.set_ylabel(f"Intensity ({data_list[0].yunit})" + suffix)
+
+            label = params.get("label") or [f"data{i}" for i in range(len(data_list))]
+            offset = params.get("offset") or [0.0] * len(data_list)
+            c0, c1 = zip(*colors_tab20_pair())
+            color_fit = cycle(params.get("color_fit") or c0)
+            color = cycle(params.get("color") or c0)
+            color_bg = cycle(params.get("color_bg") or c1)
+            marker = cycle(params.get("marker") or ["o", "s", "^", "p", "*", "D", "h", "."])
+            marker_bg = cycle(params.get("marker_bg") or ["v", ">", "<", "1", "2", "3", "4"])
+
+            lines = []
+            for data, l, ofs, cf, col, cb, mk, mb in zip(
+                data_list, label, offset, color_fit, color, color_bg, marker, marker_bg
+            ):
+                x = data.get_xdata()
+                y, y_bg = data.get_ydata(
+                    normalize_n=normalize_n, complex_conv=params.get("complex_conv", "real")
                 )
-            if y_bg is not None:
+                xfit = data.get_fit_xdata()
+                yfit = data.get_fit_ydata(normalize_n=normalize_n)
+                ystd, ybg_std = data.get_ydata(
+                    normalize_n=normalize_n,
+                    complex_conv=params.get("complex_conv", "real"),
+                    std=True,
+                )
+                if normalize_n and params.get("base_line", False):
+                    ax.hlines(1.0 + ofs, x_min * coeff, x_max * coeff, "#A0A0A0", "dashed")
+
+                _show_fit = params.get("show_fit", True) and xfit is not None and yfit is not None
+                lw = (
+                    (0.5 if _show_fit else 1.0)
+                    if params.get("linewidth") is None
+                    else params.get("linewidth")
+                )
                 if params.get("show_std", False) and ystd is not None:
                     lines.append(
                         ax.errorbar(
                             x * coeff,
-                            y_bg + ofs,
-                            yerr=ybg_std,
+                            y + ofs,
+                            yerr=ystd,
                             label=l,
-                            marker=mb,
+                            marker=mk,
                             linestyle="-",
-                            color=cb,
+                            color=col,
                             linewidth=lw,
                         )[0]
                     )
@@ -251,34 +228,59 @@ class ODMRIO(object):
                     lines.append(
                         ax.plot(
                             x * coeff,
-                            y_bg + ofs,
+                            y + ofs,
                             label=l,
-                            marker=mb,
+                            marker=mk,
                             linestyle="-",
-                            color=cb,
+                            color=col,
                             linewidth=lw,
                         )[0]
                     )
+                if y_bg is not None:
+                    if params.get("show_std", False) and ystd is not None:
+                        lines.append(
+                            ax.errorbar(
+                                x * coeff,
+                                y_bg + ofs,
+                                yerr=ybg_std,
+                                label=l,
+                                marker=mb,
+                                linestyle="-",
+                                color=cb,
+                                linewidth=lw,
+                            )[0]
+                        )
+                    else:
+                        lines.append(
+                            ax.plot(
+                                x * coeff,
+                                y_bg + ofs,
+                                label=l,
+                                marker=mb,
+                                linestyle="-",
+                                color=cb,
+                                linewidth=lw,
+                            )[0]
+                        )
 
-            if _show_fit:
-                lw_fit = params.get("linewidth_fit", 2.0)
-                ax.plot(
-                    xfit * coeff,
-                    yfit + ofs,
-                    label=l + "_fit",
-                    linestyle="-",
-                    color=cf,
-                    linewidth=lw_fit,
-                )
+                if _show_fit:
+                    lw_fit = params.get("linewidth_fit", 2.0)
+                    ax.plot(
+                        xfit * coeff,
+                        yfit + ofs,
+                        label=l + "_fit",
+                        linestyle="-",
+                        color=cf,
+                        linewidth=lw_fit,
+                    )
 
-        # set_ylim should be called after all plots to auto-scale properly
-        ax.set_ylim(params.get("ymin"), params.get("ymax"))
-        if params.get("legend") is not None:
-            ax.legend(handles=lines, loc=params["legend"])
-        plt.tight_layout()
+            # set_ylim should be called after all plots to auto-scale properly
+            ax.set_ylim(params.get("ymin"), params.get("ymax"))
+            if params.get("legend") is not None:
+                ax.legend(handles=lines, loc=params["legend"])
+            fig.tight_layout()
 
-        plt.savefig(fn)
-        plt.close()
+            fig.savefig(fn)
 
         self.logger.info(f"Exported Data to {fn}.")
         return True

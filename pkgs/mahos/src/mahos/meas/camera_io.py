@@ -12,7 +12,7 @@ from __future__ import annotations
 from os import path
 
 # import numpy as np
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 from mahos.msgs.camera_msgs import Image
 from mahos.node.log import DummyLogger
@@ -60,13 +60,12 @@ class CameraIO(object):
             return False
 
     def _export_data_image(self, file_name: str, image: Image, params):
-        fig = plt.figure()
-        fig.add_subplot(111)
+        fig = Figure()
+        ax = fig.add_subplot(111)
 
-        plt.imshow(image.image, origin="upper")
+        ax.imshow(image.image, origin="upper")
 
-        plt.savefig(file_name)
-        plt.close()
+        fig.savefig(file_name)
 
         self.logger.info(f"Exported Image to {file_name}.")
         return True

@@ -16,8 +16,8 @@ from itertools import cycle
 
 import numpy as np
 from numpy.typing import NDArray
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from lmfit.model import ModelResult
 
@@ -180,7 +180,7 @@ class IODMRIO(object):
     def _export_fit(
         self, result: ModelResult, features: dict, h: int, w: int, dirname: str, params: dict
     ):
-        fig = plt.figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi"))
+        fig = Figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi"))
         ax = fig.add_subplot(111)
         result.plot_fit(
             ax=ax,
@@ -207,19 +207,15 @@ class IODMRIO(object):
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
         ax.get_legend().remove()
-        plt.tight_layout()
+        fig.tight_layout()
 
-        plt.savefig(path.join(dirname, f"h{h:04d}_w{w:04d}.png"))
-        plt.clf()
-        plt.close(fig)
+        fig.savefig(path.join(dirname, f"h{h:04d}_w{w:04d}.png"))
 
     def _export_fit_all(self, dirname, fit, params):
         if not path.exists(dirname):
             os.makedirs(dirname)
         self.logger.info(f"Saving fit plot for all pixels in {dirname}")
 
-        # avoid GUI which causes memory leak
-        mpl.use("Agg")
         done = 0
         heights = range(0, fit.height(), params["all"])
         widths = range(0, fit.width(), params["all"])
@@ -314,39 +310,44 @@ class IODMRIO(object):
         x_max = params.get("xmax") or max([max(x) for x in xs])
         x_min = params.get("xmin") or min([min(x) for x in xs])
 
-        plt.rcParams["font.size"] = params.get("fontsize", 28)
-        figsize = params.get("figsize", (12, 12))
+        with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
+            figsize = params.get("figsize", (12, 12))
 
-        fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(111)
+            fig = Figure(figsize=figsize)
+            ax = fig.add_subplot(111)
 
-        ax.set_xlim(x_min * coeff, x_max * coeff)
-        plt.xlabel("Frequency ({})".format(xunit))
-        plt.ylabel("Intensity")
+            ax.set_xlim(x_min * coeff, x_max * coeff)
+            ax.set_xlabel("Frequency ({})".format(xunit))
+            ax.set_ylabel("Intensity")
 
-        label = params.get("label") or [f"data{i}" for i in range(len(data_list))]
-        offset = params.get("offset") or [0.0] * len(data_list)
-        color = cycle(params.get("color") or ["C0", "C1", "C2", "C3", "C4"])
-        marker = cycle(params.get("marker") or ["o", "s", "^", "p", "*", "D", "h", "."])
+            label = params.get("label") or [f"data{i}" for i in range(len(data_list))]
+            offset = params.get("offset") or [0.0] * len(data_list)
+            color = cycle(params.get("color") or ["C0", "C1", "C2", "C3", "C4"])
+            marker = cycle(params.get("marker") or ["o", "s", "^", "p", "*", "D", "h", "."])
 
-        lines = []
-        for data, l, ofs, col, mk in zip(data_list, label, offset, color, marker):
-            x, y = self.get_xydata(data, params)
-            lw = 1.0 if params.get("linewidth") is None else params.get("linewidth")
-            lines.append(
-                ax.plot(
-                    x * coeff, y + ofs, label=l, marker=mk, linestyle="-", color=col, linewidth=lw
-                )[0]
-            )
+            lines = []
+            for data, l, ofs, col, mk in zip(data_list, label, offset, color, marker):
+                x, y = self.get_xydata(data, params)
+                lw = 1.0 if params.get("linewidth") is None else params.get("linewidth")
+                lines.append(
+                    ax.plot(
+                        x * coeff,
+                        y + ofs,
+                        label=l,
+                        marker=mk,
+                        linestyle="-",
+                        color=col,
+                        linewidth=lw,
+                    )[0]
+                )
 
-        # set_ylim should be called after all plots to auto-scale properly
-        ax.set_ylim(params.get("ymin"), params.get("ymax"))
-        if params.get("legend") is not None:
-            ax.legend(handles=lines, loc=params["legend"])
-        plt.tight_layout()
+            # set_ylim should be called after all plots to auto-scale properly
+            ax.set_ylim(params.get("ymin"), params.get("ymax"))
+            if params.get("legend") is not None:
+                ax.legend(handles=lines, loc=params["legend"])
+            fig.tight_layout()
 
-        plt.savefig(fn, dpi=params.get("dpi"))
-        plt.close()
+            fig.savefig(fn, dpi=params.get("dpi"))
 
         self.logger.info(f"Exported Data to {fn}.")
         return True

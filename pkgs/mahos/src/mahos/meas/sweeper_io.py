@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from os import path
 
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.figure import Figure
 import numpy as np
 
 from ..msgs.sweeper_msgs import SweeperData, update_data
@@ -88,33 +89,31 @@ class SweeperIO(object):
     def _export_data_image(self, file_name: str, data: SweeperData, params: dict) -> bool:
         """Export data to image format (PNG, PDF, EPS)."""
 
-        plt.rcParams["font.size"] = params.get("fontsize", 28)
+        with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
+            fig = Figure(
+                figsize=params.get("figsize", (12, 12)),
+                dpi=params.get("dpi", 100),
+            )
+            ax = fig.subplots()
 
-        fig = plt.figure(
-            figsize=params.get("figsize", (12, 12)),
-            dpi=params.get("dpi", 100),
-        )
-        ax = fig.subplots()
+            xdata = data.get_xdata()
+            ydata = data.get_ydata()
 
-        xdata = data.get_xdata()
-        ydata = data.get_ydata()
+            ax.plot(xdata, ydata)
 
-        ax.plot(xdata, ydata)
+            xlabel = data.xlabel
+            xunit = f" ({data.xunit})" if data.xunit else ""
+            ylabel = data.ylabel
+            yunit = f" ({data.yunit})" if data.yunit else ""
 
-        xlabel = data.xlabel
-        xunit = f" ({data.xunit})" if data.xunit else ""
-        ylabel = data.ylabel
-        yunit = f" ({data.yunit})" if data.yunit else ""
+            ax.set_xlabel(f"{xlabel}{xunit}")
+            ax.set_ylabel(f"{ylabel}{yunit}")
 
-        ax.set_xlabel(f"{xlabel}{xunit}")
-        ax.set_ylabel(f"{ylabel}{yunit}")
+            if data.params.get("log", False):
+                ax.set_xscale("log")
 
-        if data.params.get("log", False):
-            ax.set_xscale("log")
-
-        plt.tight_layout()
-        plt.savefig(file_name)
-        plt.close()
+            fig.tight_layout()
+            fig.savefig(file_name)
 
         self.logger.info(f"Exported data to {file_name}.")
         return True

@@ -11,7 +11,7 @@ File I/O for Qdyne.
 from __future__ import annotations
 from os import path
 
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 from mahos_dq.msgs.qdyne_msgs import QdyneData, update_data
 from mahos.node.log import DummyLogger
@@ -81,23 +81,25 @@ class QdyneIO(object):
     ) -> bool:
         head, ext = path.splitext(file_name)
 
-        plt.plot(data.get_xdata(True), data.get_ydata(True))
-        plt.xlabel("Frequency (Hz)")
-        # plt.ylabel("")
-        plt.tight_layout()
-        plt.savefig(file_name)
-        plt.close()
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        ax.plot(data.get_xdata(True), data.get_ydata(True))
+        ax.set_xlabel("Frequency (Hz)")
+        # ax.set_ylabel("")
+        fig.tight_layout()
+        fig.savefig(file_name)
 
         if params.get("trace", False):
             x = data.get_xdata(False) * data.get_bin()
             y = data.get_ydata(False)
 
-            plt.plot(x, y, "C0.")
-            plt.xlabel("Time (s)")
-            plt.ylabel("Detected photons")
-            plt.tight_layout()
-            plt.savefig(head + "_trace" + ext)
-            plt.close()
+            fig = Figure()
+            ax = fig.add_subplot(111)
+            ax.plot(x, y, "C0.")
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("Detected photons")
+            fig.tight_layout()
+            fig.savefig(head + "_trace" + ext)
 
         if params.get("pulse", False):
             if not data.has_raw_data():
@@ -108,13 +110,14 @@ class QdyneIO(object):
             tbin = data.get_bin()
             mod_sec = (data.raw_data % T) * tbin
             coeff = 1e6
-            N, bins, patches = plt.hist(mod_sec * coeff, bins=1000)
+            fig = Figure()
+            ax = fig.add_subplot(111)
+            N, bins, patches = ax.hist(mod_sec * coeff, bins=1000)
             sh = data.marker_indices[0] * tbin * coeff
             st = data.marker_indices[1] * tbin * coeff
-            plt.vlines((sh, st), 0, max(N), "r")
-            plt.xlabel("Time (us)")
-            plt.ylabel("Events")
-            plt.tight_layout()
-            plt.savefig(head + "_pulse" + ext)
-            plt.close()
+            ax.vlines((sh, st), 0, max(N), "r")
+            ax.set_xlabel("Time (us)")
+            ax.set_ylabel("Events")
+            fig.tight_layout()
+            fig.savefig(head + "_pulse" + ext)
         return True

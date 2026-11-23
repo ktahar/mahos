@@ -15,7 +15,6 @@ from numpy.typing import NDArray
 from scipy.linalg import eigh
 from scipy.optimize import least_squares
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 
 
 # Default parameters
@@ -346,6 +345,8 @@ def peaks_of_B_single(
 
 
 def view_projector_axes(proj, indices=[0, 1, 2, 3], color_points=[0.3, 0.5, 0.8, 1.0], text=True):
+    import matplotlib.pyplot as plt
+
     reds = mpl.colormaps.get("Reds")
     greens = mpl.colormaps.get("Greens")
     blues = mpl.colormaps.get("Blues")

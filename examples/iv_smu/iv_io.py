@@ -12,7 +12,8 @@ from __future__ import annotations
 from os import path
 
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.figure import Figure
 
 from iv_msgs import IVData, update_data
 from mahos.node.log import DummyLogger
@@ -101,18 +102,18 @@ class IVIO(object):
         return True
 
     def _export_data_image(self, fn, data: IVData, params: dict):
-        plt.rcParams["font.size"] = params.get("fontsize", 28)
+        # Use the object-oriented API (not pyplot) because this runs inside a Node process.
+        # pyplot may select a GUI backend, whose figures can crash a multi-threaded process.
+        with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
+            fig = Figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi", 100))
+            ax = fig.subplots()
+            x = data.get_xdata()
+            y = data.get_ydata()
+            ax.plot(x, y)
+            ax.set_xlabel("Voltage (V)")
+            ax.set_ylabel("Current (A)")
 
-        fig = plt.figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi", 100))
-        ax = fig.subplots()
-        x = data.get_xdata()
-        y = data.get_ydata()
-        ax.plot(x, y)
-        ax.set_xlabel("Voltage (V)")
-        ax.set_ylabel("Current (A)")
-
-        plt.savefig(fn)
-        plt.close()
+            fig.savefig(fn)
 
         self.logger.info(f"Exported Data to {fn}.")
         return True

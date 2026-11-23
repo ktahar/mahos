@@ -13,7 +13,8 @@ from os import path
 from itertools import cycle
 
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.figure import Figure
 
 from mahos_dq.meas.spectroscopy_fitter import SpectroscopyFitter
 from mahos_dq.msgs.spectroscopy_msgs import SpectroscopyData, update_data
@@ -144,54 +145,61 @@ class SpectroscopyIO(object):
         if x_min is None:
             x_min = min([min(x) for x in xs])
 
-        plt.rcParams["font.size"] = params.get("fontsize", 28)
+        with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
+            label = params.get("label") or [f"data{i}" for i in range(len(data_list))]
+            offset = params.get("offset") or [0.0] * len(data_list)
+            color_fit = cycle(params.get("color_fit") or [f"C{i}" for i in range(10)])
+            color = cycle(params.get("color") or [f"C{i}" for i in range(10)])
+            marker = cycle(params.get("marker") or ["o", "s", "^", "p", "*", "D", "h", "."])
 
-        label = params.get("label") or [f"data{i}" for i in range(len(data_list))]
-        offset = params.get("offset") or [0.0] * len(data_list)
-        color_fit = cycle(params.get("color_fit") or [f"C{i}" for i in range(10)])
-        color = cycle(params.get("color") or [f"C{i}" for i in range(10)])
-        marker = cycle(params.get("marker") or ["o", "s", "^", "p", "*", "D", "h", "."])
+            fig = Figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi", 100))
+            ax = fig.add_subplot(111)
 
-        fig = plt.figure(figsize=params.get("figsize", (12, 12)), dpi=params.get("dpi", 100))
-        ax = fig.add_subplot(111)
+            last_n = params.get("last_n", 0)
+            filter_n = params.get("filter_n", 0)
+            lines = []
+            for data, l, ofs, cf, col, mk in zip(
+                data_list, label, offset, color_fit, color, marker
+            ):
+                if filter_n:
+                    self.logger.info(f"Plotting {l}")
+                    n = data.n_outliers(last_n=last_n, filter_n=filter_n)
+                    if n:
+                        self.logger.info(f"{n} outliers removed")
 
-        last_n = params.get("last_n", 0)
-        filter_n = params.get("filter_n", 0)
-        lines = []
-        for data, l, ofs, cf, col, mk in zip(data_list, label, offset, color_fit, color, marker):
-            if filter_n:
-                self.logger.info(f"Plotting {l}")
-                n = data.n_outliers(last_n=last_n, filter_n=filter_n)
-                if n:
-                    self.logger.info(f"{n} outliers removed")
+                x = data.get_xdata()
+                y = data.get_ydata(last_n=last_n, filter_n=filter_n)
+                xfit = data.get_fit_xdata()
+                yfit = data.get_fit_ydata()
+                if params.get("show_fit", True) and xfit is not None and yfit is not None:
+                    lw_fit = params.get("linewidth_fit", 1.0)
+                    lw = 0.0 if params.get("linewidth") is None else params.get("linewidth")
+                    ax.plot(
+                        xfit,
+                        yfit + ofs,
+                        label=l + "_fit",
+                        linestyle="-",
+                        color=cf,
+                        linewidth=lw_fit,
+                    )
+                    lines.append(
+                        ax.plot(x, y + ofs, label=l, marker=mk, color=col, linewidth=lw)[0]
+                    )
+                else:
+                    lw = 1.0 if params.get("linewidth") is None else params.get("linewidth")
+                    lines.append(ax.plot(x, y + ofs, label=l, color=col, linewidth=lw)[0])
 
-            x = data.get_xdata()
-            y = data.get_ydata(last_n=last_n, filter_n=filter_n)
-            xfit = data.get_fit_xdata()
-            yfit = data.get_fit_ydata()
-            if params.get("show_fit", True) and xfit is not None and yfit is not None:
-                lw_fit = params.get("linewidth_fit", 1.0)
-                lw = 0.0 if params.get("linewidth") is None else params.get("linewidth")
-                ax.plot(
-                    xfit, yfit + ofs, label=l + "_fit", linestyle="-", color=cf, linewidth=lw_fit
-                )
-                lines.append(ax.plot(x, y + ofs, label=l, marker=mk, color=col, linewidth=lw)[0])
-            else:
-                lw = 1.0 if params.get("linewidth") is None else params.get("linewidth")
-                lines.append(ax.plot(x, y + ofs, label=l, color=col, linewidth=lw)[0])
+            ax.set_xlim(x_min, x_max)
+            # set_ylim should be called after all plots to auto-scale properly
+            ax.set_ylim(params.get("ymin"), params.get("ymax"))
 
-        ax.set_xlim(x_min, x_max)
-        # set_ylim should be called after all plots to auto-scale properly
-        ax.set_ylim(params.get("ymin"), params.get("ymax"))
+            if params.get("legend") is not None:
+                ax.legend(handles=lines, loc=params["legend"])
 
-        if params.get("legend") is not None:
-            ax.legend(handles=lines, loc=params["legend"])
+            ax.set_xlabel("Wavelength (nm)")
+            ax.set_ylabel("Intensity (counts)")
 
-        plt.xlabel("Wavelength (nm)")
-        plt.ylabel("Intensity (counts)")
-
-        plt.savefig(fn)
-        plt.close()
+            fig.savefig(fn)
 
         self.logger.info(f"Exported Data to {fn}.")
         return True

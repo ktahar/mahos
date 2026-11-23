@@ -13,7 +13,8 @@ from os import path
 from itertools import cycle
 
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.figure import Figure
 
 from mahos_dq.msgs.podmr_msgs import PODMRData, update_data
 from mahos_dq.meas.podmr_worker import PODMRDataOperator
@@ -217,91 +218,91 @@ class PODMRIO(object):
             xcoeff, xprefix = 1.0, ""
 
         figsize = params.get("figsize", (12, 12))
-        plt.rcParams["font.size"] = params.get("fontsize", 28)
+        with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
+            fig = Figure(figsize=figsize, dpi=params.get("dpi", 100))
+            ax = fig.add_subplot(111)
 
-        fig = plt.figure(figsize=figsize, dpi=params.get("dpi", 100))
-        ax = fig.add_subplot(111)
+            ax.set_xlim(x_min * xcoeff, x_max * xcoeff)
+            if xunit is not None:
+                ax.set_xlabel(f"{xlabel} ({xprefix}{xunit})")
+            else:
+                ax.set_xlabel(xlabel)
+            ax.set_xscale(d0.xscale)
+            ax.set_yscale(d0.yscale)
+            ax.set_ylabel(ylabel)
 
-        ax.set_xlim(x_min * xcoeff, x_max * xcoeff)
-        if xunit is not None:
-            plt.xlabel(f"{xlabel} ({xprefix}{xunit})")
-        else:
-            plt.xlabel(xlabel)
-        plt.xscale(d0.xscale)
-        plt.yscale(d0.yscale)
-        plt.ylabel(ylabel)
+            label = params.get("label") or [f"data{i}" for i in range(len(data_list))]
+            offset = params.get("offset") or [0.0] * len(data_list)
+            c0, c1 = zip(*colors_tab20_pair())
+            color_fit = cycle(params.get("color_fit") or c0)
+            color0 = cycle(params.get("color0") or c0)
+            color1 = cycle(params.get("color1") or c1)
+            marker0 = cycle(params.get("marker0") or ["o", "s", "^", "p", "*", "D", "h", "."])
+            marker1 = cycle(params.get("marker1") or ["v", ">", "<", "1", "2", "3", "4"])
 
-        label = params.get("label") or [f"data{i}" for i in range(len(data_list))]
-        offset = params.get("offset") or [0.0] * len(data_list)
-        c0, c1 = zip(*colors_tab20_pair())
-        color_fit = cycle(params.get("color_fit") or c0)
-        color0 = cycle(params.get("color0") or c0)
-        color1 = cycle(params.get("color1") or c1)
-        marker0 = cycle(params.get("marker0") or ["o", "s", "^", "p", "*", "D", "h", "."])
-        marker1 = cycle(params.get("marker1") or ["v", ">", "<", "1", "2", "3", "4"])
-
-        lines = []
-        for data, l, ofs, cf, c0, c1, m0, m1 in zip(
-            data_list, label, offset, color_fit, color0, color1, marker0, marker1
-        ):
-            d = self._fetch_data(data, do_fft)
-            if d is None:
-                return False
-            x, xfit, y0, y1, yfit = d
-            l0 = l + "_0" if y1 is not None else l
-            l1 = l + "_1"
-            if params.get("show_fit", True) and xfit is not None and yfit is not None:
-                lw_fit = params.get("linewidth_fit", 1.0)
-                lw = 0.0 if params.get("linewidth") is None else params.get("linewidth")
-                ax.plot(
-                    xfit * xcoeff,
-                    yfit + ofs,
-                    label=l + "_fit",
-                    linestyle="-",
-                    color=cf,
-                    linewidth=lw_fit,
-                )
-                lines.append(
-                    ax.plot(x * xcoeff, y0 + ofs, label=l0, marker=m0, color=c0, linewidth=lw)[0]
-                )
-                if y1 is not None:
+            lines = []
+            for data, l, ofs, cf, c0, c1, m0, m1 in zip(
+                data_list, label, offset, color_fit, color0, color1, marker0, marker1
+            ):
+                d = self._fetch_data(data, do_fft)
+                if d is None:
+                    return False
+                x, xfit, y0, y1, yfit = d
+                l0 = l + "_0" if y1 is not None else l
+                l1 = l + "_1"
+                if params.get("show_fit", True) and xfit is not None and yfit is not None:
+                    lw_fit = params.get("linewidth_fit", 1.0)
+                    lw = 0.0 if params.get("linewidth") is None else params.get("linewidth")
+                    ax.plot(
+                        xfit * xcoeff,
+                        yfit + ofs,
+                        label=l + "_fit",
+                        linestyle="-",
+                        color=cf,
+                        linewidth=lw_fit,
+                    )
                     lines.append(
-                        ax.plot(x * xcoeff, y1 + ofs, label=l1, marker=m1, color=c1, linewidth=lw)[
+                        ax.plot(x * xcoeff, y0 + ofs, label=l0, marker=m0, color=c0, linewidth=lw)[
                             0
                         ]
                     )
-            else:
-                lw = 1.0 if params.get("linewidth") is None else params.get("linewidth")
-                lines.append(
-                    ax.plot(
-                        x * xcoeff,
-                        y0 + ofs,
-                        label=l0,
-                        marker=m0,
-                        linestyle="-",
-                        color=c0,
-                        linewidth=lw,
-                    )[0]
-                )
-                if y1 is not None:
+                    if y1 is not None:
+                        lines.append(
+                            ax.plot(
+                                x * xcoeff, y1 + ofs, label=l1, marker=m1, color=c1, linewidth=lw
+                            )[0]
+                        )
+                else:
+                    lw = 1.0 if params.get("linewidth") is None else params.get("linewidth")
                     lines.append(
                         ax.plot(
                             x * xcoeff,
-                            y1 + ofs,
-                            label=l1,
-                            marker=m1,
+                            y0 + ofs,
+                            label=l0,
+                            marker=m0,
                             linestyle="-",
-                            color=c1,
+                            color=c0,
                             linewidth=lw,
                         )[0]
                     )
+                    if y1 is not None:
+                        lines.append(
+                            ax.plot(
+                                x * xcoeff,
+                                y1 + ofs,
+                                label=l1,
+                                marker=m1,
+                                linestyle="-",
+                                color=c1,
+                                linewidth=lw,
+                            )[0]
+                        )
 
-        # set_ylim should be called after all plots to auto-scale properly
-        ax.set_ylim(params.get("ymin"), params.get("ymax"))
-        if params.get("legend") is not None:
-            ax.legend(handles=lines, loc=params["legend"])
-        plt.tight_layout()
-        plt.savefig(fn)
-        plt.close()
+            # set_ylim should be called after all plots to auto-scale properly
+            ax.set_ylim(params.get("ymin"), params.get("ymax"))
+            if params.get("legend") is not None:
+                ax.legend(handles=lines, loc=params["legend"])
+            fig.tight_layout()
+            fig.savefig(fn)
         self.logger.info(f"Exported Data to {fn}.")
         return True

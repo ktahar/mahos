@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from os import path
 
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.figure import Figure
 import numpy as np
 
 from ..msgs.grid_sweeper_msgs import GridSweeperData, update_data
@@ -117,28 +118,27 @@ class GridSweeperIO(object):
             self.logger.error("Axis values are unavailable.")
             return False
 
-        plt.rcParams["font.size"] = params.get("fontsize", 28)
-        fig = plt.figure(
-            figsize=params.get("figsize", (12, 12)),
-            dpi=params.get("dpi", 100),
-        )
-        ax = fig.subplots()
+        with mpl.rc_context({"font.size": params.get("fontsize", 28)}):
+            fig = Figure(
+                figsize=params.get("figsize", (12, 12)),
+                dpi=params.get("dpi", 100),
+            )
+            ax = fig.subplots()
 
-        extent = (xdata[0], xdata[-1], ydata[0], ydata[-1])
-        im = ax.imshow(zdata.T, origin="lower", aspect="auto", extent=extent)
-        cbar = fig.colorbar(im, ax=ax)
+            extent = (xdata[0], xdata[-1], ydata[0], ydata[-1])
+            im = ax.imshow(zdata.T, origin="lower", aspect="auto", extent=extent)
+            cbar = fig.colorbar(im, ax=ax)
 
-        xunit = f" ({data.xunit})" if data.xunit else ""
-        yunit = f" ({data.yunit})" if data.yunit else ""
-        zunit = f" ({data.zunit})" if data.zunit else ""
+            xunit = f" ({data.xunit})" if data.xunit else ""
+            yunit = f" ({data.yunit})" if data.yunit else ""
+            zunit = f" ({data.zunit})" if data.zunit else ""
 
-        ax.set_xlabel(f"{data.xlabel}{xunit}")
-        ax.set_ylabel(f"{data.ylabel}{yunit}")
-        cbar.set_label(f"{data.zlabel}{zunit}")
+            ax.set_xlabel(f"{data.xlabel}{xunit}")
+            ax.set_ylabel(f"{data.ylabel}{yunit}")
+            cbar.set_label(f"{data.zlabel}{zunit}")
 
-        plt.tight_layout()
-        plt.savefig(file_name)
-        plt.close()
+            fig.tight_layout()
+            fig.savefig(file_name)
 
         self.logger.info(f"Exported data to {file_name}.")
         return True

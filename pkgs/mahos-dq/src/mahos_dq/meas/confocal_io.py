@@ -15,7 +15,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 from mahos_dq.msgs.confocal_msgs import Image, Trace, ScanDirection, update_image, update_trace
 from mahos.node.log import DummyLogger
@@ -142,15 +142,15 @@ class ConfocalIO(object):
 
         if params is None:
             params = [{}, {}, {}]
-        fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+        fig = Figure(figsize=(12, 10))
+        axes = fig.subplots(2, 2)
         positions = ((pos_xyz[0], pos_xyz[1]), (pos_xyz[0], pos_xyz[2]), (pos_xyz[1], pos_xyz[2]))
         axes_ = axes[0, 0], axes[0, 1], axes[1, 0]
         for img, param, pos, ax in zip(images, params, positions, axes_):
             if img is not None:
                 plot(img, param, pos, fig, ax)
 
-        plt.savefig(file_name)
-        plt.close()
+        fig.savefig(file_name)
         self.logger.info(f"Exported View to {file_name}.")
         return True
 
@@ -305,25 +305,25 @@ class ConfocalIO(object):
         return True
 
     def _export_trace_image(self, fn, trace: Trace, params: dict):
-        plt.figure()
+        fig = Figure()
+        ax = fig.add_subplot(111)
         complex_conv = params.get("complex_conv", "real")
         if params.get("timestamp", False):
             for ch in range(len(trace.traces)):
                 s, t = trace.valid_trace(ch, complex_conv)
                 x = [datetime.fromtimestamp(s) for s in s.astype(np.float64) * 1e-9]
-                plt.plot(x, t, label=f"PD{ch}")
+                ax.plot(x, t, label=f"PD{ch}")
         else:
             end = max((len(t) for t in trace.traces), default=0)
             for ch in range(len(trace.traces)):
                 y = trace.get_trace(ch, complex_conv)
                 x = np.arange(end - len(y), end)
-                plt.plot(x, y, label=f"PD{ch}")
-            plt.xlabel("Data points")
+                ax.plot(x, y, label=f"PD{ch}")
+            ax.set_xlabel("Data points")
 
-        plt.legend()
-        plt.ylabel(f"Intensity ({trace.yunit})")
-        plt.tight_layout()
-        plt.savefig(fn)
-        plt.close()
+        ax.legend()
+        ax.set_ylabel(f"Intensity ({trace.yunit})")
+        fig.tight_layout()
+        fig.savefig(fn)
         self.logger.info(f"Exported Trace to {fn}.")
         return True
