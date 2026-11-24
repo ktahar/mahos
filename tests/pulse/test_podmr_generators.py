@@ -13,8 +13,9 @@ import pytest
 
 from mahos_dq.meas.podmr_generator import generator_kernel as K
 from mahos_dq.meas.podmr_generator.splitter import IntervalSplitter
+from mahos_dq.msgs.podmr_msgs import MWMode
 
-from mahos_dq.meas.podmr_generator.generator import make_generators
+from mahos_dq.meas.podmr_generator.generator import PatternGenerator, make_generators
 from user_generators import AddedGenerator, OverrideRabiGenerator
 
 
@@ -58,7 +59,7 @@ def test_make_generators_rejects_generator_with_disallowed_num_pattern():
 def test_interval_splitter_fixed_and_warnings():
     warnings = []
     splitter = IntervalSplitter(
-        {"split_head": 2.4e-9, "min_split_tail": 1.1e-9, "split_fraction": 8}, warnings.append
+        {"split_head": 2.4e-9, "min_split_tail": 1.1e-9, "split_fraction": 0}, warnings.append
     )
     assert len(warnings) == 1 and "split_fraction is disregarded" in warnings[0]
     assert splitter.ticks_to_preserve(1e9) == (2,)
@@ -70,9 +71,17 @@ def test_interval_splitter_fixed_and_warnings():
         splitter.split(0, 1e9, 1e9)
     assert IntervalSplitter({"split_head": 0}).split(0, 1e9, 1e9) == (0, 0)
     assert IntervalSplitter({"split_head": 2e-9}).split(2, 1e9, 1e9) == (2, 0)
-    legacy = IntervalSplitter({"min_split_tail": 1}, warnings.append)
+    legacy = IntervalSplitter({"min_split_tail": -1}, warnings.append)
     assert "min_split_tail is disregarded" in warnings[-1]
     assert legacy.split(4, 1e9, 1e9) == (1, 3)
+
+
+@pytest.mark.parametrize(
+    "conf", [{"split_fraction": 0}, {"split_head": 20e-9, "min_split_tail": -1}]
+)
+def test_interval_splitter_rejects_invalid_active_settings(conf):
+    with pytest.raises(ValueError):
+        IntervalSplitter(conf)
 
 
 @pytest.mark.parametrize(
@@ -116,6 +125,49 @@ def test_fixed_head_limits_reduction(head, expected_freq):
     )
     if head is not None:
         assert splitter.split(xdata[0], 2e9, freq)[0] / freq == pytest.approx(head)
+
+
+def _generator_params(generator, pulse_overrides):
+    pulse = generator.pulse_params().unwrap()
+    pulse.update(pulse_overrides)
+    return {
+        "base_width": 100e-9,
+        "laser_delay": 100e-9,
+        "laser_width": 100e-9,
+        "mw_delay": 100e-9,
+        "trigger_width": 100e-9,
+        "init_delay": 100e-9,
+        "final_delay": 100e-9,
+        "partial": 0,
+        "enable_reduce": True,
+        "pulse": pulse,
+    }
+
+
+@pytest.mark.parametrize(
+    "label, mode, expected_freq",
+    [
+        ("rabi", MWMode.QPSK, 10e6),
+        ("custom_rabi", MWMode.QPSK, 10e6),
+        ("fid", MWMode.Ext2Phase, 10e6),
+        ("fid", MWMode.QPSK, 2e9),
+        ("trse", MWMode.Ext2Phase, 10e6),
+        ("trse", MWMode.QPSK, 2e9),
+    ],
+)
+def test_fixed_head_constrains_only_split_paths(label, mode, expected_freq):
+    generator = make_generators(
+        splitter=IntervalSplitter({"split_head": 2.5e-9}),
+        mw_modes=(mode,),
+        generators={"custom_rabi": ["user_generators", "OverrideRabiGenerator"]},
+        print_fn=lambda _: None,
+    )[label]
+    params = _generator_params(
+        generator,
+        {"90pulse": 100e-9, "180pulse": 200e-9, "270pulse": 300e-9, "tauconst": 100e-9},
+    )
+    _, freq, _ = generator.generate_raw_blocks([100e-9], params)
+    assert freq == expected_freq
 
 
 @pytest.mark.parametrize("enable_reduce", [False, True])

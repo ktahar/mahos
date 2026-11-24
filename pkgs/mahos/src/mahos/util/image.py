@@ -28,6 +28,7 @@ the value of the pixel at row ``i`` and column ``j``.
 
 from __future__ import annotations
 
+import csv
 import os
 import warnings
 from collections.abc import Sequence
@@ -43,12 +44,18 @@ from matplotlib.patches import Patch
 import mahos.util.validation as V
 
 
+def _as_array(data: ArrayLike) -> NDArray:
+    """Convert to an array while preserving any mask."""
+
+    return np.ma.asarray(data) if np.ma.isMaskedArray(data) else np.asarray(data)
+
+
 def _check_map(x: ArrayLike, y: ArrayLike, image: ArrayLike) -> tuple[NDArray, NDArray, NDArray]:
     """Convert map inputs to arrays and check that ``image`` has shape (len(y), len(x))."""
 
-    x = np.asarray(x)
-    y = np.asarray(y)
-    image = np.asarray(image)
+    x = _as_array(x)
+    y = _as_array(y)
+    image = _as_array(image)
     if x.ndim != 1 or y.ndim != 1:
         raise ValueError(f"x and y must be 1D arrays. Given shapes: {x.shape}, {y.shape}")
     if image.shape != (len(y), len(x)):
@@ -68,11 +75,16 @@ def _prepare_figure(
     """Create or adopt (fig, ax) for :func:`plot_map` and :func:`plot_image`.
 
     If ``tight`` is True, a newly created figure uses the constrained layout.
-    A figure given by ``fig`` gets the tight layout engine only if it has no layout engine.
+    An existing figure gets the tight layout engine only if it has no layout engine.
     A new figure is created via ``matplotlib.pyplot`` only if ``use_pyplot`` is True.
 
     """
 
+    if ax is not None:
+        owner = ax.get_figure(root=True)
+        if fig is not None and fig is not owner:
+            raise ValueError("fig must own the supplied axes.")
+        fig = owner
     if fig is None:
         layout = "constrained" if tight else None
         if use_pyplot:
@@ -140,18 +152,18 @@ def plot_map(
     Use :func:`plot_image` instead for data without spatial unit.
 
     If ``tight`` is True, a newly created figure uses the constrained layout.
-    A figure given by ``fig`` gets the tight layout engine only if it has no layout engine.
+    An existing figure gets the tight layout engine only if it has no layout engine.
 
     :param fn: file name to save the figure. None to draw without saving.
     :param x: x values (pixel centers) with shape (W,).
     :param y: y values (pixel centers) with shape (H,).
     :param image: map values with shape (H, W), i.e., ``image[i, j]`` is at ``(x[j], y[i])``.
-    :param fig: figure to draw on. A new figure is created if None.
+    :param fig: figure to draw on. Defaults to the top-level figure of ``ax`` or a new figure.
     :param ax: axes to draw on. A new subplot of ``fig`` is created if None.
     :param clabel: colorbar label.
     :param plot_pos: position (x, y) to mark with a cross.
     :returns: the figure drawn on.
-    :raises ValueError: shapes of ``x``, ``y``, and ``image`` are inconsistent.
+    :raises ValueError: input shapes are inconsistent or ``fig`` does not own ``ax``.
 
     """
 
@@ -230,13 +242,15 @@ def save_map(
     """
 
     x, y, image = _check_map(x, y, image)
-    cells = image.astype(str)
-    if np.issubdtype(image.dtype, np.floating):
-        cells[np.isnan(image)] = ""
-    rows = [[f"{ylabel}\\{clabel}/{xlabel}"] + x.astype(str).tolist()]
-    rows.extend([yv] + list(c) for yv, c in zip(y.astype(str).tolist(), cells.tolist()))
+    is_float = np.issubdtype(image.dtype, np.floating)
     with open(fn, "w", encoding="utf-8", newline="") as f:
-        f.write("".join(delimiter.join(r) + os.linesep for r in rows))
+        writer = csv.writer(f, delimiter=delimiter, lineterminator=os.linesep)
+        writer.writerow([f"{ylabel}\\{clabel}/{xlabel}", *x.astype(str).tolist()])
+        for yv, row in zip(y.astype(str), image):
+            cells = row.astype(str)
+            if is_float:
+                cells[np.isnan(row)] = ""
+            writer.writerow([yv, *cells.tolist()])
 
 
 def plot_image(
@@ -268,7 +282,7 @@ def plot_image(
 
     The figure handling and color mapping params are the same as :func:`plot_map`.
     If ``tight`` is True, a newly created figure uses the constrained layout.
-    A figure given by ``fig`` gets the tight layout engine only if it has no layout engine.
+    An existing figure gets the tight layout engine only if it has no layout engine.
 
     :param fn: file name to save the figure. None to draw without saving.
     :param image: image values with shape (H, W).
@@ -277,11 +291,11 @@ def plot_image(
     :param lines: matplotlib lines drawn in pixel coordinates.
     :param show: show the figure interactively (this imports ``matplotlib.pyplot``).
     :returns: the figure drawn on.
-    :raises ValueError: ``image`` is not 2D.
+    :raises ValueError: ``image`` is not 2D or ``fig`` does not own ``ax``.
 
     """
 
-    image = np.asarray(image)
+    image = _as_array(image)
     if image.ndim != 2:
         raise ValueError(f"image must be 2D. Given shape: {image.shape}")
     h, w = image.shape

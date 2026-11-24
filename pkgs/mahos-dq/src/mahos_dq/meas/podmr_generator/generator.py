@@ -74,15 +74,17 @@ class PatternGenerator(object):
 
         return self.splitter.split(value, self.freq, freq)
 
-    def _round_pulses(self, *args):
-        """Round pulses while preserving the fixed head during frequency reduction."""
+    def _round_pulses(self, *args, use_split: bool = True):
+        """Round pulses, preserving the fixed head when the pattern uses interval splitting."""
 
-        return K.round_pulses(*args, ticks_to_preserve=self.splitter.ticks_to_preserve(self.freq))
+        ticks = self.splitter.ticks_to_preserve(self.freq) if use_split else ()
+        return K.round_pulses(*args, ticks_to_preserve=ticks)
 
-    def _round_pulsesN(self, *args):
-        """Round multiple pulse lists while preserving the fixed head."""
+    def _round_pulsesN(self, *args, use_split: bool = True):
+        """Round multiple pulse lists, preserving the fixed head when splitting is used."""
 
-        return K.round_pulsesN(*args, ticks_to_preserve=self.splitter.ticks_to_preserve(self.freq))
+        ticks = self.splitter.ticks_to_preserve(self.freq) if use_split else ()
+        return K.round_pulsesN(*args, ticks_to_preserve=ticks)
 
     def pulse_params(self) -> P.ParamDict[str, P.PDValue]:
         """Return ParamDict of additional pulse params."""
@@ -245,7 +247,14 @@ class RabiGenerator(PatternGenerator):
         fix_base_width: int | None,
     ):
         freq, xdata, common_pulses, p0, p1 = self._round_pulses(
-            self.freq, xdata, common_pulses, [], [], reduce_start_divisor, self.print_fn
+            self.freq,
+            xdata,
+            common_pulses,
+            [],
+            [],
+            reduce_start_divisor,
+            self.print_fn,
+            use_split=False,
         )
         p0 = [True]
         p1 = [False]
@@ -316,7 +325,14 @@ class T1Generator(PatternGenerator):
         p0 = [p180]
         p1 = [p180]
         freq, xdata, common_pulses, p0, p1 = self._round_pulses(
-            self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
+            self.freq,
+            xdata,
+            common_pulses,
+            p0,
+            p1,
+            reduce_start_divisor,
+            self.print_fn,
+            use_split=False,
         )
         p0 = p0 + [False, flip_head]
         p1 = p1 + [True, flip_head]
@@ -401,7 +417,14 @@ class FIDGenerator(PatternGenerator):
         p1 = [p90, p270]
 
         freq, xdata, common_pulses, p0, p1 = self._round_pulses(
-            self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
+            self.freq,
+            xdata,
+            common_pulses,
+            p0,
+            p1,
+            reduce_start_divisor,
+            self.print_fn,
+            use_split=self.mode_has_4phase(),
         )
         p0 = p0 + [mw_x]
         p1 = p1 + [mw_x_inv]
@@ -658,7 +681,14 @@ class TRSEGenerator(PatternGenerator):
         p1 = [p90, p180, p270, tauconst]
 
         freq, xdata, common_pulses, p0, p1 = self._round_pulses(
-            self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
+            self.freq,
+            xdata,
+            common_pulses,
+            p0,
+            p1,
+            reduce_start_divisor,
+            self.print_fn,
+            use_split=self.mode_has_4phase(),
         )
         p0 = p0 + [mw_x]
         p1 = p1 + [mw_x_inv]
@@ -1396,7 +1426,14 @@ class PiTrainGenerator(PatternGenerator):
         p0 = [tauconst]
         p1 = [tauconst]
         freq, xdata, common_pulses, p0, p1 = self._round_pulses(
-            self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
+            self.freq,
+            xdata,
+            common_pulses,
+            p0,
+            p1,
+            reduce_start_divisor,
+            self.print_fn,
+            use_split=False,
         )
         p0 = p0 + [Nconst, True]
         p1 = p1 + [Nconst, False]
@@ -1484,7 +1521,14 @@ class SEHalfPiSweepGenerator(PatternGenerator):
         p0 = [p180, tauconst]
         p1 = [p180, tauconst]
         freq, xdata, common_pulses, p0, p1 = self._round_pulses(
-            self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
+            self.freq,
+            xdata,
+            common_pulses,
+            p0,
+            p1,
+            reduce_start_divisor,
+            self.print_fn,
+            use_split=False,
         )
         p0 = p0 + [True]
         p1 = p1 + [False]
@@ -1580,7 +1624,14 @@ class SpinLockGenerator(PatternGenerator):
         p1 = [p90, p270, iq_delay]
 
         freq, xdata, common_pulses, p0, p1 = self._round_pulses(
-            self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
+            self.freq,
+            xdata,
+            common_pulses,
+            p0,
+            p1,
+            reduce_start_divisor,
+            self.print_fn,
+            use_split=False,
         )
         p0 = p0 + [mw_x_inv]
         p1 = p1 + [mw_x]
@@ -2346,7 +2397,14 @@ class DRabiGenerator(PatternGenerator):
         p0 = [p180, delay]
         p1 = [p180, delay]
         freq, xdata, common_pulses, p0, p1 = self._round_pulses(
-            self.freq, xdata, common_pulses, p0, p1, reduce_start_divisor, self.print_fn
+            self.freq,
+            xdata,
+            common_pulses,
+            p0,
+            p1,
+            reduce_start_divisor,
+            self.print_fn,
+            use_split=False,
         )
         p0 = p0 + [True]
         p1 = p1 + [False]
