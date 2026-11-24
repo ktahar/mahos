@@ -20,6 +20,8 @@ Changed
 
 - Development tooling: replace black and flake8 with Ruff for formatting and linting.
 - rename ``mahos.util.locked_queue`` to ``mahos.util.queue.RollingQueue``.
+- Move ``simple_moving_average()`` from ``mahos.util.stat`` to ``mahos.util.signal``.
+  Calls through ``mahos.util.stat`` remain supported and emit a ``DeprecationWarning``.
 - meas: exported figures use matplotlib's constrained layout instead of ``tight_layout()``.
   Exported images have slightly different margins and spacing.
 - mahos.util.image: ``plot_map()``, ``plot_map_only()``, and ``save_map()`` take numpy

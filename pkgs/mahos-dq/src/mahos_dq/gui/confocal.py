@@ -58,7 +58,7 @@ from mahos.node.global_params import GlobalParamsClient
 from mahos.node.node import local_conf, join_name
 from mahos.util import conv
 from mahos.util.plot import colors_tab20_pair
-from mahos.util.stat import simple_moving_average
+from mahos.util.signal import simple_moving_average
 from mahos.util.timer import FPSCounter
 from mahos.util.unit import SI_scale
 from mahos.gui.gui_node import GUINode, get_gui_logger

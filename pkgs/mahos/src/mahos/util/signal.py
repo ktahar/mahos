@@ -14,6 +14,20 @@ import numpy.typing as npt
 import mahos.util.validation as V
 
 
+def simple_moving_average(a: npt.ArrayLike, n: int) -> npt.NDArray:
+    """Compute the unweighted moving average of a one-dimensional array.
+
+    :param a: Input samples.
+    :param n: Window width in samples.
+    :returns: The averages of complete windows, without padding.
+
+    """
+
+    r = np.cumsum(a)
+    r[n:] = r[n:] - r[:-n]
+    return r[n - 1 :] / n
+
+
 def real_fft(
     xdata: npt.ArrayLike, ydata: npt.ArrayLike, remove_dc: bool = True
 ) -> tuple[npt.NDArray, npt.NDArray]:

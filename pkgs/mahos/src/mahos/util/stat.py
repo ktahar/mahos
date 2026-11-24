@@ -10,6 +10,8 @@ Statistical Data Processing Utilities.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 
 
@@ -55,14 +57,14 @@ def filter_outlier_2d(
 
 
 def simple_moving_average(a: np.ndarray, n) -> np.ndarray:
-    """Simple (non-weighted) moving average of given array `a`.
+    """Deprecated alias for :func:`mahos.util.signal.simple_moving_average`."""
 
-    :param a: 1D-array to be moving-averaged.
-    :param n: sampling width.
-    :returns: the length is shortened by n - 1.
+    import mahos.util.signal
 
-    """
-
-    r = np.cumsum(a)
-    r[n:] = r[n:] - r[:-n]
-    return r[n - 1 :] / n
+    warnings.warn(
+        "mahos.util.stat.simple_moving_average is deprecated; "
+        "use mahos.util.signal.simple_moving_average instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return mahos.util.signal.simple_moving_average(a, n)
