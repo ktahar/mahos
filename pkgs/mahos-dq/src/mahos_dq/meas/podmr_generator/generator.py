@@ -1807,16 +1807,16 @@ class XY8CorrelationGenerator(PatternGenerator):
             xy8_first = init_ptn + pattern + storage_ptn
             xy8_second = reinit_ptn + pattern + read_ptn
 
-            v_f, v_l = self._split_int(tau, freq)
+            head, tail = self._split_int(tau, freq)
             if method == "xy8cl":
-                interlude = [((mw_y,), v_l), ((reinit_phase,), v_f)]
+                interlude = [((mw_y,), head), ((reinit_phase,), tail)]
             elif method == "xy8cl1flip":
                 interlude = [
-                    ((mw_y,), v_l),
-                    ((mw_x,), v_f),
+                    ((mw_y,), head),
+                    ((mw_x,), tail),
                     ((mw_x, "mw"), p180),
-                    ((mw_x,), v_l),
-                    ((reinit_phase,), v_f),
+                    ((mw_x,), head),
+                    ((reinit_phase,), tail),
                 ]
             else:
                 raise ValueError(f"Unknown method {method}")
@@ -2168,14 +2168,14 @@ class DDGateGenerator(PatternGenerator):
             xy8_first = init_ptn + pattern + storage_ptn
             xy8_second = reinit_ptn + pattern + read_ptn
 
-            v_f, v_l = self._split_int(tau, freq)
+            head, tail = self._split_int(tau, freq)
             interlude = [
                 ((mw_y,), tau),
                 ((mw_y, "mw"), p180),
-                ((mw_y,), v_l),
-                ((mw_y,), v_f),
+                ((mw_y,), head),
+                ((mw_y,), tail),
             ] * N2const
-            interlude[-1] = ((pih_ch[2][0],), v_f)
+            interlude[-1] = ((pih_ch[2][0],), tail)
 
             return (xy8_first + interlude + xy8_second) * N3const
 
@@ -2314,14 +2314,14 @@ class DDNGateGenerator(DDGateGenerator):
             xy8_first = init_ptn + pattern + storage_ptn
             xy8_second = reinit_ptn + pattern + read_ptn
 
-            v_f, v_l = self._split_int(tau2const, freq)
+            head, tail = self._split_int(tau2const, freq)
             interlude = [
                 ((mw_y,), tau2const),
                 ((mw_y, "mw"), p180),
-                ((mw_y,), v_l),
-                ((mw_y,), v_f),
+                ((mw_y,), head),
+                ((mw_y,), tail),
             ] * n
-            interlude[-1] = ((pih_ch[2][0],), v_f)
+            interlude[-1] = ((pih_ch[2][0],), tail)
 
             return xy8_first + interlude + xy8_second
 

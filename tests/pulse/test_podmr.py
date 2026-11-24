@@ -423,7 +423,7 @@ def test_podmr_patterns():
         "Nconst": 2,
         "N2const": 2,
         "N3const": 2,
-        "ddphase": "Y:X:Y:X,Y:X:Y:iX",
+        "ddphase": "Y:X:X:X,Y:X:X:iX",  # Reinitialize at X to exercise the phase change.
         "supersample": 1,
         "iq_delay": 16e-9,
         "readY": False,
@@ -433,6 +433,7 @@ def test_podmr_patterns():
     }
 
     generators = make_generators()
+    params_xy8cl = {**params, "pulse": {**params["pulse"], "reinitX": True}}
 
     # normal (sweep tau)
     for meth in (
@@ -453,7 +454,8 @@ def test_podmr_patterns():
         "xy8cl1flip",
         "ddgate",
     ):
-        ptn = generators[meth].generate(tau, params)
+        ps = params_xy8cl if meth == "xy8cl" else params
+        ptn = generators[meth].generate(tau, ps)
         assert pattern_equal(ptn, patterns[meth])
 
     for meth in ("xy8", "xy16"):
